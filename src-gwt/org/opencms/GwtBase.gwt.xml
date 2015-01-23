@@ -1,5 +1,4 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE module PUBLIC "-//Google Inc.//DTD Google Web Toolkit 2.0.2//EN" "gwt-module.dtd">
 <module>
 	<inherits name="com.google.gwt.user.User" />
 	<inherits name="com.google.gwt.i18n.I18N"/>
@@ -28,13 +27,14 @@
 
 	<set-property name="fileapi.support" value="no" />
 
-	<set-property name="fileapi.support" value="formdata,no" >
+	<set-property name="fileapi.support" value="formdata" >
 		<any>
 			<when-property-is name="user.agent" value="safari" />
+			<when-property-is name="user.agent" value="opera" />
 		</any>
 	</set-property>
 
-	<set-property name="fileapi.support" value="formdata,fileapi,no" >
+	<set-property name="fileapi.support" value="formdata,fileapi" >
 		<any>
 			<when-property-is name="user.agent" value="gecko1_8" />
 		</any>
@@ -73,23 +73,21 @@
         </any>
     </replace-with>
     
-    <replace-with class="org.opencms.gwt.client.ui.input.impl.CmsLabelNonTextOverflowImpl">
-    	<when-type-assignable class="org.opencms.gwt.client.ui.input.CmsLabel" />
-    	<any>
-    		<when-property-is name="user.agent" value="gecko1_8" />
-    		<when-property-is name="user.agent" value="gecko" />
-    	</any>
-    </replace-with>
-    
     <replace-with class="org.opencms.gwt.client.util.impl.DOMImplIE">
         <when-type-assignable class="org.opencms.gwt.client.util.impl.DOMImpl"/>
         <any>
         	<when-property-is name="user.agent" value="ie6"/>
         	<when-property-is name="user.agent" value="ie8"/>
-        	<when-property-is name="user.agent" value="ie9"/>
         </any>
     </replace-with>
     
+    <replace-with class="org.opencms.gwt.client.util.impl.DOMImpl">
+        <when-type-assignable class="org.opencms.gwt.client.util.impl.DOMImpl"/>
+        <any>
+        	<when-property-is name="user.agent" value="ie9"/>
+        </any>
+    </replace-with>
+
     <replace-with class="org.opencms.gwt.client.CmsDefaultUserAgentInfo">
     	<when-type-is class="org.opencms.gwt.client.I_CmsUserAgentInfo" />
     </replace-with>

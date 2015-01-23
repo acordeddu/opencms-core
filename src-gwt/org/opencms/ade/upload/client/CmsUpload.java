@@ -91,6 +91,9 @@ public class CmsUpload extends A_CmsEntryPoint {
     public void onModuleLoad() {
 
         super.onModuleLoad();
+        if (!checkBuildId("org.opencms.ade.upload")) {
+            return;
+        }
         if ((getDialogMode() != null) && getDialogMode().equals("button")) {
             exportOpenUploadDialog();
         } else {

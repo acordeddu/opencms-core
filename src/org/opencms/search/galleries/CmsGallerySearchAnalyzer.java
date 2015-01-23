@@ -27,6 +27,8 @@
 
 package org.opencms.search.galleries;
 
+import org.opencms.search.CmsSearchIndex;
+
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -37,7 +39,6 @@ import org.apache.lucene.analysis.StopFilter;
 import org.apache.lucene.analysis.StopwordAnalyzerBase;
 import org.apache.lucene.analysis.TokenStream;
 import org.apache.lucene.analysis.WordlistLoader;
-import org.apache.lucene.analysis.standard.StandardAnalyzer;
 import org.apache.lucene.analysis.standard.StandardFilter;
 import org.apache.lucene.analysis.standard.StandardTokenizer;
 import org.apache.lucene.util.Version;
@@ -47,7 +48,7 @@ import org.apache.lucene.util.Version;
  * 
  * The gallery search is done in one single index that may contain multiple languages.<p>
  * 
- * According to the Lucene JavaDocs (3.0 version), the Lucene {@link StandardAnalyzer} is already using
+ * According to the Lucene JavaDocs (3.0 version), the Lucene {@link org.apache.lucene.analysis.standard.StandardAnalyzer} is already using
  * "a good tokenizer for most European-language documents". The only caveat is that a 
  * list of English only stop words is used.<p>
  * 
@@ -68,7 +69,7 @@ import org.apache.lucene.util.Version;
  */
 public class CmsGallerySearchAnalyzer extends StopwordAnalyzerBase {
 
-    /** Default maximum allowed token length */
+    /** Default maximum allowed token length. */
     public static final int DEFAULT_MAX_TOKEN_LENGTH = 255;
 
     /**
@@ -81,8 +82,11 @@ public class CmsGallerySearchAnalyzer extends StopwordAnalyzerBase {
     throws IOException {
 
         // initialize superclass
-        super(version, WordlistLoader.getWordSet(new BufferedReader(new InputStreamReader(
-            CmsGallerySearchAnalyzer.class.getResourceAsStream("stopwords_multilanguage.txt"))), "#"));
+        super(version, WordlistLoader.getWordSet(
+            new BufferedReader(new InputStreamReader(
+                CmsGallerySearchAnalyzer.class.getResourceAsStream("stopwords_multilanguage.txt"))),
+            "#",
+            CmsSearchIndex.LUCENE_VERSION));
     }
 
     /**

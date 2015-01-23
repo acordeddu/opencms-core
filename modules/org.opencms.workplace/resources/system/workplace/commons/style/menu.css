@@ -73,7 +73,7 @@
 }
 
 .link img {
-  width: 20px;
+  /*width: 20px;*/
   height: 20px;
   display: inline;
   vertical-align: middle;
@@ -574,7 +574,7 @@ span.combobutton {
 img.button {
 	height: 20px;
 	width: 20px;
-	border: 0px none;
+	border: none;
 	vertical-align: middle;
 }
 
@@ -588,7 +588,7 @@ a.button {
 /* Button - Normal style (inactive) */
 span.norm {
 	display: block;
-	border: 1px solid ThreeDFace;
+	border: 1px solid transparent;
 }
 
 /* Button - Hover style */

@@ -111,6 +111,13 @@ public interface I_CmsSitemapItemCss extends CssResource {
      * CSS class accessor.<p>
      * 
      * @return a CSS class
+     **/
+    String expiredOrNotReleased();
+
+    /**
+     * CSS class accessor.<p>
+     * 
+     * @return a CSS class
      */
     String sitemapEntryDecoration();
 

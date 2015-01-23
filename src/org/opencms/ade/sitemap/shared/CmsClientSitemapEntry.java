@@ -27,9 +27,9 @@
 
 package org.opencms.ade.sitemap.shared;
 
+import org.opencms.db.CmsResourceState;
 import org.opencms.file.CmsResource;
 import org.opencms.gwt.shared.CmsClientLock;
-import org.opencms.gwt.shared.CmsLinkBean;
 import org.opencms.gwt.shared.property.CmsClientProperty;
 import org.opencms.util.CmsStringUtil;
 import org.opencms.util.CmsUUID;
@@ -81,6 +81,12 @@ public class CmsClientSitemapEntry implements IsSerializable {
     /** True if the children of this entry have initially been loaded. */
     private boolean m_childrenLoadedInitially;
 
+    /** The expiration date. */
+    private String m_dateExpired;
+
+    /** The release date. */
+    private String m_dateReleased;
+
     /** The default file id. */
     private CmsUUID m_defaultFileId;
 
@@ -92,9 +98,6 @@ public class CmsClientSitemapEntry implements IsSerializable {
 
     /** The detail page type name. */
     private String m_detailpageTypeName;
-
-    /** The current edit status. */
-    private EditStatus m_editStatus = EditStatus.normal;
 
     /** The entry type. */
     private EntryType m_entryType;
@@ -114,6 +117,9 @@ public class CmsClientSitemapEntry implements IsSerializable {
     /** Indicates if this entry represents the default page of the parent folder. */
     private boolean m_isFolderDefaultPage;
 
+    /** Flag indicating the resource is released and not expired. */
+    private boolean m_isResleasedAndNotExpired;
+
     /** The lock of the entry resource. */
     private CmsClientLock m_lock;
 
@@ -127,7 +133,13 @@ public class CmsClientSitemapEntry implements IsSerializable {
     private Map<String, CmsClientProperty> m_ownProperties = new HashMap<String, CmsClientProperty>();
 
     /** The relative position between siblings. */
-    private int m_position;
+    private int m_position = -1;
+
+    /** The target in case of a redirect type. */
+    private String m_redirectTarget;
+
+    /** The resource state. */
+    private CmsResourceState m_resourceState;
 
     /** The resource type name. */
     private String m_resourceTypeName;
@@ -166,11 +178,12 @@ public class CmsClientSitemapEntry implements IsSerializable {
     * Adds the given entry to the children.<p>
     * 
     * @param entry the entry to add
+    * @param controller a sitemap controller instance 
     */
-    public void addSubEntry(CmsClientSitemapEntry entry) {
+    public void addSubEntry(CmsClientSitemapEntry entry, I_CmsSitemapController controller) {
 
         entry.setPosition(m_subEntries.size());
-        entry.updateSitePath(CmsStringUtil.joinPaths(m_sitePath, entry.getName()));
+        entry.updateSitePath(CmsStringUtil.joinPaths(m_sitePath, entry.getName()), controller);
         entry.setFolderDefaultPage(entry.isLeafType() && getVfsPath().equals(entry.getVfsPath()));
         m_subEntries.add(entry);
     }
@@ -183,6 +196,26 @@ public class CmsClientSitemapEntry implements IsSerializable {
     public boolean getChildrenLoadedInitially() {
 
         return m_childrenLoadedInitially;
+    }
+
+    /**
+     * Returns the expiration date.<p>
+     *
+     * @return the expiration date
+     */
+    public String getDateExpired() {
+
+        return m_dateExpired;
+    }
+
+    /**
+     * Returns the release date.<p>
+     *
+     * @return the release date
+     */
+    public String getDateReleased() {
+
+        return m_dateReleased;
     }
 
     /**
@@ -223,16 +256,6 @@ public class CmsClientSitemapEntry implements IsSerializable {
     public String getDetailpageTypeName() {
 
         return m_detailpageTypeName;
-    }
-
-    /**
-     * Returns the current edit status.<p>
-     * 
-     * @return the current edit status 
-     */
-    public EditStatus getEditStatus() {
-
-        return m_editStatus;
     }
 
     /**
@@ -306,6 +329,41 @@ public class CmsClientSitemapEntry implements IsSerializable {
     }
 
     /**
+     * Returns the property value or null if not set.<p>
+     * 
+     * @param propertyName the property name
+     * 
+     * @return the property value
+     */
+    public String getPropertyValue(String propertyName) {
+
+        if (m_ownProperties.containsKey(propertyName)) {
+            return m_ownProperties.get(propertyName).getEffectiveValue();
+        }
+        return null;
+    }
+
+    /**
+     * Returns the redirect target.<p>
+     *
+     * @return the redirect target
+     */
+    public String getRedirectTarget() {
+
+        return m_redirectTarget;
+    }
+
+    /**
+     * Returns the resource state.<p>
+     *
+     * @return the resource state
+     */
+    public CmsResourceState getResourceState() {
+
+        return m_resourceState;
+    }
+
+    /**
      * Returns the resource type name.<p>
      * 
      * @return the resource type name 
@@ -342,15 +400,14 @@ public class CmsClientSitemapEntry implements IsSerializable {
      */
     public String getTitle() {
 
-        CmsClientProperty navtext = m_ownProperties.get(CmsClientProperty.PROPERTY_NAVTEXT);
-        if (!CmsClientProperty.isPropertyEmpty(navtext)) {
-            return navtext.getEffectiveValue();
+        String title = getPropertyValue(CmsClientProperty.PROPERTY_NAVTEXT);
+        if (CmsStringUtil.isEmptyOrWhitespaceOnly(title)) {
+            title = getPropertyValue(CmsClientProperty.PROPERTY_TITLE);
         }
-        CmsClientProperty title = m_ownProperties.get(CmsClientProperty.PROPERTY_TITLE);
-        if (!CmsClientProperty.isPropertyEmpty(title)) {
-            return title.getEffectiveValue();
+        if (CmsStringUtil.isEmptyOrWhitespaceOnly(title)) {
+            title = m_name;
         }
-        return m_name;
+        return title;
     }
 
     /**
@@ -384,17 +441,6 @@ public class CmsClientSitemapEntry implements IsSerializable {
     }
 
     /**
-     * Returns true if this entry has an internal redirect.<p>
-     * 
-     * @return true if this entry has an internal redirect 
-     */
-    public boolean hasInternalRedirect() {
-
-        return false;
-        //        return m_properties.get(INTERNAL_REDIRECT) != null;
-    }
-
-    /**
      * Initializes this sitemap entry.<p>
      * 
      * @param controller a sitemap controller instance 
@@ -403,6 +449,7 @@ public class CmsClientSitemapEntry implements IsSerializable {
 
         m_ownProperties = controller.replaceProperties(m_id, m_ownProperties);
         m_defaultFileProperties = controller.replaceProperties(m_defaultFileId, m_defaultFileProperties);
+        controller.registerEntry(this);
     }
 
     /**
@@ -423,10 +470,11 @@ public class CmsClientSitemapEntry implements IsSerializable {
      * 
      * @param entry the entry to insert
      * @param position the position
+     * @param controller a sitemap controller instance 
      */
-    public void insertSubEntry(CmsClientSitemapEntry entry, int position) {
+    public void insertSubEntry(CmsClientSitemapEntry entry, int position, I_CmsSitemapController controller) {
 
-        entry.updateSitePath(CmsStringUtil.joinPaths(m_sitePath, entry.getName()));
+        entry.updateSitePath(CmsStringUtil.joinPaths(m_sitePath, entry.getName()), controller);
         m_subEntries.add(position, entry);
         updatePositions(position);
     }
@@ -494,6 +542,16 @@ public class CmsClientSitemapEntry implements IsSerializable {
     }
 
     /**
+     * Returns if the resource is released and not expired.<p>
+     *
+     * @return <code>true</code> if the resource is released and not expired
+     */
+    public boolean isResleasedAndNotExpired() {
+
+        return m_isResleasedAndNotExpired;
+    }
+
+    /**
      * Returns true if this entry is the root entry of the sitemap.<p>
      * 
      * @return true if this entry is the root entry of the sitemap 
@@ -522,6 +580,32 @@ public class CmsClientSitemapEntry implements IsSerializable {
         if (m_defaultFileProperties != null) {
             CmsClientProperty.removeEmptyProperties(m_defaultFileProperties);
         }
+    }
+
+    /**
+     * Removes the child at the given position.<p>
+     * 
+     * @param entryId the id of the child to remove
+     * 
+     * @return the removed child
+     */
+    public CmsClientSitemapEntry removeSubEntry(CmsUUID entryId) {
+
+        CmsClientSitemapEntry removed = null;
+        int position = -1;
+        if (!m_subEntries.isEmpty()) {
+            for (int i = 0; i < m_subEntries.size(); i++) {
+                if (m_subEntries.get(i).getId().equals(entryId)) {
+                    position = i;
+                }
+            }
+            if (position != -1) {
+                removed = m_subEntries.remove(position);
+                updatePositions(position);
+            }
+
+        }
+        return removed;
     }
 
     /**
@@ -556,6 +640,26 @@ public class CmsClientSitemapEntry implements IsSerializable {
     public void setChildrenLoadedInitially(boolean childrenLoaded) {
 
         m_childrenLoadedInitially = childrenLoaded;
+    }
+
+    /** 
+     * Sets the expiration date.<p>
+     *
+     * @param dateExpired the expiration date to set
+     */
+    public void setDateExpired(String dateExpired) {
+
+        m_dateExpired = dateExpired;
+    }
+
+    /**
+     * Sets the release date.<p>
+     *
+     * @param dateReleased the release date to set
+     */
+    public void setDateReleased(String dateReleased) {
+
+        m_dateReleased = dateReleased;
     }
 
     /** 
@@ -596,27 +700,6 @@ public class CmsClientSitemapEntry implements IsSerializable {
     public void setDetailpageTypeName(String detailpageTypeName) {
 
         m_detailpageTypeName = detailpageTypeName;
-    }
-
-    /**
-     * Sets the edit status to "edited", but only if the current edit status is not "new".<p>
-     */
-    public void setEdited() {
-
-        // new entries should *not* have their status changed to "edited" 
-        if (m_editStatus == EditStatus.normal) {
-            m_editStatus = EditStatus.edited;
-        }
-    }
-
-    /**
-     * Sets the current edit status.<p>
-     * 
-     * @param status the new edit status 
-     */
-    public void setEditStatus(EditStatus status) {
-
-        m_editStatus = status;
     }
 
     /**
@@ -702,11 +785,11 @@ public class CmsClientSitemapEntry implements IsSerializable {
     /**
      * Sets the "new" flag of the client sitemap entry.<p>
      *
-     * @param new1 the new new
+     * @param isNew the new new
      */
-    public void setNew(boolean new1) {
+    public void setNew(boolean isNew) {
 
-        m_new = new1;
+        m_new = isNew;
     }
 
     /**
@@ -730,34 +813,33 @@ public class CmsClientSitemapEntry implements IsSerializable {
     }
 
     /**
-     * Sets the redirect target from a bean.<p>
-     * 
-     * @param info the bean containing the redirect target 
+     * Sets the redirect target.<p>
+     *
+     * @param redirectTarget the redirect target to set
      */
-    public void setRedirect(CmsLinkBean info) {
+    public void setRedirectTarget(String redirectTarget) {
 
-        //        m_properties.remove(EXTERNAL_REDIRECT);
-        //        m_properties.remove(INTERNAL_REDIRECT);
-        //        if (info != null) {
-        //            String key = info.isInternal() ? INTERNAL_REDIRECT : EXTERNAL_REDIRECT;
-        //            CmsSimplePropertyValue value = new CmsSimplePropertyValue(info.getLink(), info.getLink());
-        //            m_properties.put(key, value);
-        //        }
+        m_redirectTarget = redirectTarget;
     }
 
     /**
-     * Sets the redirect target.<p>
-     * 
-     * @param link the redirect target
-     * @param internal if true, sets an internal redirect, else an external one 
+     * Sets the resource is released and not expired flag.<p>
+     *
+     * @param isResleasedAndNotExpired the resource is released and not expired flag
      */
-    public void setRedirect(String link, boolean internal) {
+    public void setResleasedAndNotExpired(boolean isResleasedAndNotExpired) {
 
-        //
-        //        m_properties.remove(EXTERNAL_REDIRECT);
-        //        m_properties.remove(INTERNAL_REDIRECT);
-        //        String targetKey = internal ? INTERNAL_REDIRECT : EXTERNAL_REDIRECT;
-        //        m_properties.put(targetKey, new CmsSimplePropertyValue(link, link));
+        m_isResleasedAndNotExpired = isResleasedAndNotExpired;
+    }
+
+    /**
+     * Sets the resource state.<p>
+     *
+     * @param resourceState the resource state to set
+     */
+    public void setResourceState(CmsResourceState resourceState) {
+
+        m_resourceState = resourceState;
     }
 
     /**
@@ -774,19 +856,23 @@ public class CmsClientSitemapEntry implements IsSerializable {
     /**
      * Sets the site path.<p>
      *
-     * @param sitePath the site path to set
+     * @param sitepath the site path to set
      */
-    public void setSitePath(String sitePath) {
+    public void setSitePath(String sitepath) {
 
-        m_sitePath = sitePath;
+        if (!isLeafType() && !sitepath.endsWith("/")) {
+            sitepath = sitepath + "/";
+        }
+        m_sitePath = sitepath;
     }
 
     /**
      * Sets the children.<p>
      *
      * @param children the children to set
+     * @param controller a sitemap controller instance 
      */
-    public void setSubEntries(List<CmsClientSitemapEntry> children) {
+    public void setSubEntries(List<CmsClientSitemapEntry> children, I_CmsSitemapController controller) {
 
         m_childrenLoadedInitially = true;
 
@@ -794,8 +880,7 @@ public class CmsClientSitemapEntry implements IsSerializable {
         if (children != null) {
             m_subEntries.addAll(children);
             for (CmsClientSitemapEntry child : children) {
-                child.updateSitePath(CmsStringUtil.joinPaths(m_sitePath, child.getName()));
-                //CHECK: does this work for the root element?                
+                child.updateSitePath(CmsStringUtil.joinPaths(m_sitePath, child.getName()), controller);
             }
         }
     }
@@ -842,22 +927,37 @@ public class CmsClientSitemapEntry implements IsSerializable {
     }
 
     /**
+     * Updates the entry's site path and the name accordingly.<p>
+     * 
      * @param sitepath the new site path to set
+     * @param controller a sitemap controller instance 
      */
-    public void updateSitePath(String sitepath) {
+    public void updateSitePath(String sitepath, I_CmsSitemapController controller) {
 
-        if (m_sitePath.equals(sitepath)) {
-            // nothing to do
-            return;
+        if (!isLeafType() && !sitepath.endsWith("/")) {
+            sitepath = sitepath + "/";
         }
-        m_sitePath = sitepath;
-        String name = CmsResource.getName(sitepath);
-        if (name.endsWith("/")) {
-            name = name.substring(0, name.length() - 1);
-        }
-        m_name = name;
-        for (CmsClientSitemapEntry child : m_subEntries) {
-            child.updateSitePath(CmsStringUtil.joinPaths(sitepath, CmsResource.getName(child.getSitePath())));
+        if (!m_sitePath.equals(sitepath)) {
+            // update the vfs path as well
+            int start = m_vfsPath.lastIndexOf(m_sitePath);
+            int stop = start + m_sitePath.length();
+            m_vfsPath = CmsStringUtil.joinPaths(m_vfsPath.substring(0, start), sitepath, m_vfsPath.substring(stop));
+            if (isLeafType() && m_vfsPath.endsWith("/")) {
+                m_vfsPath = m_vfsPath.substring(0, m_vfsPath.length() - 1);
+            }
+            String oldPath = m_sitePath;
+            m_sitePath = sitepath;
+            String name = CmsResource.getName(sitepath);
+            if (name.endsWith("/")) {
+                name = name.substring(0, name.length() - 1);
+            }
+            m_name = name;
+            for (CmsClientSitemapEntry child : m_subEntries) {
+                child.updateSitePath(CmsStringUtil.joinPaths(sitepath, child.getName()), controller);
+            }
+            if (controller != null) {
+                controller.registerPathChange(this, oldPath);
+            }
         }
     }
 
@@ -885,7 +985,6 @@ public class CmsClientSitemapEntry implements IsSerializable {
         }
         setSitePath(source.getSitePath());
         setVfsPath(source.getVfsPath());
-        setEditStatus(source.getEditStatus());
         setLock(source.getLock());
         setEntryType(source.getEntryType());
         setInNavigation(source.isInNavigation());
@@ -895,6 +994,11 @@ public class CmsClientSitemapEntry implements IsSerializable {
         setResourceTypeName(source.getResourceTypeName());
         setChildrenLoadedInitially(source.getChildrenLoadedInitially());
         setFolderDefaultPage(source.isFolderDefaultPage());
+        setDateExpired(source.getDateExpired());
+        setDateReleased(source.getDateReleased());
+        setResleasedAndNotExpired(source.isResleasedAndNotExpired());
+        setRedirectTarget(source.getRedirectTarget());
+        setResourceState(source.getResourceState());
     }
 
     /**

@@ -300,10 +300,21 @@ public class CmsSitemapDNDController implements I_CmsDNDController {
             default:
                 uniqueName = m_controller.ensureUniqueName(parent, CmsSitemapController.NEW_ENTRY_NAME);
                 entry.setName(uniqueName);
+                entry.getOwnProperties().put(
+                    CmsClientProperty.PROPERTY_TITLE,
+                    new CmsClientProperty(
+                        CmsClientProperty.PROPERTY_TITLE,
+                        CmsSitemapController.NEW_ENTRY_NAME,
+                        CmsSitemapController.NEW_ENTRY_NAME));
                 entry.setSitePath(m_insertPath + uniqueName + "/");
                 entry.setResourceTypeName("folder");
         }
-        m_controller.create(entry, typeInfo.getId(), typeInfo.getCopyResourceId(), typeInfo.getCreateParameter());
+        m_controller.create(
+            entry,
+            parent.getId(),
+            typeInfo.getId(),
+            typeInfo.getCopyResourceId(),
+            typeInfo.getCreateParameter());
     }
 
     /**
@@ -320,15 +331,14 @@ public class CmsSitemapDNDController implements I_CmsDNDController {
 
         if (isChangedPosition(sitemapEntry, target, true)) {
             // moving a tree entry around
-            CmsClientSitemapEntry entry = m_controller.getEntry((sitemapEntry).getSitePath());
+            CmsClientSitemapEntry entry = sitemapEntry.getSitemapEntry();
             String uniqueName = m_controller.ensureUniqueName(parent, entry.getName());
             if (!uniqueName.equals(entry.getName()) && isChangedPosition(sitemapEntry, target, false)) {
                 m_controller.editAndChangeName(
                     entry,
                     uniqueName,
-                    entry.getVfsPath(),
                     Collections.<CmsPropertyModification> emptyList(),
-                    !entry.isNew(),
+                    entry.isNew(),
                     CmsReloadMode.none);
                 m_controller.move(entry, m_insertPath + uniqueName + "/", m_insertIndex);
             } else {

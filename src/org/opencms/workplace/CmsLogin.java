@@ -315,10 +315,6 @@ public class CmsLogin extends CmsJspLoginBean {
         if (m_requestedResource == null) {
             // no resource was requested, use default workplace URI
             m_requestedResource = CmsFrameset.JSP_WORKPLACE_URI;
-        } else {
-            if (m_actionLogin != null) {
-                m_requestedResource = CmsEncoder.decode(m_requestedResource);
-            }
         }
 
         if (Boolean.valueOf(m_actionLogin).booleanValue()) {
@@ -390,8 +386,9 @@ public class CmsLogin extends CmsJspLoginBean {
             Cookie wpDataCookie = getCookie(COOKIE_WP_DATA);
             String wpData = CmsRequestUtil.getNotEmptyParameter(getRequest(), PARAM_WPDATA);
             if (wpData != null) {
+                wpData = CmsEncoder.escapeXml(wpData);
                 wpDataCookie.setValue(wpData);
-                setCookie(wpDataCookie);
+                setCookie(wpDataCookie, false);
             }
             // after logout this will automatically redirect to the login form again
             logout();
@@ -452,7 +449,7 @@ public class CmsLogin extends CmsJspLoginBean {
         // get the PC type cookie
         Cookie pcTypeCookie = getCookie(COOKIE_PCTYPE);
         if (CmsStringUtil.isNotEmptyOrWhitespaceOnly(pcTypeCookie.getValue())) {
-            // only set the data is needed
+            // only set the data if needed
             if (m_pcType == null) {
                 m_pcType = pcTypeCookie.getValue();
             }
@@ -461,13 +458,17 @@ public class CmsLogin extends CmsJspLoginBean {
             m_pcType = null;
         }
         // get other cookies only on private PC types (or if security option is disabled)
-        if (PCTYPE_PRIVATE.equals(m_pcType)) {
+        if ((m_pcType == null) || PCTYPE_PRIVATE.equals(m_pcType)) {
             // get the user name cookie
             Cookie userNameCookie = getCookie(COOKIE_USERNAME);
             if (CmsStringUtil.isNotEmptyOrWhitespaceOnly(userNameCookie.getValue())) {
                 // only set the data if needed
                 if (CmsStringUtil.isEmptyOrWhitespaceOnly(m_username)) {
                     m_username = userNameCookie.getValue();
+                }
+                if (m_pcType == null) {
+                    // set PC type to private PC if the user cookie is found
+                    m_pcType = PCTYPE_PRIVATE;
                 }
             }
             if ("null".equals(m_username)) {
@@ -559,7 +560,7 @@ public class CmsLogin extends CmsJspLoginBean {
         if (OpenCms.getLoginManager().isEnableSecurity() && CmsStringUtil.isNotEmpty(m_pcType)) {
             Cookie pcTypeCookie = getCookie(COOKIE_PCTYPE);
             pcTypeCookie.setValue(m_pcType);
-            setCookie(pcTypeCookie);
+            setCookie(pcTypeCookie, false);
         }
 
         // only store user name and OU cookies on private PC types
@@ -567,12 +568,19 @@ public class CmsLogin extends CmsJspLoginBean {
             // set the user name cookie
             Cookie userNameCookie = getCookie(COOKIE_USERNAME);
             userNameCookie.setValue(m_username);
-            setCookie(userNameCookie);
+            setCookie(userNameCookie, false);
 
             // set the organizational unit cookie
             Cookie ouFqnCookie = getCookie(COOKIE_OUFQN);
             ouFqnCookie.setValue(m_oufqn);
-            setCookie(ouFqnCookie);
+            setCookie(ouFqnCookie, false);
+        } else if (OpenCms.getLoginManager().isEnableSecurity() && PCTYPE_PUBLIC.equals(m_pcType)) {
+            // delete user name and organizational unit cookies 
+            Cookie userNameCookie = getCookie(COOKIE_USERNAME);
+            setCookie(userNameCookie, true);
+            Cookie ouFqnCookie = getCookie(COOKIE_OUFQN);
+            setCookie(ouFqnCookie, true);
+
         }
     }
 
@@ -995,7 +1003,7 @@ public class CmsLogin extends CmsJspLoginBean {
         html.append(encoding);
         html.append("\">\n");
 
-        // append workplace css
+        // append workplace CSS
         html.append("<link rel=\"stylesheet\" type=\"text/css\" href=\"");
         html.append(CmsWorkplace.getStyleUri(this, "workplace.css"));
         html.append("\">\n");
@@ -1076,9 +1084,10 @@ public class CmsLogin extends CmsJspLoginBean {
         if ((m_action == ACTION_DISPLAY) && OpenCms.getLoginManager().isEnableSecurity()) {
             html.append("<tr>\n");
             html.append("<td rowspan=\"2\">\n");
-            html.append("<img src=\"");
-            html.append(CmsWorkplace.getResourceUri("commons/login_security.png"));
-            html.append("\" height=\"48\" width=\"48\" alt=\"\">");
+            // security image should not be shown any more
+            //html.append("<img src=\"");
+            //html.append(CmsWorkplace.getResourceUri("commons/login_security.png"));
+            //html.append("\" height=\"48\" width=\"48\" alt=\"\">");
             html.append("</td>\n");
             html.append("<td colspan=\"2\" style=\"white-space: nowrap;\">\n");
             html.append("<div style=\"padding-bottom: 5px;\"><b>");
@@ -1218,7 +1227,7 @@ public class CmsLogin extends CmsJspLoginBean {
                 html.append("<input type=\"hidden\"");
                 appendId(html, CmsWorkplaceManager.PARAM_LOGIN_REQUESTED_RESOURCE);
                 html.append("value=\"");
-                html.append(CmsEncoder.encode(m_requestedResource));
+                html.append(CmsEncoder.escapeXml(m_requestedResource));
                 html.append("\">\n");
             }
 
@@ -1268,7 +1277,7 @@ public class CmsLogin extends CmsJspLoginBean {
         html.append(Messages.get().getBundle(m_locale).key(Messages.GUI_LOGIN_TRADEMARKS_0));
         html.append("</div>\n");
         html.append("<div style=\"text-align: center; font-size: 10px; white-space: nowrap;\">");
-        html.append("&copy; 2002 - 2011 Alkacon Software GmbH. ");
+        html.append("&copy; 2002 - 2012 Alkacon Software GmbH. ");
         html.append(Messages.get().getBundle(m_locale).key(Messages.GUI_LOGIN_RIGHTS_RESERVED_0));
         html.append("</div>\n");
 
@@ -1356,17 +1365,21 @@ public class CmsLogin extends CmsJspLoginBean {
      * Sets the cookie in the response.<p>
      * 
      * @param cookie the cookie to set
+     * @param delete flag to determine if the cookir should be deleted
      */
-    protected void setCookie(Cookie cookie) {
+    protected void setCookie(Cookie cookie, boolean delete) {
 
         if (getRequest().getAttribute(PARAM_PREDEF_OUFQN) != null) {
             // prevent the use of cookies if using a direct ou login url
             return;
         }
-        // set the expiration date of the cookie to six months from today
-        GregorianCalendar cal = new GregorianCalendar();
-        cal.add(Calendar.MONTH, 6);
-        int maxAge = (int)((cal.getTimeInMillis() - System.currentTimeMillis()) / 1000);
+        int maxAge = 0;
+        if (!delete) {
+            // set the expiration date of the cookie to six months from today
+            GregorianCalendar cal = new GregorianCalendar();
+            cal.add(Calendar.MONTH, 6);
+            maxAge = (int)((cal.getTimeInMillis() - System.currentTimeMillis()) / 1000);
+        }
         cookie.setMaxAge(maxAge);
         // set the path
         cookie.setPath(link("/system/login"));

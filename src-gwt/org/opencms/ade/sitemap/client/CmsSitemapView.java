@@ -40,43 +40,35 @@ import org.opencms.ade.sitemap.client.ui.CmsSitemapHeader;
 import org.opencms.ade.sitemap.client.ui.CmsStatusIconUpdateHandler;
 import org.opencms.ade.sitemap.client.ui.css.I_CmsImageBundle;
 import org.opencms.ade.sitemap.client.ui.css.I_CmsSitemapLayoutBundle;
-import org.opencms.ade.sitemap.shared.CmsAdditionalEntryInfo;
 import org.opencms.ade.sitemap.shared.CmsClientSitemapEntry;
 import org.opencms.ade.sitemap.shared.CmsDetailPageTable;
+import org.opencms.ade.sitemap.shared.CmsSitemapChange;
 import org.opencms.ade.sitemap.shared.CmsSitemapData;
-import org.opencms.db.CmsResourceState;
-import org.opencms.file.CmsResource;
 import org.opencms.gwt.client.A_CmsEntryPoint;
 import org.opencms.gwt.client.CmsPingTimer;
 import org.opencms.gwt.client.dnd.CmsDNDHandler;
-import org.opencms.gwt.client.ui.CmsInfoLoadingListItemWidget;
-import org.opencms.gwt.client.ui.CmsListItemWidget.AdditionalInfoItem;
+import org.opencms.gwt.client.ui.CmsListItemWidget.Background;
 import org.opencms.gwt.client.ui.CmsNotification;
 import org.opencms.gwt.client.ui.tree.CmsLazyTree;
 import org.opencms.gwt.client.ui.tree.CmsLazyTreeItem;
 import org.opencms.gwt.client.ui.tree.CmsTreeItem;
 import org.opencms.gwt.client.ui.tree.I_CmsLazyOpenHandler;
 import org.opencms.gwt.client.util.CmsDomUtil;
-import org.opencms.gwt.client.util.CmsResourceStateUtil;
 import org.opencms.gwt.client.util.CmsStyleVariable;
-import org.opencms.gwt.client.util.I_CmsAdditionalInfoLoader;
 import org.opencms.gwt.shared.CmsIconUtil;
-import org.opencms.gwt.shared.CmsListInfoBean;
-import org.opencms.gwt.shared.property.CmsClientProperty;
 import org.opencms.util.CmsPair;
 import org.opencms.util.CmsStringUtil;
 import org.opencms.util.CmsUUID;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 
-import com.google.gwt.event.dom.client.ClickEvent;
-import com.google.gwt.event.dom.client.ClickHandler;
+import com.google.gwt.core.client.Scheduler;
+import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.event.logical.shared.OpenEvent;
-import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.RootPanel;
 
@@ -95,17 +87,61 @@ public final class CmsSitemapView extends A_CmsEntryPoint implements I_CmsSitema
         vfs
     }
 
+    /**
+     * The sitemap tree open handler.<p>
+     */
+    protected class TreeOpenHandler implements I_CmsLazyOpenHandler<CmsSitemapTreeItem> {
+
+        /** Flag indicating the tree is initializing. */
+        private boolean m_initializing;
+
+        /**
+         * @see org.opencms.gwt.client.ui.tree.I_CmsLazyOpenHandler#load(org.opencms.gwt.client.ui.tree.CmsLazyTreeItem)
+         */
+        public void load(final CmsSitemapTreeItem target) {
+
+            // not used
+        }
+
+        /**
+         * @see org.opencms.gwt.client.ui.tree.I_CmsLazyOpenHandler#onOpen(com.google.gwt.event.logical.shared.OpenEvent)
+         */
+        public void onOpen(OpenEvent<CmsSitemapTreeItem> event) {
+
+            CmsSitemapTreeItem target = event.getTarget();
+            if ((target.getLoadState() == CmsLazyTreeItem.LoadState.UNLOADED)) {
+                target.onStartLoading();
+                target.setOpen(false);
+                getController().getChildren(target.getEntryId(), true, null);
+            } else if (!m_initializing
+                && ((target.getChildren().getWidgetCount() > 0) && (((CmsSitemapTreeItem)target.getChild(0)).getLoadState() == CmsLazyTreeItem.LoadState.UNLOADED))) {
+                // load grand children in advance
+                getController().getChildren(target.getEntryId(), false, null);
+            }
+        }
+
+        /** 
+         * Sets the initializing flag.<p>
+         * 
+         * @param initializing the initializing flag
+         */
+        protected void setInitializing(boolean initializing) {
+
+            m_initializing = initializing;
+        }
+    }
+
     /** The singleton instance. */
     private static CmsSitemapView m_instance;
 
     /** Text metrics key. */
     private static final String TM_SITEMAP = "Sitemap";
 
-    /** The controller. */
-    protected CmsSitemapController m_controller;
-
     /** The displayed sitemap tree. */
     protected CmsLazyTree<CmsSitemapTreeItem> m_tree;
+
+    /** The controller. */
+    private CmsSitemapController m_controller;
 
     /** The current sitemap editor mode. */
     private EditorMode m_editorMode;
@@ -115,6 +151,12 @@ public final class CmsSitemapView extends A_CmsEntryPoint implements I_CmsSitema
 
     /** The sitemap toolbar. */
     private CmsSitemapToolbar m_toolbar;
+
+    /** The registered tree items. */
+    private Map<CmsUUID, CmsSitemapTreeItem> m_treeItems;
+
+    /** The tree open handler. */
+    private TreeOpenHandler m_openHandler;
 
     /**
      * Returns the instance.<p>
@@ -133,110 +175,15 @@ public final class CmsSitemapView extends A_CmsEntryPoint implements I_CmsSitema
      * 
      * @return the new created (still orphan) tree item 
      */
-    public CmsSitemapTreeItem create(final CmsClientSitemapEntry entry) {
+    public CmsSitemapTreeItem create(CmsClientSitemapEntry entry) {
 
-        CmsListInfoBean infoBean = new CmsListInfoBean();
-        infoBean.setTitle(entry.getTitle());
-        infoBean.setSubTitle(entry.getSitePath());
-        infoBean.addAdditionalInfo(Messages.get().key(Messages.GUI_NAME_0), entry.getName());
-        CmsClientProperty titleProperty = entry.getOwnProperties().get(CmsClientProperty.PROPERTY_TITLE);
-        if ((titleProperty != null) && !titleProperty.isEmpty()) {
-            infoBean.addAdditionalInfo(
-                Messages.get().key(Messages.GUI_TITLE_PROPERTY_0),
-                titleProperty.getEffectiveValue());
-        }
-        String shownPath = entry.getVfsPath();
-        if (CmsStringUtil.isEmptyOrWhitespaceOnly(shownPath)) {
-            shownPath = "-";
-        }
-        infoBean.addAdditionalInfo(Messages.get().key(Messages.GUI_VFS_PATH_0), shownPath);
-        // showing the resource type icon of the default file in navigation mode
-        infoBean.setResourceType(CmsStringUtil.isNotEmptyOrWhitespaceOnly(entry.getDefaultFileType())
-        ? entry.getDefaultFileType()
-        : entry.getResourceTypeName());
-
-        CmsInfoLoadingListItemWidget itemWidget = new CmsInfoLoadingListItemWidget(infoBean);
-        itemWidget.setIcon(getIconForEntry(entry));
-        itemWidget.setIconTitle(entry.isSubSitemapType()
-        ? Messages.get().key(Messages.GUI_HOVERBAR_GOTO_SUB_0)
-        : Messages.get().key(Messages.GUI_HOVERBAR_GOTO_0));
-        itemWidget.addIconClickHandler(new ClickHandler() {
-
-            public void onClick(ClickEvent event) {
-
-                if (entry.isSubSitemapType()) {
-                    getController().openSiteMap(entry.getSitePath());
-                } else {
-                    getController().leaveEditor(entry.getSitePath());
-                }
-            }
-        });
-        final CmsSitemapTreeItem treeItem = new CmsSitemapTreeItem(itemWidget, entry);
-        itemWidget.setAdditionalInfoLoader(new I_CmsAdditionalInfoLoader() {
-
-            public void load(final AsyncCallback<List<AdditionalInfoItem>> callback) {
-
-                if (entry.getVfsPath() == null) {
-                    List<AdditionalInfoItem> infoItems = new ArrayList<AdditionalInfoItem>();
-                    AdditionalInfoItem item = createResourceStateInfo(CmsResourceState.STATE_NEW);
-                    infoItems.add(item);
-                    callback.onSuccess(infoItems);
-                } else {
-                    m_controller.getService().getAdditionalEntryInfo(
-                        entry.getId(),
-                        new AsyncCallback<CmsAdditionalEntryInfo>() {
-
-                            /**
-                             * @see com.google.gwt.user.client.rpc.AsyncCallback#onFailure(java.lang.Throwable)
-                             */
-                            public void onFailure(Throwable caught) {
-
-                                // do nothing
-
-                            }
-
-                            /**
-                             * @see com.google.gwt.user.client.rpc.AsyncCallback#onSuccess(Object o)
-                             */
-                            public void onSuccess(CmsAdditionalEntryInfo result) {
-
-                                List<AdditionalInfoItem> items = new ArrayList<AdditionalInfoItem>();
-                                items.add(createResourceStateInfo(result.getResourceState()));
-                                if ((result.getAdditional() != null) && !result.getAdditional().isEmpty()) {
-                                    for (Entry<String, String> infoEntry : result.getAdditional().entrySet()) {
-                                        items.add(new AdditionalInfoItem(infoEntry.getKey(), infoEntry.getValue(), null));
-                                    }
-                                }
-                                callback.onSuccess(items);
-                            }
-                        });
-
-                }
-
-            }
-
-            /**
-             * Helper method for creating an additional info item from a resource state.<p>
-             * 
-             * @param state the resource state for creating the additional info item 
-             * 
-             * @return the additional info item 
-             */
-            protected AdditionalInfoItem createResourceStateInfo(CmsResourceState state) {
-
-                final String label = org.opencms.gwt.client.Messages.get().key(
-                    org.opencms.gwt.client.Messages.GUI_RESOURCE_STATE_0);
-                AdditionalInfoItem item = new AdditionalInfoItem(
-                    label,
-                    CmsResourceStateUtil.getStateName(state),
-                    CmsResourceStateUtil.getStateStyle(state));
-                return item;
-
-            }
-        });
-
+        CmsSitemapTreeItem treeItem = new CmsSitemapTreeItem(entry);
         CmsSitemapHoverbar.installOn(m_controller, treeItem);
-
+        // highlight the open path
+        if (isLastPage(entry)) {
+            treeItem.setBackgroundColor(Background.YELLOW);
+        }
+        m_treeItems.put(entry.getId(), treeItem);
         return treeItem;
     }
 
@@ -356,6 +303,18 @@ public final class CmsSitemapView extends A_CmsEntryPoint implements I_CmsSitema
     /**
      * Returns the tree entry with the given path.<p>
      * 
+     * @param entryId the id of the sitemap entry
+     * 
+     * @return the tree entry with the given path, or <code>null</code> if not found
+     */
+    public CmsSitemapTreeItem getTreeItem(CmsUUID entryId) {
+
+        return m_treeItems.get(entryId);
+    }
+
+    /**
+     * Returns the tree entry with the given path.<p>
+     * 
      * @param path the path to look for
      * 
      * @return the tree entry with the given path, or <code>null</code> if not found
@@ -374,8 +333,10 @@ public final class CmsSitemapView extends A_CmsEntryPoint implements I_CmsSitema
             if (CmsStringUtil.isEmptyOrWhitespaceOnly(name)) {
                 continue;
             }
-
             result = (CmsSitemapTreeItem)result.getChild(name);
+            if (result == null) {
+                return null;
+            }
         }
         return result;
 
@@ -391,7 +352,7 @@ public final class CmsSitemapView extends A_CmsEntryPoint implements I_CmsSitema
         openItemsOnPath(sitePath);
         CmsSitemapTreeItem item = getTreeItem(sitePath);
         if (item != null) {
-            item.highlightTemporarily(1500);
+            item.highlightTemporarily(1500, isLastPage(item.getSitemapEntry()) ? Background.YELLOW : Background.DEFAULT);
         }
     }
 
@@ -410,7 +371,48 @@ public final class CmsSitemapView extends A_CmsEntryPoint implements I_CmsSitema
      */
     public void onChange(CmsSitemapChangeEvent changeEvent) {
 
-        changeEvent.getChange().applyToView(this);
+        CmsSitemapChange change = changeEvent.getChange();
+        switch (change.getChangeType()) {
+            case delete:
+                CmsSitemapTreeItem item = getTreeItem(change.getEntryId());
+                item.getParentItem().removeChild(item);
+                break;
+            case undelete:
+            case create:
+                CmsClientSitemapEntry newEntry = m_controller.getEntryById(change.getEntryId());
+                CmsSitemapTreeItem newItem = createSitemapItem(newEntry);
+                getTreeItem(change.getParentId()).insertChild(newItem, newEntry.getPosition());
+                break;
+            case bumpDetailPage:
+                updateDetailPageView(m_controller.getEntryById(change.getEntryId()));
+                updateAll(m_controller.getEntryById(change.getEntryId()));
+                break;
+            case modify:
+                if (change.hasChangedPosition() || change.hasNewParent()) {
+                    CmsClientSitemapEntry entry = m_controller.getEntryById(change.getEntryId());
+                    CmsSitemapTreeItem moveEntry = getTreeItem(change.getEntryId());
+                    CmsSitemapTreeItem sourceParent = (CmsSitemapTreeItem)moveEntry.getParentItem();
+                    getTree().setAnimationEnabled(false);
+                    sourceParent.removeChild(moveEntry);
+                    CmsSitemapTreeItem destParent = change.hasNewParent()
+                    ? getTreeItem(change.getParentId())
+                    : sourceParent;
+                    if (entry.getPosition() < destParent.getChildCount()) {
+                        destParent.insertChild(moveEntry, entry.getPosition());
+                    } else {
+                        destParent.addChild(moveEntry);
+                    }
+                    updateAll(entry);
+                    ensureVisible(moveEntry);
+                    getTree().setAnimationEnabled(true);
+                    break;
+                }
+                //$FALL-THROUGH$
+            case remove:
+                updateAll(m_controller.getEntryById(change.getEntryId()));
+                break;
+            default:
+        }
     }
 
     /**
@@ -418,11 +420,12 @@ public final class CmsSitemapView extends A_CmsEntryPoint implements I_CmsSitema
      */
     public void onLoad(CmsSitemapLoadEvent event) {
 
-        CmsSitemapTreeItem target = getTreeItem(event.getEntry().getSitePath());
+        CmsSitemapTreeItem target = getTreeItem(event.getEntry().getId());
         target.getTree().setAnimationEnabled(false);
         target.clearChildren();
         for (CmsClientSitemapEntry child : event.getEntry().getSubEntries()) {
-            target.addChild(create(child));
+            CmsSitemapTreeItem childItem = createSitemapItem(child);
+            target.addChild(childItem);
         }
         target.onFinishLoading();
         target.getTree().setAnimationEnabled(true);
@@ -439,6 +442,9 @@ public final class CmsSitemapView extends A_CmsEntryPoint implements I_CmsSitema
     public void onModuleLoad() {
 
         super.onModuleLoad();
+        if (!checkBuildId("org.opencms.ade.sitemap")) {
+            return;
+        }
         CmsPingTimer.start();
         m_instance = this;
         RootPanel rootPanel = RootPanel.get();
@@ -451,7 +457,7 @@ public final class CmsSitemapView extends A_CmsEntryPoint implements I_CmsSitema
         I_CmsImageBundle.INSTANCE.buttonCss().ensureInjected();
 
         rootPanel.addStyleName(I_CmsSitemapLayoutBundle.INSTANCE.sitemapCss().root());
-
+        m_treeItems = new HashMap<CmsUUID, CmsSitemapTreeItem>();
         // controller 
         m_controller = new CmsSitemapController();
         m_controller.addChangeHandler(this);
@@ -475,38 +481,9 @@ public final class CmsSitemapView extends A_CmsEntryPoint implements I_CmsSitema
             org.opencms.gwt.client.Messages.GUI_LOADING_0));
         page.add(loadingLabel);
 
-        // read pre-fetched data
-        CmsClientSitemapEntry root = m_controller.getData().getRoot();
-        CmsSitemapTreeItem rootItem = createSitemapItem(root);
-        rootItem.onFinishLoading();
-        rootItem.setOpen(true);
-
-        // starting rendering
-        m_tree = new CmsLazyTree<CmsSitemapTreeItem>(new I_CmsLazyOpenHandler<CmsSitemapTreeItem>() {
-
-            /**
-             * @see org.opencms.gwt.client.ui.tree.I_CmsLazyOpenHandler#load(org.opencms.gwt.client.ui.tree.CmsLazyTreeItem)
-             */
-            public void load(final CmsSitemapTreeItem target) {
-
-                m_controller.getChildren(target.getSitePath(), true, null);
-            }
-
-            /**
-             * @see org.opencms.gwt.client.ui.tree.I_CmsLazyOpenHandler#onOpen(com.google.gwt.event.logical.shared.OpenEvent)
-             */
-            public void onOpen(OpenEvent<CmsSitemapTreeItem> event) {
-
-                CmsSitemapTreeItem target = event.getTarget();
-                if (target.getLoadState() != CmsLazyTreeItem.LoadState.UNLOADED) {
-                    return;
-                }
-                target.onStartLoading();
-                target.setOpen(false);
-                load(target);
-            }
-        });
-
+        // initialize the tree
+        m_openHandler = new TreeOpenHandler();
+        m_tree = new CmsLazyTree<CmsSitemapTreeItem>(m_openHandler);
         m_inNavigationStyle = new CmsStyleVariable(m_tree);
 
         if (m_controller.isEditable()) {
@@ -519,11 +496,32 @@ public final class CmsSitemapView extends A_CmsEntryPoint implements I_CmsSitema
         }
         m_tree.truncate(TM_SITEMAP, 920);
         m_tree.setAnimationEnabled(true);
+        page.add(m_tree);
+
+        // draw tree items 
+        Scheduler.get().scheduleDeferred(new ScheduledCommand() {
+
+            public void execute() {
+
+                initiateTreeItems(page, loadingLabel);
+            }
+        });
+    }
+
+    /**
+     * Builds the tree items initially.<p>
+     * 
+     * @param page the page
+     * @param loadingLabel the loading label, will be removed when finished
+     */
+    void initiateTreeItems(CmsPage page, Label loadingLabel) {
+
+        CmsClientSitemapEntry root = m_controller.getData().getRoot();
+        CmsSitemapTreeItem rootItem = createSitemapItem(root);
+        rootItem.onFinishLoading();
+        rootItem.setOpen(true);
         m_tree.addItem(rootItem);
         setEditorMode(EditorMode.navigation);
-        // paint
-        page.remove(loadingLabel);
-        page.add(m_tree);
 
         m_controller.addPropertyUpdateHandler(new CmsStatusIconUpdateHandler());
         m_controller.recomputeProperties();
@@ -535,12 +533,28 @@ public final class CmsSitemapView extends A_CmsEntryPoint implements I_CmsSitema
             CmsNotification.get().sendSticky(
                 CmsNotification.Type.WARNING,
                 Messages.get().key(Messages.GUI_NO_EDIT_NOTIFICATION_1, m_controller.getData().getNoEditReason()));
-            return;
         }
         String openPath = m_controller.getData().getOpenPath();
         if (CmsStringUtil.isNotEmptyOrWhitespaceOnly(openPath)) {
-            highlightPath(CmsResource.getFolderPath(openPath));
+            m_openHandler.setInitializing(true);
+            openItemsOnPath(openPath);
+            m_openHandler.setInitializing(false);
         }
+
+        page.remove(loadingLabel);
+    }
+
+    /**
+     * Removes deleted entry widget reference.<p>
+     * 
+     * @param entry the entry being deleted
+     */
+    public void removeDeleted(CmsClientSitemapEntry entry) {
+
+        for (CmsClientSitemapEntry child : entry.getSubEntries()) {
+            removeDeleted(child);
+        }
+        m_treeItems.remove(entry.getId());
     }
 
     /**
@@ -627,13 +641,31 @@ public final class CmsSitemapView extends A_CmsEntryPoint implements I_CmsSitema
 
         String[] names = CmsStringUtil.splitAsArray(remainingPath, "/");
         for (String name : names) {
+            if (currentItem == null) {
+                break;
+            }
             if (CmsStringUtil.isEmptyOrWhitespaceOnly(name)) {
                 continue;
             }
             currentItem = (CmsSitemapTreeItem)currentItem.getChild(name);
-            result.add(currentItem);
+            if (currentItem != null) {
+                result.add(currentItem);
+            }
         }
         return result;
+    }
+
+    /**
+     * Checks if the given entry represents the last opened page.<p>
+     * 
+     * @param entry the entry to check
+     * 
+     * @return <code>true</code> if the given entry is the last opened page
+     */
+    private boolean isLastPage(CmsClientSitemapEntry entry) {
+
+        return ((entry.isInNavigation() && (entry.getId().toString().equals(m_controller.getData().getReturnCode()))) || ((entry.getDefaultFileId() != null) && entry.getDefaultFileId().toString().equals(
+            m_controller.getData().getReturnCode())));
     }
 
     /**
@@ -644,10 +676,25 @@ public final class CmsSitemapView extends A_CmsEntryPoint implements I_CmsSitema
     private void openItemsOnPath(String path) {
 
         List<CmsSitemapTreeItem> itemsOnPath = getItemsOnPath(path);
-        // the last item on the path shouldn't be opened 
-        itemsOnPath.remove(itemsOnPath.size() - 1);
         for (CmsSitemapTreeItem item : itemsOnPath) {
             item.setOpen(true);
+        }
+    }
+
+    /**
+     * Updates the entry and it's children's view.<p>
+     * 
+     * @param entry the entry to update
+     */
+    private void updateAll(CmsClientSitemapEntry entry) {
+
+        CmsSitemapTreeItem item = getTreeItem(entry.getId());
+        if (item != null) {
+            item.updateEntry(entry);
+            item.updateSitePath(entry.getSitePath());
+            for (CmsClientSitemapEntry child : entry.getSubEntries()) {
+                updateAll(child);
+            }
         }
     }
 }

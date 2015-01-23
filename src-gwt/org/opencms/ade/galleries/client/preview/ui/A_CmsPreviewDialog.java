@@ -28,6 +28,7 @@
 package org.opencms.ade.galleries.client.preview.ui;
 
 import org.opencms.ade.galleries.client.Messages;
+import org.opencms.ade.galleries.client.preview.CmsPreviewUtil;
 import org.opencms.ade.galleries.client.preview.I_CmsPreviewHandler;
 import org.opencms.ade.galleries.shared.CmsResourceInfoBean;
 import org.opencms.ade.galleries.shared.I_CmsGalleryProviderConstants.GalleryMode;
@@ -44,6 +45,7 @@ import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.uibinder.client.UiHandler;
 import com.google.gwt.user.client.Command;
+import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.SimplePanel;
@@ -92,6 +94,9 @@ public abstract class A_CmsPreviewDialog<T extends CmsResourceInfoBean> extends 
     @UiField
     protected FlowPanel m_parentPanel;
 
+    /** The preview height. */
+    protected int m_previewHeight;
+
     /** The preview placeholder panel. */
     @UiField
     protected FlowPanel m_previewHolder;
@@ -129,17 +134,12 @@ public abstract class A_CmsPreviewDialog<T extends CmsResourceInfoBean> extends 
 
         m_dialogHeight = dialogHeight;
         m_dialogWidth = dialogWidth;
-
-        int previewHeight = m_minPreviewHeight;
-        int detailsHeight = m_dialogHeight - previewHeight - 7;
-
-        m_previewHolder.getElement().getStyle().setHeight(previewHeight, Unit.PX);
-
+        m_previewHeight = m_minPreviewHeight;
+        int detailsHeight = m_dialogHeight - m_previewHeight - 7;
+        m_previewHolder.getElement().getStyle().setHeight(m_previewHeight, Unit.PX);
         m_tabsHolder.getElement().getStyle().setHeight(detailsHeight, Unit.PX);
-
         m_tabbedPanel = new CmsTabbedPanel<Widget>(CmsTabbedPanelStyle.classicTabs);
         m_tabsHolder.add(m_tabbedPanel);
-
         m_selectButton.setText(Messages.get().key(Messages.GUI_PREVIEW_BUTTON_SELECT_0));
         m_selectButton.setVisible(false);
         m_closePreview.setText(Messages.get().key(Messages.GUI_PREVIEW_CLOSE_BUTTON_0));
@@ -147,6 +147,7 @@ public abstract class A_CmsPreviewDialog<T extends CmsResourceInfoBean> extends 
         // buttons        
         switch (m_galleryMode) {
             case editor:
+                m_selectButton.setVisible(CmsPreviewUtil.shouldShowSelectButton());
                 m_closePreview.setText(Messages.get().key(Messages.GUI_PREVIEW_CLOSE_GALLERY_BUTTON_0));
                 m_buttonBar.getElement().getStyle().setBottom(94, Unit.PX);
                 m_buttonBar.getElement().getStyle().setRight(1, Unit.PX);
@@ -243,8 +244,26 @@ public abstract class A_CmsPreviewDialog<T extends CmsResourceInfoBean> extends 
     @UiHandler("m_selectButton")
     public void onSelectClick(ClickEvent event) {
 
-        saveChanges(null);
-        getHandler().selectResource();
+        if (m_galleryMode == GalleryMode.editor) {
+            // note: the select button isn't necessarily visible in editor mode (depending on the WYSIWYG editor), but 
+            // if it is, we want it to save the data and close the gallery dialog 
+            if (getHandler().setDataInEditor()) {
+                // do this after a delay, so we don't get ugly Javascript errors when the iframe is closed.
+                Timer timer = new Timer() {
+
+                    @Override
+                    public void run() {
+
+                        CmsPreviewUtil.closeDialog();
+                    }
+
+                };
+                timer.schedule(1);
+            }
+        } else {
+            saveChanges(null);
+            getHandler().selectResource();
+        }
     }
 
     /**

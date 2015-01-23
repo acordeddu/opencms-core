@@ -49,7 +49,7 @@ public class CmsLockReportMenuEntry extends A_CmsSitemapMenuEntry {
     public CmsLockReportMenuEntry(CmsSitemapHoverbar hoverbar) {
 
         super(hoverbar);
-        setImageClass(I_CmsImageBundle.INSTANCE.contextMenuIcons().mergeSitemap());
+        setImageClass(I_CmsImageBundle.INSTANCE.contextMenuIcons().lock());
         setLabel("Lock Report");
         setActive(true);
 
@@ -60,14 +60,13 @@ public class CmsLockReportMenuEntry extends A_CmsSitemapMenuEntry {
      */
     public void execute() {
 
-        final String sitePath = getHoverbar().getSitePath();
         final CmsSitemapController controller = getHoverbar().getController();
-        CmsClientSitemapEntry entry = controller.getEntry(sitePath);
+        final CmsClientSitemapEntry entry = getHoverbar().getEntry();
         CmsLockReportDialog.openDialogForResource(entry.getId(), new Command() {
 
             public void execute() {
 
-                controller.updateEntry(sitePath);
+                controller.updateEntry(entry.getId());
             }
         });
 

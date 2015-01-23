@@ -48,6 +48,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Map.Entry;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -480,7 +481,8 @@ public class CmsJspActionElement extends CmsJspBean {
      * 
      * @see org.opencms.jsp.CmsJspTagInclude
      */
-    public void include(String target, String element, boolean editable, Map parameterMap) throws JspException {
+    public void include(String target, String element, boolean editable, Map<String, ?> parameterMap)
+    throws JspException {
 
         include(target, element, editable, true, parameterMap);
     }
@@ -511,7 +513,7 @@ public class CmsJspActionElement extends CmsJspBean {
      * 
      * @see org.opencms.jsp.CmsJspTagInclude
      */
-    public void include(String target, String element, boolean editable, boolean cacheable, Map parameterMap)
+    public void include(String target, String element, boolean editable, boolean cacheable, Map<String, ?> parameterMap)
     throws JspException {
 
         if (isNotInitialized()) {
@@ -522,10 +524,11 @@ public class CmsJspActionElement extends CmsJspBean {
             try {
                 modParameterMap = new HashMap<String, String[]>(parameterMap.size());
                 // ensure parameters are always of type String[] not just String
-                Iterator i = parameterMap.entrySet().iterator();
+                Iterator<?> i = parameterMap.entrySet().iterator();
                 while (i.hasNext()) {
-                    Map.Entry entry = (Map.Entry)i.next();
-                    String key = (String)entry.getKey();
+                    @SuppressWarnings("unchecked")
+                    Map.Entry<String, ?> entry = (Entry<String, ?>)i.next();
+                    String key = entry.getKey();
                     Object value = entry.getValue();
                     if (value instanceof String[]) {
                         modParameterMap.put(key, (String[])value);
@@ -566,7 +569,7 @@ public class CmsJspActionElement extends CmsJspBean {
      * 
      * @see org.opencms.jsp.CmsJspTagInclude
      */
-    public void include(String target, String element, Map parameterMap) throws JspException {
+    public void include(String target, String element, Map<String, ?> parameterMap) throws JspException {
 
         include(target, element, false, parameterMap);
     }
@@ -625,7 +628,7 @@ public class CmsJspActionElement extends CmsJspBean {
      * @param editable flag to indicate if direct edit should be enabled for the element 
      * @param parameterMap a map of the request parameters
      */
-    public void includeSilent(String target, String element, boolean editable, Map parameterMap) {
+    public void includeSilent(String target, String element, boolean editable, Map<String, ?> parameterMap) {
 
         try {
             include(target, element, editable, parameterMap);
@@ -646,7 +649,7 @@ public class CmsJspActionElement extends CmsJspBean {
      * @param element the element (template selector) to display from the target
      * @param parameterMap a map of the request parameters
      */
-    public void includeSilent(String target, String element, Map parameterMap) {
+    public void includeSilent(String target, String element, Map<String, ?> parameterMap) {
 
         try {
             include(target, element, parameterMap);
@@ -737,23 +740,23 @@ public class CmsJspActionElement extends CmsJspBean {
      * 
      * Relative links are converted to absolute links, using the current element URI as base.<p>
      * 
-     * This is the same as using the <code>&lt;cms:link detailview=&quot;...&quot; &gt;***&lt;/cms:link&gt;</code> tag.<p>
+     * This is the same as using the <code>&lt;cms:link baseUri=&quot;...&quot; &gt;***&lt;/cms:link&gt;</code> tag.<p>
      * 
      * @param target the URI in the OpenCms VFS to link to
-     * @param detailPage the optional detail page URI
+     * @param baseUri the optional alternative base URI
      * 
      * @return the translated link
      * 
      * @see org.opencms.jsp.CmsJspTagLink
      * @see #link(String)
      */
-    public String link(String target, String detailPage) {
+    public String link(String target, String baseUri) {
 
         if (isNotInitialized()) {
             return getMessage(NOT_INITIALIZED);
         }
         try {
-            return CmsJspTagLink.linkTagAction(target, getRequest());
+            return CmsJspTagLink.linkTagAction(target, getRequest(), baseUri);
         } catch (Throwable t) {
             handleException(t);
         }

@@ -478,6 +478,16 @@ public class CmsJspNavElement implements Comparable<CmsJspNavElement> {
     }
 
     /**
+     * Returns the site path of the target resource. This may not be the same as the navigation resource.<p>
+     * 
+     * @return the target resource site path
+     */
+    protected String getSitePath() {
+
+        return m_sitePath;
+    }
+
+    /**
      * Sets the resource.<p>
      *
      * @param resource the resource to set

@@ -66,7 +66,7 @@ default:
 
 <form name="main" action="<%= wp.getDialogUri() %>" method="post" class="nomargin" onsubmit="return submitAction('<%= wp.DIALOG_OK %>', null, 'main');">
 <%= wp.paramsAsHidden() %><input type="hidden" name="<%= wp.PARAM_FRAMENAME %>" value="">
-<%= wp.dialogTabContentStart(wp.getParamTitle(), "style=\"height: 260px;\" id=\"tabcontent\"") %>
+<%= wp.dialogTabContentStart(wp.getParamTitle(), "id=\"tabcontent\"") %>
 
 <%
 switch (wp.getActiveTab()) {
@@ -316,7 +316,7 @@ case 6:
 		<%= wp.buildUserInformation() %>
 		<%= wp.dialogBlockEnd() %>
 		<%= wp.dialogSpacer() %>
-		<input type="button" class="dialogbutton" style="margin-left: 0px; width: 120px;" value="<%= wp.key(Messages.GUI_PREF_CHPWD_0) %>" onclick="togglePassword();">
+		<input type="button" class="dialogbutton" style="margin-left: 0px; min-width: 120px;" value="<%= wp.key(Messages.GUI_PREF_CHPWD_0) %>" onclick="togglePassword();">
 		<%= wp.dialogSpacer() %>
 		<div class="hide" id="changepwd">
 			<%= wp.dialogBlockStart("") %>

@@ -29,27 +29,14 @@ package org.opencms.ade.sitemap.client.control;
 
 import org.opencms.ade.detailpage.CmsDetailPageInfo;
 import org.opencms.ade.sitemap.client.CmsSitemapTreeItem;
+import org.opencms.ade.sitemap.client.CmsSitemapView;
 import org.opencms.ade.sitemap.client.Messages;
-import org.opencms.ade.sitemap.client.model.CmsClientSitemapChangeBumpDetailPage;
-import org.opencms.ade.sitemap.client.model.CmsClientSitemapChangeClearDeleted;
-import org.opencms.ade.sitemap.client.model.CmsClientSitemapChangeClearModified;
-import org.opencms.ade.sitemap.client.model.CmsClientSitemapChangeCreateSubSitemap;
-import org.opencms.ade.sitemap.client.model.CmsClientSitemapChangeDelete;
-import org.opencms.ade.sitemap.client.model.CmsClientSitemapChangeEdit;
-import org.opencms.ade.sitemap.client.model.CmsClientSitemapChangeMergeSitemap;
-import org.opencms.ade.sitemap.client.model.CmsClientSitemapChangeMove;
-import org.opencms.ade.sitemap.client.model.CmsClientSitemapChangeNew;
-import org.opencms.ade.sitemap.client.model.CmsClientSitemapChangeRemove;
-import org.opencms.ade.sitemap.client.model.CmsClientSitemapChangeUndelete;
-import org.opencms.ade.sitemap.client.model.CmsClientSitemapCompositeChange;
-import org.opencms.ade.sitemap.client.model.I_CmsClientSitemapChange;
 import org.opencms.ade.sitemap.shared.CmsClientSitemapEntry;
-import org.opencms.ade.sitemap.shared.CmsClientSitemapEntry.EditStatus;
 import org.opencms.ade.sitemap.shared.CmsDetailPageTable;
 import org.opencms.ade.sitemap.shared.CmsSitemapChange;
+import org.opencms.ade.sitemap.shared.CmsSitemapChange.ChangeType;
+import org.opencms.ade.sitemap.shared.CmsSitemapClipboardData;
 import org.opencms.ade.sitemap.shared.CmsSitemapData;
-import org.opencms.ade.sitemap.shared.CmsSitemapMergeInfo;
-import org.opencms.ade.sitemap.shared.CmsSubSitemapInfo;
 import org.opencms.ade.sitemap.shared.I_CmsSitemapController;
 import org.opencms.ade.sitemap.shared.rpc.I_CmsSitemapService;
 import org.opencms.ade.sitemap.shared.rpc.I_CmsSitemapServiceAsync;
@@ -58,6 +45,7 @@ import org.opencms.gwt.client.CmsCoreProvider;
 import org.opencms.gwt.client.property.CmsReloadMode;
 import org.opencms.gwt.client.rpc.CmsRpcAction;
 import org.opencms.gwt.client.rpc.CmsRpcPrefetcher;
+import org.opencms.gwt.client.ui.CmsErrorDialog;
 import org.opencms.gwt.client.ui.tree.CmsLazyTreeItem.LoadState;
 import org.opencms.gwt.client.util.CmsDebugLog;
 import org.opencms.gwt.client.util.CmsDomUtil;
@@ -85,6 +73,7 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.FormElement;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.event.shared.SimpleEventBus;
+import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.gwt.user.client.rpc.ServiceDefTarget;
@@ -98,7 +87,7 @@ import com.google.gwt.user.client.ui.RootPanel;
 public class CmsSitemapController implements I_CmsSitemapController {
 
     /** The name to use for new entries. */
-    public static final String NEW_ENTRY_NAME = "page";
+    public static final String NEW_ENTRY_NAME = Messages.get().key(Messages.GUI_NEW_ENTRY_NAME_0);
 
     /** A map of *all* detail page info beans, indexed by page id. */
     protected Map<CmsUUID, CmsDetailPageInfo> m_allDetailPageInfos = new HashMap<CmsUUID, CmsDetailPageInfo>();
@@ -112,8 +101,11 @@ public class CmsSitemapController implements I_CmsSitemapController {
     /** The event bus. */
     protected SimpleEventBus m_eventBus;
 
-    /** The list of undone changes. */
-    protected List<I_CmsClientSitemapChange> m_undone;
+    /** The entry data model. */
+    private Map<CmsUUID, CmsClientSitemapEntry> m_entriesById;
+
+    /** The sitemap entries by path. */
+    private Map<String, CmsClientSitemapEntry> m_entriesByPath;
 
     /** The set of names of hidden properties. */
     private Set<String> m_hiddenProperties;
@@ -135,15 +127,22 @@ public class CmsSitemapController implements I_CmsSitemapController {
      */
     public CmsSitemapController() {
 
-        m_undone = new ArrayList<I_CmsClientSitemapChange>();
-        m_data = (CmsSitemapData)CmsRpcPrefetcher.getSerializedObject(getService(), CmsSitemapData.DICT_NAME);
+        m_entriesById = new HashMap<CmsUUID, CmsClientSitemapEntry>();
+        m_entriesByPath = new HashMap<String, CmsClientSitemapEntry>();
+        try {
+            m_data = (CmsSitemapData)CmsRpcPrefetcher.getSerializedObject(getService(), CmsSitemapData.DICT_NAME);
+        } catch (Exception e) {
+            CmsErrorDialog dialog = new CmsErrorDialog("Error", "Deserialization failed.");
+            dialog.show();
+        }
 
         m_hiddenProperties = new HashSet<String>();
-        m_detailPageTable = m_data.getDetailPageTable();
-        m_data.getRoot().initializeAll(this);
-        m_eventBus = new SimpleEventBus();
-        initDetailPageInfos();
-
+        if (m_data != null) {
+            m_detailPageTable = m_data.getDetailPageTable();
+            m_data.getRoot().initializeAll(this);
+            m_eventBus = new SimpleEventBus();
+            initDetailPageInfos();
+        }
     }
 
     /**
@@ -213,21 +212,20 @@ public class CmsSitemapController implements I_CmsSitemapController {
     /**
      * Adds the entry to the navigation.<p>
      * 
-     * @param sitePath the sitepath of the entry
+     * @param entry the entry
      */
-    public void addToNavigation(String sitePath) {
+    public void addToNavigation(CmsClientSitemapEntry entry) {
 
-        CmsClientSitemapEntry entry = getEntry(sitePath);
         entry.setInNavigation(true);
-        CmsClientSitemapCompositeChange change = new CmsClientSitemapCompositeChange();
+        CmsSitemapChange change = new CmsSitemapChange(entry.getId(), entry.getSitePath(), ChangeType.modify);
         CmsPropertyModification mod = new CmsPropertyModification(
             entry.getId(),
             CmsClientProperty.PROPERTY_NAVTEXT,
             entry.getTitle(),
             true);
-        change.addChange(getChangeForEdit(entry, sitePath, Collections.singletonList(mod), false));
-        change.addChange(getChangeForMove(entry, sitePath, entry.getPosition(), true));
-        applyChange(change, null);
+        change.setPropertyChanges(Collections.singletonList(mod));
+        change.setPosition(entry.getPosition());
+        commitChange(change, null);
     }
 
     /**
@@ -237,8 +235,11 @@ public class CmsSitemapController implements I_CmsSitemapController {
      */
     public void bump(CmsClientSitemapEntry entry) {
 
-        CmsClientSitemapChangeBumpDetailPage change = new CmsClientSitemapChangeBumpDetailPage(entry);
-        applyChange(change, null);
+        CmsDetailPageTable table = getDetailPageTable().copy();
+        table.bump(entry.getId());
+        CmsSitemapChange change = new CmsSitemapChange(entry.getId(), entry.getSitePath(), ChangeType.bumpDetailPage);
+        change.setDetailPageInfos(table.toList());
+        commitChange(change, null);
     }
 
     /**
@@ -246,7 +247,11 @@ public class CmsSitemapController implements I_CmsSitemapController {
      */
     public void clearDeletedList() {
 
-        applyChange(new CmsClientSitemapChangeClearDeleted(), null);
+        CmsSitemapClipboardData clipboardData = getData().getClipboardData().copy();
+        clipboardData.getDeletions().clear();
+        CmsSitemapChange change = new CmsSitemapChange(null, null, ChangeType.clipboardOnly);
+        change.setClipBoardData(clipboardData);
+        commitChange(change, null);
     }
 
     /**
@@ -254,44 +259,72 @@ public class CmsSitemapController implements I_CmsSitemapController {
      */
     public void clearModifiedList() {
 
-        applyChange(new CmsClientSitemapChangeClearModified(), null);
+        CmsSitemapClipboardData clipboardData = getData().getClipboardData().copy();
+        clipboardData.getModifications().clear();
+        CmsSitemapChange change = new CmsSitemapChange(null, null, ChangeType.clipboardOnly);
+        change.setClipBoardData(clipboardData);
+        commitChange(change, null);
     }
 
     /**
      * Registers a new sitemap entry.<p>
      * 
      * @param newEntry the new entry
+     * @param parentId the parent entry id
      * @param structureId the structure id of the model page (if null, uses default model page)
      */
-    public void create(final CmsClientSitemapEntry newEntry, CmsUUID structureId) {
+    public void create(final CmsClientSitemapEntry newEntry, CmsUUID parentId, CmsUUID structureId) {
 
         if (structureId == null) {
             structureId = m_data.getDefaultNewElementInfo().getCopyResourceId();
         }
-        create(newEntry, m_data.getDefaultNewElementInfo().getId(), structureId, null);
+        create(newEntry, parentId, m_data.getDefaultNewElementInfo().getId(), structureId, null);
     }
 
     /**
      * Registers a new sitemap entry.<p>
      * 
      * @param newEntry the new entry
+     * @param parentId the parent entry id
      * @param resourceTypeId the resource type id
      * @param copyResourceId the copy resource id
      * @param parameter an additional parameter which may contain more information needed to create the new resource 
      */
     public void create(
-        final CmsClientSitemapEntry newEntry,
-        final int resourceTypeId,
-        final CmsUUID copyResourceId,
+        CmsClientSitemapEntry newEntry,
+        CmsUUID parentId,
+        int resourceTypeId,
+        CmsUUID copyResourceId,
         String parameter) {
 
-        final CmsClientSitemapEntry parent = getEntry(CmsResource.getParentFolder(newEntry.getSitePath()));
         assert (getEntry(newEntry.getSitePath()) == null);
-        assert (parent != null);
-        newEntry.setEditStatus(EditStatus.created);
-        applyChange(
-            new CmsClientSitemapChangeNew(newEntry, parent.getId(), resourceTypeId, copyResourceId, parameter),
-            null);
+
+        CmsSitemapChange change = new CmsSitemapChange(null, newEntry.getSitePath(), ChangeType.create);
+        change.setDefaultFileId(newEntry.getDefaultFileId());
+        change.setParentId(parentId);
+        change.setName(newEntry.getName());
+        change.setPosition(newEntry.getPosition());
+        change.setOwnInternalProperties(newEntry.getOwnProperties());
+        change.setDefaultFileInternalProperties(newEntry.getDefaultFileProperties());
+        change.setTitle(newEntry.getTitle());
+        change.setCreateParameter(parameter);
+        change.setNewResourceTypeId(resourceTypeId);
+        change.setNewCopyResourceId(copyResourceId);
+        if (isDetailPage(newEntry)) {
+            CmsDetailPageTable table = getDetailPageTable().copy();
+            if (!table.contains(newEntry.getId())) {
+                CmsDetailPageInfo info = new CmsDetailPageInfo(
+                    newEntry.getId(),
+                    newEntry.getSitePath(),
+                    newEntry.getDetailpageTypeName());
+                table.add(info);
+            }
+            change.setDetailPageInfos(table.toList());
+        }
+        CmsSitemapClipboardData data = getData().getClipboardData().copy();
+        data.addModified(newEntry);
+        change.setClipBoardData(data);
+        commitChange(change, null);
     }
 
     /**
@@ -333,12 +366,15 @@ public class CmsSitemapController implements I_CmsSitemapController {
                 newEntry.setNew(true);
                 newEntry.setInNavigation(true);
                 newEntry.setResourceTypeName("folder");
-                create(newEntry, structureId);
+                newEntry.getOwnProperties().put(
+                    CmsClientProperty.PROPERTY_TITLE,
+                    new CmsClientProperty(CmsClientProperty.PROPERTY_TITLE, NEW_ENTRY_NAME, NEW_ENTRY_NAME));
+                create(newEntry, parent.getId(), structureId);
             }
         };
 
         if (item.getLoadState().equals(LoadState.UNLOADED)) {
-            getChildren(parent.getSitePath(), true, callback);
+            getChildren(parent.getId(), true, callback);
         } else {
             callback.onSuccess(parent);
         }
@@ -351,7 +387,7 @@ public class CmsSitemapController implements I_CmsSitemapController {
      */
     public void createSubSitemap(final CmsUUID entryId) {
 
-        CmsRpcAction<CmsSubSitemapInfo> subSitemapAction = new CmsRpcAction<CmsSubSitemapInfo>() {
+        CmsRpcAction<CmsSitemapChange> subSitemapAction = new CmsRpcAction<CmsSitemapChange>() {
 
             /**
              * @see org.opencms.gwt.client.rpc.CmsRpcAction#execute()
@@ -367,10 +403,10 @@ public class CmsSitemapController implements I_CmsSitemapController {
              * @see org.opencms.gwt.client.rpc.CmsRpcAction#onResponse(java.lang.Object)
              */
             @Override
-            protected void onResponse(CmsSubSitemapInfo result) {
+            protected void onResponse(CmsSitemapChange result) {
 
                 stop(false);
-                onCreateSubSitemap(entryId, result);
+                applyChange(result);
             }
         };
         subSitemapAction.execute();
@@ -385,26 +421,52 @@ public class CmsSitemapController implements I_CmsSitemapController {
 
         CmsClientSitemapEntry entry = getEntry(sitePath);
         CmsClientSitemapEntry parent = getEntry(CmsResource.getParentFolder(entry.getSitePath()));
-        applyChange(new CmsClientSitemapChangeDelete(entry, parent.getId()), null);
+        CmsSitemapChange change = new CmsSitemapChange(entry.getId(), entry.getSitePath(), ChangeType.delete);
+        change.setParentId(parent.getId());
+        change.setDefaultFileId(entry.getDefaultFileId());
+        CmsSitemapClipboardData data = CmsSitemapView.getInstance().getController().getData().getClipboardData().copy();
+        if (!entry.isNew()) {
+            data.addDeleted(entry);
+            removeDeletedFromModified(entry, data);
+        }
+        change.setClipBoardData(data);
+        CmsDetailPageTable detailPageTable = CmsSitemapView.getInstance().getController().getData().getDetailPageTable();
+        CmsUUID id = entry.getId();
+        if (detailPageTable.contains(id)) {
+            CmsDetailPageTable copyTable = detailPageTable.copy();
+            copyTable.remove(id);
+            change.setDetailPageInfos(copyTable.toList());
+        }
+        commitChange(change, null);
     }
 
     /**
      * Edits the given sitemap entry.<p>
      * 
      * @param entry the sitemap entry to update
-     * @param vfsReference the new VFS reference, can be <code>null</code> to keep the old one
      * @param propertyChanges the property changes 
-     * @param isNew if false, the entry's name has been edited 
+     * @param reloadStatus a value indicating which entries need to be reloaded after the change
      */
     public void edit(
         CmsClientSitemapEntry entry,
-        String vfsReference,
         List<CmsPropertyModification> propertyChanges,
-        boolean isNew) {
+        final CmsReloadMode reloadStatus) {
 
-        CmsClientSitemapChangeEdit change = getChangeForEdit(entry, vfsReference, propertyChanges, isNew);
+        CmsSitemapChange change = getChangeForEdit(entry, propertyChanges);
+        final String updateTarget = ((reloadStatus == CmsReloadMode.reloadParent))
+        ? getParentEntry(entry).getSitePath()
+        : entry.getSitePath();
+        Command callback = new Command() {
+
+            public void execute() {
+
+                if ((reloadStatus == CmsReloadMode.reloadParent) || (reloadStatus == CmsReloadMode.reloadEntry)) {
+                    updateEntry(updateTarget);
+                }
+            }
+        };
         if (change != null) {
-            applyChange(change, null);
+            commitChange(change, callback);
         }
     }
 
@@ -413,56 +475,38 @@ public class CmsSitemapController implements I_CmsSitemapController {
      * 
      * @param entry the entry which is being edited 
      * @param newUrlName the new URL name of the entry 
-     * @param vfsPath the vfs path of the entry 
      * @param propertyChanges the property changes  
-     * @param editedName true if the name has been edited
+     * @param keepNewStatus <code>true</code> if the entry should keep it's new status
      * @param reloadStatus a value indicating which entries need to be reloaded after the change   
      */
     public void editAndChangeName(
         final CmsClientSitemapEntry entry,
         String newUrlName,
-        String vfsPath,
         List<CmsPropertyModification> propertyChanges,
-        boolean editedName,
+        final boolean keepNewStatus,
         final CmsReloadMode reloadStatus) {
 
-        CmsClientSitemapChangeEdit edit = getChangeForEdit(entry, vfsPath, propertyChanges, !editedName);
-        CmsClientSitemapChangeMove move = getChangeForMove(
-            entry,
-            getPath(entry, newUrlName),
-            entry.getPosition(),
-            false);
-        CmsClientSitemapCompositeChange change = new CmsClientSitemapCompositeChange();
-        change.addChange(edit);
-        change.addChange(move);
-        AsyncCallback<Object> callback = new AsyncCallback<Object>() {
+        CmsSitemapChange change = getChangeForEdit(entry, propertyChanges);
+        change.setName(newUrlName);
+        final CmsUUID entryId = entry.getId();
+        final boolean newStatus = keepNewStatus && entry.isNew();
 
-            public void onFailure(Throwable caught) {
+        final CmsUUID updateTarget = ((reloadStatus == CmsReloadMode.reloadParent))
+        ? getParentEntry(entry).getId()
+        : entryId;
+        Command callback = new Command() {
 
-                // do nothing 
-            }
+            public void execute() {
 
-            public void onSuccess(Object result) {
-
-                switch (reloadStatus) {
-                    case reloadEntry:
-                        updateEntry(entry.getSitePath());
-                        break;
-                    case reloadParent:
-                        CmsClientSitemapEntry parent = getParentEntry(entry);
-                        if (parent != null) {
-                            updateEntry(parent.getSitePath());
-                        }
-                        break;
-                    case none:
-                    default:
-                        break;
+                if ((reloadStatus == CmsReloadMode.reloadParent) || (reloadStatus == CmsReloadMode.reloadEntry)) {
+                    updateEntry(updateTarget);
                 }
+                getEntryById(entryId).setNew(newStatus);
             }
 
         };
-        applyChange(change, callback);
 
+        commitChange(change, callback);
     }
 
     /**
@@ -522,22 +566,25 @@ public class CmsSitemapController implements I_CmsSitemapController {
      */
     public void executePropertyModification(CmsPropertyModification propMod) {
 
-        Map<String, CmsClientProperty> props = getPropertiesForId(propMod.getId());
-        if (props != null) {
-            propMod.updatePropertyInMap(props);
+        CmsClientSitemapEntry entry = getEntryById(propMod.getId());
+        if (entry != null) {
+            Map<String, CmsClientProperty> props = getPropertiesForId(propMod.getId());
+            if (props != null) {
+                propMod.updatePropertyInMap(props);
+                entry.setOwnProperties(props);
+            }
         }
-
     }
 
     /**
      * Retrieves the child entries of the given node from the server.<p>
      * 
-     * @param sitePath the site path
+     * @param entryId the entry id
      * @param setOpen if the entry should be opened
      * @param callback the callback to execute after the children have been loaded 
      */
     public void getChildren(
-        final String sitePath,
+        final CmsUUID entryId,
         final boolean setOpen,
         final AsyncCallback<CmsClientSitemapEntry> callback) {
 
@@ -551,8 +598,8 @@ public class CmsSitemapController implements I_CmsSitemapController {
 
                 // Make the call to the sitemap service
                 start(500, false);
-
-                getService().getChildren(getEntryPoint(), sitePath, 1, this);
+                // loading grand children as well
+                getService().getChildren(getEntryPoint(), entryId, 2, this);
             }
 
             /**
@@ -561,18 +608,16 @@ public class CmsSitemapController implements I_CmsSitemapController {
             @Override
             public void onResponse(CmsClientSitemapEntry result) {
 
-                CmsClientSitemapEntry target = getEntry(sitePath);
+                CmsClientSitemapEntry target = getEntryById(entryId);
                 if (target == null) {
                     // this might happen after an automated deletion
                     stop(false);
                     return;
                 }
-
-                target.setSubEntries(result.getSubEntries());
+                target.setSubEntries(result.getSubEntries(), CmsSitemapController.this);
                 CmsSitemapTreeItem item = CmsSitemapTreeItem.getItemById(target.getId());
                 target.update(result);
                 target.initializeAll(CmsSitemapController.this);
-
                 item.updateEntry(target);
                 m_eventBus.fireEventFromSource(new CmsSitemapLoadEvent(target, setOpen), CmsSitemapController.this);
                 stop(false);
@@ -690,55 +735,7 @@ public class CmsSitemapController implements I_CmsSitemapController {
      */
     public CmsClientSitemapEntry getEntry(String entryPath) {
 
-        CmsClientSitemapEntry root = m_data.getRoot();
-        if (!entryPath.startsWith(root.getSitePath())) {
-            return null;
-        }
-        String path = entryPath.substring(root.getSitePath().length());
-        String[] names = CmsStringUtil.splitAsArray(path, "/");
-        CmsClientSitemapEntry result = root;
-        for (String name : names) {
-            if (CmsStringUtil.isEmptyOrWhitespaceOnly(name)) {
-                // in case of leading slash
-                continue;
-            }
-            boolean found = false;
-            for (CmsClientSitemapEntry child : result.getSubEntries()) {
-                if (child.getName().equals(name)) {
-                    found = true;
-                    result = child;
-                    break;
-                }
-            }
-            if (!found) {
-                // not found
-                result = null;
-                break;
-            }
-        }
-        return result;
-    }
-
-    /**
-     * Returns the entry which has the file with the given resource id as a default file, or null if there is no such entry.<p>
-     * 
-     * @param id a structure id
-     *  
-     * @return a sitemap entry, or null
-     */
-    public CmsClientSitemapEntry getEntryByDefaultFileId(CmsUUID id) {
-
-        List<CmsClientSitemapEntry> entriesToProcess = new ArrayList<CmsClientSitemapEntry>();
-        entriesToProcess.add(m_data.getRoot());
-        while (!entriesToProcess.isEmpty()) {
-            CmsClientSitemapEntry entry = entriesToProcess.remove(entriesToProcess.size() - 1);
-            if (id.equals(entry.getDefaultFileId())) {
-                return entry;
-            }
-            entriesToProcess.addAll(entry.getSubEntries());
-        }
-        return null;
-
+        return m_entriesByPath.get(entryPath);
     }
 
     /**
@@ -750,14 +747,7 @@ public class CmsSitemapController implements I_CmsSitemapController {
      */
     public CmsClientSitemapEntry getEntryById(CmsUUID id) {
 
-        List<CmsUUID> ids = new ArrayList<CmsUUID>();
-        ids.add(id);
-        Map<CmsUUID, CmsClientSitemapEntry> map = getEntriesById(ids);
-        if (map.isEmpty()) {
-            return null;
-        } else {
-            return map.values().iterator().next();
-        }
+        return m_entriesById.get(id);
     }
 
     /**
@@ -986,7 +976,7 @@ public class CmsSitemapController implements I_CmsSitemapController {
     */
     public void mergeSubSitemap(final CmsUUID entryId) {
 
-        CmsRpcAction<CmsSitemapMergeInfo> mergeAction = new CmsRpcAction<CmsSitemapMergeInfo>() {
+        CmsRpcAction<CmsSitemapChange> mergeAction = new CmsRpcAction<CmsSitemapChange>() {
 
             /**
              * @see org.opencms.gwt.client.rpc.CmsRpcAction#execute()
@@ -1002,12 +992,10 @@ public class CmsSitemapController implements I_CmsSitemapController {
              * @see org.opencms.gwt.client.rpc.CmsRpcAction#onResponse(java.lang.Object)
              */
             @Override
-            protected void onResponse(CmsSitemapMergeInfo result) {
+            protected void onResponse(CmsSitemapChange result) {
 
                 stop(false);
-                CmsClientSitemapEntry target = getEntryById(entryId);
-                I_CmsClientSitemapChange change = new CmsClientSitemapChangeMergeSitemap(target, result);
-                executeChange(change);
+                applyChange(result);
 
             }
         };
@@ -1024,9 +1012,29 @@ public class CmsSitemapController implements I_CmsSitemapController {
      */
     public void move(CmsClientSitemapEntry entry, String toPath, int position) {
 
-        CmsClientSitemapChangeMove change = getChangeForMove(entry, toPath, position, false);
-        if (change != null) {
-            applyChange(change, null);
+        // check for valid data
+        if (!isValidEntryAndPath(entry, toPath)) {
+            // invalid data, do nothing 
+            CmsDebugLog.getInstance().printLine("invalid data, doing nothing");
+            return;
+        }
+        // check for relevance
+        if (isChangedPosition(entry, toPath, position)) {
+            // only register real changes
+            CmsSitemapChange change = new CmsSitemapChange(entry.getId(), entry.getSitePath(), ChangeType.modify);
+            change.setDefaultFileId(entry.getDefaultFileId());
+            if (!toPath.equals(entry.getSitePath())) {
+                change.setParentId(getEntry(CmsResource.getParentFolder(toPath)).getId());
+                change.setName(CmsResource.getName(toPath));
+            }
+            if (CmsSitemapView.getInstance().isNavigationMode()) {
+                change.setPosition(position);
+            }
+            change.setLeafType(entry.isLeafType());
+            CmsSitemapClipboardData data = getData().getClipboardData().copy();
+            data.addModified(entry);
+            change.setClipBoardData(data);
+            commitChange(change, null);
         }
     }
 
@@ -1043,7 +1051,7 @@ public class CmsSitemapController implements I_CmsSitemapController {
         FormElement form = CmsDomUtil.generateHiddenForm(
             CmsCoreProvider.get().link(CmsCoreProvider.get().getUri()),
             Method.post,
-            Target.NONE,
+            Target.TOP,
             parameter);
         RootPanel.getBodyElement().appendChild(form);
         form.submit();
@@ -1059,15 +1067,51 @@ public class CmsSitemapController implements I_CmsSitemapController {
     }
 
     /**
+     * @see org.opencms.ade.sitemap.shared.I_CmsSitemapController#registerEntry(org.opencms.ade.sitemap.shared.CmsClientSitemapEntry)
+     */
+    public void registerEntry(CmsClientSitemapEntry entry) {
+
+        if (m_entriesById.containsKey(entry.getId())) {
+            CmsClientSitemapEntry oldEntry = m_entriesById.get(entry.getId());
+            oldEntry.update(entry);
+            if (oldEntry != m_entriesByPath.get(oldEntry.getSitePath())) {
+                m_entriesByPath.put(oldEntry.getSitePath(), oldEntry);
+            }
+        } else {
+            m_entriesById.put(entry.getId(), entry);
+            m_entriesByPath.put(entry.getSitePath(), entry);
+        }
+
+    }
+
+    /**
+     * @see org.opencms.ade.sitemap.shared.I_CmsSitemapController#registerPathChange(org.opencms.ade.sitemap.shared.CmsClientSitemapEntry, java.lang.String)
+     */
+    public void registerPathChange(CmsClientSitemapEntry entry, String oldPath) {
+
+        m_entriesById.put(entry.getId(), entry);
+        m_entriesByPath.remove(oldPath);
+        m_entriesByPath.put(entry.getSitePath(), entry);
+    }
+
+    /**
      * Removes the entry with the given site-path from navigation.<p>
      * 
-     * @param sitePath the site-path
+     * @param entryId the entry id
      */
-    public void removeFromNavigation(String sitePath) {
+    public void removeFromNavigation(CmsUUID entryId) {
 
-        CmsClientSitemapEntry entry = getEntry(sitePath);
+        CmsClientSitemapEntry entry = getEntryById(entryId);
         CmsClientSitemapEntry parent = getEntry(CmsResource.getParentFolder(entry.getSitePath()));
-        applyChange(new CmsClientSitemapChangeRemove(entry, parent.getId()), null);
+        CmsSitemapChange change = new CmsSitemapChange(entry.getId(), entry.getSitePath(), ChangeType.remove);
+        change.setParentId(parent.getId());
+        change.setDefaultFileId(entry.getDefaultFileId());
+        CmsSitemapClipboardData data = CmsSitemapView.getInstance().getController().getData().getClipboardData().copy();
+        data.addModified(entry);
+        change.setClipBoardData(data);
+        //TODO: handle detail page delete
+
+        commitChange(change, null);
     }
 
     /**
@@ -1093,12 +1137,26 @@ public class CmsSitemapController implements I_CmsSitemapController {
     /**
      * Undeletes the resource with the given structure id.<p>
      * 
-     * @param structureId the structure id
+     * @param entryId the entry id
      * @param sitePath the site-path
      */
-    public void undelete(final CmsUUID structureId, final String sitePath) {
+    public void undelete(CmsUUID entryId, String sitePath) {
 
-        applyChange(new CmsClientSitemapChangeUndelete(structureId, sitePath), null);
+        CmsSitemapChange change = new CmsSitemapChange(entryId, sitePath, ChangeType.undelete);
+        CmsSitemapClipboardData data = CmsSitemapView.getInstance().getController().getData().getClipboardData().copy();
+        data.getDeletions().remove(entryId);
+        change.setClipBoardData(data);
+        commitChange(change, null);
+    }
+
+    /**
+     * Updates the given entry.<p>
+     * 
+     * @param entryId the entry id
+      */
+    public void updateEntry(CmsUUID entryId) {
+
+        getChildren(entryId, CmsSitemapTreeItem.getItemById(entryId).isOpen(), null);
     }
 
     /**
@@ -1108,21 +1166,183 @@ public class CmsSitemapController implements I_CmsSitemapController {
      */
     public void updateEntry(String sitePath) {
 
-        getChildren(sitePath, CmsSitemapTreeItem.getItemById(getEntry(sitePath).getId()).isOpen(), null);
+        CmsClientSitemapEntry entry = getEntry(sitePath);
+        getChildren(entry.getId(), CmsSitemapTreeItem.getItemById(entry.getId()).isOpen(), null);
+    }
+
+    /**
+     * Updates the given entry only, not evaluating any child changes.<p>
+     * 
+     * @param entryId the entry id
+     */
+    public void updateSingleEntry(final CmsUUID entryId) {
+
+        CmsRpcAction<CmsClientSitemapEntry> getChildrenAction = new CmsRpcAction<CmsClientSitemapEntry>() {
+
+            /**
+            * @see org.opencms.gwt.client.rpc.CmsRpcAction#execute()
+            */
+            @Override
+            public void execute() {
+
+                getService().getChildren(getEntryPoint(), entryId, 0, this);
+            }
+
+            /**
+            * @see org.opencms.gwt.client.rpc.CmsRpcAction#onResponse(java.lang.Object)
+            */
+            @Override
+            public void onResponse(CmsClientSitemapEntry result) {
+
+                CmsClientSitemapEntry target = getEntryById(entryId);
+                if (target == null) {
+                    // this might happen after an automated deletion
+                    stop(false);
+                    return;
+                }
+                target.update(result);
+                CmsSitemapTreeItem item = CmsSitemapTreeItem.getItemById(target.getId());
+                item.updateEntry(target);
+            }
+        };
+        getChildrenAction.execute();
+    }
+
+    /**
+     * Fires a sitemap change event.<p>
+     * 
+     * @param change the change event to fire 
+     */
+    protected void applyChange(CmsSitemapChange change) {
+
+        // update the clip board data
+        if (change.getClipBoardData() != null) {
+            getData().getClipboardData().setDeletions(change.getClipBoardData().getDeletions());
+            getData().getClipboardData().setModifications(change.getClipBoardData().getModifications());
+        }
+        switch (change.getChangeType()) {
+            case bumpDetailPage:
+                CmsDetailPageTable detailPageTable = getData().getDetailPageTable();
+                if (detailPageTable.contains(change.getEntryId())) {
+                    detailPageTable.bump(change.getEntryId());
+                }
+                break;
+            case clipboardOnly:
+                // nothing to do
+                break;
+            case remove:
+                CmsClientSitemapEntry entry = getEntryById(change.getEntryId());
+                entry.setInNavigation(false);
+                CmsPropertyModification propMod = new CmsPropertyModification(
+                    entry.getId(),
+                    CmsClientProperty.PROPERTY_NAVTEXT,
+                    null,
+                    true);
+                executePropertyModification(propMod);
+                propMod = new CmsPropertyModification(entry.getId(), CmsClientProperty.PROPERTY_NAVTEXT, null, true);
+                executePropertyModification(propMod);
+                entry.normalizeProperties();
+                break;
+            case undelete:
+            case create:
+                CmsClientSitemapEntry newEntry = change.getUpdatedEntry();
+                getEntryById(change.getParentId()).insertSubEntry(newEntry, change.getPosition(), this);
+                newEntry.initializeAll(this);
+                if (isDetailPage(newEntry)) {
+                    CmsDetailPageInfo info = getDetailPageInfo(newEntry.getId());
+                    if (info == null) {
+                        info = new CmsDetailPageInfo(
+                            newEntry.getId(),
+                            newEntry.getSitePath(),
+                            newEntry.getDetailpageTypeName());
+                    }
+                    addDetailPageInfo(info);
+                }
+                break;
+            case delete:
+                removeEntry(change.getEntryId(), change.getParentId());
+                break;
+            case modify:
+                if (change.hasNewParent() || change.hasChangedPosition()) {
+                    CmsClientSitemapEntry moved = getEntryById(change.getEntryId());
+                    String oldSitepath = moved.getSitePath();
+                    CmsClientSitemapEntry sourceParent = getEntry(CmsResource.getParentFolder(oldSitepath));
+                    sourceParent.removeSubEntry(moved.getId());
+                    CmsClientSitemapEntry destParent = change.hasNewParent()
+                    ? getEntryById(change.getParentId())
+                    : sourceParent;
+                    if (change.getPosition() < destParent.getSubEntries().size()) {
+                        destParent.insertSubEntry(moved, change.getPosition(), this);
+                    } else {
+                        // inserting as last entry of the parent list
+                        destParent.addSubEntry(moved, this);
+                    }
+                    if (change.hasNewParent()) {
+                        cleanupOldPaths(oldSitepath, destParent.getSitePath());
+                    }
+                }
+                if (change.hasChangedName()) {
+                    CmsClientSitemapEntry changed = getEntryById(change.getEntryId());
+                    String oldSitepath = changed.getSitePath();
+                    CmsClientSitemapEntry parent = getEntry(CmsResource.getParentFolder(oldSitepath));
+                    String newSitepath = CmsStringUtil.joinPaths(parent.getSitePath(), change.getName());
+                    changed.updateSitePath(newSitepath, this);
+                    cleanupOldPaths(oldSitepath, newSitepath);
+                }
+                if (change.hasChangedProperties()) {
+                    for (CmsPropertyModification modification : change.getPropertyChanges()) {
+                        executePropertyModification(modification);
+                    }
+                    getEntryById(change.getEntryId()).normalizeProperties();
+                }
+                if (change.getUpdatedEntry() != null) {
+                    CmsClientSitemapEntry oldEntry = getEntryById(change.getEntryId());
+                    CmsClientSitemapEntry parent = getEntry(CmsResource.getParentFolder(oldEntry.getSitePath()));
+                    removeEntry(change.getEntryId(), parent.getId());
+                    parent.insertSubEntry(change.getUpdatedEntry(), oldEntry.getPosition(), this);
+                    change.getUpdatedEntry().initializeAll(this);
+                }
+                break;
+            default:
+        }
+        if (change.getChangeType() != ChangeType.delete) {
+            recomputeProperties();
+        }
+        m_eventBus.fireEventFromSource(new CmsSitemapChangeEvent(change), this);
+    }
+
+    /**
+     * Cleans up wrong path references.<p>
+     * 
+     * @param oldSitepath the old sitepath
+     * @param newSitepath the new sitepath
+     */
+    private void cleanupOldPaths(String oldSitepath, String newSitepath) {
+
+        // use a separate list to avoid concurrent changes
+        List<CmsClientSitemapEntry> entries = new ArrayList<CmsClientSitemapEntry>(m_entriesById.values());
+        for (CmsClientSitemapEntry entry : entries) {
+            if (entry.getSitePath().startsWith(oldSitepath)) {
+                String currentPath = entry.getSitePath();
+                String updatedSitePath = CmsStringUtil.joinPaths(
+                    newSitepath,
+                    currentPath.substring(oldSitepath.length()));
+                entry.updateSitePath(updatedSitePath, this);
+            }
+        }
     }
 
     /**
     * Adds a change to the queue.<p>
     * 
-    * @param change the change to be added  
+    * @param change the change to commit
     * @param callback the callback to execute after the change has been applied 
     */
-    protected void applyChange(final I_CmsClientSitemapChange change, final AsyncCallback<Object> callback) {
+    protected void commitChange(final CmsSitemapChange change, final Command callback) {
 
-        final CmsSitemapChange commitChange = change.getChangeForCommit();
-        if (commitChange != null) {
+        if (change != null) {
             // save the sitemap
-            CmsRpcAction<List<CmsClientSitemapEntry>> saveAction = new CmsRpcAction<List<CmsClientSitemapEntry>>() {
+            CmsRpcAction<CmsSitemapChange> saveAction = new CmsRpcAction<CmsSitemapChange>() {
 
                 /**
                 * @see org.opencms.gwt.client.rpc.CmsRpcAction#execute()
@@ -1132,7 +1352,7 @@ public class CmsSitemapController implements I_CmsSitemapController {
 
                     setLoadingMessage(Messages.get().key(Messages.GUI_SAVING_0));
                     start(0, true);
-                    getService().saveSync(getEntryPoint(), commitChange, this);
+                    getService().saveSync(getEntryPoint(), change, this);
 
                 }
 
@@ -1140,18 +1360,12 @@ public class CmsSitemapController implements I_CmsSitemapController {
                 * @see org.opencms.gwt.client.rpc.CmsRpcAction#onResponse(java.lang.Object)
                 */
                 @Override
-                public void onResponse(List<CmsClientSitemapEntry> result) {
+                public void onResponse(CmsSitemapChange result) {
 
                     stop(true);
-                    if ((result != null) && !result.isEmpty()) {
-                        for (CmsClientSitemapEntry entry : result) {
-                            change.updateEntry(entry);
-                        }
-                    }
-                    change.applyToModel(CmsSitemapController.this);
-                    fireChange(change);
+                    applyChange(result);
                     if (callback != null) {
-                        callback.onSuccess(null);
+                        callback.execute();
                     }
                 }
             };
@@ -1160,103 +1374,30 @@ public class CmsSitemapController implements I_CmsSitemapController {
     }
 
     /**
-     * Internal method which updates the model with a single change.<p>
-     * 
-     * @param change the change 
-     */
-    protected void executeChange(I_CmsClientSitemapChange change) {
-
-        // apply change to the model
-        change.applyToModel(this);
-        // refresh view
-        fireChange(change);
-    }
-
-    /**
-     * Fires a sitemap change event.<p>
-     * 
-     * @param change the change event to fire 
-     */
-    protected void fireChange(I_CmsClientSitemapChange change) {
-
-        m_eventBus.fireEventFromSource(new CmsSitemapChangeEvent(change), this);
-        recomputeProperties();
-    }
-
-    /**
      * Creates a change object for an edit operation.<p>
      *  
      * @param entry the edited sitemap entry
-     * @param vfsReference the vfs path 
      * @param propertyChanges the list of property changes 
-     * @param isNew true if the entry's url name has not been edited before
      *  
      * @return the change object
      */
-    protected CmsClientSitemapChangeEdit getChangeForEdit(
+    protected CmsSitemapChange getChangeForEdit(
         CmsClientSitemapEntry entry,
-        String vfsReference,
-        List<CmsPropertyModification> propertyChanges,
-        boolean isNew) {
+        List<CmsPropertyModification> propertyChanges) {
 
-        // check changes
-        boolean changedVfsRef = ((vfsReference != null) && !vfsReference.trim().equals(entry.getVfsPath()));
-        boolean changedProperties = true;
-        if (!changedVfsRef && !changedProperties && isNew) {
-            // nothing to do
-            return null;
+        CmsSitemapChange change = new CmsSitemapChange(entry.getId(), entry.getSitePath(), ChangeType.modify);
+        change.setDefaultFileId(entry.getDefaultFileId());
+        change.setLeafType(entry.isLeafType());
+        List<CmsPropertyModification> propertyChangeData = new ArrayList<CmsPropertyModification>();
+        for (CmsPropertyModification propChange : propertyChanges) {
+            propertyChangeData.add(propChange);
         }
+        change.setPropertyChanges(propertyChangeData);
 
-        // create changes
-        CmsClientSitemapEntry newEntry = new CmsClientSitemapEntry(entry);
-        newEntry.setEdited();
-
-        // We don't calculate isNew by comparing the old and new url names.
-        // This is because any editing of the URL name field should mark the entry as "not new", even if the final
-        // value is the same as the initial one. 
-        newEntry.setNew(entry.isNew() && isNew);
-        if (changedVfsRef) {
-            newEntry.setVfsPath(vfsReference);
-        }
-
-        // apply changes
-        return new CmsClientSitemapChangeEdit(entry, propertyChanges, newEntry);
-
-    }
-
-    /**
-     * Returns a change object for a move operation.<p>
-     *  
-     * @param entry the entry being moved 
-     * @param toPath the target path of the move operation 
-     * @param position the target position of the move operation
-     * @param forceMove <code>true</code> forces a move change, even if the position is unchanged 
-     * (needed to add a formerly hidden entry to navigation)
-     *  
-     * @return the change object
-     */
-    protected CmsClientSitemapChangeMove getChangeForMove(
-        CmsClientSitemapEntry entry,
-        String toPath,
-        int position,
-        boolean forceMove) {
-
-        // check for valid data
-        if (!isValidEntryAndPath(entry, toPath)) {
-            // invalid data, do nothing 
-            CmsDebugLog.getInstance().printLine("invalid data, doing nothing");
-            return null;
-        }
-        // check for relevance
-        if (forceMove || isChangedPosition(entry, toPath, position)) {
-            // only register real changes
-            return new CmsClientSitemapChangeMove(
-                entry,
-                toPath,
-                getEntry(CmsResource.getParentFolder(toPath)).getId(),
-                position);
-        }
-        return null;
+        CmsSitemapClipboardData data = getData().getClipboardData().copy();
+        data.addModified(entry);
+        change.setClipBoardData(data);
+        return change;
     }
 
     /**
@@ -1308,20 +1449,6 @@ public class CmsSitemapController implements I_CmsSitemapController {
             CmsDetailPageInfo info = m_data.getDetailPageTable().get(id);
             m_allDetailPageInfos.put(id, info);
         }
-    }
-
-    /**
-     * Internal method which is called when a new sub-sitemap has been successfully created.<p>
-     * 
-     * @param entryId the id of the created sub-sitemap entry
-     * @param info the info bean which is the result of the sub-sitemap creation  
-    
-     */
-    protected void onCreateSubSitemap(CmsUUID entryId, CmsSubSitemapInfo info) {
-
-        CmsClientSitemapEntry entry = getEntryById(entryId);
-        CmsClientSitemapChangeCreateSubSitemap change = new CmsClientSitemapChangeCreateSubSitemap(entry, info);
-        executeChange(change);
     }
 
     /**
@@ -1378,4 +1505,60 @@ public class CmsSitemapController implements I_CmsSitemapController {
             && (entry != null)
             && (getEntry(CmsResource.getParentFolder(toPath)) != null) && (getEntry(entry.getSitePath()) != null));
     }
+
+    /**
+     * Removes all children of the given entry recursively from the data model.<p>
+     * 
+     * @param entry the entry
+     */
+    private void removeAllChildren(CmsClientSitemapEntry entry) {
+
+        for (CmsClientSitemapEntry child : entry.getSubEntries()) {
+            removeAllChildren(child);
+            m_entriesById.remove(child.getId());
+            m_entriesByPath.remove(child.getSitePath());
+            // apply to detailpage table
+            CmsDetailPageTable detailPageTable = getData().getDetailPageTable();
+            if (detailPageTable.contains(child.getId())) {
+                detailPageTable.remove(child.getId());
+            }
+        }
+        entry.getSubEntries().clear();
+    }
+
+    /**
+     * Removes the given entry and it's descendants from the modified list.<p>
+     * 
+     * @param entry the entry
+     * @param data the clip board data
+     */
+    private void removeDeletedFromModified(CmsClientSitemapEntry entry, CmsSitemapClipboardData data) {
+
+        data.removeModified(entry);
+        for (CmsClientSitemapEntry child : entry.getSubEntries()) {
+            removeDeletedFromModified(child, data);
+        }
+    }
+
+    /**
+     * Removes the given entry from the data model.<p>
+     * 
+     * @param entryId the id of the entry to remove
+     * @param parentId the parent entry id
+     */
+    private void removeEntry(CmsUUID entryId, CmsUUID parentId) {
+
+        CmsClientSitemapEntry entry = getEntryById(entryId);
+        CmsClientSitemapEntry deleteParent = getEntryById(parentId);
+        removeAllChildren(entry);
+        deleteParent.removeSubEntry(entry.getPosition());
+        m_entriesById.remove(entryId);
+        m_entriesByPath.remove(entry.getSitePath());
+        // apply to detailpage table
+        CmsDetailPageTable detailPageTable = getData().getDetailPageTable();
+        if (detailPageTable.contains(entryId)) {
+            detailPageTable.remove(entryId);
+        }
+    }
+
 }

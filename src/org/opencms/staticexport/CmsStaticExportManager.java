@@ -279,19 +279,12 @@ public class CmsStaticExportManager implements I_CmsEventListener {
     }
 
     /**
-     * Returns the rfs name plus the default file name.<p>
+     * Returns the real file system name plus the default file name.<p>
      * 
-     * E.g. for a sitemap entry the default file name is <code>"index.html"</code>
-     * whereby the default file name for a folder in the vfs is <code>"index_export.html"</code>.<p>
+     * @param rfsName the real file system name to append the default file name to
+     * @param isFolder signals whether the according virtual file system resource is an folder or not
      * 
-     * So the result of this method is <code>"/path/to/folder/index.html"</code> for the sitemap case and
-     * <code>"/path/to/folder/index_export.html"</code> for the vfs folder case.
-     * Otherwise this method returns the original input rfs name.<p>
-     * 
-     * @param rfsName the rfs name to append the default file name to
-     * @param isFolder signals wether the according vfs resource is an folder or not
-     * 
-     * @return the rfs name plus the default file name
+     * @return the real file system name plus the default file name
      */
     public String addDefaultFileNameToFolder(String rfsName, boolean isFolder) {
 
@@ -300,10 +293,6 @@ public class CmsStaticExportManager implements I_CmsEventListener {
         if (isFolder) {
             // vfs folder case
             name.append(EXPORT_DEFAULT_FILE);
-        } else if (CmsResource.isFolder(rfsName)) {
-            LOG.info("addDefaultFileNameToFolder: sitemap case");
-            // sitemap case
-            name.append(DEFAULT_FILE);
         }
         return name.toString();
     }
@@ -1211,9 +1200,10 @@ public class CmsStaticExportManager implements I_CmsEventListener {
                 I_CmsDetailPageFinder finder = OpenCms.getADEManager().getDetailPageFinder();
                 String detailPage = finder.getDetailPage(cms, vfsRes.getRootPath(), cms.getRequestContext().getUri());
                 if (detailPage != null) {
-                    vfsName = CmsStringUtil.joinPaths(detailPage, CmsDetailPageUtil.getBestUrlName(
-                        cms,
-                        vfsRes.getStructureId()), "/");
+                    vfsName = CmsStringUtil.joinPaths(
+                        detailPage,
+                        CmsDetailPageUtil.getBestUrlName(cms, vfsRes.getStructureId()),
+                        "/");
                 }
             } catch (CmsVfsResourceNotFoundException e) {
                 // ignore
@@ -1701,8 +1691,14 @@ public class CmsStaticExportManager implements I_CmsEventListener {
     public boolean isExportLink(CmsObject cms, String vfsName) {
 
         LOG.info("isExportLink? " + vfsName);
-
-        String cacheKey = getCacheKey(cms.getRequestContext().getSiteRoot(), vfsName);
+        String siteRoot = cms.getRequestContext().getSiteRoot();
+        // vfsname may still be a root path for a site with a different site root 
+        CmsSite site = OpenCms.getSiteManager().getSiteForRootPath(vfsName);
+        if (site != null) {
+            siteRoot = site.getSiteRoot();
+            vfsName = CmsStringUtil.joinPaths("/", vfsName.substring(siteRoot.length()));
+        }
+        String cacheKey = getCacheKey(siteRoot, vfsName);
         Boolean exportResource = getCacheExportLinks().get(cacheKey);
         if (exportResource != null) {
             return exportResource.booleanValue();
@@ -1713,7 +1709,7 @@ public class CmsStaticExportManager implements I_CmsEventListener {
             // static export must always be checked with the export users permissions,
             // not the current users permissions
             CmsObject exportCms = OpenCms.initCmsObject(OpenCms.getDefaultUsers().getUserExport());
-            exportCms.getRequestContext().setSiteRoot(cms.getRequestContext().getSiteRoot());
+            exportCms.getRequestContext().setSiteRoot(siteRoot);
             // let's look up export property in VFS
             CmsResource exportRes = CmsDetailPageUtil.lookupPage(exportCms, vfsName);
             String exportValue = exportCms.readPropertyObject(
@@ -2270,9 +2266,7 @@ public class CmsStaticExportManager implements I_CmsEventListener {
                 if (CmsStringUtil.isNotEmpty(parameters)) {
                     // get the rfs base string without the parameter hashcode
                     String rfsBaseName = rfsName.substring(0, rfsName.lastIndexOf('_'));
-                    if (rfsBaseName.endsWith(DEFAULT_FILE)) {
-                        rfsBaseName = rfsBaseName.substring(0, rfsBaseName.length() - DEFAULT_FILE.length());
-                    } else if (rfsBaseName.endsWith(EXPORT_DEFAULT_FILE)) {
+                    if (rfsBaseName.endsWith(EXPORT_DEFAULT_FILE)) {
                         rfsBaseName = rfsBaseName.substring(0, rfsBaseName.length() - EXPORT_DEFAULT_FILE.length());
                     }
                     // get the vfs base name, which is later used to read the resource in the vfs
@@ -2588,11 +2582,13 @@ public class CmsStaticExportManager implements I_CmsEventListener {
                 }
                 count++;
                 if (report != null) {
-                    report.println(Messages.get().container(
-                        Messages.RPT_DELETE_EXPORT_FOLDER_3,
-                        new Integer(count),
-                        size,
-                        exportFolderName), I_CmsReport.FORMAT_NOTE);
+                    report.println(
+                        Messages.get().container(
+                            Messages.RPT_DELETE_EXPORT_FOLDER_3,
+                            new Integer(count),
+                            size,
+                            exportFolderName),
+                        I_CmsReport.FORMAT_NOTE);
                 } else {
                     // write log message
                     if (LOG.isInfoEnabled()) {
@@ -2618,11 +2614,13 @@ public class CmsStaticExportManager implements I_CmsEventListener {
                     }
                     count++;
                     if (report != null) {
-                        report.println(Messages.get().container(
-                            Messages.RPT_DELETE_EXPORT_FOLDER_3,
-                            new Integer(count),
-                            size,
-                            exportFolderName), I_CmsReport.FORMAT_NOTE);
+                        report.println(
+                            Messages.get().container(
+                                Messages.RPT_DELETE_EXPORT_FOLDER_3,
+                                new Integer(count),
+                                size,
+                                exportFolderName),
+                            I_CmsReport.FORMAT_NOTE);
                     } else {
                         // write log message
                         if (LOG.isInfoEnabled()) {

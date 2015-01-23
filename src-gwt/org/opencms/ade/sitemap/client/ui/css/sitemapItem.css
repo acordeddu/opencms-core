@@ -1,3 +1,7 @@
+@external vfsMode, navMode;
+
+.navMode{}
+
 .contentHide * {
 	visibility: hidden;
 }
@@ -46,11 +50,17 @@
 
 .notInNavigationEntry .itemTitle{
 	color: value("constants.css.textColorDisabled");
+	cursor: default;
 }
 
-@external vfsMode, navMode;
+.expiredOrNotReleased div.itemTitle{
+	font-style: italic;
+}
 
-.navMode {}  
+div.itemTitle{
+	cursor: text;
+}
+
 
 .vfsMode .notInNavigationEntry{
 	display: block;

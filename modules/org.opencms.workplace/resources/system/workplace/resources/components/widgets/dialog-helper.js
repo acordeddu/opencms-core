@@ -60,18 +60,16 @@ function _getScaleValue(scale, valueName) {
 			if (result.indexOf(",") != -1) {
 				result = result.substring(0, result.indexOf(","));
 			}
-			return result;
+			return parseInt(result);
 		}
 	}	
 	return null;
 }
 
 /**
- * Closes the dialog with the given id.
- * <p>
+ * Closes the dialog with the given id.<p>
  * 
- * @param fieldId
- *            the field id
+ * @param fieldId the field id
  * 
  * @return void
  */
@@ -81,21 +79,14 @@ function cmsCloseDialog(fieldId){
 }
 
 /**
- * Opens a modal iFrame dialog with the given parameters.
- * <p>
- * Call #cmsCloseDialog(fieldId) to close the dialog again.
- * <p>
+ * Opens a modal iFrame dialog with the given parameters.<p>
+ * Call #cmsCloseDialog(fieldId) to close the dialog again.<p>
  * 
- * @param title
- *            the dialog title
- * @param dialogUrl
- *            the iFrame URL
- * @param fieldId
- *            the field id
- * @param height
- *            the dialog height
- * @param width
- *            the dialog width
+ * @param title the dialog title
+ * @param dialogUrl the iFrame URL
+ * @param fieldId the field id
+ * @param height the dialog height
+ * @param width the dialog width
  * 
  * @return void
  */
@@ -137,26 +128,32 @@ function cmsOpenDialog(title, dialogUrl, fieldId, height, width){
 }
 
 /**
- * Opens a modal image preview.
- * <p>
+ * Opens a modal image preview.<p>
  * 
- * @param title
- *            the dialog title
- * @param context
- *            the context path
- * @param sitePath
- *            the site path of the resource to preview
+ * @param title the dialog title
+ * @param context the context path
+ * @param sitePath the site path of the resource to preview
  * 
  * @return void
  */
 function cmsOpenImagePreview(title, context, fieldId){
 	var sitePath=document.getElementById(fieldId).getAttribute('value');
+	
+	if (fieldId.indexOf('img.')==0 && sitePath.indexOf('__scale=')==-1){
+    	// in case of the CmsXmlVfsImageValue widget get the scale parameter
+        // from a separate input element
+        var scaleId='scale.'+fieldId.substring(4);
+        var scaleInput=document.getElementById(scaleId);
+        if (scaleInput!=null){
+            sitePath=sitePath+'?__scale='+scaleInput.getAttribute('value');
+        }
+    }
 	if (sitePath && $.trim(sitePath).charAt(0)=='/'){
 		sitePath=$.trim(sitePath);
 		var _dialogWidth=null;
 		var _boxWidth=null;
 		var _resizable=false;
-		if ($.browser.msie){
+		if ($.browser.msie && navigator.appVersion.match(/MSIE [6-8]./)){
 			// for IE dialog width 'auto' will not work, so try to read scaling
             // parameter to detect image width
 			var _scale=_getScaleParam(sitePath);
@@ -169,7 +166,7 @@ function cmsOpenImagePreview(title, context, fieldId){
 				// enable resize on dialog
 				_resizable=true;
 			}else{
-				_dialogWidth+=6;
+				_dialogWidth+=18;
 			}
 			
 			_boxWidth=_dialogWidth-6;
@@ -184,15 +181,13 @@ function cmsOpenImagePreview(title, context, fieldId){
 		});
 		var _imageBox=$('<div />', {'css':{
 		    'width': _boxWidth,
-	            'background-color': 'white',
-	            'padding': '6px',
-	            'text-align': 'center',
-	            '-moz-border-radius': '8px',
-	            '-webkit-border-radius': '8px',
-	            'border-radius': '8px',
-	            'border-radius': '8px'
-	        }
-		}).append(_previewImage).appendTo(document.body);
+	        'background-color': 'white',
+	        'padding': '6px',
+	        'text-align': 'center',
+	        '-moz-border-radius': '8px',
+	        '-webkit-border-radius': '8px',
+	        'border-radius': '8px'
+	    }}).append(_previewImage).appendTo(document.body);
 		_imageBox.dialog({
             /** title: title, */
 	    dialogClass: 'galleryDialog hideCaption',
@@ -228,15 +223,11 @@ function cmsOpenImagePreview(title, context, fieldId){
 
 
 /**
- * Opens a modal preview dialog.
- * <p>
+ * Opens a modal preview dialog.<p>
  * 
- * @param title
- *            the dialog title
- * @param context
- *            the context path
- * @param sitePath
- *            the site path of the resource to preview
+ * @param title the dialog title
+ * @param context the context path
+ * @param sitePath the site path of the resource to preview
  * 
  * @return void
  */

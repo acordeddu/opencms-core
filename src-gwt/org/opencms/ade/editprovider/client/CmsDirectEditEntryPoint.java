@@ -123,6 +123,9 @@ public class CmsDirectEditEntryPoint extends A_CmsEntryPoint {
     @Override
     public void onModuleLoad() {
 
+        if (!checkBuildId("org.opencms.ade.editprovider")) {
+            return;
+        }
         org.opencms.gwt.client.ui.css.I_CmsLayoutBundle.INSTANCE.directEditCss().ensureInjected();
         RootPanel.get().addStyleName(I_CmsToolbarButtonLayoutBundle.INSTANCE.toolbarButtonCss().toolbarSelection());
         RootPanel.get().addStyleName(
