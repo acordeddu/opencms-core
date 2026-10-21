@@ -1,0 +1,200 @@
+@external html-face, cmsState, previewVisible, gwt-TabLayoutPanel;
+
+div.editorGallery{
+	box-shadow: none;
+	border-radius: 0;
+}
+body.galleryBody, div.galleryBody {
+	margin:0px;
+	padding:0px;
+	overflow: hidden;
+}
+
+div.resultTabUpload{
+	float: right;
+	margin: 1px 1px 0 0;
+} 
+/* The height is set as inline style. */
+div.parentPanel {
+	position:relative;
+	overflow: hidden;
+}
+
+div.showPreview{
+	position: absolute;
+	top: 2px;
+	right: 0px;
+}
+
+div.parentPanel div.criteriaList {
+	border:1px solid value("constants.css.borderColor");
+	background-color: value("constants.css.backgroundColorDialog");
+	bottom: 6px;
+    left: 6px;
+    padding: 0 2px;
+    position: absolute;
+    right: 6px;
+    top: 41px;
+}
+
+div.parentPanel.previewVisible > div.gwt-TabLayoutPanel{
+	visibility:hidden;
+}
+
+div.selectboxWidth {
+	width: 350px;
+	display: inline-block;
+	margin-right: 3px;
+}
+
+div.listIcon {
+	margin:7px;
+}
+
+div.showParams {
+	background-image: value("constants.css.gradientListItem");
+	height: auto;
+	border:1px solid value("constants.css.borderColor");
+	margin-right:3px;
+	margin-bottom:3px;
+	padding: 0 20px 0 4px;
+	position: relative;
+}
+
+div.tabParamsPanel {
+	margin-bottom: 5px;
+	padding-right: 25px;
+}
+
+div.tabOptions {
+	clear: both;
+	margin-bottom: 5px;
+}
+
+div.paramsText {
+	max-width: 600px;
+	line-height: value("constants.css.inputInnerHeight");
+}
+
+.showParams, .paramsText {
+	display: inline-block;
+}
+
+div.showParams div.cmsState{
+	font-size:10px !important;
+	position: absolute !important;
+	right: 4px !important;
+	top: 8px !important;
+}
+
+div.searchTabRow {
+	clear: both;
+	height: value("constants.css.inputHeight");
+	margin-bottom: 5px;
+}
+
+div.searchTabFlexRow {
+    clear: both;
+    height: value("constants.css.inputHeight");
+    margin-bottom: 5px;
+    display: flex;
+    align-items: center;
+}
+
+.localeLabel {
+    margin-right: 5px;
+}
+
+div.searchTabFlexRow > div.column {
+    flex: 1;
+    display: flex;
+    align-items: center;  
+}
+
+
+div.searchTabRow div.searchTabInputWide div.html-face{
+	font-weight: normal;
+}
+div.searchTabRowRightAlign {
+	clear: both;
+	text-align: right;
+}
+div.searchTabLabelLeft {
+	width: 129px;
+	float: left;
+	margin-top: 2px;
+}
+div.searchTabLabelRight {
+	width: 134px;
+	float: right;
+	margin-top: 2px;
+}
+div.searchTabInputLeft {
+	width: 152px;
+	float: left;
+}
+div.searchTabInputRight {
+	width: 152px;
+	float: right;
+}
+div.searchTabInputWide {
+    flex: 1;
+}
+
+div.searchTabInputWide.hasButton > div{
+	margin-right: 24px;
+}
+div.searchTabInputWide.hasButton > div.cmsState{
+	margin: 4px 0px 0px 0px;
+	float:right;
+}
+
+div.searchTabBorderLayer {
+	position:absolute; 
+	top:0px; 
+	right:0px; 
+	bottom:0px; 
+	left:0px; 
+	padding: 5px;
+	border: 1px solid value("constants.css.borderColor");
+	background: value("constants.css.backgroundColorDialog");
+	margin: value("constants.css.defaultSpace");
+}
+div.searchTabDesMargin {
+	margin-bottom: 10px;
+}
+
+div.infoLabel {
+	float: right;
+	margin-top: 5px;
+	margin-right: 5px;
+	text-align: right;
+}
+
+div.quickFilterBox {
+	float: right;
+	width: 200px;
+	margin-right: 4px;
+}
+
+.typesImportant .shouldOnlyShowInFullTypeList {
+	display: none; 
+} 
+
+.typeModeSwitch * {
+	font-weight: normal !important; 
+} 
+
+.typeModeSwitch { 
+	margin-top: 3px; 
+	float: left; 
+}
+
+.groupHeader {
+    display: inline-block !important;
+    font-weight: bold;
+    font-size: 14px;
+    margin-left: 3px !important;
+    margin-top: 4px !important;
+    margin-bottom: 3px !important; 
+}

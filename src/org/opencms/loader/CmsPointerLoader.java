@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -14,12 +14,12 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * Lesser General Public License for more details.
  *
- * For further information about Alkacon Software GmbH, please see the
- * company website: http://www.alkacon.com
+ * For further information about Alkacon Software GmbH & Co. KG, please see the
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -30,6 +30,8 @@ package org.opencms.loader;
 import org.opencms.configuration.CmsParameterConfiguration;
 import org.opencms.file.CmsObject;
 import org.opencms.file.CmsResource;
+import org.opencms.i18n.CmsEncoder;
+import org.opencms.i18n.CmsLocaleManager;
 import org.opencms.main.CmsException;
 import org.opencms.main.CmsLog;
 import org.opencms.main.CmsRuntimeException;
@@ -48,8 +50,8 @@ import javax.servlet.http.HttpServletResponse;
 
 /**
  * Loader for "pointers" to resources in the VFS or to external resources.<p>
- * 
- * @since 6.0.0 
+ *
+ * @since 6.0.0
  */
 public class CmsPointerLoader extends CmsDumpLoader {
 
@@ -96,7 +98,7 @@ public class CmsPointerLoader extends CmsDumpLoader {
      * This is controlled by the configuration of this loader in
      * <code>opencms-system.xml</code>.
      * <p>
-     * 
+     *
      * @return <code>true</code> if parameters in requests to pointer resources
      *         are appended to the target link when redirecting.
      */
@@ -113,16 +115,15 @@ public class CmsPointerLoader extends CmsDumpLoader {
      * to handle conditional request parameter support for links to pointer
      * resources.
      * <p>
-     * 
+     *
      * @param pointerLink
      *            the link to append request parameters to
-     * 
+     *
      * @param req
      *            the original request to the pointer
-     * 
+     *
      * @return the pointer with the parameters
      */
-    @SuppressWarnings("unchecked")
     private static String appendLinkParams(String pointerLink, HttpServletRequest req) {
 
         String result = pointerLink;
@@ -148,7 +149,7 @@ public class CmsPointerLoader extends CmsDumpLoader {
         }
     }
 
-    /** 
+    /**
      * Destroy this ResourceLoder, this is a NOOP so far.<p>
      */
     @Override
@@ -167,7 +168,8 @@ public class CmsPointerLoader extends CmsDumpLoader {
         String element,
         Locale locale,
         HttpServletRequest req,
-        HttpServletResponse res) throws CmsException {
+        HttpServletResponse res)
+    throws CmsException {
 
         return cms.readFile(resource).getContents();
     }
@@ -179,7 +181,9 @@ public class CmsPointerLoader extends CmsDumpLoader {
     public byte[] export(CmsObject cms, CmsResource resource, HttpServletRequest req, HttpServletResponse res)
     throws IOException, CmsException {
 
-        String pointer = new String(cms.readFile(resource).getContents());
+        String pointer = new String(
+            cms.readFile(resource).getContents(),
+            CmsLocaleManager.getResourceEncoding(cms, resource));
         StringBuffer result = new StringBuffer(128);
         result.append(EXPORT_PREFIX);
         // conditionally append parameters of the current request:
@@ -195,9 +199,9 @@ public class CmsPointerLoader extends CmsDumpLoader {
     }
 
     /**
-     * Will always return <code>null</code> since this loader does not 
+     * Will always return <code>null</code> since this loader does not
      * need to be cnofigured.<p>
-     * 
+     *
      * @see org.opencms.configuration.I_CmsConfigurationParameterHandler#getConfiguration()
      */
     @Override
@@ -225,8 +229,8 @@ public class CmsPointerLoader extends CmsDumpLoader {
      * Return a String describing the ResourceLoader,
      * which is (localized to the system default locale)
      * <code>"The OpenCms default resource loader for pointers"</code>.<p>
-     * 
-     * @return a describing String for the ResourceLoader 
+     *
+     * @return a describing String for the ResourceLoader
      */
     @Override
     public String getResourceLoaderInfo() {
@@ -241,16 +245,15 @@ public class CmsPointerLoader extends CmsDumpLoader {
     public void initConfiguration() {
 
         if (CmsLog.INIT.isInfoEnabled()) {
-            CmsLog.INIT.info(Messages.get().getBundle().key(
-                Messages.INIT_LOADER_INITIALIZED_1,
-                this.getClass().getName()));
+            CmsLog.INIT.info(
+                Messages.get().getBundle().key(Messages.INIT_LOADER_INITIALIZED_1, this.getClass().getName()));
         }
     }
 
     /**
      * Returns true if request parameter support is disabled. <p>
      *
-     * @return 
+     * @return
      *      true if request parameter support is disabled
      *
      * @see org.opencms.loader.I_CmsResourceLoader#isStaticExportEnabled()
@@ -300,18 +303,22 @@ public class CmsPointerLoader extends CmsDumpLoader {
             return;
         }
 
-        String pointer = new String(cms.readFile(resource).getContents());
+        String pointer = new String(
+            cms.readFile(resource).getContents(),
+            CmsLocaleManager.getResourceEncoding(cms, resource));
         if (CmsStringUtil.isEmptyOrWhitespaceOnly(pointer)) {
-            throw new CmsLoaderException(Messages.get().container(
-                Messages.ERR_INVALID_POINTER_FILE_1,
-                resource.getName()));
+            throw new CmsLoaderException(
+                Messages.get().container(Messages.ERR_INVALID_POINTER_FILE_1, resource.getName()));
         }
         if (pointer.indexOf(':') < 0) {
             pointer = OpenCms.getLinkManager().substituteLink(cms, pointer);
+        } else {
+            pointer = CmsEncoder.convertHostToPunycode(pointer);
         }
 
         // conditionally append parameters of the current request:
         pointer = appendLinkParams(pointer, req);
+
         res.sendRedirect(pointer);
     }
 

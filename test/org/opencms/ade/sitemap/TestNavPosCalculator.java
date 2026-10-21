@@ -1,8 +1,8 @@
 /*
  * This library is part of OpenCms -
  * the Open Source Content Management System
- * 
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ *
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -15,11 +15,11 @@
  * Lesser General Public License for more details.
  *
  * For further information about Alkacon Software, please see the
- * company website: http://www.alkacon.com
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -30,7 +30,7 @@ package org.opencms.ade.sitemap;
 import org.opencms.file.CmsPropertyDefinition;
 import org.opencms.file.CmsResource;
 import org.opencms.jsp.CmsJspNavElement;
-import org.opencms.test.OpenCmsTestCase;
+import org.opencms.test.OpenCmsTestRunner;
 import org.opencms.util.CmsUUID;
 
 import java.util.ArrayList;
@@ -38,25 +38,23 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.junit.jupiter.api.MethodOrderer;
+import org.junit.jupiter.api.Order;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestMethodOrder;
+
 /**
  * Unit test for the ADE sitemap navigation position calculation algorithm.<p>
  */
-public class TestNavPosCalculator extends OpenCmsTestCase {
-
-    /**
-     * Test constructor.<p>
-     */
-    public TestNavPosCalculator() {
-
-        super("TestNavPosCalculator");
-    }
+@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
+public class TestNavPosCalculator extends OpenCmsTestRunner {
 
     /**
      * Helper method to create a list.<p>
-     * 
+     *
      * @param args the list elements
-     *  
-     * @return the list of elements 
+     *
+     * @return the list of elements
      */
     private static <X> List<X> list(X... args) {
 
@@ -70,6 +68,8 @@ public class TestNavPosCalculator extends OpenCmsTestCase {
     /**
      * Tests filtering of non-navigation entries from the navigation list.<p>
      */
+    @Test
+    @Order(4)
     public void testFilterNonNavEntries() {
 
         CmsJspNavElement a = dummyNav("foo", 1);
@@ -85,6 +85,8 @@ public class TestNavPosCalculator extends OpenCmsTestCase {
     /**
      * Tests insertion between entries with the same nav pos value.<p>
      */
+    @Test
+    @Order(9)
     public void testInserBetweenEquals() {
 
         CmsJspNavElement a = dummyNav("foo", 1);
@@ -99,8 +101,10 @@ public class TestNavPosCalculator extends OpenCmsTestCase {
 
     /**
      * Tests insertion after a Float.MAX_VALUE navigation entry.<p>
-     * 
+     *
      */
+    @Test
+    @Order(7)
     public void testInsertAfterMax() {
 
         CmsJspNavElement a = dummyNav("foo", 1);
@@ -119,6 +123,8 @@ public class TestNavPosCalculator extends OpenCmsTestCase {
     /**
      * Tests insertion between two Float.MAX_VALUE navigation entries.<p>
      */
+    @Test
+    @Order(2)
     public void testInsertAtMax() {
 
         CmsJspNavElement a = dummyNav("foo", 1);
@@ -136,6 +142,8 @@ public class TestNavPosCalculator extends OpenCmsTestCase {
     /**
      * Tests insertion before a Float.MAX_VALUE navigation entry.<p>
      */
+    @Test
+    @Order(5)
     public void testInsertBeforeMax() {
 
         CmsJspNavElement a = dummyNav("foo", 1);
@@ -153,6 +161,8 @@ public class TestNavPosCalculator extends OpenCmsTestCase {
     /**
      * Tests insertion between navigation entries with different NavPos values.<p>
      */
+    @Test
+    @Order(6)
     public void testInsertBetweenBlocks() {
 
         CmsJspNavElement a = dummyNav("foo", 1);
@@ -174,6 +184,8 @@ public class TestNavPosCalculator extends OpenCmsTestCase {
     /**
      * Tests insertion at the end of the navigation.<p>
      */
+    @Test
+    @Order(3)
     public void testInsertEndNormal() {
 
         CmsJspNavElement a = dummyNav("foo", 1);
@@ -192,6 +204,8 @@ public class TestNavPosCalculator extends OpenCmsTestCase {
     /**
      * Tests insertion at the front of the  navigation.<p>
      */
+    @Test
+    @Order(1)
     public void testInsertFrontNormal() {
 
         CmsJspNavElement a = dummyNav("foo", 1);
@@ -207,8 +221,10 @@ public class TestNavPosCalculator extends OpenCmsTestCase {
     }
 
     /**
-     * Tests the normal insertion case.<p> 
+     * Tests the normal insertion case.<p>
      */
+    @Test
+    @Order(8)
     public void testInsertNormal() {
 
         CmsJspNavElement a = dummyNav("foo", 1);
@@ -225,10 +241,10 @@ public class TestNavPosCalculator extends OpenCmsTestCase {
 
     /**
      * Helper method to check whether a list of navigation entries have increasing nav pos values.<p>
-     * 
+     *
      * @param navs the list of navigation entries
-     *  
-     * @return true if the navigation entries have increasing nav pos values 
+     *
+     * @return true if the navigation entries have increasing nav pos values
      */
     private boolean checkIncreasing(List<CmsJspNavElement> navs) {
 
@@ -245,13 +261,13 @@ public class TestNavPosCalculator extends OpenCmsTestCase {
 
     /**
      * Performs a sanity check after a navigation entry insertion.<p>
-     * 
-     * This checks whether the list of entries have non-decreasing navigation positions and 
+     *
+     * This checks whether the list of entries have non-decreasing navigation positions and
      * whether the sequence (left neighbor of inserted entry, inserted entry, right neighbor of inserted entry)
      * have increasing navigation positions.
-     * 
-     * @param navs the list of navigation entries 
-     * @param insertPosition the insertion position 
+     *
+     * @param navs the list of navigation entries
+     * @param insertPosition the insertion position
      */
     private void checkIntegrity(List<CmsJspNavElement> navs, int insertPosition) {
 
@@ -270,10 +286,10 @@ public class TestNavPosCalculator extends OpenCmsTestCase {
 
     /**
      * Helper method to check whether a list of navigation entries have non-decreasing navigation positions.<p>
-     * 
-     * @param navs the navigation entries 
-     * 
-     * @return true if the sequence of navigation positions is non-decreasing 
+     *
+     * @param navs the navigation entries
+     *
+     * @return true if the sequence of navigation positions is non-decreasing
      */
     private boolean checkNonDecreasing(List<CmsJspNavElement> navs) {
 
@@ -288,13 +304,13 @@ public class TestNavPosCalculator extends OpenCmsTestCase {
         return true;
     }
 
-    /** 
-     * Creates a dummy navigation entry 
-     * 
-     * @param name the name of the navigation entry 
+    /**
+     * Creates a dummy navigation entry.<p>
+     *
+     * @param name the name of the navigation entry
      * @param navPos the navigation position
-     *  
-     * @return the dummy navigation entry 
+     *
+     * @return the dummy navigation entry
      */
     private CmsJspNavElement dummyNav(String name, float navPos) {
 
@@ -306,10 +322,10 @@ public class TestNavPosCalculator extends OpenCmsTestCase {
 
     /**
      * Helper method to create a dummy resource.<p>
-     * 
-     * @param path the resource path 
-     * 
-     * @return the dummyy resource 
+     *
+     * @param path the resource path
+     *
+     * @return the dummyy resource
      */
     private CmsResource dummyRes(String path) {
 
@@ -334,12 +350,12 @@ public class TestNavPosCalculator extends OpenCmsTestCase {
             0);
     }
 
-    /** 
+    /**
      * Helper method for generating a dummy CmsJspNavElement instance which is not in the navigation.<p>
-     * 
-     * @param name the name of the navigation entry 
-     * 
-     * @return the dummy navigation entry 
+     *
+     * @param name the name of the navigation entry
+     *
+     * @return the dummy navigation entry
      */
     private CmsJspNavElement nonNav(String name) {
 
@@ -347,10 +363,10 @@ public class TestNavPosCalculator extends OpenCmsTestCase {
         return new CmsJspNavElement(name, dummyRes(name), props);
     }
 
-    /** 
+    /**
      * Helper method for printing a list of navigation entries.<p>
-     * 
-     * @param navs the list of navigation entries 
+     *
+     * @param navs the list of navigation entries
      */
     private void printNav(List<CmsJspNavElement> navs) {
 

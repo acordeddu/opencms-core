@@ -1,0 +1,81 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+	xmlns:g="urn:import:com.google.gwt.user.client.ui" 	
+	xmlns:cms="urn:import:org.opencms.gwt.client.ui">
+	
+	<ui:style gss="true">
+	
+		@external oc-hide-availability-badge, oc-option-bar, oc-availability-icon;
+		.availabilityBadge  {
+			color: white;
+			font-weight: bold;
+			position: absolute;
+			top: 2px;
+			right: 22px;
+			pointer-events: none;
+		}
+		
+		
+	.oc-availability-icon:after { 
+		font-family: opencms-font;
+	    display: inline-block;
+    	vertical-align: inherit;
+    	font-style: normal;
+    	font-size: 11px;
+    	font-weight: normal;
+    	font-variant: normal;
+    	text-transform: none;
+    	line-height: inherit;
+    	-webkit-font-smoothing: antialiased;
+    	-moz-osx-font-smoothing: grayscale;
+    	position: absolute;
+    	left: 5px;
+    }
+    
+    .release .oc-availability-icon:after {
+    	content: "\e627";
+    	
+    }
+    
+    .expire .oc-availability-icon:after {
+
+    	content: "\e629";	 	 
+    }
+    
+		.availabilityBadge > * {
+    		padding-left: 18px;
+    		padding-right: 5px;
+    		white-space: nowrap;
+    		font-size: 12px;
+		}
+
+		.availabilityBadge > *:first-child {
+    		border-top-left-radius: 5px;
+    		border-top-right-radius: 5px;
+		}
+
+		.availabilityBadge > *:last-child {
+    		border-bottom-left-radius: 5px;
+    		border-bottom-right-radius: 5px;
+		}
+
+		.availabilityBadge .release {
+    		background-color: #008489;
+		}
+
+		.availabilityBadge .expire {
+    		background-color: #b31b34;
+		}
+
+
+		*[class*=cmsHovering] .availabilityBadge, .oc-option-bar.oc-hide-availability-badge .availabilityBadge {
+    		display: none;
+		}
+
+	</ui:style>
+	<g:FlowPanel ui:field="m_content" addStyleNames="{style.availabilityBadge}">
+		<g:HTML ui:field="m_releaseLabel" addStyleNames="{style.release}" />
+		<g:HTML ui:field="m_expireLabel" addStyleNames="{style.expire}" />
+	</g:FlowPanel>
+	
+</ui:UiBinder> 

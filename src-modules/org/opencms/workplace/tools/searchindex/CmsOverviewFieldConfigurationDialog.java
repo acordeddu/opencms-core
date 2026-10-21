@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -14,12 +14,12 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * Lesser General Public License for more details.
  *
- * For further information about Alkacon Software GmbH, please see the
- * company website: http://www.alkacon.com
+ * For further information about Alkacon Software GmbH & Co. KG, please see the
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -36,16 +36,16 @@ import javax.servlet.http.HttpServletResponse;
 import javax.servlet.jsp.PageContext;
 
 /**
- * 
- * Widget dialog for an overview of a <code>{@link org.opencms.search.fields.CmsSearchFieldConfiguration}</code>.<p> 
- * 
+ *
+ * Widget dialog for an overview of a <code>{@link org.opencms.search.fields.CmsLuceneFieldConfiguration}</code>.<p>
+ *
  * @since 6.5.5
  */
 public class CmsOverviewFieldConfigurationDialog extends A_CmsFieldConfigurationDialog {
 
     /**
      * Public constructor with JSP action element.<p>
-     * 
+     *
      * @param jsp an initialized JSP action element
      */
     public CmsOverviewFieldConfigurationDialog(CmsJspActionElement jsp) {
@@ -55,7 +55,7 @@ public class CmsOverviewFieldConfigurationDialog extends A_CmsFieldConfiguration
 
     /**
      * Public constructor with JSP variables.<p>
-     * 
+     *
      * @param context the JSP page context
      * @param req the JSP request
      * @param res the JSP response
@@ -67,12 +67,13 @@ public class CmsOverviewFieldConfigurationDialog extends A_CmsFieldConfiguration
 
     /**
      * Creates the dialog HTML for all defined widgets of the named dialog (page).<p>
-     * 
+     *
      * This overwrites the method from the super class to create a layout variation for the widgets.<p>
-     * 
+     *
      * @param dialog the dialog (page) to get the HTML for
      * @return the dialog HTML for all defined widgets of the named dialog (page)
      */
+    @Override
     protected String createDialogHtml(String dialog) {
 
         StringBuffer result = new StringBuffer(1024);
@@ -99,6 +100,7 @@ public class CmsOverviewFieldConfigurationDialog extends A_CmsFieldConfiguration
     /**
      * @see org.opencms.workplace.CmsWidgetDialog#defaultActionHtmlEnd()
      */
+    @Override
     protected String defaultActionHtmlEnd() {
 
         return "";
@@ -107,6 +109,7 @@ public class CmsOverviewFieldConfigurationDialog extends A_CmsFieldConfiguration
     /**
      * @see org.opencms.workplace.CmsWidgetDialog#defineWidgets()
      */
+    @Override
     protected void defineWidgets() {
 
         super.defineWidgets();

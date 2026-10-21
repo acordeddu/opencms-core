@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -15,11 +15,11 @@
  * Lesser General Public License for more details.
  *
  * For further information about Alkacon Software, please see the
- * company website: http://www.alkacon.com
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -27,42 +27,33 @@
 
 package org.opencms.file;
 
-import org.opencms.test.OpenCmsTestCase;
-import org.opencms.test.OpenCmsTestProperties;
+import org.opencms.test.OpenCmsTestRunner;
 
-import junit.framework.Test;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInfo;
 
 /**
  * Unit tests for the counters.<p>
  */
-public class TestCounters extends OpenCmsTestCase {
+public class TestCounters extends OpenCmsTestRunner {
 
     /**
-     * Default JUnit constructor.<p>
-     * 
-     * @param arg0 JUnit parameters
+     * @see org.opencms.test.OpenCmsTestRunner#$openCmsSetUp(org.junit.jupiter.api.TestInfo)
      */
-    public TestCounters(String arg0) {
+    @Override
+    @BeforeAll
+    public void $openCmsSetUp(TestInfo testInfo) {
 
-        super(arg0);
-    }
-
-    /**
-     * Test suite for this test class.<p> 
-     * 
-     * @return the test suite
-     */
-    public static Test suite() {
-
-        OpenCmsTestProperties.initialize(org.opencms.test.AllTests.TEST_PROPERTIES_PATH);
-        return generateSetupTestWrapper(TestCounters.class, "systemtest", "/");
+        setupOpenCms(testInfo, "systemtest", "/");
     }
 
     /**
      * Tests reading a single counter.<p>
-     * 
-     * @throws Exception when an error occurs 
+     *
+     * @throws Exception when an error occurs
      */
+    @Test
     public void testReadCounter() throws Exception {
 
         CmsObject cms = getCmsObject();
@@ -74,9 +65,10 @@ public class TestCounters extends OpenCmsTestCase {
 
     /**
      * Tests reading two counters in interleaved order.<p>
-     * 
-     * @throws Exception when an error occurs 
+     *
+     * @throws Exception when an error occurs
      */
+    @Test
     public void testReadCountersInterleaved() throws Exception {
 
         CmsObject cms = getCmsObject();

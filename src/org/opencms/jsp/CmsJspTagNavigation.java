@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -14,12 +14,12 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * Lesser General Public License for more details.
  *
- * For further information about Alkacon Software GmbH, please see the
- * company website: http://www.alkacon.com
+ * For further information about Alkacon Software GmbH & Co. KG, please see the
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -31,20 +31,27 @@ import org.opencms.file.CmsObject;
 import org.opencms.flex.CmsFlexController;
 import org.opencms.jsp.util.CmsJspNavigationBean;
 import org.opencms.main.CmsIllegalArgumentException;
+import org.opencms.main.CmsLog;
 import org.opencms.util.CmsStringUtil;
+
+import java.util.Locale;
 
 import javax.servlet.jsp.PageContext;
 
+import org.apache.commons.lang3.LocaleUtils;
+import org.apache.commons.logging.Log;
+
 /**
- * Implementation of the <code>&lt;cms:navigation var="..." /&gt;</code> tag, 
+ * Implementation of the <code>&lt;cms:navigation var="..." /&gt;</code> tag,
  * used to access OpenCms VFS navigation information on a JSP with the EL.<p>
- * 
+ *
  * @since 8.0
  */
 public class CmsJspTagNavigation extends CmsJspScopedVarBodyTagSuport {
 
     /** Constants for <code>type</code> attribute interpretation. */
     public enum Type {
+
         /** Bread crumb navigation. */
         breadCrumb,
         /** Navigation for folder. */
@@ -58,11 +65,11 @@ public class CmsJspTagNavigation extends CmsJspScopedVarBodyTagSuport {
 
         /**
          * Parses a string into an enumeration element.<p>
-         * 
+         *
          * @param name the name of the enumeration element
-         * 
+         *
          * @return the enumeration element with the given name
-         * 
+         *
          * @throws IllegalArgumentException in case of an invalid enumeration name
          */
         public static Type parse(String name) throws IllegalArgumentException {
@@ -70,6 +77,9 @@ public class CmsJspTagNavigation extends CmsJspScopedVarBodyTagSuport {
             return Enum.valueOf(Type.class, name);
         }
     }
+
+    /** The log object for this class. */
+    private static final Log LOG = CmsLog.getLog(CmsJspTagNavigation.class);
 
     /** Serial version UID required for safe serialization. */
     private static final long serialVersionUID = 8589202895748764705L;
@@ -92,8 +102,11 @@ public class CmsJspTagNavigation extends CmsJspScopedVarBodyTagSuport {
     /** The navigation type. */
     protected Type m_type;
 
+    /** The locale for which the property should be read. */
+    protected Locale m_locale;
+
     /**
-     * Empty constructor, required for JSP tags.<p> 
+     * Empty constructor, required for JSP tags.<p>
      */
     public CmsJspTagNavigation() {
 
@@ -101,8 +114,8 @@ public class CmsJspTagNavigation extends CmsJspScopedVarBodyTagSuport {
     }
 
     /**
-     * Constructor used for scriptlet code.<p> 
-     * 
+     * Constructor used for scriptlet code.<p>
+     *
      * @param context the JSP page context
      */
     public CmsJspTagNavigation(PageContext context) {
@@ -124,7 +137,7 @@ public class CmsJspTagNavigation extends CmsJspScopedVarBodyTagSuport {
 
     /**
      * Returns the (optional) end level for the navigation.<p>
-     * 
+     *
      * @return the (optional) end level for the navigation
      */
     public String getEndLevel() {
@@ -134,7 +147,7 @@ public class CmsJspTagNavigation extends CmsJspScopedVarBodyTagSuport {
 
     /**
      * Returns the optional parameter for the navigation.<p>
-     * 
+     *
      * @return the optional parameter for the navigation
      */
     public String getParam() {
@@ -144,7 +157,7 @@ public class CmsJspTagNavigation extends CmsJspScopedVarBodyTagSuport {
 
     /**
      * Returns the (optional) resource for the navigation.<p>
-     * 
+     *
      * @return the (optional) resource for the navigation
      */
     public String getResource() {
@@ -154,7 +167,7 @@ public class CmsJspTagNavigation extends CmsJspScopedVarBodyTagSuport {
 
     /**
      * Returns the (optional) start level for the navigation.<p>
-     * 
+     *
      * @return the (optional) start level for the navigation
      */
     public String getStartLevel() {
@@ -164,9 +177,9 @@ public class CmsJspTagNavigation extends CmsJspScopedVarBodyTagSuport {
 
     /**
      * Returns the selected navigation type.<p>
-     * 
+     *
      * This must match one of the elements in {@link Type}.<p>
-     * 
+     *
      * @return the selected navigation type
      */
     public String getType() {
@@ -190,7 +203,7 @@ public class CmsJspTagNavigation extends CmsJspScopedVarBodyTagSuport {
 
     /**
      * Sets the (optional) end level for the navigation.<p>
-     * 
+     *
      * @param endLevel the (optional) end level for the navigation
      */
     public void setEndLevel(String endLevel) {
@@ -201,8 +214,23 @@ public class CmsJspTagNavigation extends CmsJspScopedVarBodyTagSuport {
     }
 
     /**
+     * Sets the locale for which the property should be read.
+     *
+     * @param locale the locale for which the property should be read.
+     */
+    public void setLocale(String locale) {
+
+        try {
+            m_locale = LocaleUtils.toLocale(locale);
+        } catch (IllegalArgumentException e) {
+            LOG.error(Messages.get().getBundle().key(Messages.ERR_TAG_INVALID_LOCALE_1, "cms:navigation"), e);
+            m_locale = null;
+        }
+    }
+
+    /**
      * Sets the optional parameter for the navigation.<p>
-     * 
+     *
      * @param param the optional parameter for the navigation to set
      */
     public void setParam(String param) {
@@ -214,7 +242,7 @@ public class CmsJspTagNavigation extends CmsJspScopedVarBodyTagSuport {
 
     /**
      * Sets the (optional) resource for the navigation.<p>
-     * 
+     *
      * @param resource the (optional) resource for the navigation
      */
     public void setResource(String resource) {
@@ -226,7 +254,7 @@ public class CmsJspTagNavigation extends CmsJspScopedVarBodyTagSuport {
 
     /**
      * Sets the (optional) start level for the navigation.<p>
-     * 
+     *
      * @param startLevel the (optional) start level for the navigation
      */
     public void setStartLevel(String startLevel) {
@@ -238,9 +266,9 @@ public class CmsJspTagNavigation extends CmsJspScopedVarBodyTagSuport {
 
     /**
      * Sets the selected navigation type.<p>
-     * 
+     *
      * This must match one of the elements in {@link Type}.<p>
-     * 
+     *
      * @param type the navigation type to set
      */
     public void setType(String type) {
@@ -251,7 +279,7 @@ public class CmsJspTagNavigation extends CmsJspScopedVarBodyTagSuport {
     }
 
     /**
-     * Initializes this formatter tag.<p> 
+     * Initializes this formatter tag.<p>
      */
     protected void init() {
 
@@ -263,7 +291,14 @@ public class CmsJspTagNavigation extends CmsJspScopedVarBodyTagSuport {
         int endLevel = m_endLevel == null ? Integer.MIN_VALUE : Integer.parseInt(m_endLevel);
 
         // load navigation bean in the JSP context
-        CmsJspNavigationBean bean = new CmsJspNavigationBean(m_cms, m_type, startLevel, endLevel, m_resource, m_param);
+        CmsJspNavigationBean bean = new CmsJspNavigationBean(
+            m_cms,
+            m_type,
+            startLevel,
+            endLevel,
+            m_resource,
+            m_param,
+            m_locale);
         storeAttribute(getVar(), bean);
     }
 }

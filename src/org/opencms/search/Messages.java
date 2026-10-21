@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -14,12 +14,12 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * Lesser General Public License for more details.
  *
- * For further information about Alkacon Software GmbH, please see the
- * company website: http://www.alkacon.com
+ * For further information about Alkacon Software GmbH & Co. KG, please see the
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -31,9 +31,9 @@ import org.opencms.i18n.A_CmsMessageBundle;
 import org.opencms.i18n.I_CmsMessageBundle;
 
 /**
- * Convenience class to access the localized messages of this OpenCms package.<p> 
- * 
- * @since 6.0.0 
+ * Convenience class to access the localized messages of this OpenCms package.<p>
+ *
+ * @since 6.0.0
  */
 public final class Messages extends A_CmsMessageBundle {
 
@@ -56,6 +56,9 @@ public final class Messages extends A_CmsMessageBundle {
     public static final String ERR_DOCTYPE_NO_CLASS_DEF_0 = "ERR_DOCTYPE_NO_CLASS_DEF_0";
 
     /** Message constant for key in the resource bundle. */
+    public static final String ERR_SPELLCHECK_CORE_NOT_AVAILABLE_1 = "ERR_SPELLCHECK_CORE_NOT_AVAILABLE_1";
+
+    /** Message constant for key in the resource bundle. */
     public static final String ERR_DOCTYPE_NO_NAME_0 = "ERR_DOCTYPE_NO_NAME_0";
 
     /** Message constant for key in the resource bundle. */
@@ -65,7 +68,13 @@ public final class Messages extends A_CmsMessageBundle {
     public static final String ERR_EVENT_REBUILD_SEARCHINDEX_1 = "ERR_EVENT_REBUILD_SEARCHINDEX_1";
 
     /** Message constant for key in the resource bundle. */
-    public static final String ERR_FIELD_CONFIGURATION_IS_EMPTY_1 = "ERR_FIELD_CONFIGURATION_IS_EMPTY_1";
+    public static final String LOG_EVENT_REINDEX_STARTED_0 = "LOG_EVENT_REINDEX_STARTED_0";
+
+    /** Message constant for key in the resource bundle. */
+    public static final String LOG_EVENT_REINDEX_FINISHED_0 = "LOG_EVENT_REINDEX_FINISHED_0";
+
+    /** Message constant for key in the resource bundle. */
+    public static final String ERR_EVENT_REINDEX_FAILED_1 = "ERR_EVENT_REINDEX_FAILED_1";
 
     /** Message constant for key in the resource bundle. */
     public static final String ERR_FIELD_CONFIGURATION_UNKNOWN_2 = "ERR_FIELD_CONFIGURATION_UNKNOWN_2";
@@ -149,6 +158,15 @@ public final class Messages extends A_CmsMessageBundle {
     public static final String ERR_SEARCHINDEX_CREATE_MISSING_NAME_0 = "ERR_SEARCHINDEX_CREATE_MISSING_NAME_0";
 
     /** Message constant for key in the resource bundle. */
+    public static final String ERR_SOLR_CORE_CONTAINER_NOT_CREATED_1 = "ERR_SOLR_CORE_CONTAINER_NOT_CREATED_1";
+
+    /** Name of the used resource bundle. */
+    public static final String ERR_SOLR_NOT_ENABLED_0 = "ERR_SOLR_NOT_ENABLED_0";
+
+    /** Message constant for key in the resource bundle. */
+    public static final String ERR_SOLR_SERVER_NOT_CREATED_3 = "ERR_SOLR_SERVER_NOT_CREATED_3";
+
+    /** Message constant for key in the resource bundle. */
     public static final String GUI_HELP_BUTTON_BACK_0 = "GUI_HELP_BUTTON_BACK_0";
 
     /** Message constant for key in the resource bundle. */
@@ -179,6 +197,12 @@ public final class Messages extends A_CmsMessageBundle {
     public static final String GUI_HELP_SEARCH_UNAVAILABLE_0 = "GUI_HELP_SEARCH_UNAVAILABLE_0";
 
     /** Message constant for key in the resource bundle. */
+    public static final String GUI_REINDEXING_SUCCESS_0 = "GUI_REINDEXING_SUCCESS_0";
+
+    /** Message constant for key in the resource bundle. */
+    public static final String GUI_REINDEXING_FAILED_0 = "GUI_REINDEXING_FAILED_0";
+
+    /** Message constant for key in the resource bundle. */
     public static final String INIT_ADD_ANALYZER_2 = "INIT_ADD_ANALYZER_2";
 
     /** Message constant for key in the resource bundle. */
@@ -204,6 +228,18 @@ public final class Messages extends A_CmsMessageBundle {
 
     /** Message constant for key in the resource bundle. */
     public static final String INIT_SHUTDOWN_MANAGER_0 = "INIT_SHUTDOWN_MANAGER_0";
+
+    /** Message constant for key in the resource bundle. */
+    public static final String INIT_SOLR_CORE_CONTAINER_CREATED_2 = "INIT_SOLR_CORE_CONTAINER_CREATED_2";
+
+    /** Message constant for key in the resource bundle. */
+    public static final String INIT_SOLR_INDEX_DIR_CREATED_2 = "INIT_SOLR_INDEX_DIR_CREATED_2";
+
+    /** Message constant for key in the resource bundle. */
+    public static final String INIT_SOLR_SERVER_CREATED_1 = "INIT_SOLR_SERVER_CREATED_1";
+
+    /** Message constant for key in the resource bundle. */
+    public static final String INIT_SOLR_SHUTDOWN_SUCCESS_0 = "INIT_SOLR_SHUTDOWN_SUCCESS_0";
 
     /** Message constant for key in the resource bundle. */
     public static final String INIT_START_SEARCH_CONFIG_0 = "INIT_START_SEARCH_CONFIG_0";
@@ -236,7 +272,16 @@ public final class Messages extends A_CmsMessageBundle {
     public static final String LOG_EVENT_REBUILD_SEARCHINDEX_1 = "LOG_EVENT_REBUILD_SEARCHINDEX_1";
 
     /** Message constant for key in the resource bundle. */
+    public static final String LOG_FIELD_CONFIGURATION_IS_EMPTY_1 = "LOG_FIELD_CONFIGURATION_IS_EMPTY_1";
+
+    /** Message constant for key in the resource bundle. */
     public static final String LOG_FIELDS_QUERY_1 = "LOG_FIELDS_QUERY_1";
+
+    /** Message constant for key in the resource bundle. */
+    public static final String LOG_GALLERIES_COULD_NOT_EVALUATE_SUBSITE_1 = "LOG_GALLERIES_COULD_NOT_EVALUATE_SUBSITE_1";
+
+    /** Message constant for key in the resource bundle. */
+    public static final String LOG_GALLERIES_NO_REFERENCE_PATH_PROVIDED_0 = "LOG_GALLERIES_NO_REFERENCE_PATH_PROVIDED_0";
 
     /** Message constant for key in the resource bundle. */
     public static final String LOG_INDEX_ACCESS_FAILED_1 = "LOG_INDEX_ACCESS_FAILED_1";
@@ -263,10 +308,16 @@ public final class Messages extends A_CmsMessageBundle {
     public static final String LOG_INDEXER_CREATION_FAILED_1 = "LOG_INDEXER_CREATION_FAILED_1";
 
     /** Message constant for key in the resource bundle. */
+    public static final String LOG_INDEXING_DEFAULT_FILE_FOR_FOLDER_3 = "LOG_INDEXING_DEFAULT_FILE_FOR_FOLDER_3";
+
+    /** Message constant for key in the resource bundle. */
     public static final String LOG_INDEXING_TIMEOUT_1 = "LOG_INDEXING_TIMEOUT_1";
 
     /** Message constant for key in the resource bundle. */
     public static final String LOG_INDEXING_WITH_FACTORY_2 = "LOG_INDEXING_WITH_FACTORY_2";
+
+    /** Name of the used resource bundle. */
+    public static final String LOG_INVALID_FIELD_CLASS_1 = "LOG_INVALID_FIELD_CLASS_1";
 
     /** Message constant for key in the resource bundle. */
     public static final String LOG_INVALID_PARAM_3 = "LOG_INVALID_PARAM_3";
@@ -329,6 +380,8 @@ public final class Messages extends A_CmsMessageBundle {
     public static final String LOG_PARSE_OFFLINE_UPDATE_FAILED_2 = "LOG_PARSE_OFFLINE_UPDATE_FAILED_2";
 
     /** Message constant for key in the resource bundle. */
+    public static final String LOG_PARSE_MAX_INDEX_WAITTIME_FAILED_2 = "LOG_PARSE_MAX_INDEX_WAITTIME_FAILED_2";
+    /** Message constant for key in the resource bundle. */
     public static final String LOG_PARSE_TIMEOUT_FAILED_2 = "LOG_PARSE_TIMEOUT_FAILED_2";
 
     /** Message constant for key in the resource bundle. */
@@ -377,6 +430,9 @@ public final class Messages extends A_CmsMessageBundle {
     public static final String LOG_SEARCHING_FAILED_0 = "LOG_SEARCHING_FAILED_0";
 
     /** Message constant for key in the resource bundle. */
+    public static final String LOG_SKIP_REBUILD_FOR_MODE_NEVER_1 = "LOG_SKIP_REBUILD_FOR_MODE_NEVER_1";
+
+    /** Message constant for key in the resource bundle. */
     public static final String LOG_SKIPPED_1 = "LOG_SKIPPED_1";
 
     /** Message constant for key in the resource bundle. */
@@ -384,6 +440,9 @@ public final class Messages extends A_CmsMessageBundle {
 
     /** Message constant for key in the resource bundle. */
     public static final String LOG_THREADS_FINISHED_0 = "LOG_THREADS_FINISHED_0";
+
+    /** Message constant for key in the resource bundle. */
+    public static final String LOG_UNABLE_TO_READ_DEFAULT_FILE_FOR_FOLDER_2 = "LOG_UNABLE_TO_READ_DEFAULT_FILE_FOR_FOLDER_2";
 
     /** Message constant for key in the resource bundle. */
     public static final String LOG_UNABLE_TO_READ_PROPERTY_1 = "LOG_UNABLE_TO_READ_PROPERTY_1";
@@ -455,7 +514,7 @@ public final class Messages extends A_CmsMessageBundle {
 
     /**
      * Returns an instance of this localized message accessor.<p>
-     * 
+     *
      * @return an instance of this localized message accessor
      */
     public static I_CmsMessageBundle get() {
@@ -465,7 +524,7 @@ public final class Messages extends A_CmsMessageBundle {
 
     /**
      * Returns the bundle name for this OpenCms package.<p>
-     * 
+     *
      * @return the bundle name for this OpenCms package
      */
     public String getBundleName() {

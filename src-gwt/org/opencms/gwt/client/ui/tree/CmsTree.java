@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -15,11 +15,11 @@
  * Lesser General Public License for more details.
  *
  * For further information about Alkacon Software, please see the
- * company website: http://www.alkacon.com
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -31,9 +31,11 @@ import org.opencms.gwt.client.dnd.CmsDNDHandler.Orientation;
 import org.opencms.gwt.client.ui.CmsList;
 import org.opencms.gwt.client.util.CmsDebugLog;
 import org.opencms.gwt.client.util.CmsDomUtil;
-import org.opencms.util.CmsStringUtil;
 
 import com.google.gwt.dom.client.Element;
+import com.google.gwt.event.logical.shared.CloseEvent;
+import com.google.gwt.event.logical.shared.CloseHandler;
+import com.google.gwt.event.logical.shared.HasCloseHandlers;
 import com.google.gwt.event.logical.shared.HasOpenHandlers;
 import com.google.gwt.event.logical.shared.OpenEvent;
 import com.google.gwt.event.logical.shared.OpenHandler;
@@ -45,12 +47,13 @@ import com.google.gwt.user.client.ui.HasAnimation;
 
 /**
  * A tree of list items.<p>
- * 
- * @param <I> the specific tree item implementation 
- * 
+ *
+ * @param <I> the specific tree item implementation
+ *
  * @since 8.0.0
  */
-public class CmsTree<I extends CmsTreeItem> extends CmsList<I> implements HasOpenHandlers<I>, HasAnimation {
+public class CmsTree<I extends CmsTreeItem> extends CmsList<I>
+implements HasOpenHandlers<I>, HasCloseHandlers<I>, HasAnimation {
 
     /**
      * Timer to set sub item list visible.<p>
@@ -62,7 +65,7 @@ public class CmsTree<I extends CmsTreeItem> extends CmsList<I> implements HasOpe
 
         /**
          * Constructor.<p>
-         * 
+         *
          * @param item the tree item
          */
         protected OpenTimer(CmsTreeItem item) {
@@ -82,7 +85,7 @@ public class CmsTree<I extends CmsTreeItem> extends CmsList<I> implements HasOpe
 
         /**
          * Checks if the timer is running for the given tree item.<p>
-         * 
+         *
          * @param item the tree item to check
          * @return <code>true</code> if the given item matches the timer item
          */
@@ -118,6 +121,14 @@ public class CmsTree<I extends CmsTreeItem> extends CmsList<I> implements HasOpe
     }
 
     /**
+     * @see com.google.gwt.event.logical.shared.HasCloseHandlers#addCloseHandler(com.google.gwt.event.logical.shared.CloseHandler)
+     */
+    public HandlerRegistration addCloseHandler(CloseHandler<I> handler) {
+
+        return m_eventBus.addHandlerToSource(CloseEvent.getType(), this, handler);
+    }
+
+    /**
      * @see com.google.gwt.event.logical.shared.HasOpenHandlers#addOpenHandler(com.google.gwt.event.logical.shared.OpenHandler)
      */
     public HandlerRegistration addOpenHandler(final OpenHandler<I> handler) {
@@ -134,6 +145,31 @@ public class CmsTree<I extends CmsTreeItem> extends CmsList<I> implements HasOpe
             m_openTimer.cancel();
             m_openTimer = null;
         }
+    }
+
+    /**
+     * Closes all empty entries.<p>
+     */
+    public void closeAllEmpty() {
+
+        CmsDebugLog.getInstance().printLine("closing all empty");
+        int childCount = getWidgetCount();
+        for (int index = 0; index < childCount; index++) {
+            CmsTreeItem item = getItem(index);
+            if (item.isOpen()) {
+                item.closeAllEmptyChildren();
+            }
+        }
+    }
+
+    /**
+     * Fires the close event for an item.<p>
+     *
+     * @param item the item for which to fire the close event
+     */
+    public void fireClose(I item) {
+
+        CloseEvent.fire(this, item);
     }
 
     /**
@@ -156,42 +192,8 @@ public class CmsTree<I extends CmsTreeItem> extends CmsList<I> implements HasOpe
     }
 
     /**
-     * Returns the tree entry with the given path.<p>
-     * 
-     * @param path the path to look for
-     * 
-     * @return the tree entry with the given path, or <code>null</code> if not found
-     */
-    @SuppressWarnings("unchecked")
-    @Deprecated
-    // method may not work correctly when the tree root has an empty id
-    // TODO: check this
-    public I getItemByPath(String path) {
-
-        String[] names = CmsStringUtil.splitAsArray(path, "/");
-        I result = null;
-        for (String name : names) {
-            if (CmsStringUtil.isEmptyOrWhitespaceOnly(name)) {
-                // in case of leading slash
-                continue;
-            }
-            if (result != null) {
-                result = (I)result.getChild(name);
-            } else {
-                // match the root node
-                result = getItem(name);
-            }
-            if (result == null) {
-                // not found
-                break;
-            }
-        }
-        return result;
-    }
-
-    /**
      * Returns the placeholder path.<p>
-     * 
+     *
      * @return the path
      */
     public String getPlaceholderPath() {
@@ -254,7 +256,7 @@ public class CmsTree<I extends CmsTreeItem> extends CmsList<I> implements HasOpe
                 m_placeholderIndex = item.repositionPlaceholder(x, y, m_placeholder, orientation);
                 return;
             }
-            if (isDNDTakeAll() && (index == widgetCount - 1)) {
+            if (isDNDTakeAll() && (index == (widgetCount - 1))) {
                 // last item of the list, no matching item was found and take-all is enabled
                 // check if cursor position is above or below
                 int relativeTop = CmsDomUtil.getRelativeY(y, getElement());
@@ -271,7 +273,8 @@ public class CmsTree<I extends CmsTreeItem> extends CmsList<I> implements HasOpe
                         if (item.isOpen() && (item.getChildCount() > 0)) {
                             int originalPathLevel = -1;
                             if ((getDnDHandler() != null) && (getDnDHandler().getDraggable() instanceof CmsTreeItem)) {
-                                originalPathLevel = CmsTreeItem.getPathLevel(((CmsTreeItem)getDnDHandler().getDraggable()).getPath()) - 1;
+                                originalPathLevel = CmsTreeItem.getPathLevel(
+                                    ((CmsTreeItem)getDnDHandler().getDraggable()).getPath()) - 1;
                             }
                             // insert into the tree as last visible item
                             CmsTreeItem lastOpened = CmsTreeItem.getLastOpenedItem(item, originalPathLevel, true);
@@ -297,9 +300,9 @@ public class CmsTree<I extends CmsTreeItem> extends CmsList<I> implements HasOpe
 
     /**
      * Here the meaning is enabling dropping on the root level.<p>
-     * 
+     *
      * Use {@link CmsTreeItem#setDropEnabled(boolean)} for dropping on tree items.<p>
-     * 
+     *
      * @see org.opencms.gwt.client.ui.CmsList#setDropEnabled(boolean)
      */
     @Override
@@ -310,7 +313,7 @@ public class CmsTree<I extends CmsTreeItem> extends CmsList<I> implements HasOpe
 
     /**
      * Sets a timer to set a tree item open.<p>
-     * 
+     *
      * @param item the item to open
      */
     public void setOpenTimer(CmsTreeItem item) {
@@ -325,7 +328,7 @@ public class CmsTree<I extends CmsTreeItem> extends CmsList<I> implements HasOpe
             m_openTimer.cancel();
         }
         m_openTimer = new OpenTimer(item);
-        m_openTimer.schedule(150);
+        m_openTimer.schedule(100);
     }
 
     /**
@@ -336,21 +339,6 @@ public class CmsTree<I extends CmsTreeItem> extends CmsList<I> implements HasOpe
     public void setRootDropEnabled(boolean rootDropEnabled) {
 
         m_rootDropEnabled = rootDropEnabled;
-    }
-
-    /**
-     * Closes all empty entries.<p>
-     */
-    public void closeAllEmpty() {
-
-        CmsDebugLog.getInstance().printLine("closing all empty");
-        int childCount = getWidgetCount();
-        for (int index = 0; index < childCount; index++) {
-            CmsTreeItem item = getItem(index);
-            if (item.isOpen()) {
-                item.closeAllEmptyChildren();
-            }
-        }
     }
 
     /**
@@ -383,7 +371,7 @@ public class CmsTree<I extends CmsTreeItem> extends CmsList<I> implements HasOpe
 
     /**
      * Sets the placeholder path.<p>
-     * 
+     *
      * @param path the path
      */
     protected void setPlaceholderPath(String path) {

@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -14,12 +14,12 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * Lesser General Public License for more details.
  *
- * For further information about Alkacon Software GmbH, please see the
- * company website: http://www.alkacon.com
+ * For further information about Alkacon Software GmbH & Co. KG, please see the
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -27,17 +27,19 @@
 
 package org.opencms.util;
 
+import org.opencms.test.OpenCmsTestRunner;
+
 import java.util.ArrayList;
 import java.util.regex.Pattern;
 
-import junit.framework.TestCase;
+import org.junit.jupiter.api.Test;
 
-/** 
+/**
  * Test case for browser matcher.<p>
- * 
+ *
  * @since 6.0.0
  */
-public class TestCmsBrowserMatcher extends TestCase {
+public class TestCmsBrowserMatcher extends OpenCmsTestRunner {
 
     private static String[] browser = {
         "MSIE_6.x",
@@ -79,27 +81,18 @@ public class TestCmsBrowserMatcher extends TestCase {
         ".*"};
 
     /**
-     * Default JUnit constructor.<p>
-     * 
-     * @param arg0 JUnit parameters
-     */
-    public TestCmsBrowserMatcher(String arg0) {
-
-        super(arg0);
-    }
-
-    /**
      * Tests the browser matching regular expressions.<p>
      */
+    @Test
     public void testMatchBrowser() {
 
-        ArrayList pattern = new ArrayList(useragent.length);
+        ArrayList<Pattern> pattern = new ArrayList<Pattern>(useragent.length);
         for (int i = 0; i < useragent.length; i++) {
             pattern.add(Pattern.compile(useragent[i]));
         }
         for (int i = 0; i < sampleagent.length; i++) {
             for (int j = 0; j < pattern.size(); j++) {
-                boolean matches = ((Pattern)pattern.get(j)).matcher(sampleagent[i]).matches();
+                boolean matches = pattern.get(j).matcher(sampleagent[i]).matches();
                 if (matches) {
                     System.out.println(browser[j] + "\t matches " + sampleagent[i]);
                     break;
@@ -111,6 +104,7 @@ public class TestCmsBrowserMatcher extends TestCase {
     /**
      * Tests for regular expressions.<p>
      */
+    @Test
     public void testRegex() {
 
         String source = "addMenuEntry(resource_id, \"language_key(explorer.context.copy)\", \"/WORKPLACE/copy.html?initial=true\", \"''\", \"rules_key(d d aaai aaai dddd dddd dddd)\");";
@@ -120,7 +114,7 @@ public class TestCmsBrowserMatcher extends TestCase {
 
         String result = source.replaceAll(regex, replace);
         System.out.println(result);
-        assertEquals(result, target);
+        assertEquals(target, result);
     }
 
 }

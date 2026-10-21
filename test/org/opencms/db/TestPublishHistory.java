@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -14,12 +14,12 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * Lesser General Public License for more details.
  *
- * For further information about Alkacon Software GmbH, please see the
- * company website: http://www.alkacon.com
+ * For further information about Alkacon Software GmbH & Co. KG, please see the
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -34,20 +34,28 @@ import org.opencms.main.CmsEvent;
 import org.opencms.main.CmsException;
 import org.opencms.main.I_CmsEventListener;
 import org.opencms.main.OpenCms;
-import org.opencms.test.OpenCmsTestCase;
-import org.opencms.test.OpenCmsTestProperties;
+import org.opencms.test.OpenCmsTestRunner;
 import org.opencms.util.CmsUUID;
 
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.Arrays;
 import java.util.List;
 
-import junit.extensions.TestSetup;
-import junit.framework.Test;
-import junit.framework.TestSuite;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.MethodOrderer;
+import org.junit.jupiter.api.Order;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInfo;
+import org.junit.jupiter.api.TestMethodOrder;
 
 /**
  * Unit tests for OpenCms publish history.<p>
  */
-public class TestPublishHistory extends OpenCmsTestCase implements I_CmsEventListener {
+@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
+public class TestPublishHistory extends OpenCmsTestRunner implements I_CmsEventListener {
 
     /** Internal shared variable to test the right publish history. */
     private static CmsResourceState m_test;
@@ -59,48 +67,13 @@ public class TestPublishHistory extends OpenCmsTestCase implements I_CmsEventLis
     private static final String RESOURCENAME_MOVED = "/folder1/testfile_moved.txt";
 
     /**
-     * Default JUnit constructor.<p>
-     * 
-     * @param arg0 JUnit parameters
+     * @see org.opencms.test.OpenCmsTestRunner#$openCmsSetUp(org.junit.jupiter.api.TestInfo)
      */
-    public TestPublishHistory(String arg0) {
+    @Override
+    @BeforeAll
+    public void $openCmsSetUp(TestInfo testInfo) {
 
-        super(arg0);
-    }
-
-    /**
-     * Test suite for this test class.<p>
-     * 
-     * @return the test suite
-     */
-    public static Test suite() {
-
-        OpenCmsTestProperties.initialize(org.opencms.test.AllTests.TEST_PROPERTIES_PATH);
-
-        TestSuite suite = new TestSuite();
-        suite.setName(TestPublishHistory.class.getName());
-
-        suite.addTest(new TestPublishHistory("testPublishNewFile"));
-        suite.addTest(new TestPublishHistory("testPublishChangedFile"));
-        suite.addTest(new TestPublishHistory("testPublishMovedFile"));
-        suite.addTest(new TestPublishHistory("testPublishDeletedFile"));
-
-        TestSetup wrapper = new TestSetup(suite) {
-
-            @Override
-            protected void setUp() {
-
-                setupOpenCms("simpletest", "/");
-            }
-
-            @Override
-            protected void tearDown() {
-
-                removeOpenCms();
-            }
-        };
-
-        return wrapper;
+        setupOpenCms(testInfo, "simpletest", "/");
     }
 
     /**
@@ -179,14 +152,114 @@ public class TestPublishHistory extends OpenCmsTestCase implements I_CmsEventLis
     }
 
     /**
+     * Tests publish history cleanup.
+     * @throws Exception if something goes wrong
+     */
+    @Test
+    @Order(1)
+    public void testCleanupPublishHistory1() throws Exception {
+
+        String prefix = "tph1_";
+        OpenCms.addCmsEventListener(evt -> {
+            if (evt.getType() == I_CmsEventListener.EVENT_PUBLISH_PROJECT) {
+                System.out.println(evt.getData().get(I_CmsEventListener.KEY_PUBLISHID));
+            }
+        });
+        CmsObject cms = getCmsObject();
+        CmsUUID[] historyIds = new CmsUUID[12];
+        for (int i = 0; i < 12; i++) {
+            String path = "/" + prefix + i + ".txt";
+            CmsResource res = cms.createResource(path, 1);
+            CmsUUID historyId = OpenCms.getPublishManager().publishResource(cms, path);
+            historyIds[i] = historyId;
+            OpenCms.getPublishManager().waitWhileRunning();
+        }
+        Thread.sleep(1000);
+        // publish history size is configured as 10, auto publish resource cleanup is on,
+        // we have published 12 times, check that the cleanup worked
+        assertEquals(0, cms.readPublishedResources(historyIds[0]).size());
+        assertEquals(0, cms.readPublishedResources(historyIds[1]).size());
+        assertEquals(1, cms.readPublishedResources(historyIds[2]).size());
+        assertEquals(1, cms.readPublishedResources(historyIds[3]).size());
+    }
+
+    /**
+     * Tests publish history cleanup.
+     * @throws Exception if something goes wrong
+     */
+    @Test
+    @Order(2)
+    public void testCleanupPublishHistory2() throws Exception {
+
+        Connection conn = null;
+        PreparedStatement stmt = null;
+        ResultSet res = null;
+        List<CmsUUID> fakeHistoryIds = Arrays.asList(new CmsUUID(), new CmsUUID(), new CmsUUID());
+        try {
+            conn = OpenCms.getSqlManager().getConnection(OpenCms.getSqlManager().getDefaultDbPoolName());
+            stmt = conn.prepareStatement("INSERT INTO CMS_PUBLISH_HISTORY VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
+            for (CmsUUID id : fakeHistoryIds) {
+                stmt.setString(1, id.toString());
+                stmt.setInt(2, 0);
+                stmt.setString(3, new CmsUUID().toString());
+                stmt.setString(4, new CmsUUID().toString());
+                stmt.setString(5, "/" + Math.random());
+                stmt.setInt(6, 0);
+                stmt.setInt(7, 1);
+                stmt.setInt(8, 1);
+                stmt.addBatch();
+            }
+            stmt.executeBatch();
+        } catch (SQLException e) {
+            // noop
+
+        } finally {
+            if (res != null) {
+                try {
+                    res.close();
+                } catch (Exception e) {
+                    // noop
+                }
+            }
+            if (conn != null) {
+                try {
+                    conn.close();
+                } catch (Exception e) {
+                    // noop
+                }
+            }
+            if (stmt != null) {
+                try {
+                    stmt.close();
+                } catch (Exception e) {
+                    // noop
+                }
+            }
+
+        }
+
+        CmsObject cms = getCmsObject();
+        for (CmsUUID id : fakeHistoryIds) {
+            assertEquals(1, cms.readPublishedResources(id).size());
+        }
+        OpenCms.getPublishManager().cleanupPublishHistory(cms, Arrays.asList(fakeHistoryIds.get(0)));
+        assertEquals(1, cms.readPublishedResources(fakeHistoryIds.get(0)).size());
+        assertEquals(0, cms.readPublishedResources(fakeHistoryIds.get(1)).size());
+        assertEquals(0, cms.readPublishedResources(fakeHistoryIds.get(1)).size());
+
+    }
+
+    /**
      * Test the publish history for a changed file.<p>
-     * 
+     *
      * @throws Throwable if something goes wrong
      */
+    @Test
+    @Order(4)
     public void testPublishChangedFile() throws Throwable {
 
         CmsObject cms = getCmsObject();
-        echo("Testing publish history for a changed file");
+        System.out.println("Testing publish history for a changed file");
 
         // set the test to changed file
         m_test = CmsResource.STATE_CHANGED;
@@ -200,13 +273,15 @@ public class TestPublishHistory extends OpenCmsTestCase implements I_CmsEventLis
 
     /**
      * Test the publish history for a deleted file.<p>
-     * 
+     *
      * @throws Throwable if something goes wrong
      */
+    @Test
+    @Order(6)
     public void testPublishDeletedFile() throws Throwable {
 
         CmsObject cms = getCmsObject();
-        echo("Testing publish history for a deleted file");
+        System.out.println("Testing publish history for a deleted file");
 
         // set the test to deleted file
         m_test = CmsResource.STATE_DELETED;
@@ -220,13 +295,15 @@ public class TestPublishHistory extends OpenCmsTestCase implements I_CmsEventLis
 
     /**
      * Test the publish history for a moved file.<p>
-     * 
+     *
      * @throws Throwable if something goes wrong
      */
+    @Test
+    @Order(5)
     public void testPublishMovedFile() throws Throwable {
 
         CmsObject cms = getCmsObject();
-        echo("Testing publish history for a moved file");
+        System.out.println("Testing publish history for a moved file");
 
         // set the test to new file
         m_test = CmsPublishedResource.STATE_MOVED_SOURCE;
@@ -240,13 +317,15 @@ public class TestPublishHistory extends OpenCmsTestCase implements I_CmsEventLis
 
     /**
      * Test publish history for a new file.<p>
-     * 
+     *
      * @throws Throwable if something goes wrong
      */
+    @Test
+    @Order(3)
     public void testPublishNewFile() throws Throwable {
 
         CmsObject cms = getCmsObject();
-        echo("Testing publish history for a new file");
+        System.out.println("Testing publish history for a new file");
 
         // THIS is the first test case, so register the event listener here!
         OpenCms.addCmsEventListener(this, new int[] {I_CmsEventListener.EVENT_PUBLISH_PROJECT});

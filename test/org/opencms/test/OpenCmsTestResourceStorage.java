@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -14,12 +14,12 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * Lesser General Public License for more details.
  *
- * For further information about Alkacon Software GmbH, please see the
- * company website: http://www.alkacon.com
+ * For further information about Alkacon Software GmbH & Co. KG, please see the
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -37,7 +37,7 @@ import java.util.Map;
 
 /**
  * Storage object for storing all attributes of vfs resources.<p>
- * 
+ *
  */
 public class OpenCmsTestResourceStorage {
 
@@ -64,7 +64,7 @@ public class OpenCmsTestResourceStorage {
 
     /**
      * Creates a new OpenCmsTestResourceStorage.<p>
-     * 
+     *
      * @param name the name of the storage
      */
     public OpenCmsTestResourceStorage(String name) {
@@ -76,10 +76,10 @@ public class OpenCmsTestResourceStorage {
         m_name = name;
     }
 
-    /** 
+    /**
      * Adds a CmsResource to the resource storage.<p>
-     * 
-     * @param cms the CmsObject 
+     *
+     * @param cms the CmsObject
      * @param resourceName the resource name to add
      * @param resource the resource to add
      * @throws CmsException if something goes wrong
@@ -92,8 +92,8 @@ public class OpenCmsTestResourceStorage {
 
     /**
      * Gets an entry from the storage.<p>
-     * 
-     * @param resourceName the name of the resource to get 
+     *
+     * @param resourceName the name of the resource to get
      * @return OpenCmsTestResourceStorageEntry with all the attributes of a CmsResource
      * @throws Exception in case something goes wrong
      */
@@ -105,12 +105,13 @@ public class OpenCmsTestResourceStorage {
         entry = m_storage.get(mappedResourceName);
 
         if (entry == null) {
-            throw new Exception("resource "
-                + resourceName
-                + " -> "
-                + mappedResourceName
-                + " not found in storage "
-                + m_storage.keySet().toString());
+            throw new Exception(
+                "resource "
+                    + resourceName
+                    + " -> "
+                    + mappedResourceName
+                    + " not found in storage "
+                    + m_storage.keySet().toString());
         }
 
         return entry;
@@ -118,7 +119,7 @@ public class OpenCmsTestResourceStorage {
 
     /**
      * Gets the name of the storage.<p>
-     * 
+     *
      * @return the name of the storage
      */
     public String getName() {
@@ -127,22 +128,12 @@ public class OpenCmsTestResourceStorage {
     }
 
     /**
-     * Returns the size of the storage.<p>
-     * 
-     * @return the size of the storage
-     */
-    public int size() {
-
-        return m_storage.size();
-    }
-
-    /**
      * Gets an precalculate resource state from the storage.<p>
-     * 
+     *
      * @param resourceName the name of the resource to get  the state
-     * 
+     *
      * @return precalculated resource state
-     * 
+     *
      * @throws Exception in case something goes wrong
      */
     public CmsResourceState getPreCalculatedState(String resourceName) throws Exception {
@@ -158,7 +149,7 @@ public class OpenCmsTestResourceStorage {
 
     /**
      * Returns the source name mapping.<p>
-     * 
+     *
      * @return the source name mapping
      */
     public String getSourceNameMapping() {
@@ -168,7 +159,7 @@ public class OpenCmsTestResourceStorage {
 
     /**
      * Returns the target name mapping.<p>
-     * 
+     *
      * @return the the target name mapping
      */
     public String getTargetNameMapping() {
@@ -177,29 +168,8 @@ public class OpenCmsTestResourceStorage {
     }
 
     /**
-     * Sets the mapping for resourcenames.<p>
-     *
-     * @param source the source resource name
-     * @param target the target resource name
-     */
-    public void setMapping(String source, String target) {
-
-        m_sourceNameMapping = source;
-        m_targetNameMapping = target;
-    }
-
-    /**
-     * Resets the mapping for resourcenames.<p>
-     */
-    public void resetMapping() {
-
-        m_sourceNameMapping = null;
-        m_targetNameMapping = null;
-    }
-
-    /**
      * Does the name mapping of a resourceName.<p>
-     * 
+     *
      * This is required to find resources in the resource storage afer their path in the vfs
      * has changed (e.g. after a copy operation).<p>
      *
@@ -220,9 +190,40 @@ public class OpenCmsTestResourceStorage {
     }
 
     /**
-     * Precalculates the state of a resource after an operation based on its state before 
+     * Resets the mapping for resourcenames.<p>
+     */
+    public void resetMapping() {
+
+        m_sourceNameMapping = null;
+        m_targetNameMapping = null;
+    }
+
+    /**
+     * Sets the mapping for resourcenames.<p>
+     *
+     * @param source the source resource name
+     * @param target the target resource name
+     */
+    public void setMapping(String source, String target) {
+
+        m_sourceNameMapping = source;
+        m_targetNameMapping = target;
+    }
+
+    /**
+     * Returns the size of the storage.<p>
+     *
+     * @return the size of the storage
+     */
+    public int size() {
+
+        return m_storage.size();
+    }
+
+    /**
+     * Precalculates the state of a resource after an operation based on its state before
      * the operation is excecuted.<p>
-     * 
+     *
      * The following states are precalculated:
      * <ul>
      * <li>Unchanged -> Changed</li>
@@ -230,7 +231,7 @@ public class OpenCmsTestResourceStorage {
      * <li>New -> New</li>
      * <li>Deleted -> Deleted</li>
      * </ul>
-     * @param res the resource 
+     * @param res the resource
      * @return new precalculated state
      */
     private CmsResourceState preCalculateState(CmsResource res) {

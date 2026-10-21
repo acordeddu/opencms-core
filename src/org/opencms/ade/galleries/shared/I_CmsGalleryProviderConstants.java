@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -15,11 +15,11 @@
  * Lesser General Public License for more details.
  *
  * For further information about Alkacon Software, please see the
- * company website: http://www.alkacon.com
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -31,7 +31,7 @@ import com.google.gwt.user.client.rpc.IsSerializable;
 
 /**
  * Shared constants interface.<p>
- * 
+ *
  * @since 8.0.0
  */
 public interface I_CmsGalleryProviderConstants {
@@ -40,40 +40,45 @@ public interface I_CmsGalleryProviderConstants {
     enum GalleryMode implements IsSerializable {
 
         /** The advanced direct edit mode. */
-        ade(GalleryTabId.cms_tab_types, GalleryTabId.cms_tab_galleries, GalleryTabId.cms_tab_categories,
-        GalleryTabId.cms_tab_search),
+        ade(CmsGalleryTabConfiguration.resolve(CmsGalleryTabConfiguration.TC_ADE_ADD)),
 
-        /** The FCKEditor mode. */
-        editor(GalleryTabId.cms_tab_galleries, GalleryTabId.cms_tab_categories, GalleryTabId.cms_tab_search),
+        /** The mode for showing all galleries in ADE. */
+        adeView(CmsGalleryTabConfiguration.resolve(CmsGalleryTabConfiguration.TC_SELECT_DOC)),
+
+        /** The wysiwyg editor mode. */
+        editor(CmsGalleryTabConfiguration.resolve(
+            CmsGalleryTabConfiguration.TC_SELECT_DOC)/* may be overwritten by configuration */),
 
         /** The explorer mode. */
-        view(GalleryTabId.cms_tab_types, GalleryTabId.cms_tab_galleries, GalleryTabId.cms_tab_vfstree,
-        GalleryTabId.cms_tab_categories, GalleryTabId.cms_tab_search),
+        view(CmsGalleryTabConfiguration.resolve(CmsGalleryTabConfiguration.TC_SELECT_DOC)),
 
         /** The widget mode. */
-        widget(GalleryTabId.cms_tab_galleries, GalleryTabId.cms_tab_vfstree, GalleryTabId.cms_tab_categories,
-        GalleryTabId.cms_tab_search);
+        widget(CmsGalleryTabConfiguration.resolve(CmsGalleryTabConfiguration.TC_SELECT_DOC));
 
         /** The configuration. */
-        private GalleryTabId[] m_tabs;
+        private CmsGalleryTabConfiguration m_tabConfig;
 
         /** Constructor.<p>
          *
-         * @param tabs the configuration
+         * @param tabConfig the tab configuration
          */
-        private GalleryMode(GalleryTabId... tabs) {
+        private GalleryMode(CmsGalleryTabConfiguration tabConfig) {
 
-            m_tabs = tabs;
+            m_tabConfig = tabConfig;
         }
 
-        /** 
-         * Returns the name.<p>
-         * 
-         * @return the name
+        /**
+         * Returns the configured tabs.<p>
+         *
+         * @return the configured tabs
          */
         public GalleryTabId[] getTabs() {
 
-            return m_tabs;
+            GalleryTabId[] tabs = new GalleryTabId[m_tabConfig.getTabs().size()];
+            for (int i = 0; i < tabs.length; i++) {
+                tabs[i] = m_tabConfig.getTabs().get(i);
+            }
+            return tabs;
         }
 
     }
@@ -95,6 +100,9 @@ public interface I_CmsGalleryProviderConstants {
 
         /** The id for search tab. */
         cms_tab_search,
+
+        /** The id for sitemap tab. */
+        cms_tab_sitemap,
 
         /** The id for types tab. */
         cms_tab_types,
@@ -132,43 +140,6 @@ public interface I_CmsGalleryProviderConstants {
 
     }
 
-    /** Request parameter name constants. */
-    public enum ReqParam {
-
-        /** The current element. */
-        currentelement,
-
-        /** Generic data parameter. */
-        data,
-
-        /** The dialog mode. */
-        dialogmode,
-
-        /** The widget field id. */
-        fieldid,
-
-        /** The gallery path. */
-        gallerypath,
-
-        /** The gallery tab id. */
-        gallerytabid,
-
-        /** The widget field id hash. */
-        hashid,
-
-        /** The current locale. */
-        locale,
-
-        /** The edited resource. */
-        resource,
-
-        /** The tabs configuration, which tabs should be displayed. */
-        tabs,
-
-        /** The available types for the gallery dialog. */
-        types;
-    }
-
     /** Sorting parameters. */
     public enum SortParams implements IsSerializable {
 
@@ -197,11 +168,80 @@ public interface I_CmsGalleryProviderConstants {
         type_asc,
 
         /** Resource type descending sorting. */
-        type_desc;
+        type_desc,
+
+        /** Score sorting. */
+        score,
+
+        /** Group galleries. */
+        grouped,
+
+        /** Group galleries, sort by title. */
+        grouped_title;
     }
 
     /** The request attribute name for the close link. */
     String ATTR_CLOSE_LINK = "closeLink";
+
+    /** Configuration key. */
+    String CONFIG_CURRENT_ELEMENT = "currentelement";
+
+    /** Configuration key. */
+    String CONFIG_GALLERY_MODE = "gallerymode";
+
+    /** Configuration key. */
+    String CONFIG_GALLERY_NAME = "galleryname";
+
+    /** Configuration key. */
+    String CONFIG_GALLERY_PATH = "gallerypath";
+
+    /** Configuration key. */
+    String CONFIG_GALLERY_STORAGE_PREFIX = "galleryprefix";
+
+    /** Configuration key. */
+    String CONFIG_GALLERY_TYPES = "gallerytypes";
+
+    /** Configuration key. */
+    String CONFIG_IMAGE_FORMAT_NAMES = "imageformatnames";
+
+    /** Configuration key. */
+    String CONFIG_IMAGE_FORMATS = "imageformats";
+
+    /** Configuration key. */
+    String CONFIG_LOCALE = "locale";
+
+    /** Configuration key. */
+    String CONFIG_PAGE_ID = "pageId";
+
+    /** Configuration key. */
+    String CONFIG_REFERENCE_PATH = "resource";
+
+    /** Configuration key. */
+    String CONFIG_RESOURCE_TYPES = "resourcetypes";
+
+    /** Configuration key. */
+    String CONFIG_SEARCH_TYPES = "searchtypes";
+
+    /** Configuration key. */
+    String CONFIG_SHOW_SITE_SELECTOR = "showsiteselector";
+
+    /** Configuration key. */
+    String CONFIG_START_FOLDER = "startfolder";
+
+    /** Configuration key. */
+    String CONFIG_START_SITE = "startsite";
+
+    /** Configuration key. */
+    String CONFIG_TAB_CONFIG = "tabconfig";
+
+    /** The key for the tree token. */
+    String CONFIG_TREE_TOKEN = "treeToken";
+
+    /** Configuration key. */
+    String CONFIG_UPLOAD_FOLDER = "uploadfolder";
+
+    /** Configuration key. */
+    String CONFIG_USE_FORMATS = "useformats";
 
     /** The id for the HTML div containing the gallery dialog. */
     String GALLERY_DIALOG_ID = "galleryDialog";
@@ -212,6 +252,28 @@ public interface I_CmsGalleryProviderConstants {
     /** The widget field id hash. */
     String KEY_HASH_ID = "hashId";
 
+    /** The key for the flag which controls whether the select button should be shown. */
+    String KEY_SHOW_SELECT = "showSelect";
+
+    /** The parameter used to tell the gallery dialog to use the standard set of resource types from the VfsFileWidget. */
+    String PARAM_USE_LINK_DEFAULT_TYPES = "useLinkDefaultTypes";
+
+    /** The folder resource type name. */
+    String RESOURCE_TYPE_FOLDER = "folder";
+
+    /** Sitemap tree state session attribute name prefix. */
+    String TREE_SITEMAP = "sitemap";
+
+    /** VFS tree state session attribute name prefix. */
+    String TREE_VFS = "vfs";
+
     /** Path to the host page. */
-    String VFS_OPEN_GALLERY_PATH = "/system/modules/org.opencms.ade.galleries/gallery.jsp";
+    String VFS_OPEN_GALLERY_PATH = "/system/workplace/commons/gallery.jsp";
+
+    /** Option to enable/disable gallery selection. */
+    String CONFIG_GALLERIES_SELECTABLE = "galleriesSelectable";
+
+    /** Option to disable result selection if set to false. */
+    String CONFIG_RESULTS_SELECTABLE = "resultsSelectable";
+
 }

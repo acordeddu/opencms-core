@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -14,12 +14,12 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * Lesser General Public License for more details.
  *
- * For further information about Alkacon Software GmbH, please see the
- * company website: http://www.alkacon.com
+ * For further information about Alkacon Software GmbH & Co. KG, please see the
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -30,11 +30,14 @@ package org.opencms.search;
 import org.opencms.main.CmsIllegalArgumentException;
 import org.opencms.main.CmsLog;
 import org.opencms.main.OpenCms;
+import org.opencms.search.documents.I_CmsDocumentFactory;
 import org.opencms.util.CmsStringUtil;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -43,10 +46,13 @@ import org.apache.commons.logging.Log;
 /**
  * A search index source is a description of a list of Cms resources
  * to be indexed.<p>
- * 
- * @since 6.0.0 
+ *
+ * @since 6.0.0
  */
-public class CmsSearchIndexSource implements Comparable<CmsSearchIndexSource> {
+public class CmsSearchIndexSource implements Comparable<CmsSearchIndexSource>, Serializable {
+
+    /** The serial version id. */
+    private static final long serialVersionUID = -3869627913906693823L;
 
     /** The log object for this class. */
     private static final Log LOG = CmsLog.getLog(CmsSearchIndexSource.class);
@@ -54,8 +60,11 @@ public class CmsSearchIndexSource implements Comparable<CmsSearchIndexSource> {
     /** A list of Cms resource types to be indexed. */
     private List<String> m_documentTypes;
 
+    /** The map from extraction keys to document factories. */
+    private transient Map<String, I_CmsDocumentFactory> m_documentFactories;
+
     /** The indexer. */
-    private I_CmsIndexer m_indexer;
+    private transient I_CmsIndexer m_indexer;
 
     /** The class name of the indexer. */
     private String m_indexerClassName;
@@ -77,11 +86,12 @@ public class CmsSearchIndexSource implements Comparable<CmsSearchIndexSource> {
         m_params = new HashMap<String, String>();
         m_resourcesNames = new ArrayList<String>();
         m_documentTypes = new ArrayList<String>();
+        m_documentFactories = new LinkedHashMap<>();
     }
 
     /**
      * Adds a parameter.<p>
-     * 
+     *
      * @param key the key/name of the parameter
      * @param value the value of the parameter
      */
@@ -92,7 +102,7 @@ public class CmsSearchIndexSource implements Comparable<CmsSearchIndexSource> {
 
     /**
      * Adds the name of a document type.<p>
-     * 
+     *
      * @param key the name of a document type to add
      */
     public void addDocumentType(String key) {
@@ -102,7 +112,7 @@ public class CmsSearchIndexSource implements Comparable<CmsSearchIndexSource> {
 
     /**
      * Adds the path of a Cms resource.<p>
-     * 
+     *
      * @param resourceName the path of a Cms resource
      */
     public void addResourceName(String resourceName) {
@@ -112,13 +122,13 @@ public class CmsSearchIndexSource implements Comparable<CmsSearchIndexSource> {
 
     /**
      * Returns <code>0</code> if the given object is an index source with the same name. <p>
-     * 
+     *
      * Note that the name of an index source has to be unique within OpenCms.<p>
-     * 
+     *
      * @param obj another index source
-     * 
+     *
      * @return <code>0</code> if the given object is an index source with the same name
-     * 
+     *
      * @see java.lang.Comparable#compareTo(java.lang.Object)
      */
     public int compareTo(CmsSearchIndexSource obj) {
@@ -133,7 +143,7 @@ public class CmsSearchIndexSource implements Comparable<CmsSearchIndexSource> {
      * Two index sources are considered equal if their names as returned by {@link #getName()} is equal.<p>
      *
      * Note that the name of an index source has to be unique within OpenCms.<p>
-     * 
+     *
      * @see java.lang.Object#equals(java.lang.Object)
      */
     @Override
@@ -149,6 +159,18 @@ public class CmsSearchIndexSource implements Comparable<CmsSearchIndexSource> {
     }
 
     /**
+     * Returns the document factory for given key.<p>
+     * Note that only the keys resulting from the document types for this source set are taken into account.<p>
+     *
+     * @param documentTypeKey the key for the factory to use.
+     * @return a document factory or null
+     */
+    public I_CmsDocumentFactory getDocumentFactory(String documentTypeKey) {
+
+        return null == documentTypeKey ? null : m_documentFactories.get(documentTypeKey);
+    }
+
+    /**
      * Returns the list of names (Strings) of the document types to be indexed.<p>
      *
      * @return the list of names (Strings) of the document types to be indexed
@@ -160,7 +182,7 @@ public class CmsSearchIndexSource implements Comparable<CmsSearchIndexSource> {
 
     /**
      * Returns the indexer.<p>
-     * 
+     *
      * @return the indexer
      */
     public I_CmsIndexer getIndexer() {
@@ -190,7 +212,7 @@ public class CmsSearchIndexSource implements Comparable<CmsSearchIndexSource> {
 
     /**
      * Returns the value for a specified parameter key.<p>
-     * 
+     *
      * @param key the parameter key/name
      * @return the value for the specified parameter key
      */
@@ -220,9 +242,9 @@ public class CmsSearchIndexSource implements Comparable<CmsSearchIndexSource> {
     }
 
     /**
-     * Overriden to be consistents with overridden method 
-     * <code>{@link #equals(Object)}</code>. 
-     * 
+     * Overriden to be consistents with overridden method
+     * <code>{@link #equals(Object)}</code>.
+     *
      * @see java.lang.Object#hashCode()
      */
     @Override
@@ -232,14 +254,22 @@ public class CmsSearchIndexSource implements Comparable<CmsSearchIndexSource> {
     }
 
     /**
+     * Initialization for search index sources.
+     */
+    public void init() {
+
+        m_documentFactories = OpenCms.getSearchManager().getDocumentTypeMapForTypeNames(m_documentTypes);
+    }
+
+    /**
      * Returns <code>true</code> in case the given resource root path is contained in the list of
      * configured resource names of this index source.<p>
-     * 
+     *
      * @param rootPath the resource root path to check
-     * 
+     *
      * @return <code>true</code> in case the given resource root path is contained in the list of
      *       configured resource names of this index source
-     *       
+     *
      * @see #getResourcesNames()
      */
     public boolean isContaining(String rootPath) {
@@ -260,27 +290,27 @@ public class CmsSearchIndexSource implements Comparable<CmsSearchIndexSource> {
      * Returns <code>true</code> in case the given resource root path is contained in the list of
      * configured resource names, and the given document type name is contained in the
      * list if configured document type names of this index source.<p>
-     * 
+     *
      * @param rootPath the resource root path to check
-     * @param documentType the document type factory name to check
-     * 
+     * @param documentTypeKey the document type key for which the presence of a factory name has to be checked
+     *
      * @return <code>true</code> in case the given resource root path is contained in the list of
      *      configured resource names, and the given document type name is contained in the
      *      list if configured document type names of this index source
-     *      
+     *
      * @see #isContaining(String)
      * @see #getDocumentTypes()
      */
-    public boolean isIndexing(String rootPath, String documentType) {
+    public boolean isIndexing(String rootPath, String documentTypeKey) {
 
-        return m_documentTypes.contains(documentType) && isContaining(rootPath);
+        return m_documentFactories.keySet().contains(documentTypeKey) && isContaining(rootPath);
     }
 
     /**
      * Removes the name of a document type from the list of configured types of this index source.<p>
-     * 
+     *
      * @param key the name of the document type to remove
-     * 
+     *
      * @return true if the given document type name was contained before thus could be removed successfully, false otherwise
      */
     public boolean removeDocumentType(String key) {
@@ -300,11 +330,11 @@ public class CmsSearchIndexSource implements Comparable<CmsSearchIndexSource> {
 
     /**
      * Sets the class name of the indexer.<p>
-     * 
+     *
      * An Exception is thrown to allow GUI-display of wrong input.<p>
      *
-     * @param indexerClassName the class name of the indexer 
-     * 
+     * @param indexerClassName the class name of the indexer
+     *
      * @throws CmsIllegalArgumentException if the given String is not a fully qualified classname (within this Java VM)
      */
     public void setIndexerClassName(String indexerClassName) throws CmsIllegalArgumentException {
@@ -318,10 +348,11 @@ public class CmsSearchIndexSource implements Comparable<CmsSearchIndexSource> {
                     Messages.get().getBundle().key(Messages.LOG_INDEXER_CREATION_FAILED_1, m_indexerClassName),
                     exc);
             }
-            throw new CmsIllegalArgumentException(Messages.get().container(
-                Messages.ERR_INDEXSOURCE_INDEXER_CLASS_NAME_2,
-                indexerClassName,
-                I_CmsIndexer.class.getName()));
+            throw new CmsIllegalArgumentException(
+                Messages.get().container(
+                    Messages.ERR_INDEXSOURCE_INDEXER_CLASS_NAME_2,
+                    indexerClassName,
+                    I_CmsIndexer.class.getName()));
         }
     }
 
@@ -329,25 +360,24 @@ public class CmsSearchIndexSource implements Comparable<CmsSearchIndexSource> {
      * Sets the logical key/name of this search index source.<p>
      *
      * @param name the logical key/name of this search index source
-     * 
-     * @throws CmsIllegalArgumentException if argument name is null, an empty or whitespace-only Strings 
-     *         or already used for another indexsource's name. 
+     *
+     * @throws CmsIllegalArgumentException if argument name is null, an empty or whitespace-only Strings
+     *         or already used for another indexsource's name.
      */
     public void setName(String name) throws CmsIllegalArgumentException {
 
         if (CmsStringUtil.isEmptyOrWhitespaceOnly(name)) {
-            throw new CmsIllegalArgumentException(Messages.get().container(
-                Messages.ERR_INDEXSOURCE_CREATE_MISSING_NAME_0));
+            throw new CmsIllegalArgumentException(
+                Messages.get().container(Messages.ERR_INDEXSOURCE_CREATE_MISSING_NAME_0));
         }
         // already used? Don't test this at xml-configuration time (no manager)
         if (OpenCms.getRunLevel() > OpenCms.RUNLEVEL_2_INITIALIZING) {
             CmsSearchManager mngr = OpenCms.getSearchManager();
-            // don't test this if the indexsource is not new (widget invokes setName even if it was not changed) 
+            // don't test this if the indexsource is not new (widget invokes setName even if it was not changed)
             if (mngr.getIndexSource(name) != this) {
                 if (mngr.getSearchIndexSources().keySet().contains(name)) {
-                    throw new CmsIllegalArgumentException(Messages.get().container(
-                        Messages.ERR_INDEXSOURCE_CREATE_INVALID_NAME_1,
-                        name));
+                    throw new CmsIllegalArgumentException(
+                        Messages.get().container(Messages.ERR_INDEXSOURCE_CREATE_INVALID_NAME_1, name));
                 }
             }
         }

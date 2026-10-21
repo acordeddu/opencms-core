@@ -1,0 +1,39 @@
+.dialog-popup.elementSettingsDialog {
+	position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+}
+
+.dialog-popup.elementSettingsDialog .dialog-popupHead , .dialog-popup.elementSettingsDialog .dialog-caption {
+	cursor: default;
+} 
+
+.dialog-popup.elementSettingsDialog > .dialog-popupContent {
+    min-width: 720px;
+    width: 80vw;
+    max-width: 900px;
+}
+
+.dialog-popup.elementSettingsDialog .dialog-contentPadding {
+    overflow: auto;
+    max-height: 80vh;
+}
+
+.dialog-popup.elementSettingsDialog > .dialog-popupContent .input-formLabel {
+	min-height: 30px;
+	line-height: normal;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding-right: 5px;
+}
+
+.dialog-popup.elementSettingsDialog > .dialog-popupContent .input-formWidgetContainer {
+	
+}
+
+.dialog-popup.elementSettingsDialog > .dialog-popupContent .input-formWidgetContainer > .input-checkBox .input-checkBoxImage {
+	/* margin-top: -5px;*/ 
+}
+

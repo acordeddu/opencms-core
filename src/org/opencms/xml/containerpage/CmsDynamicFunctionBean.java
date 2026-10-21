@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (C) Alkacon Software (http://www.alkacon.com)
+ * Copyright (C) Alkacon Software (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -15,11 +15,11 @@
  * Lesser General Public License for more details.
  *
  * For further information about Alkacon Software, please see the
- * company website: http://www.alkacon.com
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -29,6 +29,7 @@ package org.opencms.xml.containerpage;
 
 import org.opencms.file.CmsObject;
 import org.opencms.file.CmsResource;
+import org.opencms.file.types.CmsResourceTypeFunctionConfig;
 import org.opencms.util.CmsUUID;
 import org.opencms.xml.content.CmsXmlContentProperty;
 
@@ -69,15 +70,20 @@ public class CmsDynamicFunctionBean {
 
         /**
          * Creates a new format instance.<p>
-         * 
-         * @param structureId the structure id of the JSP 
-         * @param type the container type 
-         * @param minWidth the minimum width 
-         * @param maxWidth the maximum width 
-         * 
-         * @param parameters the JSP parameters 
+         *
+         * @param structureId the structure id of the JSP
+         * @param type the container type
+         * @param minWidth the minimum width
+         * @param maxWidth the maximum width
+         *
+         * @param parameters the JSP parameters
          */
-        public Format(CmsUUID structureId, String type, String minWidth, String maxWidth, Map<String, String> parameters) {
+        public Format(
+            CmsUUID structureId,
+            String type,
+            String minWidth,
+            String maxWidth,
+            Map<String, String> parameters) {
 
             m_jspStructureId = structureId;
             m_type = type;
@@ -88,8 +94,8 @@ public class CmsDynamicFunctionBean {
 
         /**
          * Returns the structure id of the JSP.<p>
-         * 
-         * @return the structure id of the JSP 
+         *
+         * @return the structure id of the JSP
          */
         public CmsUUID getJspStructureId() {
 
@@ -98,8 +104,8 @@ public class CmsDynamicFunctionBean {
 
         /**
          * Returns the maximum width.<p>
-         * 
-         * @return the maximum width 
+         *
+         * @return the maximum width
          */
         public String getMaxWidth() {
 
@@ -108,8 +114,8 @@ public class CmsDynamicFunctionBean {
 
         /**
          * Returns the minimum width.<p>
-         * 
-         * @return the minimum width 
+         *
+         * @return the minimum width
          */
         public String getMinWidth() {
 
@@ -118,9 +124,9 @@ public class CmsDynamicFunctionBean {
 
         /**
          * Returns the map of parameters for the JSP.<p>
-         * 
-         * @return the map of parameters for the JSP 
-         **/
+         *
+         * @return the map of parameters for the JSP
+         */
         public Map<String, String> getParameters() {
 
             return m_parameters;
@@ -128,8 +134,8 @@ public class CmsDynamicFunctionBean {
 
         /**
          * Gets the container type.<p>
-         * 
-         * @return the container type 
+         *
+         * @return the container type
          */
         public String getType() {
 
@@ -138,8 +144,8 @@ public class CmsDynamicFunctionBean {
 
         /**
          * Returns true if this format has no container settings.<p>
-         *  
-         * @return true if this format has no container settings 
+         *
+         * @return true if this format has no container settings
          */
         public boolean hasNoContainerSettings() {
 
@@ -148,8 +154,8 @@ public class CmsDynamicFunctionBean {
 
         /**
          * Sets the parameters which should be used if the format has no parameters of its own.<p>
-         * 
-         * @param parameters the default parameters 
+         *
+         * @param parameters the default parameters
          */
         protected void setDefaultParameters(Map<String, String> parameters) {
 
@@ -160,17 +166,14 @@ public class CmsDynamicFunctionBean {
 
         /**
          * Sets the flag to indicate that this format has no  container settings.<p>
-         * 
-         * @param noContainerSettings the new value for the noContainerSettings flag 
+         *
+         * @param noContainerSettings the new value for the noContainerSettings flag
          */
         protected void setNoContainerSettings(boolean noContainerSettings) {
 
             m_noContainerSettings = true;
         }
     }
-
-    /** The path of the formatter which calls the JSP. */
-    public static final String FORMATTER_PATH = "/system/modules/org.opencms.ade.containerpage/formatters/function.jsp";
 
     /** The function formatter resource. */
     private CmsResource m_functionFormatter;
@@ -189,12 +192,12 @@ public class CmsDynamicFunctionBean {
 
     /**
      * Creates a new dynamic function bean.<p>
-     * 
-     * @param mainFormat the primary format 
-     * @param otherFormats the list of other formats 
-     * @param settingConfig the setting configuration 
-     * @param resource the resource from which the dynamic function bean has been read 
-     * @param functionFormatter the generic formatter for dynamic functions 
+     *
+     * @param mainFormat the primary format
+     * @param otherFormats the list of other formats
+     * @param settingConfig the setting configuration
+     * @param resource the resource from which the dynamic function bean has been read
+     * @param functionFormatter the generic formatter for dynamic functions
      */
     public CmsDynamicFunctionBean(
         Format mainFormat,
@@ -215,28 +218,28 @@ public class CmsDynamicFunctionBean {
 
     /**
      * Finds the correct format for a given container type and width.<p>
-     * 
-     * @param cms the current CMS context 
-     * @param type the container type 
-     * @param width the container width 
-     * 
-     * @return the format for the given container type and width 
+     *
+     * @param cms the current CMS context
+     * @param type the container type
+     * @param width the container width
+     *
+     * @return the format for the given container type and width
      */
     public Format getFormatForContainer(CmsObject cms, String type, int width) {
 
         IdentityHashMap<CmsFormatterBean, Format> formatsByFormatter = new IdentityHashMap<CmsFormatterBean, Format>();
-        // relate formatters to formats so we can pick the corresponding format after a formatter has been selected  
-        CmsFormatterBean mainFormatter = createFormatterBean(m_mainFormat);
+        // relate formatters to formats so we can pick the corresponding format after a formatter has been selected
+        CmsFormatterBean mainFormatter = createFormatterBean(m_mainFormat, true);
         formatsByFormatter.put(mainFormatter, m_mainFormat);
-        List<CmsFormatterBean> formatters = new ArrayList<CmsFormatterBean>();
+        List<I_CmsFormatterBean> formatters = new ArrayList<I_CmsFormatterBean>();
         for (Format format : m_otherFormats) {
-            CmsFormatterBean formatter = createFormatterBean(format);
+            CmsFormatterBean formatter = createFormatterBean(format, false);
             formatsByFormatter.put(formatter, format);
             formatters.add(formatter);
         }
         formatters.add(0, mainFormatter);
         CmsFormatterConfiguration formatterConfiguration = CmsFormatterConfiguration.create(cms, formatters);
-        CmsFormatterBean matchingFormatter = formatterConfiguration.getFormatter(type, width);
+        I_CmsFormatterBean matchingFormatter = formatterConfiguration.getDefaultFormatter(type, width);
         if (matchingFormatter == null) {
             return null;
         }
@@ -244,27 +247,25 @@ public class CmsDynamicFunctionBean {
     }
 
     /**
-     * Creates the formatter configuration for this dynamic function.<p>
-     * 
-     * @param cms the current CMS context
-     *  
-     * @return the formatter configuration for this dynamic function 
+     * Creates the formatter list for this dynamic function.<p>
+     *
+     * @return the formatter list for this dynamic function
      */
-    public CmsFormatterConfiguration getFormatterConfiguration(CmsObject cms) {
+    public List<CmsFormatterBean> getFormatters() {
 
-        CmsFormatterBean mainFormatter = createFormatterBean(m_mainFormat);
+        CmsFormatterBean mainFormatter = createFormatterBean(m_mainFormat, true);
         List<CmsFormatterBean> formatters = new ArrayList<CmsFormatterBean>();
+        formatters.add(mainFormatter);
         for (Format format : m_otherFormats) {
-            formatters.add(createFormatterBean(format));
+            formatters.add(createFormatterBean(format, false));
         }
-        formatters.add(0, mainFormatter);
-        return CmsFormatterConfiguration.create(cms, formatters);
+        return formatters;
     }
 
     /**
      * Gets the generic function formatter resource.<p>
-     * 
-     * @return the generic function formatter resource 
+     *
+     * @return the generic function formatter resource
      */
     public CmsResource getFunctionFormatter() {
 
@@ -273,18 +274,18 @@ public class CmsDynamicFunctionBean {
 
     /**
      * Gets the main format.<p>
-     * 
-     * @return the main format 
+     *
+     * @return the main format
      */
     public Format getMainFormat() {
 
         return m_mainFormat;
     }
 
-    /** 
+    /**
      * Returns the setting configuration for this dynamic function.<p>
-     * 
-     * @return the setting configuration for this dynamic function 
+     *
+     * @return the setting configuration for this dynamic function
      */
     public Map<String, CmsXmlContentProperty> getSettings() {
 
@@ -293,21 +294,27 @@ public class CmsDynamicFunctionBean {
 
     /**
      * Helper method to create a formatter bean from a format.<p>
-     * 
-     * @param format the format bean 
-     * @return the formatter corresponding to the format 
+     *
+     * @param format the format bean
+     * @param isPreview if true, the formatter returned will be marked as a preview formatter
+     *
+     * @return the formatter corresponding to the format
      */
-    protected CmsFormatterBean createFormatterBean(Format format) {
+    protected CmsFormatterBean createFormatterBean(Format format, boolean isPreview) {
 
         if (format.hasNoContainerSettings()) {
-            return new CmsFormatterBean(FORMATTER_PATH, m_functionFormatter.getStructureId(), m_resource.getRootPath());
+            return new CmsFormatterBean(
+                CmsResourceTypeFunctionConfig.FORMATTER_PATH,
+                m_functionFormatter.getStructureId(),
+                m_resource.getRootPath(),
+                isPreview);
         } else {
             CmsFormatterBean result = new CmsFormatterBean(
                 format.getType(),
-                FORMATTER_PATH,
+                CmsResourceTypeFunctionConfig.FORMATTER_PATH,
                 format.getMinWidth(),
                 format.getMaxWidth(),
-                "false",
+                "" + isPreview,
                 "false",
                 m_resource.getRootPath());
             result.setJspStructureId(m_functionFormatter.getStructureId());

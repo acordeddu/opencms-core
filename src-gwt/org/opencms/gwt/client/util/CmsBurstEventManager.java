@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -14,12 +14,12 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * Lesser General Public License for more details.
  *
- * For further information about Alkacon Software GmbH, please see the
- * company website: http://www.alkacon.com
+ * For further information about Alkacon Software GmbH & Co. KG, please see the
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -35,23 +35,23 @@ import com.google.gwt.user.client.Timer;
 
 /**
  * Takes care of the burst of the same event, by skipping the first ones and executing only the last one.<p>
- * 
+ *
  * Usage example:
- * 
+ *
  * <pre>
  *   Window.addResizeHandler(new ResizeHandler() {
  *       public void onResize(ResizeEvent event) {
  *           CmsBurstEventManager.get().schedule("resize-window", new Command() {
  *               public void execute() {
- *                   // resize                        
+ *                   // resize
  *               }
  *           }, 200);
  *       }
  *   });
  * </pre>
- * 
+ *
  * @since 8.0.0
- * 
+ *
  * @see <a href="http://ui-programming.blogspot.com/2010/02/gwt-how-to-implement-delayedtask-in.html">Original implementation</a>
  */
 public final class CmsBurstEventManager {
@@ -66,7 +66,7 @@ public final class CmsBurstEventManager {
 
         /**
          * Constructor of the 'burst' event.<p>
-         * 
+         *
          * @param name the unique name, which identifies the event
          * @param command command to execute when the timer expires
          */
@@ -115,7 +115,7 @@ public final class CmsBurstEventManager {
 
     /**
      * Returns the singleton instance.<p>
-     * 
+     *
      * @return the singleton instance
      */
     protected static CmsBurstEventManager get() {
@@ -127,8 +127,22 @@ public final class CmsBurstEventManager {
     }
 
     /**
+     * Removes the event from the manager.<p>
+     *
+     * @param eventName the name of the event that we need to remove
+     */
+    public void cancel(final String eventName) {
+
+        BurstEvent oe = m_memory.remove(eventName);
+        if (oe != null) {
+            // disable the old event.
+            oe.getTimer().cancel();
+        }
+    }
+
+    /**
      * Adds an 'burst' event to the manager.<p>
-     * 
+     *
      * @param name the unique name, which identifies the event
      * @param command command to execute when the timer expires
      * @param delayMsec the timer delay (it's reseted if multiple events are added)
@@ -144,19 +158,5 @@ public final class CmsBurstEventManager {
         e = new BurstEvent(name, command);
         m_memory.put(name, e);
         e.getTimer().schedule(delayMsec);
-    }
-
-    /**
-     * Removes the event from the manager.<p>
-     * 
-     * @param eventName the name of the event that we need to remove
-     */
-    public void cancel(final String eventName) {
-
-        BurstEvent oe = m_memory.remove(eventName);
-        if (oe != null) {
-            // disable the old event.
-            oe.getTimer().cancel();
-        }
     }
 }

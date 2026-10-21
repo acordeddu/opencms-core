@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -14,12 +14,12 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * Lesser General Public License for more details.
  *
- * For further information about Alkacon Software GmbH, please see the
- * company website: http://www.alkacon.com
+ * For further information about Alkacon Software GmbH & Co. KG, please see the
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -34,7 +34,7 @@ import java.lang.reflect.Constructor;
 
 /**
  * Represents an user additional information entry.<p>
- * 
+ *
  * @since 6.5.6
  */
 public final class CmsWorkplaceUserInfoEntry {
@@ -56,7 +56,7 @@ public final class CmsWorkplaceUserInfoEntry {
 
     /**
      * Default constructor.<p>
-     * 
+     *
      * @param key the key for this entry
      * @param type the class name of the stored data type
      * @param widget the widget to use
@@ -73,6 +73,23 @@ public final class CmsWorkplaceUserInfoEntry {
     }
 
     /**
+     * Returns the class type.<p>
+     *
+     * @return the class type
+     */
+    public Class<?> getClassType() {
+
+        if (m_type == null) {
+            return String.class;
+        }
+        try {
+            return Class.forName(m_type);
+        } catch (ClassNotFoundException e) {
+            return String.class;
+        }
+    }
+
+    /**
      * Returns the key.<p>
      *
      * @return the key
@@ -80,6 +97,36 @@ public final class CmsWorkplaceUserInfoEntry {
     public String getKey() {
 
         return m_key;
+    }
+
+    /**
+     * Returns the optional flag.<p>
+     *
+     * @return the optional flag
+     */
+    public String getOptional() {
+
+        return m_optional;
+    }
+
+    /**
+     * Returns the configured widget parameters.<p>
+     *
+     * @return the configured widget parameters
+     */
+    public String getParams() {
+
+        return m_params;
+    }
+
+    /**
+     * Returns the configured class name type.<p>
+     *
+     * @return the configured class name type
+     */
+    public String getType() {
+
+        return m_type;
     }
 
     /**
@@ -123,55 +170,8 @@ public final class CmsWorkplaceUserInfoEntry {
      *
      * @return the optional flag
      */
-    public String getOptional() {
-
-        return m_optional;
-    }
-
-    /**
-     * Returns the optional flag.<p>
-     *
-     * @return the optional flag
-     */
     public boolean isOptional() {
 
         return Boolean.valueOf(m_optional).booleanValue();
-    }
-
-    /**
-     * Returns the configured widget parameters.<p>
-     *
-     * @return the configured widget parameters
-     */
-    public String getParams() {
-
-        return m_params;
-    }
-
-    /**
-     * Returns the configured class name type.<p>
-     *
-     * @return the configured class name type
-     */
-    public String getType() {
-
-        return m_type;
-    }
-
-    /**
-     * Returns the class type.<p>
-     *
-     * @return the class type
-     */
-    public Class<?> getClassType() {
-
-        if (m_type == null) {
-            return String.class;
-        }
-        try {
-            return Class.forName(m_type);
-        } catch (ClassNotFoundException e) {
-            return String.class;
-        }
     }
 }

@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -15,11 +15,11 @@
  * Lesser General Public License for more details.
  *
  * For further information about Alkacon Software, please see the
- * company website: http://www.alkacon.com
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -27,22 +27,34 @@
 
 package org.opencms.jsp.util;
 
+import org.opencms.ade.contenteditor.CmsContentService;
 import org.opencms.file.CmsFile;
 import org.opencms.file.CmsObject;
+import org.opencms.file.CmsProject;
 import org.opencms.file.CmsResource;
+import org.opencms.file.CmsResourceFilter;
 import org.opencms.file.types.CmsResourceTypeXmlPage;
+import org.opencms.i18n.CmsEncoder;
 import org.opencms.i18n.CmsLocaleManager;
+import org.opencms.jsp.CmsJspResourceWrapper;
+import org.opencms.lock.CmsLock;
 import org.opencms.main.CmsException;
 import org.opencms.main.CmsRuntimeException;
+import org.opencms.main.OpenCms;
+import org.opencms.security.CmsPermissionSet;
 import org.opencms.util.CmsCollectionsGenericWrapper;
 import org.opencms.util.CmsConstantMap;
 import org.opencms.util.CmsUUID;
 import org.opencms.xml.I_CmsXmlDocument;
+import org.opencms.xml.content.CmsXmlContent;
 import org.opencms.xml.content.CmsXmlContentFactory;
 import org.opencms.xml.page.CmsXmlPageFactory;
 import org.opencms.xml.types.I_CmsXmlContentValue;
+import org.opencms.xml.xml2json.renderer.CmsJsonRendererXmlContent;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
@@ -51,20 +63,20 @@ import java.util.Map;
 import org.apache.commons.collections.Transformer;
 
 /**
- * Allows access to the individual elements of an XML content, usually used inside a loop of a 
+ * Allows access to the individual elements of an XML content, usually used inside a loop of a
  * <code>&lt;cms:contentload&gt;</code> tag.<p>
- * 
- * The implementation is optimized for performance and uses lazy initializing of the 
+ *
+ * The implementation is optimized for performance and uses lazy initializing of the
  * requested values as much as possible.<p>
- * 
+ *
  * @since 7.0.2
- * 
+ *
  * @see org.opencms.jsp.CmsJspTagContentAccess
  */
 public class CmsJspContentAccessBean {
 
     /**
-     * Provides Booleans that indicate if a specified locale is available in the XML content, 
+     * Provides Booleans that indicate if a specified locale is available in the XML content,
      * the input is assumed to be a String that represents a Locale.<p>
      */
     public class CmsHasLocaleTransformer implements Transformer {
@@ -79,7 +91,7 @@ public class CmsJspContentAccessBean {
     }
 
     /**
-     * Provides Booleans that indicate if a specified path exists in the XML content,  
+     * Provides Booleans that indicate if a specified path exists in the XML content,
      * the input is assumed to be a String that represents an xpath in the XML content.<p>
      */
     public class CmsHasLocaleValueTransformer implements Transformer {
@@ -101,7 +113,7 @@ public class CmsJspContentAccessBean {
     }
 
     /**
-     * Provides a Map with Booleans that indicate if a specified path exists in the XML content in the selected Locale,  
+     * Provides a Map with Booleans that indicate if a specified path exists in the XML content in the selected Locale,
      * the input is assumed to be a String that represents an xpath in the XML content.<p>
      */
     public class CmsHasValueTransformer implements Transformer {
@@ -111,7 +123,7 @@ public class CmsJspContentAccessBean {
 
         /**
          * Constructor with a locale.<p>
-         * 
+         *
          * @param locale the locale to use
          */
         public CmsHasValueTransformer(Locale locale) {
@@ -129,7 +141,39 @@ public class CmsJspContentAccessBean {
     }
 
     /**
-     * Provides a Map which lets the user access the list of element names from the selected locale in an XML content, 
+     * Transformer used for the 'imageDnd' EL attribute which is used to annotate images which can be replaced by drag and drop.<p>
+     */
+    public class CmsImageDndTransformer implements Transformer {
+
+        /**
+         * Creates a new instance.<p>
+         */
+        public CmsImageDndTransformer() {
+
+            // do nothing
+
+        }
+
+        /**
+         * @see org.apache.commons.collections.Transformer#transform(java.lang.Object)
+         */
+        public Object transform(Object input) {
+
+            String result;
+            if (CmsJspContentAccessValueWrapper.isDirectEditEnabled(getCmsObject())) {
+                result = createImageDndAttr(
+                    getRawContent().getFile().getStructureId(),
+                    String.valueOf(input),
+                    String.valueOf(getLocale()));
+            } else {
+                result = "";
+            }
+            return result;
+        }
+    }
+
+    /**
+     * Provides a Map which lets the user access the list of element names from the selected locale in an XML content,
      * the input is assumed to be a String that represents a Locale.<p>
      */
     public class CmsLocaleNamesTransformer implements Transformer {
@@ -146,7 +190,30 @@ public class CmsJspContentAccessBean {
     }
 
     /**
-     * Provides a Map which lets the user access sub value Lists from the selected locale in an XML content, 
+     * Provides a Map which lets the user access the RDFA tags for all values in the selected locale in an XML content,
+     * the input is assumed to be a String that represents a Locale.<p>
+     */
+    public class CmsLocaleRdfaTransformer implements Transformer {
+
+        /**
+         * @see org.apache.commons.collections.Transformer#transform(java.lang.Object)
+         */
+        public Object transform(Object input) {
+
+            Locale locale = CmsLocaleManager.getLocale(String.valueOf(input));
+            Map<String, String> result;
+            if (getRawContent().hasLocale(locale)) {
+                result = CmsCollectionsGenericWrapper.createLazyMap(new CmsRdfaTransformer(locale));
+            } else {
+                // return a map that always returns an empty string
+                result = CmsConstantMap.CONSTANT_EMPTY_STRING_MAP;
+            }
+            return result;
+        }
+    }
+
+    /**
+     * Provides a Map which lets the user access sub value Lists from the selected locale in an XML content,
      * the input is assumed to be a String that represents a Locale.<p>
      */
     public class CmsLocaleSubValueListTransformer implements Transformer {
@@ -168,7 +235,7 @@ public class CmsJspContentAccessBean {
     }
 
     /**
-     * Provides a Map which lets the user access value Lists from the selected locale in an XML content, 
+     * Provides a Map which lets the user access value Lists from the selected locale in an XML content,
      * the input is assumed to be a String that represents a Locale.<p>
      */
     public class CmsLocaleValueListTransformer implements Transformer {
@@ -190,7 +257,7 @@ public class CmsJspContentAccessBean {
     }
 
     /**
-     * Provides a Map which lets the user access a value from the selected locale in an XML content, 
+     * Provides a Map which lets the user access a value from the selected locale in an XML content,
      * the input is assumed to be a String that represents a Locale.<p>
      */
     public class CmsLocaleValueTransformer implements Transformer {
@@ -212,7 +279,39 @@ public class CmsJspContentAccessBean {
     }
 
     /**
-     * Provides a Map which lets the user access sub value Lists in an XML content, 
+     * Provides a Map which lets the user access the RDFA tag for a value in an XML content,
+     * the input is assumed to be a String that represents an xpath in the XML content.<p>
+     */
+    public class CmsRdfaTransformer implements Transformer {
+
+        /** The selected locale. */
+        private Locale m_selectedLocale;
+
+        /**
+         * Constructor with a locale.<p>
+         *
+         * @param locale the locale to use
+         */
+        public CmsRdfaTransformer(Locale locale) {
+
+            m_selectedLocale = locale;
+        }
+
+        /**
+         * @see org.apache.commons.collections.Transformer#transform(java.lang.Object)
+         */
+        public Object transform(Object input) {
+
+            if (CmsJspContentAccessValueWrapper.isDirectEditEnabled(getCmsObject())) {
+                return CmsContentService.getRdfaAttributes(getRawContent(), m_selectedLocale, String.valueOf(input));
+            } else {
+                return "";
+            }
+        }
+    }
+
+    /**
+     * Provides a Map which lets the user access sub value Lists in an XML content,
      * the input is assumed to be a String that represents an xpath in the XML content.<p>
      */
     public class CmsSubValueListTransformer implements Transformer {
@@ -222,7 +321,7 @@ public class CmsJspContentAccessBean {
 
         /**
          * Constructor with a locale.<p>
-         * 
+         *
          * @param locale the locale to use
          */
         public CmsSubValueListTransformer(Locale locale) {
@@ -239,16 +338,16 @@ public class CmsJspContentAccessBean {
             List<CmsJspContentAccessValueWrapper> result = new ArrayList<CmsJspContentAccessValueWrapper>();
             Iterator<I_CmsXmlContentValue> i = values.iterator();
             while (i.hasNext()) {
-                // XML content API offers List of values only as Objects, must iterate them and create Strings 
+                // XML content API offers List of values only as Objects, must iterate them and create Strings
                 I_CmsXmlContentValue value = i.next();
-                result.add(CmsJspContentAccessValueWrapper.createWrapper(getCmsObject(), value));
+                result.add(CmsJspContentAccessValueWrapper.createWrapper(getCmsObject(), value, null, null));
             }
             return result;
         }
     }
 
     /**
-     * Provides a Map which lets the user access value Lists in an XML content, 
+     * Provides a Map which lets the user access value Lists in an XML content,
      * the input is assumed to be a String that represents an xpath in the XML content.<p>
      */
     public class CmsValueListTransformer implements Transformer {
@@ -258,7 +357,7 @@ public class CmsJspContentAccessBean {
 
         /**
          * Constructor with a locale.<p>
-         * 
+         *
          * @param locale the locale to use
          */
         public CmsValueListTransformer(Locale locale) {
@@ -275,16 +374,16 @@ public class CmsJspContentAccessBean {
             List<CmsJspContentAccessValueWrapper> result = new ArrayList<CmsJspContentAccessValueWrapper>();
             Iterator<I_CmsXmlContentValue> i = values.iterator();
             while (i.hasNext()) {
-                // XML content API offers List of values only as Objects, must iterate them and create Strings 
+                // XML content API offers List of values only as Objects, must iterate them and create Strings
                 I_CmsXmlContentValue value = i.next();
-                result.add(CmsJspContentAccessValueWrapper.createWrapper(getCmsObject(), value));
+                result.add(CmsJspContentAccessValueWrapper.createWrapper(getCmsObject(), value, null, null));
             }
             return result;
         }
     }
 
     /**
-     * Provides a Map which lets the user access a value in an XML content, 
+     * Provides a Map which lets the user access a value in an XML content,
      * the input is assumed to be a String that represents an xpath in the XML content.<p>
      */
     public class CmsValueTransformer implements Transformer {
@@ -294,7 +393,7 @@ public class CmsJspContentAccessBean {
 
         /**
          * Constructor with a locale.<p>
-         * 
+         *
          * @param locale the locale to use
          */
         public CmsValueTransformer(Locale locale) {
@@ -308,7 +407,12 @@ public class CmsJspContentAccessBean {
         public Object transform(Object input) {
 
             I_CmsXmlContentValue value = getRawContent().getValue(String.valueOf(input), m_selectedLocale);
-            return CmsJspContentAccessValueWrapper.createWrapper(getCmsObject(), value);
+            return CmsJspContentAccessValueWrapper.createWrapper(
+                getCmsObject(),
+                value,
+                getRawContent(),
+                (String)input,
+                m_selectedLocale);
         }
     }
 
@@ -316,42 +420,60 @@ public class CmsJspContentAccessBean {
     protected static final Map<String, CmsJspContentAccessValueWrapper> CONSTANT_NULL_VALUE_WRAPPER_MAP = new CmsConstantMap<String, CmsJspContentAccessValueWrapper>(
         CmsJspContentAccessValueWrapper.NULL_VALUE_WRAPPER);
 
+    /** The categories assigned to the resource. */
+    private CmsJspCategoryAccessBean m_categories;
+
     /** The OpenCms context of the current user. */
     private CmsObject m_cms;
 
     /** The XML content to access. */
     private I_CmsXmlDocument m_content;
 
-    /** The lazy initialized map for the "has locale" check. */
+    /** Lazy map for the "has locale" check. */
     private Map<String, Boolean> m_hasLocale;
 
-    /** The lazy initialized map for the "has locale value" check. */
+    /** Lazy map for the "has locale value" check. */
     private Map<String, Map<String, Boolean>> m_hasLocaleValue;
 
-    /** The selected locale for accessing entries from the XML content. */
+    /** Lazy map for imageDnd annotations. */
+    private Map<String, String> m_imageDnd;
+
+    /** Lazy map from locales to JSON representations of the content. */
+    private Map<Object, CmsJspJsonWrapper> m_json;
+
+    /** The locale used for accessing entries from the XML content, this may be a fallback default locale. */
     private Locale m_locale;
 
-    /** The lazy initialized with the locale names. */
+    /** Lazy map with the locale names. */
     private Map<String, List<String>> m_localeNames;
 
-    /** The lazy initialized with the locale sub value lists. */
+    /** Lazy map of RDFA maps by locale. */
+    private Map<String, Map<String, String>> m_localeRdfa;
+
+    /** Lazy map with the locale sub value lists. */
     private Map<String, Map<String, List<CmsJspContentAccessValueWrapper>>> m_localeSubValueList;
 
-    /** The lazy initialized with the locale value. */
+    /** Lazy map with the locale value. */
     private Map<String, Map<String, CmsJspContentAccessValueWrapper>> m_localeValue;
 
-    /** The lazy initialized with the locale value lists. */
+    /** Lazy map with the locale value lists. */
     private Map<String, Map<String, List<CmsJspContentAccessValueWrapper>>> m_localeValueList;
+
+    /** The original locale requested for accessing entries from the XML content. */
+    private Locale m_requestedLocale;
 
     /** Resource the XML content is created from. */
     private CmsResource m_resource;
 
+    /** JSP EL access wrapped version of the resource the XML content is created from. */
+    private CmsJspResourceWrapper m_resourceWrapper;
+
     /**
      * No argument constructor, required for a JavaBean.<p>
-     * 
-     * You must call {@link #init(CmsObject, Locale, I_CmsXmlDocument, CmsResource)} and provide the 
-     * required values when you use this constructor.<p> 
-     * 
+     *
+     * You must call {@link #init(CmsObject, Locale, I_CmsXmlDocument, CmsResource)} and provide the
+     * required values when you use this constructor.<p>
+     *
      * @see #init(CmsObject, Locale, I_CmsXmlDocument, CmsResource)
      */
     public CmsJspContentAccessBean() {
@@ -361,7 +483,7 @@ public class CmsJspContentAccessBean {
 
     /**
      * Creates a content access bean based on a Resource, using the current request context locale.<p>
-     * 
+     *
      * @param cms the OpenCms context of the current user
      * @param resource the resource to create the content from
      */
@@ -372,7 +494,7 @@ public class CmsJspContentAccessBean {
 
     /**
      * Creates a content access bean based on a Resource.<p>
-     * 
+     *
      * @param cms the OpenCms context of the current user
      * @param locale the Locale to use when accessing the content
      * @param resource the resource to create the content from
@@ -384,7 +506,7 @@ public class CmsJspContentAccessBean {
 
     /**
      * Creates a content access bean based on an XML content object.<p>
-     * 
+     *
      * @param cms the OpenCms context of the current user
      * @param locale the Locale to use when accessing the content
      * @param content the content to access
@@ -395,8 +517,63 @@ public class CmsJspContentAccessBean {
     }
 
     /**
+     * Generates the HTML attribute "data-imagednd" that enables the ADE image drag and drop feature.<p>
+     *
+     * @param structureId the structure ID of the XML document to insert the image
+     * @param locale the locale to generate the image in
+     * @param imagePath the XML path to the image source node.
+     *
+     * @return the HTML attribute "data-imagednd" that enables the ADE image drag and drop feature
+     */
+    protected static String createImageDndAttr(CmsUUID structureId, String imagePath, String locale) {
+
+        String attrValue = structureId + "|" + imagePath + "|" + locale;
+        String escapedAttrValue = CmsEncoder.escapeXml(attrValue);
+        return ("data-imagednd=\"" + escapedAttrValue + "\"");
+    }
+
+    /**
+     * Gets the list of locales for which there are attachments.<p>
+     *
+     * @return the list of locales for which there are attachments
+     */
+    public List<String> getAttachmentLocales() {
+
+        return CmsJspContentAttachmentsBean.getAttachmentLocales(m_cms, m_resource);
+    }
+
+    /**
+     * Gets an attachment bean, trying to automatically find the right locale for the current page.<p>
+     *
+     * @return the attachments bean for the current page's locale
+     * @throws CmsException if something goes wrong
+     */
+    public CmsJspContentAttachmentsBean getAttachments() throws CmsException {
+
+        return CmsJspContentAttachmentsBean.getAttachmentsForCurrentPage(m_cms, m_resource);
+    }
+
+    /**
+     * Gets a lazy map which maps locales to attachment beans for that locale.<p>
+     *
+     * @return the lazy map
+     */
+    public Map<?, ?> getAttachmentsForLocale() {
+
+        return CmsCollectionsGenericWrapper.createLazyMap(new Transformer() {
+
+            @SuppressWarnings("synthetic-access")
+            public Object transform(Object arg0) {
+
+                String localeStr = (String)arg0;
+                return CmsJspContentAttachmentsBean.getAttachmentsForLocale(m_cms, m_resource, localeStr);
+            }
+        });
+    }
+
+    /**
      * Returns the OpenCms user context this bean was initialized with.<p>
-     * 
+     *
      * @return the OpenCms user context this bean was initialized with
      */
     public CmsObject getCmsObject() {
@@ -406,15 +583,15 @@ public class CmsJspContentAccessBean {
 
     /**
      * Returns the raw VFS file object the content accessed by this bean was created from.<p>
-     * 
+     *
      * This can be used to access information from the raw file on a JSP.<p>
-     * 
+     *
      * Usage example on a JSP with the JSTL:<pre>
      * &lt;cms:contentload ... &gt;
      *     &lt;cms:contentaccess var="content" /&gt;
      *     Root path of the resource: ${content.file.rootPath}
      * &lt;/cms:contentload&gt;</pre>
-     * 
+     *
      * @return the raw VFS file object the content accessed by this bean was created from
      */
     public CmsFile getFile() {
@@ -423,18 +600,33 @@ public class CmsJspContentAccessBean {
     }
 
     /**
-     * Returns the site path of the current resource, that is the result of 
-     * {@link CmsObject#getSitePath(CmsResource)} with the resource 
+     * Returns the substituted link to the content file.<p>
+     * Use for detail page links.<p>
+     *
+     * @return the substituted link
+     */
+    public String getFileLink() {
+
+        if (m_resource != null) {
+            return A_CmsJspValueWrapper.substituteLink(m_cms, m_cms.getSitePath(m_resource));
+        } else {
+            return "";
+        }
+    }
+
+    /**
+     * Returns the site path of the current resource, that is the result of
+     * {@link CmsObject#getSitePath(CmsResource)} with the resource
      * obtained by {@link #getFile()}.<p>
-     * 
+     *
      * Usage example on a JSP with the JSTL:<pre>
      * &lt;cms:contentload ... &gt;
      *     &lt;cms:contentaccess var="content" /&gt;
      *     Site path of the resource: "${content.filename}";
      * &lt;/cms:contentload&gt;</pre>
-     * 
+     *
      * @return the site path of the current resource
-     * 
+     *
      * @see CmsObject#getSitePath(CmsResource)
      */
     public String getFilename() {
@@ -443,20 +635,20 @@ public class CmsJspContentAccessBean {
     }
 
     /**
-     * Returns a lazy initialized Map that provides Booleans that indicate if a specified Locale is available 
+     * Returns a lazy initialized Map that provides Booleans that indicate if a specified Locale is available
      * in the XML content.<p>
-     * 
+     *
      * The provided Map key is assumed to be a String that represents a Locale.<p>
-     * 
+     *
      * Usage example on a JSP with the JSTL:<pre>
      * &lt;cms:contentload ... &gt;
      *     &lt;cms:contentaccess var="content" /&gt;
      *     &lt;c:if test="${content.hasLocale['de']}" &gt;
-     *         The content has a "de" Locale! 
+     *         The content has a "de" Locale!
      *     &lt;/c:if&gt;
      * &lt;/cms:contentload&gt;</pre>
-     *  
-     * @return a lazy initialized Map that provides Booleans that indicate if a specified Locale is available 
+     *
+     * @return a lazy initialized Map that provides Booleans that indicate if a specified Locale is available
      *      in the XML content
      */
     public Map<String, Boolean> getHasLocale() {
@@ -468,26 +660,26 @@ public class CmsJspContentAccessBean {
     }
 
     /**
-     * Returns a lazy initialized Map that provides a Map that provides Booleans that 
+     * Returns a lazy initialized Map that provides a Map that provides Booleans that
      * indicate if a value (xpath) is available in the XML content in the selected locale.<p>
-     * 
+     *
      * The first provided Map key is assumed to be a String that represents the Locale,
      * the second provided Map key is assumed to be a String that represents the xpath to the value.<p>
-     * 
+     *
      * Usage example on a JSP with the JSTL:<pre>
      * &lt;cms:contentload ... &gt;
      *     &lt;cms:contentaccess var="content" /&gt;
      *     &lt;c:if test="${content.hasLocaleValue['de']['Title']}" &gt;
-     *         The content has a "Title" value in the "de" Locale! 
+     *         The content has a "Title" value in the "de" Locale!
      *     &lt;/c:if&gt;
      * &lt;/cms:contentload&gt;</pre>
-     *  
+     *
      * Please note that you can also test if a locale value exists like this:<pre>
      * &lt;c:if test="${content.value['de']['Title'].exists}" &gt; ... &lt;/c:if&gt;</pre>
-     *  
-     * @return a lazy initialized Map that provides a Map that provides Booleans that 
+     *
+     * @return a lazy initialized Map that provides a Map that provides Booleans that
      *      indicate if a value (xpath) is available in the XML content in the selected locale
-     * 
+     *
      * @see #getHasValue()
      */
     public Map<String, Map<String, Boolean>> getHasLocaleValue() {
@@ -499,44 +691,44 @@ public class CmsJspContentAccessBean {
     }
 
     /**
-     * Returns a lazy initialized Map that provides Booleans that 
+     * Returns a lazy initialized Map that provides Booleans that
      * indicate if a value (xpath) is available in the XML content in the current locale.<p>
-     * 
+     *
      * The provided Map key is assumed to be a String that represents the xpath to the value.<p>
-     * 
+     *
      * Usage example on a JSP with the JSTL:<pre>
      * &lt;cms:contentload ... &gt;
      *     &lt;cms:contentaccess var="content" /&gt;
      *     &lt;c:if test="${content.hasValue['Title']}" &gt;
-     *         The content has a "Title" value in the current locale! 
+     *         The content has a "Title" value in the current locale!
      *     &lt;/c:if&gt;
      * &lt;/cms:contentload&gt;</pre>
-     * 
+     *
      * Please note that you can also test if a value exists like this:<pre>
      * &lt;c:if test="${content.value['Title'].exists}" &gt; ... &lt;/c:if&gt;</pre>
-     *  
-     * @return a lazy initialized Map that provides Booleans that 
+     *
+     * @return a lazy initialized Map that provides Booleans that
      *      indicate if a value (xpath) is available in the XML content in the current locale
-     * 
+     *
      * @see #getHasLocaleValue()
      */
     public Map<String, Boolean> getHasValue() {
 
-        return getHasLocaleValue().get(m_locale);
+        return getHasLocaleValue().get(getLocale());
     }
 
     /**
-     * Returns the structure ID of the current resource, that is the ID of 
+     * Returns the structure ID of the current resource, that is the ID of
      * the resource obtained by {@link #getFile()}.<p>
-     * 
+     *
      * Usage example on a JSP with the JSTL:<pre>
      * &lt;cms:contentload ... &gt;
      *     &lt;cms:contentaccess var="content" /&gt;
      *     Site path of the resource: "${content.id}";
      * &lt;/cms:contentload&gt;</pre>
-     * 
+     *
      * @return the structure ID of the current resource
-     * 
+     *
      * @see CmsResource#getStructureId()
      */
     public CmsUUID getId() {
@@ -545,32 +737,156 @@ public class CmsJspContentAccessBean {
     }
 
     /**
-     * Returns the Locale this bean was initialized with.<p>
+     * Gets the lazy imageDnd map.<p>
      *
-     * @return the locale  this bean was initialized with
+     * @return the lazy imageDnd map
+     */
+    public Map<String, String> getImageDnd() {
+
+        if (m_imageDnd == null) {
+            m_imageDnd = CmsCollectionsGenericWrapper.createLazyMap(new CmsImageDndTransformer());
+        }
+        return m_imageDnd;
+    }
+
+    /**
+     * Returns <code>true</code> in case the current user is allowed to edit the XML content.<p>
+     *
+     * If the check is performed from the online project, the user context is internally switched to an offline
+     * project. So this may return <code>true</code> even if the user is currently in the online project.
+     *
+     * "Allowed to edit" here requires "read" and "write" permission for the VFS resource the XML content was created from.
+     * It also requires that the VFS resource is not locked by another user.
+     * Moreover, the user must be able to access at least one "offline" project.<p>
+     *
+     * Intended for quick checks to for example show / hide edit buttons for user generated content.<p>
+     *
+     * @return <code>true</code> in case the current user is allowed to edit the XML content
+     */
+    public boolean getIsEditable() {
+
+        boolean result = false;
+        try {
+            CmsObject cms;
+            if (m_cms.getRequestContext().getCurrentProject().isOnlineProject()) {
+                // we are in the online project, which means we must first switch to an offline project
+                // otherwise write permission checks will always return false
+                cms = OpenCms.initCmsObject(m_cms);
+                List<CmsProject> projects = OpenCms.getOrgUnitManager().getAllAccessibleProjects(
+                    cms,
+                    cms.getRequestContext().getOuFqn(),
+                    false);
+                if ((projects != null) && (projects.size() > 0)) {
+                    // there is at least one project available
+                    for (CmsProject p : projects) {
+                        // need to iterate because the online project will be part of the result list
+                        if (!p.isOnlineProject()) {
+                            cms.getRequestContext().setCurrentProject(p);
+                            break;
+                        }
+                    }
+                }
+            } else {
+                // not in the online project, so just use the current project
+                cms = m_cms;
+            }
+
+            result = cms.hasPermissions(
+                m_resource,
+                CmsPermissionSet.ACCESS_WRITE,
+                false,
+                CmsResourceFilter.ONLY_VISIBLE_NO_DELETED);
+            if (result) {
+                // still need to check the lock status
+                CmsLock lock = cms.getLock(m_resource);
+                if (!lock.isLockableBy(cms.getRequestContext().getCurrentUser())) {
+                    // resource is locked from a different user
+                    result = false;
+                }
+            }
+        } catch (CmsException e) {
+            // should not happen, in case it does just assume not editable
+        }
+        return result;
+    }
+
+    /**
+     * Gets the JSON for the current locale.
+     *
+     * @return the JSON for the current locale
+     */
+    public CmsJspJsonWrapper getJson() {
+
+        Locale locale = getLocale();
+        return getLocaleJson().get(locale);
+
+    }
+
+    /**
+     * Returns the Locale this bean is using for content access, this may be a default fall back Locale.<p>
+     *
+     * @return the Locale this bean is using for content access, this may be a default fall back Locale
      */
     public Locale getLocale() {
 
+        // check the content if the locale has not been set yet
+        if (m_locale == null) {
+            getRawContent();
+        }
         return m_locale;
     }
 
     /**
-     * Returns a lazy initialized Map that provides a List with all available elements paths (Strings) 
+     * Gets a lazy map from locales (can be provided as strings or java.util.Locale) to the (default) JSON representation of an XML content.
+     *
+     * @return the lazy map from locales to JSON strings
+     */
+    public Map<Object, CmsJspJsonWrapper> getLocaleJson() {
+
+        if (m_json == null) {
+            m_json = CmsCollectionsGenericWrapper.createLazyMap(key -> {
+                CmsXmlContent content = (CmsXmlContent)getRawContent();
+
+                Locale locale;
+                if (key instanceof Locale) {
+                    locale = (Locale)key;
+                } else {
+                    locale = CmsLocaleManager.getLocale("" + key);
+                }
+                if (content.hasLocale(locale)) {
+                    CmsJsonRendererXmlContent renderer;
+                    try {
+                        renderer = new CmsJsonRendererXmlContent(m_cms);
+                        Object jsonObj = renderer.render(content, locale);
+                        return new CmsJspJsonWrapper(jsonObj);
+                    } catch (Exception e) {
+                        throw new RuntimeException(e);
+                    }
+                } else {
+                    return new CmsJspJsonWrapper(null);
+                }
+            });
+        }
+        return m_json;
+    }
+
+    /**
+     * Returns a lazy initialized Map that provides a List with all available elements paths (Strings)
      * used in this document in the selected locale.<p>
-     * 
+     *
      * The provided Map key is assumed to be a String that represents the Locale.<p>
-     * 
+     *
      * Usage example on a JSP with the JSTL:<pre>
      * &lt;cms:contentload ... &gt;
      *     &lt;cms:contentaccess var="content" /&gt;
      *     &lt;c:forEach items="${content.localeNames['de']}" var="elem"&gt;
      *         &lt;c:out value="${elem}" /&gt;
-     *     &lt;/c:forEach&gt;  
+     *     &lt;/c:forEach&gt;
      * &lt;/cms:contentload&gt;</pre>
-     *  
-     * @return a lazy initialized Map that provides a Map that provides 
+     *
+     * @return a lazy initialized Map that provides a Map that provides
      *      values from the XML content in the selected locale
-     * 
+     *
      * @see #getNames()
      */
     public Map<String, List<String>> getLocaleNames() {
@@ -582,12 +898,25 @@ public class CmsJspContentAccessBean {
     }
 
     /**
-     * Returns a lazy initialized Map that provides a Map that provides Lists of direct sub values 
+     * Returns the map of RDFA maps by locale.<p>
+     *
+     * @return the map of RDFA maps by locale
+     */
+    public Map<String, Map<String, String>> getLocaleRdfa() {
+
+        if (m_localeRdfa == null) {
+            m_localeRdfa = CmsCollectionsGenericWrapper.createLazyMap(new CmsLocaleRdfaTransformer());
+        }
+        return m_localeRdfa;
+    }
+
+    /**
+     * Returns a lazy initialized Map that provides a Map that provides Lists of direct sub values
      * from the XML content in the selected locale.<p>
-     * 
+     *
      * The first provided Map key is assumed to be a String that represents the Locale,
      * the second provided Map key is assumed to be a String that represents the xpath to the value.<p>
-     * 
+     *
      * Usage example on a JSP with the JSTL:<pre>
      * &lt;cms:contentload ... &gt;
      *     &lt;cms:contentaccess var="content" /&gt;
@@ -595,10 +924,10 @@ public class CmsJspContentAccessBean {
      *         ${item}
      *     &lt;/c:forEach&gt;
      * &lt;/cms:contentload&gt;</pre>
-     *  
-     * @return a lazy initialized Map that provides a Map that provides Lists of direct sub values 
+     *
+     * @return a lazy initialized Map that provides a Map that provides Lists of direct sub values
      *      from the XML content in the selected locale
-     * 
+     *
      * @see #getLocaleValue()
      */
     public Map<String, Map<String, List<CmsJspContentAccessValueWrapper>>> getLocaleSubValueList() {
@@ -610,21 +939,21 @@ public class CmsJspContentAccessBean {
     }
 
     /**
-     * Returns a lazy initialized Map that provides a Map that provides 
+     * Returns a lazy initialized Map that provides a Map that provides
      * values from the XML content in the selected locale.<p>
-     * 
+     *
      * The first provided Map key is assumed to be a String that represents the Locale,
      * the second provided Map key is assumed to be a String that represents the xpath to the value.<p>
-     * 
+     *
      * Usage example on a JSP with the JSTL:<pre>
      * &lt;cms:contentload ... &gt;
      *     &lt;cms:contentaccess var="content" /&gt;
      *     The Title in Locale "de": ${content.localeValue['de']['Title']}
      * &lt;/cms:contentload&gt;</pre>
-     *  
-     * @return a lazy initialized Map that provides a Map that provides 
+     *
+     * @return a lazy initialized Map that provides a Map that provides
      *      values from the XML content in the selected locale
-     * 
+     *
      * @see #getValue()
      */
     public Map<String, Map<String, CmsJspContentAccessValueWrapper>> getLocaleValue() {
@@ -636,12 +965,12 @@ public class CmsJspContentAccessBean {
     }
 
     /**
-     * Returns a lazy initialized Map that provides a Map that provides Lists of values 
+     * Returns a lazy initialized Map that provides a Map that provides Lists of values
      * from the XML content in the selected locale.<p>
-     * 
+     *
      * The first provided Map key is assumed to be a String that represents the Locale,
      * the second provided Map key is assumed to be a String that represents the xpath to the value.<p>
-     * 
+     *
      * Usage example on a JSP with the JSTL:<pre>
      * &lt;cms:contentload ... &gt;
      *     &lt;cms:contentaccess var="content" /&gt;
@@ -649,10 +978,10 @@ public class CmsJspContentAccessBean {
      *         ${teaser}
      *     &lt;/c:forEach&gt;
      * &lt;/cms:contentload&gt;</pre>
-     *  
-     * @return a lazy initialized Map that provides a Map that provides Lists of values 
+     *
+     * @return a lazy initialized Map that provides a Map that provides Lists of values
      *      from the XML content in the selected locale
-     * 
+     *
      * @see #getLocaleValue()
      */
     public Map<String, Map<String, List<CmsJspContentAccessValueWrapper>>> getLocaleValueList() {
@@ -666,7 +995,7 @@ public class CmsJspContentAccessBean {
     /**
      * Returns a list with all available elements paths (Strings) used in this document
      * in the current locale.<p>
-     * 
+     *
      * Usage example on a JSP with the JSTL:<pre>
      * &lt;cms:contentload ... &gt;
      *     &lt;cms:contentaccess var="content" /&gt;
@@ -674,19 +1003,48 @@ public class CmsJspContentAccessBean {
      *         &lt;c:out value="${elem}" /&gt;
      *     &lt;/c:forEach&gt;
      * &lt;/cms:contentload&gt;</pre>
-     *  
+     *
      * @return a list with all available elements paths (Strings) used in this document in the current locale
-     * 
+     *
      * @see #getLocaleNames()
      */
     public List<String> getNames() {
 
-        return getLocaleNames().get(m_locale);
+        return getLocaleNames().get(getLocale());
+    }
+
+    /**
+     * Prints the XPaths of the available content values into an HTML ul list.<p>
+     *
+     * @return the HTML list of XPaths
+     */
+    public String getPrintStructure() {
+
+        if (getRawContent().hasLocale(m_requestedLocale)) {
+            List<I_CmsXmlContentValue> values = new ArrayList<I_CmsXmlContentValue>(
+                getRawContent().getValues(m_requestedLocale));
+            Collections.sort(values, new Comparator<I_CmsXmlContentValue>() {
+
+                public int compare(I_CmsXmlContentValue arg0, I_CmsXmlContentValue arg1) {
+
+                    return arg0.getPath().compareTo(arg1.getPath());
+                }
+            });
+
+            StringBuffer buffer = new StringBuffer("<ul>\n");
+            for (I_CmsXmlContentValue value : values) {
+                buffer.append("<li>").append(value.getPath()).append("</li>\n");
+            }
+            buffer.append("</ul>");
+            return buffer.toString();
+        } else {
+            return "";
+        }
     }
 
     /**
      * Returns the raw XML content object that is accessed by this bean.<p>
-     * 
+     *
      * @return the raw XML content object that is accessed by this bean
      */
     public I_CmsXmlDocument getRawContent() {
@@ -704,23 +1062,67 @@ public class CmsJspContentAccessBean {
                     m_content = CmsXmlContentFactory.unmarshal(m_cms, file);
                 }
             } catch (CmsException e) {
-                // this usually should not happen, as the resource already has been read by the current user 
+                // this usually should not happen, as the resource already has been read by the current user
                 // and we just upgrade it to a File
-                throw new CmsRuntimeException(Messages.get().container(
-                    Messages.ERR_XML_CONTENT_UNMARSHAL_1,
-                    m_resource.getRootPath()), e);
+                throw new CmsRuntimeException(
+                    Messages.get().container(Messages.ERR_XML_CONTENT_UNMARSHAL_1, m_resource.getRootPath()),
+                    e);
             }
         }
+
+        // make sure a valid locale is used
+        if (m_locale == null) {
+            m_locale = OpenCms.getLocaleManager().getBestMatchingLocale(
+                m_requestedLocale,
+                OpenCms.getLocaleManager().getDefaultLocales(m_cms, m_cms.getRequestContext().getUri()),
+                m_content.getLocales());
+        }
+
         return m_content;
     }
 
     /**
-     * Returns a lazy initialized Map that provides Lists of direct sub values 
+     * Returns RDFA by value name map.<p>
+     *
+     * @return RDFA by value name map
+     */
+    public Map<String, String> getRdfa() {
+
+        return getLocaleRdfa().get(getLocale());
+    }
+
+    /**
+     * Reads and returns the categories assigned to the content's VFS resource.
+     * @return the categories assigned to the content's VFS resource.
+     */
+    public CmsJspCategoryAccessBean getReadCategories() {
+
+        if (null == m_categories) {
+            m_categories = readCategories();
+        }
+        return m_categories;
+    }
+
+    /**
+     * Returns the (wrapped) content resource for the content accessed by this bean.<p>
+     *
+     * @return the (wrapped) content resource for the content accessed by this bean
+     */
+    public CmsJspResourceWrapper getResource() {
+
+        if (m_resourceWrapper == null) {
+            m_resourceWrapper = CmsJspResourceWrapper.wrap(m_cms, m_resource);
+        }
+        return m_resourceWrapper;
+    }
+
+    /**
+     * Returns a lazy initialized Map that provides Lists of direct sub values
      * of the given value from the XML content in the current locale.<p>
-     * 
+     *
      * The provided Map key is assumed to be a String that represents the xpath to the value.
      * Use this method in case you want to iterate over a List of sub values from the XML content.<p>
-     * 
+     *
      * Usage example on a JSP with the JSTL:<pre>
      * &lt;cms:contentload ... &gt;
      *     &lt;cms:contentaccess var="content" /&gt;
@@ -728,42 +1130,56 @@ public class CmsJspContentAccessBean {
      *         ${item}
      *     &lt;/c:forEach&gt;
      * &lt;/cms:contentload&gt;</pre>
-     *  
+     *
      * @return a lazy initialized Map that provides Lists of values from the XML content in the current locale
-     * 
+     *
      * @see #getLocaleValueList()
      */
     public Map<String, List<CmsJspContentAccessValueWrapper>> getSubValueList() {
 
-        return getLocaleSubValueList().get(m_locale);
+        return getLocaleSubValueList().get(getLocale());
+    }
+
+    /**
+     * Returns the resource type name.<p>
+     *
+     * @return the resource type name
+     */
+    public String getTypeName() {
+
+        if (m_resource != null) {
+            return OpenCms.getResourceManager().getResourceType(m_resource).getTypeName();
+        } else {
+            return "";
+        }
     }
 
     /**
      * Returns a lazy initialized Map that provides values from the XML content in the current locale.<p>
-     * 
+     *
      * The provided Map key is assumed to be a String that represents the xpath to the value.<p>
-     * 
+     *
      * Usage example on a JSP with the JSTL:<pre>
      * &lt;cms:contentload ... &gt;
      *     &lt;cms:contentaccess var="content" /&gt;
      *     The Title: ${content.value['Title']}
      * &lt;/cms:contentload&gt;</pre>
-     *  
+     *
      * @return a lazy initialized Map that provides values from the XML content in the current locale
-     * 
+     *
      * @see #getLocaleValue()
      */
     public Map<String, CmsJspContentAccessValueWrapper> getValue() {
 
-        return getLocaleValue().get(m_locale);
+        return getLocaleValue().get(getLocale());
     }
 
     /**
      * Returns a lazy initialized Map that provides Lists of values from the XML content in the current locale.<p>
-     * 
+     *
      * The provided Map key is assumed to be a String that represents the xpath to the value.
      * Use this method in case you want to iterate over a List of values form the XML content.<p>
-     * 
+     *
      * Usage example on a JSP with the JSTL:<pre>
      * &lt;cms:contentload ... &gt;
      *     &lt;cms:contentaccess var="content" /&gt;
@@ -771,21 +1187,21 @@ public class CmsJspContentAccessBean {
      *         ${teaser}
      *     &lt;/c:forEach&gt;
      * &lt;/cms:contentload&gt;</pre>
-     *  
+     *
      * @return a lazy initialized Map that provides Lists of values from the XML content in the current locale
-     * 
+     *
      * @see #getLocaleValueList()
      */
     public Map<String, List<CmsJspContentAccessValueWrapper>> getValueList() {
 
-        return getLocaleValueList().get(m_locale);
+        return getLocaleValueList().get(getLocale());
     }
 
     /**
      * Returns an instance of a VFS access bean,
      * initialized with the OpenCms user context this bean was created with.<p>
-     * 
-     * @return an instance of a VFS access bean, 
+     *
+     * @return an instance of a VFS access bean,
      *      initialized with the OpenCms user context this bean was created with
      */
     public CmsJspVfsAccessBean getVfs() {
@@ -794,8 +1210,21 @@ public class CmsJspContentAccessBean {
     }
 
     /**
+     * Returns the (wrapped) content resource for the content accessed by this bean.<p>
+     *
+     * @return the (wrapped) content resource for the content accessed by this bean
+     *
+     * @deprecated use {@link #getResource()} instead
+     */
+    @Deprecated
+    public CmsJspResourceWrapper getWrap() {
+
+        return getResource();
+    }
+
+    /**
      * Initialize this instance.<p>
-     * 
+     *
      * @param cms the OpenCms context of the current user
      * @param locale the Locale to use when accessing the content
      * @param content the XML content to access
@@ -804,8 +1233,17 @@ public class CmsJspContentAccessBean {
     public void init(CmsObject cms, Locale locale, I_CmsXmlDocument content, CmsResource resource) {
 
         m_cms = cms;
-        m_locale = locale;
+        m_requestedLocale = locale;
         m_content = content;
         m_resource = resource;
+    }
+
+    /**
+     * Reads the categories assigned to the content's VFS resource.
+     * @return the categories assigned to the content's VFS resource.
+     */
+    private CmsJspCategoryAccessBean readCategories() {
+
+        return new CmsJspCategoryAccessBean(getCmsObject(), m_resource);
     }
 }

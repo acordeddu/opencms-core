@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -15,11 +15,11 @@
  * Lesser General Public License for more details.
  *
  * For further information about Alkacon Software, please see the
- * company website: http://www.alkacon.com
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -33,7 +33,7 @@ import com.google.gwt.resources.client.CssResource.Shared;
 
 /**
  * CSS resource interface for the classic Direct Edit Buttons.<p>
- * 
+ *
  * @since 8.0.0
  */
 @Shared
@@ -41,37 +41,44 @@ public interface I_CmsDirectEditCss extends I_CmsToolbarButtonCss {
 
     /**
      * CSS class accessor.<p>
-     * 
-     * @return a CSS class name 
-     */
-    String classicDirectEdit();
-
-    /**
-     * CSS class accessor.<p>
-     * 
-     * @return a CSS class name 
+     *
+     * @return a CSS class name
      */
     String directEditButtons();
 
     /**
      * CSS class accessor.<p>
-     * 
-     * @return a CSS class name 
+     *
+     * @return a CSS class name
+     */
+    String editableElement();
+
+    /**
+     * CSS class accessor.<p>
+     *
+     * @return a CSS class name
+     */
+    String expiredListElementOverlay();
+
+    /**
+     * CSS class accessor.<p>
+     *
+     * @return a CSS class name
      */
     String hideButtons();
 
     /**
      * CSS class accessor.<p>
-     * 
-     * @return a CSS class name 
+     *
+     * @return a CSS class name
      */
+    @ClassName("oc-option-bar")
     String optionBar();
 
     /**
      * CSS class accessor.<p>
-     * 
-     * @return a CSS class name 
+     *
+     * @return a CSS class name
      */
     String showButtons();
-
 }

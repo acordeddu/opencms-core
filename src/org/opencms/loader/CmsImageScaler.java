@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -15,11 +15,11 @@
  * Lesser General Public License for more details.
  *
  * For further information about Alkacon Software, please see the
- * company website: http://www.alkacon.com
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -27,11 +27,14 @@
 
 package org.opencms.loader;
 
+import com.alkacon.simapi.CmykJpegReader.ByteArrayImageInputStream;
 import com.alkacon.simapi.RenderSettings;
 import com.alkacon.simapi.Simapi;
 import com.alkacon.simapi.filter.GrayscaleFilter;
 import com.alkacon.simapi.filter.ShadowFilter;
 
+import org.opencms.ade.galleries.CmsPreviewService;
+import org.opencms.ade.galleries.shared.CmsPoint;
 import org.opencms.file.CmsFile;
 import org.opencms.file.CmsObject;
 import org.opencms.file.CmsProperty;
@@ -42,26 +45,96 @@ import org.opencms.main.OpenCms;
 import org.opencms.util.CmsStringUtil;
 
 import java.awt.Color;
+import java.awt.Dimension;
 import java.awt.Rectangle;
 import java.awt.image.BufferedImage;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
+import java.util.concurrent.Semaphore;
+import java.util.concurrent.atomic.AtomicInteger;
 
+import javax.imageio.ImageIO;
+import javax.imageio.ImageReader;
 import javax.servlet.http.HttpServletRequest;
 
 import org.apache.commons.logging.Log;
 
 /**
  * Creates scaled images, acting as it's own parameter container.<p>
- * 
+ *
  * @since 6.2.0
  */
 public class CmsImageScaler {
 
+    /**
+     * Result of a scaling operation.<p>
+     */
+    private static class CmsImageScalingResult {
+
+        /** The image type used for encoding. */
+        private String m_imageType;
+
+        /** Indicates if the image was changed by the scaler. */
+        private boolean m_processed;
+
+        /** The resulting image. */
+        private BufferedImage m_resultImage;
+
+        /**
+         * Creates a new scaling result.<p>
+         *
+         * @param resultImage the resulting image
+         * @param imageType the image type
+         * @param processed indicates if the image was changed
+         */
+        CmsImageScalingResult(BufferedImage resultImage, String imageType, boolean processed) {
+
+            m_resultImage = resultImage;
+            m_imageType = imageType;
+            m_processed = processed;
+        }
+
+        /**
+         * Returns the image type.<p>
+         *
+         * @return the image type
+         */
+        String getImageType() {
+
+            return m_imageType;
+        }
+
+        /**
+         * Returns the resulting image.<p>
+         *
+         * @return the resulting image
+         */
+        BufferedImage getResultImage() {
+
+            return m_resultImage;
+        }
+
+        /**
+         * Returns if the image was changed.<p>
+         *
+         * @return <code>true</code> if the image was changed
+         */
+        boolean isProcessed() {
+
+            return m_processed;
+        }
+    }
+
     /** The name of the transparent color (for the background image). */
     public static final String COLOR_TRANSPARENT = "transparent";
+
+    /** Default number of permits for the image scaling semaphore. */
+    public static final int DEFAULT_CONCURRENCY = 6;
 
     /** The name of the grayscale image filter. */
     public static final String FILTER_GRAYSCALE = "grayscale";
@@ -79,7 +152,7 @@ public class CmsImageScaler {
     public static final int SCALE_DEFAULT_MAX_BLUR_SIZE = 2500 * 2500;
 
     /** The default maximum image size (width or height) to allow when up or down scaling an image using request parameters. */
-    public static final int SCALE_DEFAULT_MAX_SIZE = 1500;
+    public static final int SCALE_DEFAULT_MAX_SIZE = 2500;
 
     /** The scaler parameter to indicate the requested image background color (if required). */
     public static final String SCALE_PARAM_COLOR = "c";
@@ -120,6 +193,15 @@ public class CmsImageScaler {
     /** The log object for this class. */
     protected static final Log LOG = CmsLog.getLog(CmsImageScaler.class);
 
+    /** Semaphore used to limit the number of concurrent image scaling operations. */
+    private static Semaphore semaphore = new Semaphore(DEFAULT_CONCURRENCY, true);
+
+    /** Atomic counter for concurrent image scaling operations. */
+    private static final AtomicInteger concurrentRequests = new AtomicInteger(0);
+
+    /** Controls access to the semaphore. */
+    private static final Object sync = new Object();
+
     /** The target background color (optional). */
     private Color m_color;
 
@@ -138,8 +220,14 @@ public class CmsImageScaler {
     /** The list of image filter names (Strings) to apply. */
     private List<String> m_filters;
 
+    /** The focal point. */
+    private CmsPoint m_focalPoint;
+
     /** The target height (required). */
     private int m_height;
+
+    /** Indicates if this image scaler was only used to read the image properties. */
+    private boolean m_isOriginalScaler;
 
     /** The maximum image size (width * height) to apply image blurring when down scaling (setting this to high may case "out of memory" errors). */
     private int m_maxBlurSize;
@@ -177,18 +265,18 @@ public class CmsImageScaler {
     }
 
     /**
-     * Creates a new image scaler initialized with the height and width of 
+     * Creates a new image scaler initialized with the height and width of
      * the given image contained in the byte array.<p>
-     * 
+     *
      * <b>Please note:</b>The image itself is not stored in the scaler, only the width and
      * height dimensions of the image. To actually scale an image, you need to use
-     * <code>{@link #scaleImage(CmsFile)}</code>. This constructor is commonly used only 
+     * <code>{@link #scaleImage(CmsFile)}</code>. This constructor is commonly used only
      * to extract the image dimensions, for example when creating a String value for
      * the <code>{@link CmsPropertyDefinition#PROPERTY_IMAGE_SIZE}</code> property.<p>
-     * 
+     *
      * In case the byte array can not be decoded to an image, or in case of other errors,
      * <code>{@link #isValid()}</code> will return <code>false</code>.<p>
-     * 
+     *
      * @param content the image to calculate the dimensions for
      * @param rootPath the root path of the resource (for error logging)
      */
@@ -196,12 +284,18 @@ public class CmsImageScaler {
 
         init();
         try {
-            // read the scaled image
-            BufferedImage image = Simapi.read(content);
-            m_height = image.getHeight();
-            m_width = image.getWidth();
+            Dimension dim = getImageDimensions(rootPath, content);
+            if (dim != null) {
+                m_width = dim.width;
+                m_height = dim.height;
+            } else {
+                //  read the scaled image
+                BufferedImage image = Simapi.read(content);
+                m_height = image.getHeight();
+                m_width = image.getWidth();
+            }
         } catch (Exception e) {
-            // nothing we can do about this, keep the original properties            
+            // nothing we can do about this, keep the original properties
             if (LOG.isDebugEnabled()) {
                 LOG.debug(Messages.get().getBundle().key(Messages.ERR_UNABLE_TO_EXTRACT_IMAGE_SIZE_1, rootPath), e);
             }
@@ -211,18 +305,33 @@ public class CmsImageScaler {
     }
 
     /**
+     * Creates a new image scaler based on the given base scaler and the given width and height.<p>
+     *
+     * @param base the base scaler to initialize the values with
+     * @param width the width to set for this scaler
+     * @param height the height to set for this scaler
+     */
+    public CmsImageScaler(CmsImageScaler base, int width, int height) {
+
+        initValuesFrom(base);
+        setWidth(width);
+        setHeight(height);
+    }
+
+    /**
      * Creates a new image scaler by reading the property <code>{@link CmsPropertyDefinition#PROPERTY_IMAGE_SIZE}</code>
      * from the given resource.<p>
-     * 
+     *
      * In case of any errors reading or parsing the property,
      * <code>{@link #isValid()}</code> will return <code>false</code>.<p>
-     * 
+     *
      * @param cms the OpenCms user context to use when reading the property
      * @param res the resource to read the property from
      */
     public CmsImageScaler(CmsObject cms, CmsResource res) {
 
         init();
+        m_isOriginalScaler = true;
         String sizeValue = null;
         if ((cms != null) && (res != null)) {
             try {
@@ -232,7 +341,12 @@ public class CmsImageScaler {
                     sizeValue = sizeProp.getValue();
                 }
             } catch (Exception e) {
-                // ignore
+                LOG.debug(e.getMessage(), e);
+            }
+            try {
+                m_focalPoint = CmsPreviewService.readFocalPoint(cms, res);
+            } catch (Exception e) {
+                LOG.debug(e.getLocalizedMessage(), e);
             }
         }
         if (CmsStringUtil.isNotEmpty(sizeValue)) {
@@ -242,15 +356,15 @@ public class CmsImageScaler {
 
     /**
      * Creates a new image scaler based on the given HTTP request.<p>
-     * 
-     * The maximum scale size is checked in order to prevent DOS attacks. 
+     *
+     * The maximum scale size is checked in order to prevent DOS attacks.
      * Without this, it would be possible to request arbitrary huge images with a simple GET request,
      * which would result in Out-Of-Memory errors if the image is just requested large enough.<p>
-     * 
-     * The maximum blur size is checked since this operation is know to also cause memory issues 
-     * with large images. If the original image is larger then this, no blur is applied before 
+     *
+     * The maximum blur size is checked since this operation is know to also cause memory issues
+     * with large images. If the original image is larger then this, no blur is applied before
      * scaling down, which will result in a less optimal but still usable scale result.<p>
-     * 
+     *
      * @param request the HTTP request to read the parameters from
      * @param maxScaleSize the maximum scale size (width or height) for the image
      * @param maxBlurSize the maximum size of the image (width * height) to apply blur
@@ -273,8 +387,21 @@ public class CmsImageScaler {
     }
 
     /**
+     * Creates an image scaler with manually set width and height.
+     *
+     * @param width the width
+     * @param height the height
+     */
+    public CmsImageScaler(int width, int height) {
+
+        init();
+        m_width = width;
+        m_height = height;
+    }
+
+    /**
      * Creates a new image scaler based on the given parameter String.<p>
-     * 
+     *
      * @param parameters the scale parameters to use
      */
     public CmsImageScaler(String parameters) {
@@ -286,22 +413,107 @@ public class CmsImageScaler {
     }
 
     /**
-     * Creates a new image scaler based on the given base scaler and the given width and height.<p>
-     * 
-     * @param base the base scaler to initialize the values with
-     * @param width the width to set for this scaler
-     * @param height the height to set for this scaler
+     * Calculate the width and height of a source image if scaled inside the given box.<p>
+     *
+     * @param sourceWidth the width of the source image
+     * @param sourceHeight the height of the source image
+     * @param boxWidth the width of the target box
+     * @param boxHeight the height of the target box
+     *
+     * @return the width [0] and height [1] of the source image if scaled inside the given box
      */
-    protected CmsImageScaler(CmsImageScaler base, int width, int height) {
+    public static int[] calculateDimension(int sourceWidth, int sourceHeight, int boxWidth, int boxHeight) {
 
-        initValuesFrom(base);
-        setWidth(width);
-        setHeight(height);
+        int[] result = new int[2];
+        if ((sourceWidth <= boxWidth) && (sourceHeight <= boxHeight)) {
+            result[0] = sourceWidth;
+            result[1] = sourceHeight;
+        } else {
+            float scaleWidth = (float)boxWidth / (float)sourceWidth;
+            float scaleHeight = (float)boxHeight / (float)sourceHeight;
+            float scale = Math.min(scaleHeight, scaleWidth);
+            result[0] = Math.round(sourceWidth * scale);
+            result[1] = Math.round(sourceHeight * scale);
+        }
+
+        return result;
+    }
+
+    /**
+     * Gets image dimensions for given file
+     * @param path the image file path
+     * @param content the image file content
+     * @return dimensions of image
+     * @throws IOException if the file is not a known image
+     */
+    public static Dimension getImageDimensions(String path, byte[] content) throws IOException {
+
+        String name = CmsResource.getName(path);
+        int pos = name.lastIndexOf(".");
+        if (pos == -1) {
+            LOG.warn("Couldn't determine image dimensions for " + path);
+            return null;
+        }
+        String suffix = name.substring(pos + 1);
+        Iterator<ImageReader> iter = ImageIO.getImageReadersBySuffix(suffix);
+        while (iter.hasNext()) {
+            ImageReader reader = iter.next();
+            try {
+                ByteArrayImageInputStream stream = new ByteArrayImageInputStream(content);
+                reader.setInput(stream);
+                int minIndex = reader.getMinIndex();
+                int width = reader.getWidth(minIndex);
+                int height = reader.getHeight(minIndex);
+                return new Dimension(width, height);
+            } catch (IOException e) {
+                LOG.warn("Problem determining image size for " + path + ": " + e.getLocalizedMessage(), e);
+            } finally {
+                reader.dispose();
+            }
+        }
+        LOG.warn("Couldn't determine image dimensions for " + path);
+        return null;
+    }
+
+    /**
+     * Sets the image scaling concurrency level, i.e. the maximum number of threads allowed to scale images concurrently.
+     *
+     * @param numThreads the maximum number of threads that can scale images concurrently
+     */
+    public static void setConcurrency(int numThreads) {
+
+        synchronized (sync) {
+            if (semaphore != null) {
+                semaphore.drainPermits();
+            }
+            semaphore = new Semaphore(numThreads, true);
+        }
+    }
+
+    /**
+     * Acquires a permit from the image scaling semaphore.
+     *
+     * @throws InterruptedException if the acquire operation is interrupted
+     */
+    private static void acquireSemaphore() throws InterruptedException {
+
+        semaphore.acquire();
+        int requests = concurrentRequests.incrementAndGet();
+        LOG.trace("Concurrent image scaling requests: " + requests);
+    }
+
+    /**
+     * Releases the image scaling semaphore.
+     */
+    private static void releaseSemaphore() {
+
+        concurrentRequests.decrementAndGet();
+        semaphore.release();
     }
 
     /**
      * Adds a filter name to the list of filters that should be applied to the image.<p>
-     * 
+     *
      * @param filter the filter name to add
      */
     public void addFilter(String filter) {
@@ -364,7 +576,7 @@ public class CmsImageScaler {
 
     /**
      * Returns the crop area height.<p>
-     * 
+     *
      * Use {@link #setCropArea(int, int, int, int)} to set this value.<p>
      *
      * @return the crop area height
@@ -375,14 +587,14 @@ public class CmsImageScaler {
     }
 
     /**
-     * Returns a new image scaler that is a cropped rescaler from <code>this</code> cropped scaler 
+     * Returns a new image scaler that is a cropped rescaler from <code>this</code> cropped scaler
      * size to the given target scaler size.<p>
-     * 
+     *
      * @param target the image scaler that holds the target image dimensions
-     * 
-     * @return a new image scaler that is a cropped rescaler from <code>this</code> cropped scaler 
+     *
+     * @return a new image scaler that is a cropped rescaler from <code>this</code> cropped scaler
      *      size to the given target scaler size
-     *      
+     *
      * @see #getReScaler(CmsImageScaler)
      * @see #setCropArea(int, int, int, int)
      */
@@ -397,7 +609,7 @@ public class CmsImageScaler {
 
     /**
      * Returns the crop area width.<p>
-     * 
+     *
      * Use {@link #setCropArea(int, int, int, int)} to set this value.<p>
      *
      * @return the crop area width
@@ -409,7 +621,7 @@ public class CmsImageScaler {
 
     /**
      * Returns the crop area X start coordinate.<p>
-     * 
+     *
      * Use {@link #setCropArea(int, int, int, int)} to set this value.<p>
      *
      * @return the crop area X start coordinate
@@ -421,7 +633,7 @@ public class CmsImageScaler {
 
     /**
      * Returns the crop area Y start coordinate.<p>
-     * 
+     *
      * Use {@link #setCropArea(int, int, int, int)} to set this value.<p>
      *
      * @return the crop area Y start coordinate
@@ -432,15 +644,15 @@ public class CmsImageScaler {
     }
 
     /**
-     * Returns a new image scaler that is a down scale from the size of <code>this</code> scaler 
+     * Returns a new image scaler that is a down scale from the size of <code>this</code> scaler
      * to the given scaler size.<p>
-     * 
+     *
      * If no down scale from this to the given scaler is required according to
-     * {@link #isDownScaleRequired(CmsImageScaler)}, then <code>null</code> is returned.<p> 
-     * 
+     * {@link #isDownScaleRequired(CmsImageScaler)}, then <code>null</code> is returned.<p>
+     *
      * @param downScaler the image scaler that holds the down scaled target image dimensions
-     * 
-     * @return a new image scaler that is a down scale from the size of <code>this</code> scaler 
+     *
+     * @return a new image scaler that is a down scale from the size of <code>this</code> scaler
      *      to the given target scaler size, or <code>null</code>
      */
     public CmsImageScaler getDownScaler(CmsImageScaler downScaler) {
@@ -479,9 +691,9 @@ public class CmsImageScaler {
         return new CmsImageScaler(downScaler, downWidth, downHeight);
     }
 
-    /** 
-     * Returns the list of image filter names (Strings) to be applied to the image.<p> 
-     * 
+    /**
+     * Returns the list of image filter names (Strings) to be applied to the image.<p>
+     *
      * @return the list of image filter names (Strings) to be applied to the image
      */
     public List<String> getFilters() {
@@ -489,9 +701,9 @@ public class CmsImageScaler {
         return m_filters;
     }
 
-    /** 
-     * Returns the list of image filter names (Strings) to be applied to the image as a String.<p> 
-     * 
+    /**
+     * Returns the list of image filter names (Strings) to be applied to the image as a String.<p>
+     *
      * @return the list of image filter names (Strings) to be applied to the image as a String
      */
     public String getFiltersString() {
@@ -509,6 +721,16 @@ public class CmsImageScaler {
     }
 
     /**
+     * Gets the focal point, or null if it is not set.<p>
+     *
+     * @return the focal point
+     */
+    public CmsPoint getFocalPoint() {
+
+        return m_focalPoint;
+    }
+
+    /**
      * Returns the height.<p>
      *
      * @return the height
@@ -521,19 +743,19 @@ public class CmsImageScaler {
     /**
      * Returns the image type from the given file name based on the file suffix (extension)
      * and the available image writers.<p>
-     * 
-     * For example, for the file name "opencms.gif" the type is GIF, for 
-     * "opencms.jpg" is is "JPEG" etc.<p> 
-     * 
+     *
+     * For example, for the file name "opencms.gif" the type is GIF, for
+     * "opencms.jpg" is is "JPEG" etc.<p>
+     *
      * In case the input filename has no suffix, or there is no known image writer for the format defined
      * by the suffix, <code>null</code> is returned.<p>
-     * 
+     *
      * Any non-null result can be used if an image type input value is required.<p>
-     * 
+     *
      * @param filename the file name to get the type for
-     *  
-     * @return the image type from the given file name based on the suffix and the available image writers, 
-     *      or null if no image writer is available for the format 
+     *
+     * @return the image type from the given file name based on the suffix and the available image writers,
+     *      or null if no image writer is available for the format
      */
     public String getImageType(String filename) {
 
@@ -542,14 +764,14 @@ public class CmsImageScaler {
 
     /**
      * Returns the maximum image size (width * height) to apply image blurring when down scaling images.<p>
-     * 
-     * Image blurring is required to achieve the best results for down scale operations when the target image size 
-     * is 2 times or more smaller then the original image size. 
-     * This parameter controls the maximum size (width * height) of an 
+     *
+     * Image blurring is required to achieve the best results for down scale operations when the target image size
+     * is 2 times or more smaller then the original image size.
+     * This parameter controls the maximum size (width * height) of an
      * image that is blurred before it is down scaled. If the image is larger, no blurring is done.
-     * Image blurring is an expensive operation in both CPU usage and memory consumption. 
+     * Image blurring is an expensive operation in both CPU usage and memory consumption.
      * Setting the blur size to large may case "out of memory" errors.<p>
-     * 
+     *
      * @return the maximum image size (width * height) to apply image blurring when down scaling images
      */
     public int getMaxBlurSize() {
@@ -579,9 +801,9 @@ public class CmsImageScaler {
 
     /**
      * Returns the image pixel count, that is the image with multiplied by the image height.<p>
-     * 
+     *
      * If this scaler is not valid (see {@link #isValid()}) the result is undefined.<p>
-     * 
+     *
      * @return the image pixel count, that is the image with multiplied by the image height
      */
     public int getPixelCount() {
@@ -601,7 +823,7 @@ public class CmsImageScaler {
 
     /**
      * Returns the image saving quality in percent (0 - 100).<p>
-     * 
+     *
      * This is used only if applicable, for example when saving JPEG images.<p>
      *
      * @return the image saving quality in percent
@@ -617,10 +839,10 @@ public class CmsImageScaler {
      * Possible values are:<dl>
      * <dt>{@link Simapi#RENDER_QUALITY} (default)</dt>
      * <dd>Use best possible image processing - this may be slow sometimes.</dd>
-     * 
+     *
      * <dt>{@link Simapi#RENDER_SPEED}</dt>
      * <dd>Fastest image processing but worse results - use this for thumbnails or where speed is more important then quality.</dd>
-     * 
+     *
      * <dt>{@link Simapi#RENDER_MEDIUM}</dt>
      * <dd>Use default rendering hints from JVM - not recommended since it's almost as slow as the {@link Simapi#RENDER_QUALITY} mode.</dd></dl>
      *
@@ -632,16 +854,30 @@ public class CmsImageScaler {
     }
 
     /**
-     * Returns a new image scaler that is a rescaler from <code>this</code> scaler 
+     * Creates a request parameter configured with the values from this image scaler, also
+     * appends a <code>'?'</code> char as a prefix so that this may be directly appended to an image URL.<p>
+     *
+     * This can be appended to an image request in order to apply image scaling parameters.<p>
+     *
+     * @return a request parameter configured with the values from this image scaler
+     * @see #toRequestParam()
+     */
+    public String getRequestParam() {
+
+        return toRequestParam();
+    }
+
+    /**
+     * Returns a new image scaler that is a rescaler from <code>this</code> scaler
      * size to the given target scaler size.<p>
-     * 
-     * The height of the target image is calculated in proportion 
-     * to the original image width. If the width of the the original image is not known, 
+     *
+     * The height of the target image is calculated in proportion
+     * to the original image width. If the width of the the original image is not known,
      * the target image width is calculated in proportion to the original image height.<p>
-     * 
+     *
      * @param target the image scaler that holds the target image dimensions
-     * 
-     * @return a new image scaler that is a rescaler from the <code>this</code> scaler 
+     *
+     * @return a new image scaler that is a rescaler from the <code>this</code> scaler
      *      size to the given target scaler size
      */
     public CmsImageScaler getReScaler(CmsImageScaler target) {
@@ -656,7 +892,7 @@ public class CmsImageScaler {
                 // ensure we have sensible values for maxWidth / minWidth even if one has not been set
                 float maxWidth = target.getMaxWidth() > 0 ? target.getMaxWidth() : height;
                 float maxHeight = target.getMaxHeight() > 0 ? target.getMaxHeight() : width;
-                // calculate the factor of the image and the 3 possible target dimensions 
+                // calculate the factor of the image and the 3 possible target dimensions
                 float scaleOfImage = (float)getWidth() / (float)getHeight();
                 float[] scales = new float[3];
                 scales[0] = (float)width / (float)height;
@@ -665,15 +901,15 @@ public class CmsImageScaler {
                 int useScale = calculateClosest(scaleOfImage, scales);
                 int[] dimensions;
                 switch (useScale) {
-                    case 0:
-                    default:
-                        dimensions = calculateDimension(getWidth(), getHeight(), width, height);
-                        break;
                     case 1:
                         dimensions = calculateDimension(getWidth(), getHeight(), width, (int)maxHeight);
                         break;
                     case 2:
                         dimensions = calculateDimension(getWidth(), getHeight(), (int)maxWidth, height);
+                        break;
+                    case 0:
+                    default:
+                        dimensions = calculateDimension(getWidth(), getHeight(), width, height);
                         break;
                 }
                 width = dimensions[0];
@@ -700,10 +936,16 @@ public class CmsImageScaler {
             }
         }
 
+        if ((type == 9) && ((width > getWidth()) || (height > getHeight()))) {
+            // type 9 with "no upscale" has been requested but target size is larger than original size
+            width = getWidth();
+            height = getHeight();
+        }
+
         if ((type == 1) && (!target.isValid())) {
-            // "no upscale" has been requested, only one target dimension was given
+            // type 1 with "no upscale" has been requested, only one target dimension was given
             if ((target.getWidth() > 0) && (getWidth() < width)) {
-                // target width was given, target image should have this width 
+                // target width was given, target image should have this width
                 height = getHeight();
             } else if ((target.getHeight() > 0) && (getHeight() < height)) {
                 // target height was given, target image should have this height
@@ -720,9 +962,9 @@ public class CmsImageScaler {
 
     /**
      * Returns the type.<p>
-     * 
+     *
      * Possible values are:<dl>
-     * 
+     *
      * <dt>0 (default): Scale to exact target size with background padding</dt><dd><ul>
      * <li>enlarge image to fit in target size (if required)
      * <li>reduce image to fit in target size (if required)
@@ -755,14 +997,35 @@ public class CmsImageScaler {
      * <li>don't keep image aspect ratio / proportions intact
      * <li>the image will be scaled exactly to the given target size and likely will be loose proportions</ul></dd>
      * </dl>
-     * 
+     *
      * <dt>5: Scale and keep image proportions without enlargement, target size variable with optional max width and height</dt><dd><ul>
      * <li>dont't enlarge image
      * <li>reduce image to fit in target size (if required)
      * <li>keep image aspect ratio / proportions intact
      * <li>best fit into target width / height _OR_ width / maxHeight _OR_ maxWidth / height
      * <li>scaled image will not be padded or cropped, so target size is likely not the exact requested size</ul></dd>
-     * 
+     *
+     * <dt>6: Crop around point: Use exact pixels</dt><dd><ul>
+     * <li>This type only applies for image crop operations (full crop parameters must be provided).
+     * <li>In this case the crop coordinates <code>x, y</code> are treated as a point in the middle of <code>width, height</code>.
+     * <li>With this type, the pixels from the source image are used 1:1 for the target image.</ul></dd>
+     *
+     * <dt>7: Crop around point: Use pixels for target size, get maximum out of image</dt><dd><ul>
+     * <li>This type only applies for image crop operations (full crop parameters must be provided).
+     * <li>In this case the crop coordinates <code>x, y</code> are treated as a point in the middle of <code>width, height</code>.
+     * <li>With this type, as much as possible from the source image is fitted in the target image size.</ul></dd>
+     *
+     * <dt>8: Focal point mode.</dt>
+     * <p>If a focal point is set on this scaler, this mode will first crop a region defined by cx,cy,cw,ch from the original
+     * image, then select the largest region of the aspect ratio defined by w/h in the cropped image containing the focal point, and finally
+     * scale that region to size w x h.</p>
+     *
+     * <dt>9: Scale and keep image proportions, target size variable, no image enlargement</dt><dd><ul>
+     * <li>dont't enlarge image
+     * <li>reduce image to fit in target size (if required)
+     * <li>keep image aspect ratio / proportions intact
+     * <li>scaled image will not be padded or cropped, so target size is likely not the exact requested size</ul></dd>
+     *
      * @return the type
      */
     public int getType() {
@@ -781,16 +1044,16 @@ public class CmsImageScaler {
     }
 
     /**
-     * Returns a new image scaler that is a width based down scale from the size of <code>this</code> scaler 
+     * Returns a new image scaler that is a width based down scale from the size of <code>this</code> scaler
      * to the given scaler size.<p>
-     * 
+     *
      * If no down scale from this to the given scaler is required because the width of <code>this</code>
-     * scaler is not larger than the target width, then the image dimensions of <code>this</code> scaler 
+     * scaler is not larger than the target width, then the image dimensions of <code>this</code> scaler
      * are unchanged in the result scaler. No up scaling is done!<p>
-     * 
+     *
      * @param downScaler the image scaler that holds the down scaled target image dimensions
-     * 
-     * @return a new image scaler that is a down scale from the size of <code>this</code> scaler 
+     *
+     * @return a new image scaler that is a down scale from the size of <code>this</code> scaler
      *      to the given target scaler size
      */
     public CmsImageScaler getWidthScaler(CmsImageScaler downScaler) {
@@ -823,10 +1086,10 @@ public class CmsImageScaler {
 
     /**
      * Returns <code>true</code> if all required parameters for image cropping are available.<p>
-     * 
-     * Required parameters are <code>"cx","cy"</code> (x, y start coordinate), 
+     *
+     * Required parameters are <code>"cx","cy"</code> (x, y start coordinate),
      * and <code>"ch","cw"</code> (crop height and width).<p>
-     * 
+     *
      * @return <code>true</code> if all required cropping parameters are available
      */
     public boolean isCropping() {
@@ -840,15 +1103,15 @@ public class CmsImageScaler {
      *
      * If either <code>this</code> scaler or the given <code>downScaler</code> is invalid according to
      * {@link #isValid()}, then <code>false</code> is returned.<p>
-     * 
-     * The use case: <code>this</code> scaler represents an image (that is contains width and height of 
+     *
+     * The use case: <code>this</code> scaler represents an image (that is contains width and height of
      * an image). The <code>downScaler</code> represents the maximum wanted image. The scalers
      * are compared and if the image represented by <code>this</code> scaler is too large,
-     * <code>true</code> is returned. Image orientation is ignored, so for example an image with 600x800 pixel 
+     * <code>true</code> is returned. Image orientation is ignored, so for example an image with 600x800 pixel
      * will NOT be down scaled if the target size is 800x600 but kept unchanged.<p>
-     * 
+     *
      * @param downScaler the down scaler to compare this image scaler with
-     * 
+     *
      * @return <code>true</code> if this image scaler must be down scaled when compared to the
      *      given "down scale" image scaler
      */
@@ -883,10 +1146,22 @@ public class CmsImageScaler {
     }
 
     /**
+     * Returns <code>true</code> if the image scaler was
+     * only used to read image properties from the VFS.
+     *
+     * @return <code>true</code> if the image scaler was
+     * only used to read image properties from the VFS
+     */
+    public boolean isOriginalScaler() {
+
+        return m_isOriginalScaler;
+    }
+
+    /**
      * Returns <code>true</code> if all required parameters are available.<p>
-     * 
+     *
      * Required parameters are <code>"h"</code> (height), and <code>"w"</code> (width).<p>
-     * 
+     *
      * @return <code>true</code> if all required parameters are available
      */
     public boolean isValid() {
@@ -896,12 +1171,12 @@ public class CmsImageScaler {
 
     /**
      * Parses the given parameters and sets the internal scaler variables accordingly.<p>
-     * 
+     *
      * The parameter String must have a format like <code>"h:100,w:200,t:1"</code>,
      * that is a comma separated list of attributes followed by a colon ":", followed by a value.
      * As possible attributes, use the constants from this class that start with <code>SCALE_PARAM</Code>
      * for example {@link #SCALE_PARAM_HEIGHT} or {@link #SCALE_PARAM_WIDTH}.<p>
-     * 
+     *
      * @param parameters the parameters to parse
      */
     public void parseParameters(String parameters) {
@@ -910,7 +1185,7 @@ public class CmsImageScaler {
         m_height = -1;
         m_position = 0;
         m_type = 0;
-        m_color = Color.WHITE;
+        m_color = Simapi.COLOR_TRANSPARENT;
         m_cropX = -1;
         m_cropY = -1;
         m_cropWidth = -1;
@@ -987,161 +1262,78 @@ public class CmsImageScaler {
 
     /**
      * Returns a scaled version of the given image byte content according this image scalers parameters.<p>
-     *  
+     *
+     * @param content the image byte content to scale
+     * @param image if this is set, this image will be used as base for the scaling rather than a new image read from the content byte array
+     * @param rootPath the root path of the image file in the VFS
+     *
+     * @return a scaled version of the given image byte content according to the provided scaler parameters
+     */
+    public byte[] scaleImage(byte[] content, BufferedImage image, String rootPath) {
+
+        ByteArrayOutputStream out = new ByteArrayOutputStream(content.length);
+        scaleImageTo(content, image, rootPath, out);
+        return out.toByteArray();
+    }
+
+    /**
+     * Returns a scaled version of the given image byte content according this image scalers parameters.<p>
+     *
      * @param content the image byte content to scale
      * @param rootPath the root path of the image file in the VFS
-     * 
+     *
      * @return a scaled version of the given image byte content according to the provided scaler parameters
      */
     public byte[] scaleImage(byte[] content, String rootPath) {
 
-        byte[] result = content;
-
-        // initialize image crop area
-        initCropArea();
-
-        RenderSettings renderSettings;
-        if ((m_renderMode == 0) && (m_quality == 0)) {
-            // use default render mode and quality
-            renderSettings = new RenderSettings(Simapi.RENDER_QUALITY);
-        } else {
-            // use special render mode and/or quality
-            renderSettings = new RenderSettings(m_renderMode);
-            if (m_quality != 0) {
-                renderSettings.setCompressionQuality(m_quality / 100f);
-            }
-        }
-        // set max blur size
-        renderSettings.setMaximumBlurSize(m_maxBlurSize);
-        // new create the scaler
-        Simapi scaler = new Simapi(renderSettings);
-        // calculate a valid image type supported by the imaging library (e.g. "JPEG", "GIF")
-        String imageType = Simapi.getImageType(rootPath);
-        if (imageType == null) {
-            // no type given, maybe the name got mixed up
-            String mimeType = OpenCms.getResourceManager().getMimeType(rootPath, null, null);
-            // check if this is another known MIME type, if so DONT use it (images should not be named *.pdf)
-            if (mimeType == null) {
-                // no MIME type found, use JPEG format to write images to the cache         
-                imageType = Simapi.TYPE_JPEG;
-            }
-        }
-        if (imageType == null) {
-            // unknown type, unable to scale the image
-            if (LOG.isDebugEnabled()) {
-                LOG.debug(Messages.get().getBundle().key(Messages.ERR_UNABLE_TO_SCALE_IMAGE_2, rootPath, toString()));
-            }
-            return result;
-        }
-        try {
-            BufferedImage image = Simapi.read(content);
-
-            if (isCropping()) {
-                // check if the crop width / height are not larger then the source image
-                if ((m_cropHeight > image.getHeight()) || (m_cropWidth > image.getWidth())) {
-                    // crop height / width is outside of image - return image unchanged
-                    return result;
-                }
-            }
-
-            Color color = getColor();
-
-            if (!m_filters.isEmpty()) {
-                Iterator<String> i = m_filters.iterator();
-                while (i.hasNext()) {
-                    String filter = i.next();
-                    if (FILTER_GRAYSCALE.equals(filter)) {
-                        // add a gray scale filter
-                        GrayscaleFilter grayscaleFilter = new GrayscaleFilter();
-                        renderSettings.addImageFilter(grayscaleFilter);
-                    } else if (FILTER_SHADOW.equals(filter)) {
-                        // add a drop shadow filter
-                        ShadowFilter shadowFilter = new ShadowFilter();
-                        shadowFilter.setXOffset(5);
-                        shadowFilter.setYOffset(5);
-                        shadowFilter.setOpacity(192);
-                        shadowFilter.setBackgroundColor(color.getRGB());
-                        color = Simapi.COLOR_TRANSPARENT;
-                        renderSettings.setTransparentReplaceColor(Simapi.COLOR_TRANSPARENT);
-                        renderSettings.addImageFilter(shadowFilter);
-                    }
-                }
-            }
-
-            if (isCropping()) {
-                // image crop operation
-                image = scaler.cropToSize(
-                    image,
-                    m_cropX,
-                    m_cropY,
-                    m_cropWidth,
-                    m_cropHeight,
-                    getWidth(),
-                    getHeight(),
-                    color);
-            } else {
-                // image rescale operation
-                switch (getType()) {
-                // select the "right" method of scaling according to the "t" parameter
-                    case 1:
-                        // thumbnail generation mode (like 0 but no image enlargement)
-                        image = scaler.resize(image, getWidth(), getHeight(), color, getPosition(), false);
-                        break;
-                    case 2:
-                        // scale to exact target size, crop what does not fit
-                        image = scaler.resize(image, getWidth(), getHeight(), getPosition());
-                        break;
-                    case 3:
-                        // scale and keep image proportions, target size variable
-                        image = scaler.resize(image, getWidth(), getHeight(), true);
-                        break;
-                    case 4:
-                        // don't keep image proportions, use exact target size
-                        image = scaler.resize(image, getWidth(), getHeight(), false);
-                        break;
-                    case 5:
-                        // scale and keep image proportions, target size variable, include maxWidth / maxHeight option
-                        // image proportions have already been calculated so should not be a problem, use 
-                        // 'false' to make sure image size exactly matches height and width attributes of generated tag
-                        image = scaler.resize(image, getWidth(), getHeight(), false);
-                        break;
-                    default:
-                        // scale to exact target size with background padding
-                        image = scaler.resize(image, getWidth(), getHeight(), color, getPosition(), true);
-                }
-            }
-
-            if (!m_filters.isEmpty()) {
-                Rectangle targetSize = scaler.applyFilterDimensions(getWidth(), getHeight());
-                image = scaler.resize(
-                    image,
-                    (int)targetSize.getWidth(),
-                    (int)targetSize.getHeight(),
-                    Simapi.COLOR_TRANSPARENT,
-                    Simapi.POS_CENTER);
-                image = scaler.applyFilters(image);
-            }
-
-            // get the byte result for the scaled image
-            result = scaler.getBytes(image, imageType);
-        } catch (Exception e) {
-            if (LOG.isDebugEnabled()) {
-                LOG.debug(Messages.get().getBundle().key(Messages.ERR_UNABLE_TO_SCALE_IMAGE_2, rootPath, toString()), e);
-            }
-        }
-        return result;
+        return scaleImage(content, (BufferedImage)null, rootPath);
     }
 
     /**
      * Returns a scaled version of the given image file according this image scalers parameters.<p>
-     *  
+     *
      * @param file the image file to scale
-     * 
+     *
      * @return a scaled version of the given image file according to the provided scaler parameters
      */
     public byte[] scaleImage(CmsFile file) {
 
         return scaleImage(file.getContents(), file.getRootPath());
+    }
+
+    /**
+     * Writes a scaled version of the given image byte content according this image scalers parameters to an output
+     * stream.<p>
+     *
+     * @param content the image byte content to scale
+     * @param image if this is set, this image will be used as base for the scaling rather than a new image read from the content byte array
+     * @param rootPath the root path of the image file in the VFS
+     * @param out the output stream to write the scaled image to
+     */
+    public void scaleImageTo(byte[] content, BufferedImage image, String rootPath, OutputStream out) {
+
+        try {
+            acquireSemaphore();
+            try {
+                CmsImageScalingResult result = processImage(content, image, rootPath);
+                if ((result == null) || !result.isProcessed()) {
+                    out.write(content);
+                } else {
+                    createSimapi(createRenderSettings()).write(result.getResultImage(), out, result.getImageType());
+                }
+            } finally {
+                releaseSemaphore();
+            }
+        } catch (InterruptedException e) {
+            LOG.warn("Waiting on image scaling semaphore was interrupted", e);
+            try {
+                out.write(content);
+            } catch (IOException ioException) {
+                LOG.warn("Writing original image after interrupted scaling failed", ioException);
+            }
+        } catch (IOException e) {
+            LOG.warn("Writing scaled image failed", e);
+        }
     }
 
     /**
@@ -1164,13 +1356,13 @@ public class CmsImageScaler {
         if (COLOR_TRANSPARENT.indexOf(value) == 0) {
             setColor(Simapi.COLOR_TRANSPARENT);
         } else {
-            setColor(CmsStringUtil.getColorValue(value, Color.WHITE, SCALE_PARAM_COLOR));
+            setColor(CmsStringUtil.getColorValue(value, Simapi.COLOR_TRANSPARENT, SCALE_PARAM_COLOR));
         }
     }
 
     /**
      * Sets the image crop area.<p>
-     * 
+     *
      * @param x the x coordinate for the crop
      * @param y the y coordinate for the crop
      * @param width the crop width
@@ -1186,7 +1378,7 @@ public class CmsImageScaler {
 
     /**
      * Sets the list of filters as a String.<p>
-     * 
+     *
      * @param value the list of filters to set
      */
     public void setFilters(String value) {
@@ -1210,6 +1402,16 @@ public class CmsImageScaler {
     }
 
     /**
+     * Sets the focal point.<p>
+     *
+     * @param point the new value for the focal point
+     */
+    public void setFocalPoint(CmsPoint point) {
+
+        m_focalPoint = point;
+    }
+
+    /**
      * Sets the height.<p>
      *
      * @param height the height to set
@@ -1220,10 +1422,10 @@ public class CmsImageScaler {
     }
 
     /**
-     * Sets the maximum image size (width * height) to apply image blurring when downscaling images.<p> 
-     * 
+     * Sets the maximum image size (width * height) to apply image blurring when downscaling images.<p>
+     *
      * @param maxBlurSize the maximum image blur size to set
-     * 
+     *
      * @see #getMaxBlurSize() for a more detailed description about this parameter
      */
     public void setMaxBlurSize(int maxBlurSize) {
@@ -1295,7 +1497,7 @@ public class CmsImageScaler {
      * Sets the image rendering mode constant.<p>
      *
      * @param renderMode the image rendering mode to set
-     * 
+     *
      * @see #getRenderMode() for a list of allowed values for the rendering mode
      */
     public void setRenderMode(int renderMode) {
@@ -1310,12 +1512,12 @@ public class CmsImageScaler {
      * Sets the scale type.<p>
      *
      * @param type the scale type to set
-     * 
+     *
      * @see #getType() for a detailed description of the possible values for the type
      */
     public void setType(int type) {
 
-        if ((type < 0) || (type > 5)) {
+        if ((type < 0) || (type > 9)) {
             // invalid type, use 0
             m_type = 0;
         } else {
@@ -1336,9 +1538,9 @@ public class CmsImageScaler {
     /**
      * Creates a request parameter configured with the values from this image scaler, also
      * appends a <code>'?'</code> char as a prefix so that this may be directly appended to an image URL.<p>
-     * 
+     *
      * This can be appended to an image request in order to apply image scaling parameters.<p>
-     * 
+     *
      * @return a request parameter configured with the values from this image scaler
      */
     public String toRequestParam() {
@@ -1434,10 +1636,10 @@ public class CmsImageScaler {
 
     /**
      * Calculate the closest match of the given base float with the list of others.<p>
-     *  
+     *
      * @param base the base float to compare the other with
      * @param others the list of floats to compate to the base
-     * 
+     *
      * @return the array index of the closest match
      */
     private int calculateClosest(float base, float[] others) {
@@ -1460,30 +1662,44 @@ public class CmsImageScaler {
     }
 
     /**
-     * Calculate the width and height of a source image if scaled inside the given box.<p>
-     *  
-     * @param sourceWidth the width of the source image
-     * @param sourceHeight the height of the source image
-     * @param boxWidth the width of the target box
-     * @param boxHeight the height of the target box
-     * 
-     * @return the width [0] and height [1] of the source image if scaled inside the given box
+     * Creates render settings for the current scaler parameters.<p>
+     *
+     * @return the render settings
      */
-    private int[] calculateDimension(int sourceWidth, int sourceHeight, int boxWidth, int boxHeight) {
+    private RenderSettings createRenderSettings() {
 
-        int result[] = new int[2];
-        if ((sourceWidth <= boxWidth) && (sourceHeight <= boxHeight)) {
-            result[0] = sourceWidth;
-            result[1] = sourceHeight;
+        RenderSettings renderSettings;
+        if ((m_renderMode == 0) && (m_quality == 0)) {
+            // use default render mode and quality
+            renderSettings = new RenderSettings(Simapi.RENDER_QUALITY);
         } else {
-            float scaleWidth = (float)boxWidth / (float)sourceWidth;
-            float scaleHeight = (float)boxHeight / (float)sourceHeight;
-            float scale = Math.min(scaleHeight, scaleWidth);
-            result[0] = Math.round(sourceWidth * scale);
-            result[1] = Math.round(sourceHeight * scale);
+            // use special render mode and/or quality
+            renderSettings = new RenderSettings(m_renderMode);
+            if (m_quality != 0) {
+                renderSettings.setCompressionQuality(m_quality / 100f);
+            }
         }
+        // set max blur size
+        renderSettings.setMaximumBlurSize(m_maxBlurSize);
+        return renderSettings;
+    }
 
-        return result;
+    /**
+     * Creates a Simapi instance for the given render settings.<p>
+     *
+     * @param renderSettings the render settings
+     *
+     * @return the Simapi instance
+     */
+    private Simapi createSimapi(RenderSettings renderSettings) {
+
+        return new Simapi(renderSettings);
+    }
+
+    private Dimension getDimensionsWithSimapi(byte[] content) throws Exception {
+
+        BufferedImage image = Simapi.read(content);
+        return new Dimension(image.getWidth(), image.getHeight());
     }
 
     /**
@@ -1506,14 +1722,17 @@ public class CmsImageScaler {
         m_color = Color.WHITE;
         m_filters = new ArrayList<String>();
         m_maxBlurSize = CmsImageLoader.getMaxBlurSize();
+        m_isOriginalScaler = false;
     }
 
     /**
      * Initializes the crop area setting.<p>
-     * 
+     *
      * Only if all 4 required parameters have been set, the crop area is set accordingly.
      * Moreover, it is not required to specify the target image width and height when using crop,
-     * because these parameters can be calculated from the crop area.<p> 
+     * because these parameters can be calculated from the crop area.<p>
+     *
+     * Scale type 6 and 7 are used for a 'crop around point' operation, see {@link #getType()} for a description.<p>
      */
     private void initCropArea() {
 
@@ -1526,30 +1745,241 @@ public class CmsImageScaler {
             if (m_height < 0) {
                 m_height = m_cropHeight;
             }
-            // set type to 0 - scale type is ignored when using crop
-            setType(0);
+            if ((getType() != 6) && (getType() != 7) && (getType() != 8)) {
+                // cropping type can only be 6 or 7 (point cropping)
+                // all other values with cropping coordinates are invalid
+                setType(0);
+            }
         }
     }
 
     /**
      * Copies all values from the given scaler into this scaler.<p>
-     * 
+     *
      * @param source the source scaler
      */
     private void initValuesFrom(CmsImageScaler source) {
 
-        m_width = source.m_width;
-        m_height = source.m_height;
-        m_type = source.m_type;
-        m_position = source.m_position;
-        m_renderMode = source.m_renderMode;
-        m_quality = source.m_quality;
         m_color = source.m_color;
-        m_filters = new ArrayList<String>(source.m_filters);
-        m_maxBlurSize = source.m_maxBlurSize;
         m_cropHeight = source.m_cropHeight;
         m_cropWidth = source.m_cropWidth;
         m_cropX = source.m_cropX;
         m_cropY = source.m_cropY;
+        m_filters = new ArrayList<String>(source.m_filters);
+        m_focalPoint = source.m_focalPoint;
+        m_height = source.m_height;
+        m_isOriginalScaler = source.m_isOriginalScaler;
+        m_maxBlurSize = source.m_maxBlurSize;
+        m_position = source.m_position;
+        m_quality = source.m_quality;
+        m_renderMode = source.m_renderMode;
+        m_type = source.m_type;
+        m_width = source.m_width;
+
+    }
+
+    /**
+     * Processes an image and returns the scaled image result.<p>
+     *
+     * @param content the source image bytes, only used if no image is provided
+     * @param image the image to scale
+     * @param rootPath the root path of the image file in the VFS
+     *
+     * @return the scaling result, or <code>null</code> if the image can not be scaled
+     */
+    private CmsImageScalingResult processImage(byte[] content, BufferedImage image, String rootPath) {
+
+        // flag for processed image
+        boolean imageProcessed = false;
+        // initialize image crop area
+        initCropArea();
+
+        RenderSettings renderSettings = createRenderSettings();
+        Simapi scaler = createSimapi(renderSettings);
+        // calculate a valid image type supported by the imaging library (e.g. "JPEG", "GIF")
+        String imageType = Simapi.getImageType(rootPath);
+        if (imageType == null) {
+            // no type given, maybe the name got mixed up
+            String mimeType = OpenCms.getResourceManager() != null
+            ? OpenCms.getResourceManager().getMimeType(rootPath, null, null)
+            : null;
+            // check if this is another known MIME type, if so DONT use it (images should not be named *.pdf)
+            if (mimeType == null) {
+                // no MIME type found, use JPEG format to write images to the cache
+                imageType = Simapi.TYPE_JPEG;
+            }
+        }
+        if (imageType == null) {
+            // unknown type, unable to scale the image
+            if (LOG.isDebugEnabled()) {
+                LOG.debug(Messages.get().getBundle().key(Messages.ERR_UNABLE_TO_SCALE_IMAGE_2, rootPath, toString()));
+            }
+            return null;
+        }
+        try {
+            if (image == null) {
+                image = Simapi.read(content);
+            }
+            if (image == null) {
+                return null;
+            }
+
+            if (isCropping()) {
+                // check if the crop width / height are not larger then the source image
+                if ((getType() == 0) && ((m_cropHeight > image.getHeight()) || (m_cropWidth > image.getWidth()))) {
+                    // crop height / width is outside of image - return image unchanged
+                    return new CmsImageScalingResult(image, imageType, false);
+                }
+            }
+
+            Color color = getColor();
+
+            if (!m_filters.isEmpty()) {
+                Iterator<String> i = m_filters.iterator();
+                while (i.hasNext()) {
+                    String filter = i.next();
+                    if (FILTER_GRAYSCALE.equals(filter)) {
+                        // add a gray scale filter
+                        GrayscaleFilter grayscaleFilter = new GrayscaleFilter();
+                        renderSettings.addImageFilter(grayscaleFilter);
+                    } else if (FILTER_SHADOW.equals(filter)) {
+                        // add a drop shadow filter
+                        ShadowFilter shadowFilter = new ShadowFilter();
+                        shadowFilter.setXOffset(5);
+                        shadowFilter.setYOffset(5);
+                        shadowFilter.setOpacity(192);
+                        shadowFilter.setBackgroundColor(color.getRGB());
+                        color = Simapi.COLOR_TRANSPARENT;
+                        renderSettings.setTransparentReplaceColor(Simapi.COLOR_TRANSPARENT);
+                        renderSettings.addImageFilter(shadowFilter);
+                    }
+                }
+            }
+
+            if (isCropping()) {
+                if ((getType() == 8) && (m_focalPoint != null)) {
+                    image = scaler.cropToSize(
+                        image,
+                        m_cropX,
+                        m_cropY,
+                        m_cropWidth,
+                        m_cropHeight,
+                        m_cropWidth,
+                        m_cropHeight,
+                        color);
+                    // Find the biggest scaling factor which, when applied to a rectangle of dimensions m_width x m_height,
+                    // would allow the resulting rectangle to still fit inside a rectangle of dimensions m_cropWidth x m_cropHeight
+                    // (we have to take the minimum because a rectangle that fits on the x axis might still be out of bounds on the y axis, and
+                    // vice versa).
+                    double scaling = Math.min((1.0 * m_cropWidth) / m_width, (1.0 * m_cropHeight) / m_height);
+                    int relW = (int)(scaling * m_width);
+                    int relH = (int)(scaling * m_height);
+                    // the focal point's coordinates are in the uncropped image's coordinate system, so we have to subtract cx/cy
+                    int relX = (int)(m_focalPoint.getX() - m_cropX);
+                    int relY = (int)(m_focalPoint.getY() - m_cropY);
+                    image = scaler.cropPointToSize(image, relX, relY, false, relW, relH);
+                    if ((m_width != relW) || (m_height != relH)) {
+                        image = scaler.scale(image, m_width, m_height);
+                    }
+                } else if ((getType() == 6) || (getType() == 7)) {
+                    // image crop operation around point
+                    image = scaler.cropPointToSize(image, m_cropX, m_cropY, getType() == 6, m_cropWidth, m_cropHeight);
+                } else {
+                    // image crop operation
+                    image = scaler.cropToSize(
+                        image,
+                        m_cropX,
+                        m_cropY,
+                        m_cropWidth,
+                        m_cropHeight,
+                        getWidth(),
+                        getHeight(),
+                        color);
+                }
+
+                imageProcessed = true;
+            } else {
+                // only rescale the image, if the width and height are different to the target size
+                int imageWidth = image.getWidth();
+                int imageHeight = image.getHeight();
+
+                // image rescale operation
+                switch (getType()) {
+                    // select the "right" method of scaling according to the "t" parameter
+                    case 1:
+                        // thumbnail generation mode (like 0 but no image enlargement)
+                        image = scaler.resize(image, getWidth(), getHeight(), color, getPosition(), false);
+                        imageProcessed = true;
+                        break;
+                    case 2:
+                        // scale to exact target size, crop what does not fit
+                        if (((imageWidth != getWidth()) || (imageHeight != getHeight()))) {
+                            image = scaler.resize(image, getWidth(), getHeight(), getPosition());
+                            imageProcessed = true;
+                        }
+                        break;
+                    case 3:
+                        // scale and keep image proportions, target size variable
+                        if (((imageWidth != getWidth()) || (imageHeight != getHeight()))) {
+                            image = scaler.resize(image, getWidth(), getHeight(), true);
+                            imageProcessed = true;
+                        }
+                        break;
+                    case 4:
+                        // don't keep image proportions, use exact target size
+                        if (((imageWidth != getWidth()) || (imageHeight != getHeight()))) {
+                            image = scaler.resize(image, getWidth(), getHeight(), false);
+                            imageProcessed = true;
+                        }
+                        break;
+                    case 5:
+                        // scale and keep image proportions, target size variable, include maxWidth / maxHeight option
+                        // image proportions have already been calculated so should not be a problem, use
+                        // 'false' to make sure image size exactly matches height and width attributes of generated tag
+                        if (((imageWidth != getWidth()) || (imageHeight != getHeight()))) {
+                            image = scaler.resize(image, getWidth(), getHeight(), false);
+                            imageProcessed = true;
+                        }
+                        break;
+                    case 9:
+                        // scale and keep image proportions, target size variable, no image enlargement
+                        if ((imageWidth > getWidth()) && (imageHeight > getHeight())) {
+                            image = scaler.resize(image, getWidth(), getHeight(), true);
+                            imageProcessed = true;
+                        }
+                        break;
+                    default:
+                        // scale to exact target size with background padding
+                        image = scaler.resize(image, getWidth(), getHeight(), color, getPosition(), true);
+                        imageProcessed = true;
+                }
+
+            }
+
+            if (!m_filters.isEmpty()) {
+                Rectangle targetSize = scaler.applyFilterDimensions(getWidth(), getHeight());
+                image = scaler.resize(
+                    image,
+                    (int)targetSize.getWidth(),
+                    (int)targetSize.getHeight(),
+                    Simapi.COLOR_TRANSPARENT,
+                    Simapi.POS_CENTER);
+                image = scaler.applyFilters(image);
+                imageProcessed = true;
+            }
+
+            // get the byte result for the scaled image if some changes have been made.
+            // otherwiese use the original image
+            if (imageProcessed) {
+                return new CmsImageScalingResult(image, imageType, true);
+            }
+        } catch (Exception e) {
+            if (LOG.isDebugEnabled()) {
+                LOG.debug(
+                    Messages.get().getBundle().key(Messages.ERR_UNABLE_TO_SCALE_IMAGE_2, rootPath, toString()),
+                    e);
+            }
+        }
+        return new CmsImageScalingResult(image, imageType, false);
     }
 }

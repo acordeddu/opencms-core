@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -14,12 +14,12 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * Lesser General Public License for more details.
  *
- * For further information about Alkacon Software GmbH, please see the
- * company website: http://www.alkacon.com
+ * For further information about Alkacon Software GmbH & Co. KG, please see the
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -46,13 +46,13 @@ import javax.servlet.http.HttpServletResponse;
  * OpenCms loader for resources of type <code>{@link org.opencms.file.types.CmsResourceTypeXmlContainerPage}</code>.<p>
  *
  * It is just a xml-content loader with template capabilities.<p>
- * 
+ *
  * @since 7.6
  */
-public class CmsXmlContainerPageLoader extends A_CmsXmlDocumentLoader {
+public class CmsXmlContainerPageLoader extends CmsXmlContentLoader {
 
     /** The id of this loader. */
-    public static final int RESOURCE_LOADER_ID = 11;
+    public static final int CONTAINER_PAGE_RESOURCE_LOADER_ID = 11;
 
     /**
      * Default constructor.<p>
@@ -65,17 +65,19 @@ public class CmsXmlContainerPageLoader extends A_CmsXmlDocumentLoader {
     /**
      * @see org.opencms.loader.I_CmsResourceLoader#getLoaderId()
      */
+    @Override
     public int getLoaderId() {
 
-        return RESOURCE_LOADER_ID;
+        return CONTAINER_PAGE_RESOURCE_LOADER_ID;
     }
 
     /**
      * Returns a String describing this resource loader, which is (localized to the system default locale)
      * <code>"The OpenCms default resource loader for container page"</code>.<p>
-     * 
-     * @return a describing String for the ResourceLoader 
+     *
+     * @return a describing String for the ResourceLoader
      */
+    @Override
     public String getResourceLoaderInfo() {
 
         return Messages.get().getBundle().key(Messages.GUI_LOADER_CONTAINERPAGE_DEFAULT_DESC_0);
@@ -99,8 +101,10 @@ public class CmsXmlContainerPageLoader extends A_CmsXmlDocumentLoader {
 
         CmsTemplateLoaderFacade loaderFacade = OpenCms.getResourceManager().getTemplateLoaderFacade(
             cms,
+            req,
             resource,
             getTemplatePropertyDefinition());
+        setTemplateRequestAttributes(loaderFacade, req);
         loaderFacade.getLoader().load(cms, loaderFacade.getLoaderStartResource(), req, res);
     }
 

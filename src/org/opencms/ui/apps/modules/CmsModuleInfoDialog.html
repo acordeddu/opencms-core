@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html>
+<head>
+  	  	<meta name="package-mapping" content="u:org.opencms.ui" />
+  	  	<meta name="package-mapping" content="o:org.opencms.ui.components" />
+  </head>
+  <body>
+  		<o-cms-basic-dialog>
+  			<content>
+  				<vaadin7-vertical-layout margin spacing>
+  					<vaadin7-label _id="m_description" ></vaadin7-label>
+  					<v-panel caption="%(key.GUI_MODULES_PANEL_RESOURCETYPES_0)">
+  						<vaadin7-vertical-layout margin spacing style-name="o-reduced-spacing" _id="m_resourceTypes">
+  						</vaadin7-vertical-layout>
+  					</v-panel>
+  					<v-panel _id="m_explorerTypesPanel" caption="%(key.GUI_MODULES_PANEL_EXPLORERTYPES_0)">
+  						<vaadin7-vertical-layout margin spacing style-name="o-reduced-spacing"  _id="m_explorerTypes">
+  						</vaadin7-vertical-layout>
+  					</v-panel>
+  				</vaadin7-vertical-layout>
+  			</content>
+  			<buttons>
+  				<v-button _id="m_ok" >%(key.GUI_DIALOG_BUTTON_OK_0)</v-button>
+  				<v-button _id="m_edit">%(key.GUI_DIALOG_BUTTON_EDIT_0)</v-button>
+  			</buttons>
+  		</o-cms-basic-dialog>
+  </body>
+</html>

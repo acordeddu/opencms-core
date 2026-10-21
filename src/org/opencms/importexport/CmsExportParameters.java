@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -14,12 +14,12 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * Lesser General Public License for more details.
  *
- * For further information about Alkacon Software GmbH, please see the
- * company website: http://www.alkacon.com
+ * For further information about Alkacon Software GmbH & Co. KG, please see the
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -28,19 +28,26 @@
 package org.opencms.importexport;
 
 import org.opencms.main.CmsIllegalArgumentException;
+import org.opencms.module.CmsModule.ExportMode;
 import org.opencms.util.CmsStringUtil;
 
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import org.dom4j.Element;
 
 /**
  * Export parameters.<p>
- * 
- * @since 7.0.4 
+ *
+ * @since 7.0.4
  */
 public class CmsExportParameters {
+
+    /** The additional resource list. */
+    private String m_additionalResourceList = null;
 
     /** Only resources modified after this time stamp will be exported. */
     private long m_contentAge;
@@ -50,6 +57,9 @@ public class CmsExportParameters {
 
     /** Indicates if the resources are exported in one export .ZIP file (the default) or as individual files. */
     private boolean m_exportAsFiles;
+
+    /** The export mode that should be used for the export. */
+    private ExportMode m_exportMode = ExportMode.DEFAULT;
 
     /** If the project data should be exported. */
     private boolean m_exportProjectData;
@@ -62,12 +72,14 @@ public class CmsExportParameters {
 
     /** If unchanged files should be included in the export.*/
     private boolean m_includeUnchangedResources = true;
-
     /** If set, only resources belonging to the current project will be exported. */
     private boolean m_inProject;
 
     /** The module informations if to export a module. */
     private Element m_moduleInfo;
+
+    /** The site root that should override the site root from the request context. */
+    private String m_overrideSiteRoot;
 
     /** The file path, should be a zip file. */
     private String m_path;
@@ -78,8 +90,16 @@ public class CmsExportParameters {
     /** The resources to export.*/
     private List<String> m_resources;
 
+    /** Don't write parent folders to manifest. */
+    private boolean m_skipParentFolders;
+
     /** If set, the manifest.xml file will be generated with dtd info. */
     private boolean m_xmlValidation;
+
+    /** Resources for with meta data should be exported, even if not in the resources to export.
+     * That are super-folders of exported resources, where meta data should be kept in the export.
+     */
+    private List<String> m_additionalResourcesToExportWithMetaData;
 
     /**
      * Constructor.<p>
@@ -91,7 +111,7 @@ public class CmsExportParameters {
 
     /**
      * Constructor.<p>
-     * 
+     *
      * @param exportFile the zip file to export to
      * @param moduleElement module informations in a Node for module export
      * @param exportResourceData if the resource data has also to be exported
@@ -103,6 +123,7 @@ public class CmsExportParameters {
      * @param contentAge export contents changed after this date/time
      * @param recursive recursive flag
      * @param inProject if only resources in the current project are exported
+     * @param exportMode the export mode to use
      */
     public CmsExportParameters(
         String exportFile,
@@ -115,7 +136,8 @@ public class CmsExportParameters {
         boolean includeUnchanged,
         long contentAge,
         boolean recursive,
-        boolean inProject) {
+        boolean inProject,
+        ExportMode exportMode) {
 
         setPath(exportFile);
         setResources(resourcesToExport);
@@ -129,6 +151,86 @@ public class CmsExportParameters {
         setExportProjectData(exportProjectData);
         setInProject(inProject);
         setExportAsFiles(false);
+        setExportMode(exportMode);
+        setAdditionalResourcesToExportWithMetaData(null);
+    }
+
+    /**
+     * Constructor.<p>
+     *
+     * @param exportFile the zip file to export to
+     * @param moduleElement module informations in a Node for module export
+     * @param exportResourceData if the resource data has also to be exported
+     * @param exportUserdata if the account data has also to be exported
+     * @param exportProjectData if the project data has also to be exported
+     * @param resourcesToExport the paths of folders and files to export
+     * @param includeSystem if <code>true</code>, the system folder is included
+     * @param includeUnchanged <code>true</code>, if unchanged files should be included
+     * @param contentAge export contents changed after this date/time
+     * @param recursive recursive flag
+     * @param inProject if only resources in the current project are exported
+     * @param exportMode the export mode to use
+     * @param additionalResourcesToExportWithMetaData the list of export-site relative paths of folders/files for
+     *      which meta data should be exported, even if they do not belong the the resourcesToExport.
+     */
+    public CmsExportParameters(
+        String exportFile,
+        Element moduleElement,
+        boolean exportResourceData,
+        boolean exportUserdata,
+        boolean exportProjectData,
+        List<String> resourcesToExport,
+        boolean includeSystem,
+        boolean includeUnchanged,
+        long contentAge,
+        boolean recursive,
+        boolean inProject,
+        ExportMode exportMode,
+        List<String> additionalResourcesToExportWithMetaData) {
+
+        setPath(exportFile);
+        setResources(resourcesToExport);
+        setIncludeSystemFolder(includeSystem);
+        setIncludeUnchangedResources(includeUnchanged);
+        setModuleInfo(moduleElement);
+        setExportAccountData(exportUserdata);
+        setContentAge(contentAge);
+        setRecursive(recursive);
+        setExportResourceData(exportResourceData);
+        setExportProjectData(exportProjectData);
+        setInProject(inProject);
+        setExportAsFiles(false);
+        setExportMode(exportMode);
+        setAdditionalResourcesToExportWithMetaData(additionalResourcesToExportWithMetaData);
+    }
+
+    /**
+     * Adds the resources from the additional resource list to the actual export resources.
+     */
+    public void addAdditionalResources() {
+
+        if (m_additionalResourceList != null) {
+            Set<String> resources = new HashSet<>();
+            resources.addAll(getResources());
+            for (String line : m_additionalResourceList.split("\n")) {
+                line = line.trim();
+                if (line.length() > 0) {
+                    resources.add(line);
+                }
+            }
+            setResources(new ArrayList<>(resources));
+            m_additionalResourceList = null;
+        }
+    }
+
+    /**
+     * Gets the additional resource list.
+     *
+     * @return the additional resource list
+     */
+    public String getAdditionalResourceList() {
+
+        return m_additionalResourceList;
     }
 
     /**
@@ -139,6 +241,16 @@ public class CmsExportParameters {
     public long getContentAge() {
 
         return m_contentAge;
+    }
+
+    /**
+     * Returns the export mode that should be used.
+     *
+     * @return the export mode that should be used.
+     */
+    public ExportMode getExportMode() {
+
+        return m_exportMode;
     }
 
     /**
@@ -179,6 +291,18 @@ public class CmsExportParameters {
     }
 
     /**
+     * Returns the resources to export with (some additional) meta-data, even for reduced meta-data export.
+     * @return the resources to export with (some additional) meta-data, even for reduced meta-data export.
+     */
+    public List<String> getResourcesToExportWithMetaData() {
+
+        return null != m_additionalResourcesToExportWithMetaData
+        ? m_additionalResourcesToExportWithMetaData
+        : Collections.emptyList();
+
+    }
+
+    /**
      * Checks if to export account data.<p>
      *
      * @return <code>true</code>, if to export account data
@@ -191,8 +315,8 @@ public class CmsExportParameters {
     /**
      * Indicates if the resources are exported in one export .ZIP file (the default) or as individual files.<p>
      *
-     * @return <code>false</code> if the resources will be exported in a .ZIP file, 
-     *      <code>true</code> if the resources will be exported as individual files 
+     * @return <code>false</code> if the resources will be exported in a .ZIP file,
+     *      <code>true</code> if the resources will be exported as individual files
      */
     public boolean isExportAsFiles() {
 
@@ -260,6 +384,16 @@ public class CmsExportParameters {
     }
 
     /**
+     * If true, parent folders are not written to the manifest.
+     *
+     * @return true if parent folders should be skipped
+     */
+    public boolean isSkipParentFolders() {
+
+        return m_skipParentFolders;
+    }
+
+    /**
      * Checks if the manifest.xml file will be generated with dtd info.<p>
      *
      * @return the xml validation flag
@@ -267,6 +401,28 @@ public class CmsExportParameters {
     public boolean isXmlValidation() {
 
         return m_xmlValidation;
+    }
+
+    /**
+     * Sets the additional resources for the export.
+     *
+     * @param additionalResourceList the additional resource paths to export, separated by newlines
+     */
+    public void setAdditionalResourceList(String additionalResourceList) {
+
+        m_additionalResourceList = additionalResourceList;
+
+    }
+
+    /**
+     * Checks if the manifest.xml file will be generated with dtd info.<p>
+     *
+     * @param resourcesToExportWithMetaData the vfs paths of the resources.
+     */
+    public void setAdditionalResourcesToExportWithMetaData(List<String> resourcesToExportWithMetaData) {
+
+        m_additionalResourcesToExportWithMetaData = resourcesToExportWithMetaData;
+
     }
 
     /**
@@ -296,12 +452,22 @@ public class CmsExportParameters {
     /**
      * Controls if the resources are exported in one export .ZIP file (the default) or as individual files.<p>
      *
-     * @param exportAsFiles if <code>false</code>, then the resources will be exported in a .ZIP file, 
-     *      otherwise as individual files 
+     * @param exportAsFiles if <code>false</code>, then the resources will be exported in a .ZIP file,
+     *      otherwise as individual files
      */
     public void setExportAsFiles(boolean exportAsFiles) {
 
         m_exportAsFiles = exportAsFiles;
+    }
+
+    /**
+     * Sets the export mode.
+     *
+     * @param exportMode the export mode to set
+     */
+    public void setExportMode(ExportMode exportMode) {
+
+        m_exportMode = null != exportMode ? exportMode : ExportMode.DEFAULT;
     }
 
     /**
@@ -366,7 +532,7 @@ public class CmsExportParameters {
 
     /**
      * Sets the file path, should be a zip file.<p>
-     * 
+     *
      * @param path the file path
      */
     public void setPath(String path) {
@@ -395,6 +561,16 @@ public class CmsExportParameters {
     public void setResources(List<String> resources) {
 
         m_resources = resources;
+    }
+
+    /**
+     * Enables / disables skipping of parent folders in the manifest.
+     *
+     * @param skipSuperFolders true if parent folders should not be written to the manifest
+     */
+    public void setSkipParentFolders(boolean skipSuperFolders) {
+
+        m_skipParentFolders = skipSuperFolders;
     }
 
     /**

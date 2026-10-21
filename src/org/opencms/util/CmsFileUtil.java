@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -14,12 +14,12 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * Lesser General Public License for more details.
  *
- * For further information about Alkacon Software GmbH, please see the
- * company website: http://www.alkacon.com
+ * For further information about Alkacon Software GmbH & Co. KG, please see the
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -28,13 +28,17 @@
 package org.opencms.util;
 
 import org.opencms.file.CmsObject;
+import org.opencms.file.CmsProperty;
+import org.opencms.file.CmsPropertyDefinition;
 import org.opencms.file.CmsRequestContext;
 import org.opencms.file.CmsResource;
 import org.opencms.flex.CmsFlexCache;
 import org.opencms.i18n.CmsEncoder;
 import org.opencms.main.CmsException;
 import org.opencms.main.CmsIllegalArgumentException;
+import org.opencms.main.CmsLog;
 import org.opencms.main.CmsSystemInfo;
+import org.opencms.main.OpenCms;
 import org.opencms.staticexport.CmsLinkManager;
 
 import java.io.ByteArrayInputStream;
@@ -46,24 +50,94 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.Locale;
 
+import org.apache.commons.collections.Closure;
+import org.apache.commons.logging.Log;
+
 /**
  * Provides File utility functions.<p>
- * 
- * @since 6.0.0 
+ *
+ * @since 6.0.0
  */
 public final class CmsFileUtil {
 
     /**
-     * Hides the public constructor.<p> 
+     * Data bean which walkFileSystem passes to its callback.<p>
+     *
+     * The list of directories is mutable, which can be used by the callback to exclude certain directories.<p>
+     */
+    public static class FileWalkState {
+
+        /** Current directory. */
+        private File m_currentDir;
+
+        /** List of subdirectories of the current directory. */
+        private List<File> m_directories;
+
+        /** List of files of the current directory. */
+        private List<File> m_files;
+
+        /**
+         * Creates a new file walk state.<P>
+         *
+         * @param currentDir the current directory
+         * @param dirs the list of subdirectories
+         * @param files the list of files
+         */
+        public FileWalkState(File currentDir, List<File> dirs, List<File> files) {
+
+            m_currentDir = currentDir;
+            m_directories = dirs;
+            m_files = files;
+        }
+
+        /**
+         * Gets the current directory.<p>
+         *
+         * @return the current directory
+         */
+        public File getCurrentDir() {
+
+            return m_currentDir;
+        }
+
+        /**
+         * Gets the list of subdirectories.<p>
+         *
+         * @return the list of subdirectories
+         */
+        public List<File> getDirectories() {
+
+            return m_directories;
+        }
+
+        /**
+         * Returns the list of files.<p>
+         *
+         * @return the list of files
+         */
+        public List<File> getFiles() {
+
+            return m_files;
+        }
+    }
+
+    /** The static log object for this class. */
+    private static final Log LOG = CmsLog.getLog(CmsFileUtil.class);
+
+    /**
+     * Hides the public constructor.<p>
      */
     private CmsFileUtil() {
 
@@ -72,7 +146,7 @@ public final class CmsFileUtil {
 
     /**
      * Adds a trailing separator to a path if required.<p>
-     * 
+     *
      * @param path the path to add the trailing separator to
      * @return the path with a trailing separator
      */
@@ -88,39 +162,59 @@ public final class CmsFileUtil {
 
     /**
      * Checks if all resources are present.<p>
-     * 
+     *
      * @param cms an initialized OpenCms user context which must have read access to all resources
      * @param resources a list of vfs resource names to check
-     * 
+     *
      * @throws CmsIllegalArgumentException in case not all resources exist or can be read with the given OpenCms user context
      */
-    public static void checkResources(CmsObject cms, List resources) throws CmsIllegalArgumentException {
+    public static void checkResources(CmsObject cms, List<String> resources) throws CmsIllegalArgumentException {
 
         StringBuffer result = new StringBuffer(128);
-        ListIterator it = resources.listIterator();
+        ListIterator<String> it = resources.listIterator();
         while (it.hasNext()) {
-            String resourcePath = (String)it.next();
+            String resourcePath = it.next();
             try {
                 CmsResource resource = cms.readResource(resourcePath);
                 // append folder separator, if resource is a folder and does not and with a slash
                 if (resource.isFolder() && !resourcePath.endsWith("/")) {
                     it.set(resourcePath + "/");
                 }
-            } catch (CmsException e) {
+            } catch (@SuppressWarnings("unused") CmsException e) {
                 result.append(resourcePath);
                 result.append('\n');
             }
         }
         if (result.length() > 0) {
-            throw new CmsIllegalArgumentException(Messages.get().container(
-                Messages.ERR_MISSING_RESOURCES_1,
-                result.toString()));
+            throw new CmsIllegalArgumentException(
+                Messages.get().container(Messages.ERR_MISSING_RESOURCES_1, result.toString()));
+        }
+    }
+
+    /**
+     * Copies all data from an input stream to an output stream.<p>
+     *
+     * The streams are not closed by this method.<p>
+     *
+     * @param in the input stream
+     * @param out the output stream
+     *
+     * @throws IOException if copying fails
+     */
+    public static void copy(InputStream in, OutputStream out) throws IOException {
+
+        byte[] buffer = new byte[8192];
+        int read;
+        while ((read = in.read(buffer)) >= 0) {
+            if (read > 0) {
+                out.write(buffer, 0, read);
+            }
         }
     }
 
     /**
      * Simply version of a 1:1 binary file copy.<p>
-     * 
+     *
      * @param fromFile the name of the file to copy
      * @param toFile the name of the target file
      * @throws IOException if any IO error occurs during the copy operation
@@ -129,7 +223,9 @@ public final class CmsFileUtil {
 
         File inputFile = new File(fromFile);
         File outputFile = new File(toFile);
-
+        if (!outputFile.getParentFile().isDirectory()) {
+            outputFile.getParentFile().mkdirs();
+        }
         FileInputStream in = new FileInputStream(inputFile);
         FileOutputStream out = new FileOutputStream(outputFile);
 
@@ -143,58 +239,60 @@ public final class CmsFileUtil {
         out.close();
     }
 
-    /** 
+    /**
      * Returns the formatted filesize to Bytes, KB, MB or GB depending on the given value.<p>
-     * 
-     * @param filesize in bytes 
-     * @param locale the locale of the current OpenCms user or the System's default locale if the first choice 
+     *
+     * @param filesize in bytes
+     * @param locale the locale of the current OpenCms user or the System's default locale if the first choice
      *               is not at hand.
-     * 
-     * @return the formatted filesize to Bytes, KB, MB or GB depending on the given value 
-     **/
+     *
+     * @return the formatted filesize to Bytes, KB, MB or GB depending on the given value
+     */
     public static String formatFilesize(long filesize, Locale locale) {
 
         String result;
         filesize = Math.abs(filesize);
 
         if (Math.abs(filesize) < 1024) {
-            result = Messages.get().getBundle(locale).key(Messages.GUI_FILEUTIL_FILESIZE_BYTES_1, new Long(filesize));
+            result = Messages.get().getBundle(locale).key(
+                Messages.GUI_FILEUTIL_FILESIZE_BYTES_1,
+                Long.valueOf(filesize));
         } else if (Math.abs(filesize) < 1048576) {
             // 1048576 = 1024.0 * 1024.0
             result = Messages.get().getBundle(locale).key(
                 Messages.GUI_FILEUTIL_FILESIZE_KBYTES_1,
-                new Double(filesize / 1024.0));
+                Double.valueOf(filesize / 1024.0));
         } else if (Math.abs(filesize) < 1073741824) {
             // 1024.0^3 =  1073741824
             result = Messages.get().getBundle(locale).key(
                 Messages.GUI_FILEUTIL_FILESIZE_MBYTES_1,
-                new Double(filesize / 1048576.0));
+                Double.valueOf(filesize / 1048576.0));
         } else {
             result = Messages.get().getBundle(locale).key(
                 Messages.GUI_FILEUTIL_FILESIZE_GBYTES_1,
-                new Double(filesize / 1073741824.0));
+                Double.valueOf(filesize / 1073741824.0));
         }
         return result;
     }
 
     /**
-     * Returns a comma separated list of resource paths names, with the site root 
-     * from the given OpenCms user context removed.<p> 
-     * 
+     * Returns a comma separated list of resource paths names, with the site root
+     * from the given OpenCms user context removed.<p>
+     *
      * @param context the current users OpenCms context (optional, may be <code>null</code>)
      * @param resources a List of <code>{@link CmsResource}</code> instances to get the names from
-     * 
+     *
      * @return a comma separated list of resource paths names
      */
-    public static String formatResourceNames(CmsRequestContext context, List resources) {
+    public static String formatResourceNames(CmsRequestContext context, List<CmsResource> resources) {
 
         if (resources == null) {
             return null;
         }
         StringBuffer result = new StringBuffer(128);
-        Iterator i = resources.iterator();
+        Iterator<CmsResource> i = resources.iterator();
         while (i.hasNext()) {
-            CmsResource res = (CmsResource)i.next();
+            CmsResource res = i.next();
             String path = res.getRootPath();
             if (context != null) {
                 path = context.removeSiteRoot(path);
@@ -208,25 +306,45 @@ public final class CmsFileUtil {
     }
 
     /**
+     * Returns the encoding of the file.
+     * Encoding is read from the content-encoding property and defaults to the systems default encoding.
+     * Since properties can change without rewriting content, the actual encoding can differ.
+     *
+     * @param cms {@link CmsObject} used to read properties of the given file.
+     * @param file the file for which the encoding is requested
+     * @return the file's encoding according to the content-encoding property, or the system's default encoding as default.
+     */
+    public static String getEncoding(CmsObject cms, CmsResource file) {
+
+        CmsProperty encodingProperty = CmsProperty.getNullProperty();
+        try {
+            encodingProperty = cms.readPropertyObject(file, CmsPropertyDefinition.PROPERTY_CONTENT_ENCODING, true);
+        } catch (CmsException e) {
+            LOG.debug(e.getLocalizedMessage(), e);
+        }
+        return CmsEncoder.lookupEncoding(encodingProperty.getValue(""), OpenCms.getSystemInfo().getDefaultEncoding());
+    }
+
+    /**
      * Returns the extension of the given resource name, that is the part behind the last '.' char,
      * converted to lower case letters.<p>
-     * 
+     *
      * The extension of a file is the part of the name after the last dot, including the dot.
      * The extension of a folder is empty.
      * All extensions are returned as lower case<p>
-     * 
+     *
      * Please note: No check is performed to ensure the given file name is not <code>null</code>.<p>
-     * 
-     * Examples:<br> 
+     *
+     * Examples:<br>
      * <ul>
      *   <li><code>/folder.test/</code> has an empty extension.
      *   <li><code>/folder.test/config</code> has an empty extension.
      *   <li><code>/strange.filename.</code> has an empty extension.
      *   <li><code>/document.PDF</code> has the extension <code>.pdf</code>.
      * </ul>
-     * 
+     *
      * @param resourceName the resource to get the extension for
-     * 
+     *
      * @return the extension of a resource
      */
     public static String getExtension(String resourceName) {
@@ -251,17 +369,17 @@ public final class CmsFileUtil {
     /**
      * Returns the extension of the given file name, that is the part behind the last '.' char,
      * converted to lower case letters.<p>
-     * 
+     *
      * The result does contain the '.' char. For example, if the input is <code>"opencms.html"</code>,
      * then the result will be <code>".html"</code>.<p>
-     * 
+     *
      * If the given file name does not contain a '.' char, the empty String <code>""</code> is returned.<p>
-     * 
+     *
      * Please note: No check is performed to ensure the given file name is not <code>null</code>.<p>
-     * 
+     *
      * @param filename the file name to get the extension for
      * @return the extension of the given file name
-     * 
+     *
      * @deprecated use {@link #getExtension(String)} instead, it is better implemented
      */
     @Deprecated
@@ -273,17 +391,17 @@ public final class CmsFileUtil {
 
     /**
      * Returns a list of all filtered files in the RFS.<p>
-     * 
+     *
      * If the <code>name</code> is not a folder the folder that contains the
      * given file will be used instead.<p>
-     * 
+     *
      * Despite the filter may not accept folders, every subfolder is traversed
      * if the <code>includeSubtree</code> parameter is set.<p>
-     * 
+     *
      * @param name a folder or file name
      * @param filter a filter
      * @param includeSubtree if to include subfolders
-     * 
+     *
      * @return a list of filtered <code>{@link File}</code> objects
      */
     public static List<File> getFiles(String name, FileFilter filter, boolean includeSubtree) {
@@ -312,14 +430,14 @@ public final class CmsFileUtil {
     }
 
     /**
-     * Returns the file name for a given VFS name that has to be written to a repository in the "real" file system, 
-     * by appending the VFS root path to the given base repository path, also adding an 
+     * Returns the file name for a given VFS name that has to be written to a repository in the "real" file system,
+     * by appending the VFS root path to the given base repository path, also adding an
      * folder for the "online" or "offline" project.<p>
      *
      * @param repository the base repository path
-     * @param vfspath the VFS root path to write to use 
+     * @param vfspath the VFS root path to write to use
      * @param online flag indicates if the result should be used for the online project (<code>true</code>) or not
-     * 
+     *
      * @return The full uri to the JSP
      */
     public static String getRepositoryName(String repository, String vfspath, boolean online) {
@@ -332,18 +450,18 @@ public final class CmsFileUtil {
     }
 
     /**
-     * Creates unique, valid RFS name for the given filename that contains 
+     * Creates unique, valid RFS name for the given filename that contains
      * a coded version of the given parameters, with the given file extension appended.<p>
-     *    
-     * This is used to create file names for the static export, 
+     *
+     * This is used to create file names for the static export,
      * or in a vfs disk cache.<p>
-     * 
+     *
      * @param filename the base file name
      * @param extension the extension to use
      * @param parameters the parameters to code in the result file name
-     * 
+     *
      * @return a unique, valid RFS name for the given parameters
-     * 
+     *
      * @see org.opencms.staticexport.CmsStaticExportManager
      */
     public static String getRfsPath(String filename, String extension, String parameters) {
@@ -359,13 +477,13 @@ public final class CmsFileUtil {
     }
 
     /**
-     * Normalizes a file path that might contain <code>'../'</code> or <code>'./'</code> or <code>'//'</code> 
+     * Normalizes a file path that might contain <code>'../'</code> or <code>'./'</code> or <code>'//'</code>
      * elements to a normal absolute path, the path separator char used is {@link File#separatorChar}.<p>
-     * 
+     *
      * @param path the path to normalize
-     * 
+     *
      * @return the normalized path
-     * 
+     *
      * @see #normalizePath(String, char)
      */
     public static String normalizePath(String path) {
@@ -374,15 +492,15 @@ public final class CmsFileUtil {
     }
 
     /**
-     * Normalizes a file path that might contain <code>'../'</code> or <code>'./'</code> or <code>'//'</code> 
+     * Normalizes a file path that might contain <code>'../'</code> or <code>'./'</code> or <code>'//'</code>
      * elements to a normal absolute path.<p>
-     * 
-     * Can also handle Windows like path information containing a drive letter, 
+     *
+     * Can also handle Windows like path information containing a drive letter,
      * like <code>C:\path\..\</code>.<p>
-     * 
+     *
      * @param path the path to normalize
      * @param separatorChar the file separator char to use, for example {@link File#separatorChar}
-     * 
+     *
      * @return the normalized path
      */
     public static String normalizePath(String path, char separatorChar) {
@@ -403,7 +521,7 @@ public final class CmsFileUtil {
             // ensure all File separators are '/'
             path = path.replace('\\', '/');
             if (drive != null) {
-                drive.replace('\\', '/');
+                drive = drive.replace('\\', '/');
             }
             if (path.charAt(0) == '/') {
                 // trick to resolve all ../ inside a path
@@ -427,14 +545,14 @@ public final class CmsFileUtil {
 
     /**
      * Returns the normalized file path created from the given URL.<p>
-     * 
-     * The path part {@link URL#getPath()} is used, unescaped and 
+     *
+     * The path part {@link URL#getPath()} is used, unescaped and
      * normalized using {@link #normalizePath(String, char)} using {@link File#separatorChar}.<p>
-     * 
+     *
      * @param url the URL to extract the path information from
-     * 
+     *
      * @return the normalized file path created from the given URL using {@link File#separatorChar}
-     * 
+     *
      * @see #normalizePath(URL, char)
      */
     public static String normalizePath(URL url) {
@@ -444,13 +562,13 @@ public final class CmsFileUtil {
 
     /**
      * Returns the normalized file path created from the given URL.<p>
-     * 
-     * The path part {@link URL#getPath()} is used, unescaped and 
+     *
+     * The path part {@link URL#getPath()} is used, unescaped and
      * normalized using {@link #normalizePath(String, char)}.<p>
-     * 
+     *
      * @param url the URL to extract the path information from
      * @param separatorChar the file separator char to use, for example {@link File#separatorChar}
-     * 
+     *
      * @return the normalized file path created from the given URL
      */
     public static String normalizePath(URL url, char separatorChar) {
@@ -465,7 +583,7 @@ public final class CmsFileUtil {
 
     /**
      * Deletes a directory in the file system and all subfolders of that directory.<p>
-     * 
+     *
      * @param directory the directory to delete
      */
     public static void purgeDirectory(File directory) {
@@ -486,13 +604,14 @@ public final class CmsFileUtil {
     }
 
     /**
-     * Reads a file from the RFS and returns the file content.<p> 
-     * 
-     * @param file the file to read 
+     * Reads a file from the RFS and returns the file content.<p>
+     *
+     * @param file the file to read
      * @return the read file content
-     * 
+     *
      * @throws IOException in case of file access errors
      */
+    @SuppressWarnings("resource")
     public static byte[] readFile(File file) throws IOException {
 
         // create input and output stream
@@ -503,13 +622,14 @@ public final class CmsFileUtil {
     }
 
     /**
-     * Reads a file with the given name from the class loader and returns the file content.<p> 
-     * 
-     * @param filename the file to read 
+     * Reads a file with the given name from the class loader and returns the file content.<p>
+     *
+     * @param filename the file to read
      * @return the read file content
-     * 
+     *
      * @throws IOException in case of file access errors
      */
+    @SuppressWarnings("resource")
     public static byte[] readFile(String filename) throws IOException {
 
         // create input and output stream
@@ -522,9 +642,9 @@ public final class CmsFileUtil {
     }
 
     /**
-     * Reads a file from the class loader and converts it to a String with the specified encoding.<p> 
-     * 
-     * @param filename the file to read 
+     * Reads a file from the class loader and converts it to a String with the specified encoding.<p>
+     *
+     * @param filename the file to read
      * @param encoding the encoding to use when converting the file content to a String
      * @return the read file convered to a String
      * @throws IOException in case of file access errors
@@ -536,11 +656,11 @@ public final class CmsFileUtil {
 
     /**
      * Reads all bytes from the given input stream, closes it
-     * and returns the result in an array.<p> 
-     * 
-     * @param in the input stream to read the bytes from 
+     * and returns the result in an array.<p>
+     *
+     * @param in the input stream to read the bytes from
      * @return the byte content of the input stream
-     * 
+     *
      * @throws IOException in case of errors in the underlying java.io methods used
      */
     public static byte[] readFully(InputStream in) throws IOException {
@@ -549,13 +669,13 @@ public final class CmsFileUtil {
     }
 
     /**
-     * Reads all bytes from the given input stream, conditionally closes the given input stream 
-     * and returns the result in an array.<p> 
-     * 
-     * @param in the input stream to read the bytes from 
+     * Reads all bytes from the given input stream, conditionally closes the given input stream
+     * and returns the result in an array.<p>
+     *
+     * @param in the input stream to read the bytes from
      * @return the byte content of the input stream
      * @param closeInputStream if true the given stream will be closed afterwards
-     * 
+     *
      * @throws IOException in case of errors in the underlying java.io methods used
      */
     public static byte[] readFully(InputStream in, boolean closeInputStream) throws IOException {
@@ -584,13 +704,13 @@ public final class CmsFileUtil {
     }
 
     /**
-     * Reads the specified number of bytes from the given input stream and returns the result in an array.<p> 
-     * 
+     * Reads the specified number of bytes from the given input stream and returns the result in an array.<p>
+     *
      * @param in the input stream to read the bytes from
-     * @param size the number of bytes to read 
-     *  
+     * @param size the number of bytes to read
+     *
      * @return the byte content read from the input stream
-     * 
+     *
      * @throws IOException in case of errors in the underlying java.io methods used
      */
     public static byte[] readFully(InputStream in, int size) throws IOException {
@@ -599,15 +719,15 @@ public final class CmsFileUtil {
     }
 
     /**
-     * Reads the specified number of bytes from the given input stream, conditionally closes the stream 
-     * and returns the result in an array.<p> 
-     * 
+     * Reads the specified number of bytes from the given input stream, conditionally closes the stream
+     * and returns the result in an array.<p>
+     *
      * @param in the input stream to read the bytes from
-     * @param size the number of bytes to read 
-     * @param closeStream if true the given stream will be closed 
-     *  
+     * @param size the number of bytes to read
+     * @param closeStream if true the given stream will be closed
+     *
      * @return the byte content read from the input stream
-     * 
+     *
      * @throws IOException in case of errors in the underlying java.io methods used
      */
     public static byte[] readFully(InputStream in, int size, boolean closeStream) throws IOException {
@@ -617,19 +737,22 @@ public final class CmsFileUtil {
 
         // read in the bytes
         int offset = 0;
-        int numRead = 0;
-        while (offset < size) {
-            numRead = in.read(bytes, offset, size - offset);
-            if (numRead >= 0) {
-                offset += numRead;
-            } else {
-                break;
-            }
-        }
 
-        // close the input stream and return bytes
-        if (closeStream) {
-            in.close();
+        try {
+            int numRead = 0;
+            while (offset < size) {
+                numRead = in.read(bytes, offset, size - offset);
+                if (numRead >= 0) {
+                    offset += numRead;
+                } else {
+                    break;
+                }
+            }
+        } finally {
+            // close the input stream
+            if (closeStream) {
+                in.close();
+            }
         }
 
         // ensure all the bytes have been read in
@@ -640,16 +763,36 @@ public final class CmsFileUtil {
         return bytes;
     }
 
-    /** 
-     * Removes all resource names in the given List that are "redundant" because the parent folder name 
-     * is also contained in the List.<p> 
-     * 
+    /**
+     * Removes a leading separator from a path if required.<p>
+     *
+     * @param path the path to remove the leading separator from
+     * @return the path without a trailing separator
+     */
+    public static String removeLeadingSeparator(String path) {
+
+        int l = path.length();
+        if (l == 0) {
+            return "";
+        } else if (path.charAt(0) != '/') {
+            return path;
+        } else if (l == 1) {
+            return "";
+        } else {
+            return path.substring(1, l);
+        }
+    }
+
+    /**
+     * Removes all resource names in the given List that are "redundant" because the parent folder name
+     * is also contained in the List.<p>
+     *
      * The content of the input list is not modified.<p>
-     * 
+     *
      * @param resourcenames a list of VFS pathnames to check for redundencies (Strings)
-     *  
+     *
      * @return a new list with all redundancies removed
-     * 
+     *
      * @see #removeRedundantResources(List)
      */
     public static List<String> removeRedundancies(List<String> resourcenames) {
@@ -690,16 +833,16 @@ public final class CmsFileUtil {
         return result;
     }
 
-    /** 
-     * Removes all resources in the given List that are "redundant" because the parent folder 
-     * is also contained in the List.<p> 
-     * 
+    /**
+     * Removes all resources in the given List that are "redundant" because the parent folder
+     * is also contained in the List.<p>
+     *
      * The content of the input list is not modified.<p>
-     * 
+     *
      * @param resources a list of <code>{@link CmsResource}</code> objects to check for redundancies
-     *  
+     *
      * @return a the given list with all redundancies removed
-     * 
+     *
      * @see #removeRedundancies(List)
      */
     public static List<CmsResource> removeRedundantResources(List<CmsResource> resources) {
@@ -739,9 +882,9 @@ public final class CmsFileUtil {
 
     /**
      * Removes a trailing separator from a path if required.<p>
-     * 
+     *
      * In case we have the root folder "/", the separator is not removed.<p>
-     * 
+     *
      * @param path the path to remove the trailing separator from
      * @return the path without a trailing separator
      */
@@ -756,11 +899,11 @@ public final class CmsFileUtil {
     }
 
     /**
-     * Searches for the OpenCms web application 'WEB-INF' folder during system startup, code or 
+     * Searches for the OpenCms web application 'WEB-INF' folder during system startup, code or
      * <code>null</code> if the 'WEB-INF' folder can not be found.<p>
-     * 
+     *
      * @param startFolder the folder where to start searching
-     * 
+     *
      * @return String the path of the 'WEB-INF' folder in the 'real' file system, or <code>null</code>
      */
     public static String searchWebInfFolder(String startFolder) {
@@ -781,9 +924,22 @@ public final class CmsFileUtil {
 
         String webInfFolder = null;
         File[] subFiles = f.listFiles();
-        for (int i = 0; i < subFiles.length; i++) {
-            if (subFiles[i].isDirectory()) {
-                webInfFolder = searchWebInfFolder(subFiles[i].getAbsolutePath());
+        List<File> fileList = new ArrayList<File>(Arrays.asList(subFiles));
+        Collections.sort(fileList, new Comparator<File>() {
+
+            public int compare(File arg0, File arg1) {
+
+                // make sure that the WEB-INF folder, if it has that name, comes earlier
+                boolean a = arg0.getPath().contains("WEB-INF");
+                boolean b = arg1.getPath().contains("WEB-INF");
+                return Boolean.valueOf(b).compareTo(Boolean.valueOf(a));
+
+            }
+        });
+
+        for (File file : fileList) {
+            if (file.isDirectory()) {
+                webInfFolder = searchWebInfFolder(file.getAbsolutePath());
                 if (webInfFolder != null) {
                     break;
                 }
@@ -791,5 +947,56 @@ public final class CmsFileUtil {
         }
 
         return webInfFolder;
+    }
+
+    public static String toggleTrailingSeparator(String path) {
+
+        if (path.endsWith("/")) {
+            return path.substring(0, path.length() - 1);
+        } else {
+            return path + "/";
+        }
+    }
+
+    /**
+     * Traverses the file system starting from a base folder and executes a callback for every directory found.<p>
+     *
+     * @param base the base folder
+     * @param action a callback which will be passed a FileWalkState object for every directory encountered
+     */
+    public static void walkFileSystem(File base, Closure action) {
+
+        List<FileWalkState> m_states = new ArrayList<FileWalkState>();
+        m_states.add(createFileWalkState(base));
+        while (!m_states.isEmpty()) {
+            // pop the top off the state stack, process it, then push states for all subdirectories onto it
+            FileWalkState last = m_states.remove(m_states.size() - 1);
+            action.execute(last);
+            for (File dir : last.getDirectories()) {
+                m_states.add(createFileWalkState(dir));
+            }
+        }
+    }
+
+    /**
+     * Helper method for creating a FileWalkState object from a File object.<p>
+     *
+     * @param file the file
+     *
+     * @return the file walk state
+     */
+    private static FileWalkState createFileWalkState(File file) {
+
+        File[] contents = file.listFiles();
+        List<File> dirs = new ArrayList<File>();
+        List<File> files = new ArrayList<File>();
+        for (File subFile : contents) {
+            if (subFile.isDirectory()) {
+                dirs.add(subFile);
+            } else {
+                files.add(subFile);
+            }
+        }
+        return new FileWalkState(file, dirs, files);
     }
 }

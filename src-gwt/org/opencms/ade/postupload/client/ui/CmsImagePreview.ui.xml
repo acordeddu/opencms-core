@@ -1,0 +1,80 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+	xmlns:g="urn:import:com.google.gwt.user.client.ui"
+	xmlns:postupload="urn:import:org.opencms.ade.postupload.client.ui"
+	xmlns:cms="urn:import:org.opencms.gwt.client.ui">
+	<ui:with field="resources"
+		type="org.opencms.gwt.client.ui.css.I_CmsLayoutBundle" />
+	<ui:style>
+	
+		.root {
+			display: flex;
+			border: 1px solid #c9c9c9;
+			border-radius: 4px;
+		}
+		
+		.flex {
+			flex: 1;
+		}
+
+		.imageContainer {
+			width: 202px;
+			height: 172px;
+			border: 1px solid #c9c9c9;
+			border-radius: 4px;
+			overflow: hidden;
+			box-sizing: border-box;
+		}
+
+		.imageContainer img {
+			display: block;
+			object-fit: scale-down;
+			background-color: white;
+			position: relative;
+		}
+		
+		.imageContainer img[src*=".svg"] {
+			object-fit: contain;
+		}
+		
+		@def BG eval("\"repeating-conic-gradient(#ddd 0% 25%, #fff 0% 50%)\"");
+		.imageContainer img {
+			background-image: BG;
+			background-size: 10px 10px;
+			background-position: 0 0,5px 5px;
+			background-color: white;
+		}
+
+		.labelContainer {
+			display: flex;
+			flex-direction: column;
+			width: 289px;
+		}
+		
+		.labelContainer > * {
+			margin-top: 2px;
+			margin-bottom: 2px;
+			margin-left: 6px;
+		}
+		
+		.root > * {
+			margin-top: 2px;
+			margin-bottom: 2px;
+		}
+	</ui:style>
+	<g:FlowPanel addStyleNames="{style.root}">
+
+		<g:FlowPanel addStyleNames="{style.labelContainer}">
+			<g:Label ui:field="m_label" />
+			<g:Label addStyleNames="{style.flex}" />
+			<g:Label ui:field="m_info1" />
+			<g:Label ui:field="m_info2" />
+		</g:FlowPanel>
+
+		<g:FlowPanel addStyleNames="{style.imageContainer}">
+			<postupload:CmsPreviewLink ui:field="m_link" target="_blank">
+				<g:Image ui:field="m_image" width="200px" height="170px"/>
+			</postupload:CmsPreviewLink>
+		</g:FlowPanel>
+	</g:FlowPanel>
+</ui:UiBinder>

@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -14,12 +14,12 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * Lesser General Public License for more details.
  *
- * For further information about Alkacon Software GmbH, please see the
- * company website: http://www.alkacon.com
+ * For further information about Alkacon Software GmbH & Co. KG, please see the
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -47,7 +47,7 @@ import java.util.List;
 
 /**
  * Generalized organizational unit users view.<p>
- * 
+ *
  * @since 6.5.6
  */
 public abstract class A_CmsOrgUnitUsersList extends A_CmsListDialog {
@@ -83,17 +83,17 @@ public abstract class A_CmsOrgUnitUsersList extends A_CmsListDialog {
     public static final String ORGUNIT_USERS = "orgunit_users";
 
     /** Stores the users not in the current ou.*/
-    private List m_notOuUsers;
+    private List<CmsUser> m_notOuUsers;
 
     /** Stores the users of the the current ou.*/
-    private List m_ouUsers;
+    private List<CmsUser> m_ouUsers;
 
     /** Stores the value of the request parameter for the organizational unit fqn. */
     private String m_paramOufqn;
 
     /**
      * Public constructor.<p>
-     * 
+     *
      * @param jsp an initialized JSP action element
      * @param listId the id of the list
      * @param listName the name of the list
@@ -105,35 +105,20 @@ public abstract class A_CmsOrgUnitUsersList extends A_CmsListDialog {
         CmsMessageContainer listName,
         boolean searchable) {
 
-        super(jsp, listId, listName, LIST_COLUMN_LOGIN, CmsListOrderEnum.ORDER_ASCENDING, searchable ? LIST_COLUMN_NAME
-        : null);
-    }
-
-    /**
-     * Returns the notOuUsers.<p>
-     *
-     * @return the notOuUsers
-     */
-    public List getNotOuUsers() {
-
-        return m_notOuUsers;
-    }
-
-    /**
-     * Returns the ouUsers.<p>
-     *
-     * @return the ouUsers
-     */
-    public List getOuUsers() {
-
-        return m_ouUsers;
+        super(
+            jsp,
+            listId,
+            listName,
+            LIST_COLUMN_LOGIN,
+            CmsListOrderEnum.ORDER_ASCENDING,
+            searchable ? LIST_COLUMN_NAME : null);
     }
 
     /**
      * Returns the right icon path for the given list item.<p>
-     * 
+     *
      * @param item the list item to get the icon path for
-     * 
+     *
      * @return the icon path for the given role
      */
     public String getIconPath(CmsListItem item) {
@@ -151,8 +136,28 @@ public abstract class A_CmsOrgUnitUsersList extends A_CmsListDialog {
     }
 
     /**
+     * Returns the notOuUsers.<p>
+     *
+     * @return the notOuUsers
+     */
+    public List<CmsUser> getNotOuUsers() {
+
+        return m_notOuUsers;
+    }
+
+    /**
+     * Returns the ouUsers.<p>
+     *
+     * @return the ouUsers
+     */
+    public List<CmsUser> getOuUsers() {
+
+        return m_ouUsers;
+    }
+
+    /**
      * Returns the organizational unit fqn parameter value.<p>
-     * 
+     *
      * @return the organizational unit fqn parameter value
      */
     public String getParamOufqn() {
@@ -165,7 +170,7 @@ public abstract class A_CmsOrgUnitUsersList extends A_CmsListDialog {
      *
      * @param notOuUsers the notOuUsers to set
      */
-    public void setNotOuUsers(List notOuUsers) {
+    public void setNotOuUsers(List<CmsUser> notOuUsers) {
 
         m_notOuUsers = notOuUsers;
         getJsp().getRequest().getSession().setAttribute(A_CmsOrgUnitUsersList.NOT_ORGUNIT_USERS, m_notOuUsers);
@@ -176,7 +181,7 @@ public abstract class A_CmsOrgUnitUsersList extends A_CmsListDialog {
      *
      * @param ouUsers the ouUsers to set
      */
-    public void setOuUsers(List ouUsers) {
+    public void setOuUsers(List<CmsUser> ouUsers) {
 
         m_ouUsers = ouUsers;
         getJsp().getRequest().getSession().setAttribute(A_CmsOrgUnitUsersList.ORGUNIT_USERS, m_ouUsers);
@@ -184,7 +189,7 @@ public abstract class A_CmsOrgUnitUsersList extends A_CmsListDialog {
 
     /**
      * Sets the organizational unit fqn parameter value.<p>
-     * 
+     *
      * @param ouFqn the organizational unit fqn parameter value
      */
     public void setParamOufqn(String ouFqn) {
@@ -198,6 +203,7 @@ public abstract class A_CmsOrgUnitUsersList extends A_CmsListDialog {
     /**
      * @see org.opencms.workplace.list.A_CmsListDialog#fillDetails(java.lang.String)
      */
+    @Override
     protected void fillDetails(String detailId) {
 
         // noop
@@ -206,15 +212,16 @@ public abstract class A_CmsOrgUnitUsersList extends A_CmsListDialog {
     /**
      * @see org.opencms.workplace.list.A_CmsListDialog#getListItems()
      */
-    protected List getListItems() throws CmsException {
+    @Override
+    protected List<CmsListItem> getListItems() throws CmsException {
 
-        List ret = new ArrayList();
+        List<CmsListItem> ret = new ArrayList<CmsListItem>();
 
-        // get content        
-        List users = getUsers();
-        Iterator itUsers = users.iterator();
+        // get content
+        List<CmsUser> users = getUsers();
+        Iterator<CmsUser> itUsers = users.iterator();
         while (itUsers.hasNext()) {
-            CmsUser user = (CmsUser)itUsers.next();
+            CmsUser user = itUsers.next();
             CmsListItem item = getList().newItem(user.getId().toString());
             item.set(LIST_COLUMN_LOGIN, user.getName());
             item.set(LIST_COLUMN_NAME, user.getSimpleName());
@@ -228,16 +235,17 @@ public abstract class A_CmsOrgUnitUsersList extends A_CmsListDialog {
 
     /**
      * Returns a list of users to display.<p>
-     * 
-     * @return a list of <code><{@link CmsUser}</code>s
-     * 
+     *
+     * @return a list of {@link CmsUser}s
+     *
      * @throws CmsException if something goes wrong
      */
-    protected abstract List getUsers() throws CmsException;
+    protected abstract List<CmsUser> getUsers() throws CmsException;
 
     /**
      * @see org.opencms.workplace.list.A_CmsListDialog#setColumns(org.opencms.workplace.list.CmsListMetadata)
      */
+    @Override
     protected void setColumns(CmsListMetadata metadata) {
 
         // create column for icon display
@@ -286,14 +294,14 @@ public abstract class A_CmsOrgUnitUsersList extends A_CmsListDialog {
 
     /**
      * Sets the optional login default action.<p>
-     * 
+     *
      * @param loginCol the login column
      */
     protected abstract void setDefaultAction(CmsListColumnDefinition loginCol);
 
     /**
      * Sets the needed icon action(s).<p>
-     * 
+     *
      * @param iconCol the list column for edition.
      */
     protected abstract void setIconAction(CmsListColumnDefinition iconCol);
@@ -301,6 +309,7 @@ public abstract class A_CmsOrgUnitUsersList extends A_CmsListDialog {
     /**
      * @see org.opencms.workplace.list.A_CmsListDialog#setIndependentActions(org.opencms.workplace.list.CmsListMetadata)
      */
+    @Override
     protected void setIndependentActions(CmsListMetadata metadata) {
 
         // noop
@@ -308,7 +317,7 @@ public abstract class A_CmsOrgUnitUsersList extends A_CmsListDialog {
 
     /**
      * Sets the optional state change action column.<p>
-     * 
+     *
      * @param metadata the list metadata object
      */
     protected abstract void setStateActionCol(CmsListMetadata metadata);
@@ -316,6 +325,7 @@ public abstract class A_CmsOrgUnitUsersList extends A_CmsListDialog {
     /**
      * @see org.opencms.workplace.list.A_CmsListDialog#validateParamaters()
      */
+    @Override
     protected void validateParamaters() throws Exception {
 
         // test the needed parameters

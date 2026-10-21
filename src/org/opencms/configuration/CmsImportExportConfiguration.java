@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -14,12 +14,12 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * Lesser General Public License for more details.
  *
- * For further information about Alkacon Software GmbH, please see the
- * company website: http://www.alkacon.com
+ * For further information about Alkacon Software GmbH & Co. KG, please see the
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -30,30 +30,43 @@ package org.opencms.configuration;
 import org.opencms.db.CmsUserExportSettings;
 import org.opencms.importexport.CmsExtendedHtmlImportDefault;
 import org.opencms.importexport.CmsImportExportManager;
+import org.opencms.importexport.CmsImportExportManager.TimestampMode;
 import org.opencms.importexport.I_CmsImport;
 import org.opencms.importexport.I_CmsImportExportHandler;
 import org.opencms.main.CmsLog;
-import org.opencms.repository.A_CmsRepository;
 import org.opencms.repository.CmsRepositoryFilter;
 import org.opencms.repository.CmsRepositoryManager;
+import org.opencms.repository.I_CmsRepository;
 import org.opencms.security.I_CmsPrincipal;
+import org.opencms.staticexport.A_CmsOnDemandStaticExportHandler;
+import org.opencms.staticexport.CmsSharedCacheConfiguration;
+import org.opencms.staticexport.CmsSharedCachePolicy;
 import org.opencms.staticexport.CmsStaticExportExportRule;
 import org.opencms.staticexport.CmsStaticExportManager;
 import org.opencms.staticexport.CmsStaticExportRfsRule;
+import org.opencms.staticexport.CmsStoredContentDeliveryConfiguration;
+import org.opencms.util.CmsResourceTranslator;
 import org.opencms.util.CmsStringUtil;
 
 import java.io.File;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
 import java.util.regex.Pattern;
 
-import org.apache.commons.digester.Digester;
+import javax.xml.parsers.ParserConfigurationException;
+
+import org.apache.commons.digester3.Digester;
+import org.apache.commons.digester3.NodeCreateRule;
+import org.apache.commons.logging.Log;
 
 import org.dom4j.Element;
+import org.w3c.dom.NodeList;
 
 /**
  * Import / export master configuration class.<p>
- * 
+ *
  * @since 6.0.0
  */
 public class CmsImportExportConfiguration extends A_CmsXmlConfiguration {
@@ -72,6 +85,18 @@ public class CmsImportExportConfiguration extends A_CmsXmlConfiguration {
 
     /** Node that indicates page conversion. */
     public static final String N_CONVERT = "convert";
+
+    /** The node name of the export sub-configuration. */
+    public static final String N_EXPORT = "export";
+
+    /** The node name of the defaultexporttimestamps sub-configuration. */
+    public static final String N_EXPORT_DEFAULTTIMESTAMPMODES = "defaulttimestampmodes";
+
+    /** The node name of the resourcetype sub-configuration. */
+    public static final String N_EXPORT_RESOURCETYPENAME = "resourcetypename";
+
+    /** The node name of the timestamp sub-configuration. */
+    public static final String N_EXPORT_TIMESTAMPMODE = "timestampmode";
 
     /**  The main configuration node for the extended html import. */
     public static final String N_EXTHTMLIMPORT = "extendedhtmlimport";
@@ -124,6 +149,9 @@ public class CmsImportExportConfiguration extends A_CmsXmlConfiguration {
     /**  The node name of the html import template node. */
     public static final String N_EXTHTMLIMPORT_TEMPLATE = "template";
 
+    /** filetranslations node name. */
+    public static final String N_FILETRANSLATIONS = "filetranslations";
+
     /** The node name of the repository filter node. */
     public static final String N_FILTER = "filter";
 
@@ -169,6 +197,9 @@ public class CmsImportExportConfiguration extends A_CmsXmlConfiguration {
     /** The principal translation node. */
     public static final String N_PRINCIPALTRANSLATIONS = "principaltranslations";
 
+    /**  The node name of the column node. */
+    public static final String N_PROTECTED_EXPORT = "protectedexport";
+
     /** The node name of the repository filter regex node. */
     public static final String N_REGEX = "regex";
 
@@ -180,6 +211,21 @@ public class CmsImportExportConfiguration extends A_CmsXmlConfiguration {
 
     /**  The node name of the separator node. */
     public static final String N_SEPARATOR = "separator";
+
+    /** The node name of the shared cache configuration. */
+    public static final String N_SHAREDCACHE = "sharedcache";
+
+    /** The node name of a shared cache policy. */
+    public static final String N_SHAREDCACHE_CACHEPOLICY = "cachepolicy";
+
+    /** The node name of the shared cache client maximum age. */
+    public static final String N_SHAREDCACHE_CLIENTMAXAGE = "clientmaxage";
+
+    /** The node name of the shared cache shared maximum age. */
+    public static final String N_SHAREDCACHE_SHAREDMAXAGE = "sharedmaxage";
+
+    /** The node name of the shared cache stale-if-error duration. */
+    public static final String N_SHAREDCACHE_STALEIFERROR = "staleiferror";
 
     /**  The main configuration node for static export name. */
     public static final String N_STATICEXPORT = "staticexport";
@@ -283,8 +329,23 @@ public class CmsImportExportConfiguration extends A_CmsXmlConfiguration {
     /**  The node name of the static export vfx-prefix node. */
     public static final String N_STATICEXPORT_VFS_PREFIX = "vfs-prefix";
 
+    /** The node name of the stored content delivery configuration. */
+    public static final String N_STOREDCONTENTDELIVERY = "storedcontentdelivery";
+
+    /** The node name of the stored content delivery enabled suffixes list. */
+    public static final String N_STOREDCONTENTDELIVERY_ENABLEDSUFFIXES = "enabledsuffixes";
+
+    /** The temporary export point path node. */
+    public static final String N_TEMP_EXPORTPONT_PATH = "temp-exportpoint-path";
+
+    /** translation node name. */
+    public static final String N_TRANSLATION = "translation";
+
     /**  The node name of the user csv export node. */
     public static final String N_USERCSVEXPORT = "usercsvexport";
+
+    /** Log instance for this class. */
+    private static final Log LOG = CmsLog.getLog(CmsImportExportConfiguration.class);
 
     /** The configured import/export manager. */
     private CmsImportExportManager m_importExportManager;
@@ -292,18 +353,35 @@ public class CmsImportExportConfiguration extends A_CmsXmlConfiguration {
     /** The configured repository manager. */
     private CmsRepositoryManager m_repositoryManager;
 
+    /** The shared cache configuration. */
+    private CmsSharedCacheConfiguration m_sharedCacheConfiguration = new CmsSharedCacheConfiguration();
+
     /** The configured static export manager. */
     private CmsStaticExportManager m_staticExportManager;
 
+    /** The stored content delivery configuration. */
+    private CmsStoredContentDeliveryConfiguration m_storedContentDeliveryConfiguration = new CmsStoredContentDeliveryConfiguration();
+
     /**
-     * @see org.opencms.configuration.I_CmsXmlConfiguration#addXmlDigesterRules(org.apache.commons.digester.Digester)
+     * Adds an protected export point.<p>
+     *
+     * @param uri the source URI
+     * @param destination the export destination
+     */
+    public void addProtectedExportPoint(String uri, String destination) {
+
+        m_staticExportManager.addProtectedExportPoint(uri, destination);
+    }
+
+    /**
+     * @see org.opencms.configuration.I_CmsXmlConfiguration#addXmlDigesterRules(org.apache.commons.digester3.Digester)
      */
     public void addXmlDigesterRules(Digester digester) {
 
         // add finish rule
         digester.addCallMethod("*/" + N_IMPORTEXPORT, "initializeFinished");
 
-        // creation of the import/export manager        
+        // creation of the import/export manager
         digester.addObjectCreate("*/" + N_IMPORTEXPORT, CmsImportExportManager.class);
         // import/export manager finished
         digester.addSetNext("*/" + N_IMPORTEXPORT, "setImportExportManager");
@@ -311,8 +389,8 @@ public class CmsImportExportConfiguration extends A_CmsXmlConfiguration {
         // add rules for import/export handlers
         digester.addObjectCreate(
             "*/" + N_IMPORTEXPORT + "/" + N_IMPORTEXPORTHANDLERS + "/" + N_IMPORTEXPORTHANDLER,
-            A_CLASS,
-            CmsConfigurationException.class);
+            CmsConfigurationException.class.getName(),
+            A_CLASS);
         digester.addSetNext(
             "*/" + N_IMPORTEXPORT + "/" + N_IMPORTEXPORTHANDLERS + "/" + N_IMPORTEXPORTHANDLER,
             "addImportExportHandler");
@@ -330,14 +408,10 @@ public class CmsImportExportConfiguration extends A_CmsXmlConfiguration {
         digester.addCallMethod("*/" + N_IMPORTEXPORT + "/" + N_IMPORT + "/" + N_OLDWEBAPPURL, "setOldWebAppUrl", 0);
 
         // add rules for the import versions
-        digester.addObjectCreate("*/"
-            + N_IMPORTEXPORT
-            + "/"
-            + N_IMPORT
-            + "/"
-            + N_IMPORTVERSIONS
-            + "/"
-            + N_IMPORTVERSION, A_CLASS, CmsConfigurationException.class);
+        digester.addObjectCreate(
+            "*/" + N_IMPORTEXPORT + "/" + N_IMPORT + "/" + N_IMPORTVERSIONS + "/" + N_IMPORTVERSION,
+            CmsConfigurationException.class.getName(),
+            A_CLASS);
         digester.addSetNext(
             "*/" + N_IMPORTEXPORT + "/" + N_IMPORT + "/" + N_IMPORTVERSIONS + "/" + N_IMPORTVERSION,
             "addImportVersionClass");
@@ -350,38 +424,22 @@ public class CmsImportExportConfiguration extends A_CmsXmlConfiguration {
         digester.addCallParam("*/" + N_IMPORTEXPORT + "/" + N_IMPORT + "/" + N_IMMUTABLES + "/" + N_RESOURCE, 0, A_URI);
 
         // add rules for the import principal translations
-        digester.addCallMethod("*/"
-            + N_IMPORTEXPORT
-            + "/"
-            + N_IMPORT
-            + "/"
-            + N_PRINCIPALTRANSLATIONS
-            + "/"
-            + N_PRINCIPALTRANSLATION, "addImportPrincipalTranslation", 3);
-        digester.addCallParam("*/"
-            + N_IMPORTEXPORT
-            + "/"
-            + N_IMPORT
-            + "/"
-            + N_PRINCIPALTRANSLATIONS
-            + "/"
-            + N_PRINCIPALTRANSLATION, 0, A_TYPE);
-        digester.addCallParam("*/"
-            + N_IMPORTEXPORT
-            + "/"
-            + N_IMPORT
-            + "/"
-            + N_PRINCIPALTRANSLATIONS
-            + "/"
-            + N_PRINCIPALTRANSLATION, 1, A_FROM);
-        digester.addCallParam("*/"
-            + N_IMPORTEXPORT
-            + "/"
-            + N_IMPORT
-            + "/"
-            + N_PRINCIPALTRANSLATIONS
-            + "/"
-            + N_PRINCIPALTRANSLATION, 2, A_TO);
+        digester.addCallMethod(
+            "*/" + N_IMPORTEXPORT + "/" + N_IMPORT + "/" + N_PRINCIPALTRANSLATIONS + "/" + N_PRINCIPALTRANSLATION,
+            "addImportPrincipalTranslation",
+            3);
+        digester.addCallParam(
+            "*/" + N_IMPORTEXPORT + "/" + N_IMPORT + "/" + N_PRINCIPALTRANSLATIONS + "/" + N_PRINCIPALTRANSLATION,
+            0,
+            A_TYPE);
+        digester.addCallParam(
+            "*/" + N_IMPORTEXPORT + "/" + N_IMPORT + "/" + N_PRINCIPALTRANSLATIONS + "/" + N_PRINCIPALTRANSLATION,
+            1,
+            A_FROM);
+        digester.addCallParam(
+            "*/" + N_IMPORTEXPORT + "/" + N_IMPORT + "/" + N_PRINCIPALTRANSLATIONS + "/" + N_PRINCIPALTRANSLATION,
+            2,
+            A_TO);
 
         // add rules for the ignored properties
         digester.addCallMethod(
@@ -393,7 +451,62 @@ public class CmsImportExportConfiguration extends A_CmsXmlConfiguration {
             0,
             A_NAME);
 
-        // creation of the static export manager        
+        // add rules for export settings
+        digester.addCallMethod(
+            "*/"
+                + N_IMPORTEXPORT
+                + "/"
+                + N_EXPORT
+                + "/"
+                + N_EXPORT_DEFAULTTIMESTAMPMODES
+                + "/"
+                + N_EXPORT_TIMESTAMPMODE,
+            "addDefaultTimestampMode",
+            1);
+
+        digester.addCallParam(
+            "*/"
+                + N_IMPORTEXPORT
+                + "/"
+                + N_EXPORT
+                + "/"
+                + N_EXPORT_DEFAULTTIMESTAMPMODES
+                + "/"
+                + N_EXPORT_TIMESTAMPMODE,
+            0,
+            A_MODE);
+
+        digester.addCallMethod(
+            "*/"
+                + N_IMPORTEXPORT
+                + "/"
+                + N_EXPORT
+                + "/"
+                + N_EXPORT_DEFAULTTIMESTAMPMODES
+                + "/"
+                + N_EXPORT_TIMESTAMPMODE
+                + "/"
+                + N_EXPORT_RESOURCETYPENAME,
+            "addResourceTypeForDefaultTimestampMode",
+            1);
+
+        digester.addCallParam(
+            "*/"
+                + N_IMPORTEXPORT
+                + "/"
+                + N_EXPORT
+                + "/"
+                + N_EXPORT_DEFAULTTIMESTAMPMODES
+                + "/"
+                + N_EXPORT_TIMESTAMPMODE
+                + "/"
+                + N_EXPORT_RESOURCETYPENAME,
+            0);
+
+        digester.addCallMethod("*/" + N_IMPORTEXPORT + "/" + N_TEMP_EXPORTPONT_PATH, "addTempExportpointPath", 1);
+        digester.addCallParam("*/" + N_IMPORTEXPORT + "/" + N_TEMP_EXPORTPONT_PATH, 0);
+
+        // creation of the static export manager
         digester.addObjectCreate("*/" + N_STATICEXPORT, CmsStaticExportManager.class);
         // static export manager finished
         digester.addSetNext("*/" + N_STATICEXPORT, "setStaticExportManager");
@@ -416,101 +529,80 @@ public class CmsImportExportConfiguration extends A_CmsXmlConfiguration {
         // default property rule
         digester.addCallMethod("*/" + N_STATICEXPORT + "/" + N_STATICEXPORT_DEFAULT, "setDefault", 0);
         // export suffix rule
-        digester.addCallMethod("*/"
-            + N_STATICEXPORT
-            + "/"
-            + N_STATICEXPORT_DEFAULTSUFFIXES
-            + "/"
-            + N_STATICEXPORT_SUFFIX, "setExportSuffix", 1);
-        digester.addCallParam("*/"
-            + N_STATICEXPORT
-            + "/"
-            + N_STATICEXPORT_DEFAULTSUFFIXES
-            + "/"
-            + N_STATICEXPORT_SUFFIX, 0, A_KEY);
+        digester.addCallMethod(
+            "*/" + N_STATICEXPORT + "/" + N_STATICEXPORT_DEFAULTSUFFIXES + "/" + N_STATICEXPORT_SUFFIX,
+            "setExportSuffix",
+            1);
+        digester.addCallParam(
+            "*/" + N_STATICEXPORT + "/" + N_STATICEXPORT_DEFAULTSUFFIXES + "/" + N_STATICEXPORT_SUFFIX,
+            0,
+            A_KEY);
         // header rule
         digester.addCallMethod(
             "*/" + N_STATICEXPORT + "/" + N_STATICEXPORT_EXPORTHEADERS + "/" + N_STATICEXPORT_HEADER,
             "setExportHeader",
             0);
         // accept-language rule
-        digester.addCallMethod("*/"
-            + N_STATICEXPORT
-            + "/"
-            + N_STATICEXPORT_REQUESTHEADERS
-            + "/"
-            + N_STATICEXPORT_ACCEPTLANGUAGE, "setAcceptLanguageHeader", 0);
+        digester.addCallMethod(
+            "*/" + N_STATICEXPORT + "/" + N_STATICEXPORT_REQUESTHEADERS + "/" + N_STATICEXPORT_ACCEPTLANGUAGE,
+            "setAcceptLanguageHeader",
+            0);
         // accept-charset rule
-        digester.addCallMethod("*/"
-            + N_STATICEXPORT
-            + "/"
-            + N_STATICEXPORT_REQUESTHEADERS
-            + "/"
-            + N_STATICEXPORT_ACCEPTCHARSET, "setAcceptCharsetHeader", 0);
+        digester.addCallMethod(
+            "*/" + N_STATICEXPORT + "/" + N_STATICEXPORT_REQUESTHEADERS + "/" + N_STATICEXPORT_ACCEPTCHARSET,
+            "setAcceptCharsetHeader",
+            0);
         // accept-charset rule
-        digester.addCallMethod("*/"
-            + N_STATICEXPORT
-            + "/"
-            + N_STATICEXPORT_REQUESTHEADERS
-            + "/"
-            + N_STATICEXPORT_REMOTEADDR, "setRemoteAddr", 0);
+        digester.addCallMethod(
+            "*/" + N_STATICEXPORT + "/" + N_STATICEXPORT_REQUESTHEADERS + "/" + N_STATICEXPORT_REMOTEADDR,
+            "setRemoteAddr",
+            0);
         // rfs-prefix rule
-        digester.addCallMethod("*/"
-            + N_STATICEXPORT
-            + "/"
-            + N_STATICEXPORT_RENDERSETTINGS
-            + "/"
-            + N_STATICEXPORT_RFS_PREFIX, "setRfsPrefix", 0);
+        digester.addCallMethod(
+            "*/" + N_STATICEXPORT + "/" + N_STATICEXPORT_RENDERSETTINGS + "/" + N_STATICEXPORT_RFS_PREFIX,
+            "setRfsPrefix",
+            0);
         // vfs-prefix rule
-        digester.addCallMethod("*/"
-            + N_STATICEXPORT
-            + "/"
-            + N_STATICEXPORT_RENDERSETTINGS
-            + "/"
-            + N_STATICEXPORT_VFS_PREFIX, "setVfsPrefix", 0);
+        digester.addCallMethod(
+            "*/" + N_STATICEXPORT + "/" + N_STATICEXPORT_RENDERSETTINGS + "/" + N_STATICEXPORT_VFS_PREFIX,
+            "setVfsPrefix",
+            0);
         // relative links rule
-        digester.addCallMethod("*/"
-            + N_STATICEXPORT
-            + "/"
-            + N_STATICEXPORT_RENDERSETTINGS
-            + "/"
-            + N_STATICEXPORT_RELATIVELINKS, "setRelativeLinks", 0);
+        digester.addCallMethod(
+            "*/" + N_STATICEXPORT + "/" + N_STATICEXPORT_RENDERSETTINGS + "/" + N_STATICEXPORT_RELATIVELINKS,
+            "setRelativeLinks",
+            0);
         // exporturl rule
-        digester.addCallMethod("*/"
-            + N_STATICEXPORT
-            + "/"
-            + N_STATICEXPORT_RENDERSETTINGS
-            + "/"
-            + N_STATICEXPORT_EXPORTURL, "setExportUrl", 0);
+        digester.addCallMethod(
+            "*/" + N_STATICEXPORT + "/" + N_STATICEXPORT_RENDERSETTINGS + "/" + N_STATICEXPORT_EXPORTURL,
+            "setExportUrl",
+            0);
         // plain export optimization rule
-        digester.addCallMethod("*/"
-            + N_STATICEXPORT
-            + "/"
-            + N_STATICEXPORT_RENDERSETTINGS
-            + "/"
-            + N_STATICEXPORT_PLAINOPTIMIZATION, "setPlainExportOptimization", 0);
+        digester.addCallMethod(
+            "*/" + N_STATICEXPORT + "/" + N_STATICEXPORT_RENDERSETTINGS + "/" + N_STATICEXPORT_PLAINOPTIMIZATION,
+            "setPlainExportOptimization",
+            0);
         // test resource rule
-        digester.addCallMethod("*/"
-            + N_STATICEXPORT
-            + "/"
-            + N_STATICEXPORT_RENDERSETTINGS
-            + "/"
-            + N_STATICEXPORT_TESTRESOURCE, "setTestResource", 1);
-        digester.addCallParam("*/"
-            + N_STATICEXPORT
-            + "/"
-            + N_STATICEXPORT_RENDERSETTINGS
-            + "/"
-            + N_STATICEXPORT_TESTRESOURCE, 0, A_URI);
+        digester.addCallMethod(
+            "*/" + N_STATICEXPORT + "/" + N_STATICEXPORT_RENDERSETTINGS + "/" + N_STATICEXPORT_TESTRESOURCE,
+            "setTestResource",
+            1);
+        digester.addCallParam(
+            "*/" + N_STATICEXPORT + "/" + N_STATICEXPORT_RENDERSETTINGS + "/" + N_STATICEXPORT_TESTRESOURCE,
+            0,
+            A_URI);
         // resources to export rule
-        digester.addCallMethod("*/"
-            + N_STATICEXPORT
-            + "/"
-            + N_STATICEXPORT_RENDERSETTINGS
-            + "/"
-            + N_STATICEXPORT_RESOURCESTORENDER
-            + "/"
-            + N_STATICEXPORT_REGEX, "setExportFolderPattern", 0);
+        digester.addCallMethod(
+            "*/"
+                + N_STATICEXPORT
+                + "/"
+                + N_STATICEXPORT_RENDERSETTINGS
+                + "/"
+                + N_STATICEXPORT_RESOURCESTORENDER
+                + "/"
+                + N_STATICEXPORT_REGEX,
+            "setExportFolderPattern",
+            0);
 
         // export-rules configuration
         String exportRulePath = "*/"
@@ -562,19 +654,122 @@ public class CmsImportExportConfiguration extends A_CmsXmlConfiguration {
             1);
         digester.addCallParam(rfsRulePath + "/" + N_STATICEXPORT_RELATED_SYSTEM_RES + "/" + N_STATICEXPORT_REGEX, 0);
 
+        // creation of the stored content delivery configuration
+        digester.addObjectCreate("*/" + N_STOREDCONTENTDELIVERY, CmsStoredContentDeliveryConfiguration.class);
+        digester.addSetNext("*/" + N_STOREDCONTENTDELIVERY, "setStoredContentDeliveryConfiguration");
+        digester.addCallMethod("*/" + N_STOREDCONTENTDELIVERY, "setEnabled", 1);
+        digester.addCallParam("*/" + N_STOREDCONTENTDELIVERY, 0, A_ENABLED);
+        // stored content delivery suffix rule
+        digester.addCallMethod(
+            "*/"
+                + N_STOREDCONTENTDELIVERY
+                + "/"
+                + N_STOREDCONTENTDELIVERY_ENABLEDSUFFIXES
+                + "/"
+                + N_STATICEXPORT_SUFFIX,
+            "addEnabledSuffix",
+            1);
+        digester.addCallParam(
+            "*/"
+                + N_STOREDCONTENTDELIVERY
+                + "/"
+                + N_STOREDCONTENTDELIVERY_ENABLEDSUFFIXES
+                + "/"
+                + N_STATICEXPORT_SUFFIX,
+            0,
+            A_KEY);
+
+        // creation of the shared cache configuration
+        digester.addObjectCreate("*/" + N_SHAREDCACHE, CmsSharedCacheConfiguration.class);
+        digester.addSetNext("*/" + N_SHAREDCACHE, "setSharedCacheConfiguration");
+        digester.addCallMethod("*/" + N_SHAREDCACHE, "setEnabled", 1);
+        digester.addCallParam("*/" + N_SHAREDCACHE, 0, A_ENABLED);
+        // shared cache policy rules
+        String sharedCachePolicyPath = "*/" + N_SHAREDCACHE + "/" + N_SHAREDCACHE_CACHEPOLICY;
+        digester.addObjectCreate(sharedCachePolicyPath, CmsSharedCachePolicy.class);
+        digester.addSetNext(sharedCachePolicyPath, "addCachePolicy");
+        digester.addCallMethod(sharedCachePolicyPath, "setContentType", 1);
+        digester.addCallParam(sharedCachePolicyPath, 0, "contenttype");
+        digester.addCallMethod(sharedCachePolicyPath + "/" + N_SHAREDCACHE_CLIENTMAXAGE, "setClientMaxAge", 0);
+        digester.addCallMethod(sharedCachePolicyPath + "/" + N_SHAREDCACHE_SHAREDMAXAGE, "setSharedMaxAge", 0);
+        digester.addCallMethod(sharedCachePolicyPath + "/" + N_SHAREDCACHE_STALEIFERROR, "setStaleIfError", 0);
+
+        // adds protected export rules
+        digester.addCallMethod(
+            "*/" + N_PROTECTED_EXPORT + "/" + N_STATICEXPORT_EXPORTPATH,
+            "setProtectedExportPath",
+            1);
+        digester.addCallParam("*/" + N_PROTECTED_EXPORT + "/" + N_STATICEXPORT_EXPORTPATH, 0);
+        // add rules for the protected export points
+        digester.addCallMethod(
+            "*/"
+                + N_PROTECTED_EXPORT
+                + "/"
+                + I_CmsXmlConfiguration.N_EXPORTPOINTS
+                + "/"
+                + I_CmsXmlConfiguration.N_EXPORTPOINT,
+            "addProtectedExportPoint",
+            2);
+        digester.addCallParam(
+            "*/"
+                + N_PROTECTED_EXPORT
+                + "/"
+                + I_CmsXmlConfiguration.N_EXPORTPOINTS
+                + "/"
+                + I_CmsXmlConfiguration.N_EXPORTPOINT,
+            0,
+            I_CmsXmlConfiguration.A_URI);
+        digester.addCallParam(
+            "*/"
+                + N_PROTECTED_EXPORT
+                + "/"
+                + I_CmsXmlConfiguration.N_EXPORTPOINTS
+                + "/"
+                + I_CmsXmlConfiguration.N_EXPORTPOINT,
+            1,
+            I_CmsXmlConfiguration.A_DESTINATION);
+
         // add rules for the user data export
         digester.addObjectCreate("*/" + N_USERCSVEXPORT, CmsUserExportSettings.class);
         digester.addCallMethod("*/" + N_USERCSVEXPORT + "/" + N_SEPARATOR, "setSeparator", 0);
         digester.addCallMethod("*/" + N_USERCSVEXPORT + "/" + N_COLUMNS + "/" + N_COLUMN, "addColumn", 0);
         digester.addSetNext("*/" + N_USERCSVEXPORT, "setUserExportSettings");
 
-        // creation of the static repository manager        
+        // creation of the static repository manager
         digester.addObjectCreate("*/" + N_REPOSITORIES, CmsRepositoryManager.class);
         digester.addCallMethod("*/" + N_REPOSITORIES, I_CmsConfigurationParameterHandler.INIT_CONFIGURATION_METHOD);
         digester.addSetNext("*/" + N_REPOSITORIES, "setRepositoryManager");
 
         // repository
-        digester.addObjectCreate("*/" + N_REPOSITORIES + "/" + N_REPOSITORY, A_CLASS, CmsConfigurationException.class);
+        digester.addObjectCreate(
+            "*/" + N_REPOSITORIES + "/" + N_REPOSITORY,
+            CmsConfigurationException.class.getName(),
+            A_CLASS);
+
+        try {
+            digester.addRule(
+                "*/" + N_REPOSITORIES + "/" + N_REPOSITORY + "/" + N_FILETRANSLATIONS,
+                new NodeCreateRule() {
+
+                    @Override
+                    public void end(String namespace, String name) throws Exception {
+
+                        org.w3c.dom.Element elem = (org.w3c.dom.Element)digester.pop();
+                        boolean enabled = Boolean.parseBoolean(elem.getAttribute(A_ENABLED));
+                        NodeList translationElements = elem.getElementsByTagName(N_TRANSLATION);
+                        String[] translationStrings = new String[translationElements.getLength()];
+                        for (int i = 0; i < translationElements.getLength(); i++) {
+                            org.w3c.dom.Element translationElem = (org.w3c.dom.Element)translationElements.item(i);
+                            translationStrings[i] = translationElem.getTextContent();
+                        }
+                        CmsResourceTranslator translator = new CmsResourceTranslator(translationStrings, true);
+                        I_CmsRepository repo = (I_CmsRepository)(digester.peek());
+                        repo.setTranslation(translator, enabled);
+                    }
+                });
+        } catch (ParserConfigurationException e) {
+            LOG.error(e.getLocalizedMessage(), e);
+        }
 
         // repository name
         digester.addCallMethod("*/" + N_REPOSITORIES + "/" + N_REPOSITORY, "setName", 1);
@@ -592,7 +787,9 @@ public class CmsImportExportConfiguration extends A_CmsXmlConfiguration {
         digester.addCallParam("*/" + N_REPOSITORIES + "/" + N_REPOSITORY + "/" + N_PARAMS + "/" + N_PARAM, 1);
 
         // repository filter
-        digester.addObjectCreate("*/" + N_REPOSITORIES + "/" + N_REPOSITORY + "/" + N_FILTER, CmsRepositoryFilter.class);
+        digester.addObjectCreate(
+            "*/" + N_REPOSITORIES + "/" + N_REPOSITORY + "/" + N_FILTER,
+            CmsRepositoryFilter.class);
 
         // repository filter type
         digester.addCallMethod("*/" + N_REPOSITORIES + "/" + N_REPOSITORY + "/" + N_FILTER, "setType", 1);
@@ -613,28 +810,24 @@ public class CmsImportExportConfiguration extends A_CmsXmlConfiguration {
         if (m_repositoryManager == null) {
             m_repositoryManager = new CmsRepositoryManager(false);
         }
-        // creation of the extended HTML importer       
+        // creation of the extended HTML importer
         digester.addObjectCreate("*/" + N_EXTHTMLIMPORT, CmsExtendedHtmlImportDefault.class);
         // extended HTML importer  finished
         digester.addSetNext("*/" + N_EXTHTMLIMPORT, "setExtendedHtmlImportManager");
         digester.addCallMethod("*/" + N_EXTHTMLIMPORT + "/" + N_EXTHTMLIMPORT_DESTINATION, "setDestinationDir", 0);
         digester.addCallMethod("*/" + N_EXTHTMLIMPORT + "/" + N_EXTHTMLIMPORT_INPUT, "setInputDir", 0);
-        digester.addCallMethod("*/"
-            + N_EXTHTMLIMPORT
-            + "/"
-            + N_EXTHTMLIMPORT_GALLERIES
-            + "/"
-            + N_EXTHTMLIMPORT_DOWNLOAD, "setDownloadGallery", 0);
+        digester.addCallMethod(
+            "*/" + N_EXTHTMLIMPORT + "/" + N_EXTHTMLIMPORT_GALLERIES + "/" + N_EXTHTMLIMPORT_DOWNLOAD,
+            "setDownloadGallery",
+            0);
         digester.addCallMethod(
             "*/" + N_EXTHTMLIMPORT + "/" + N_EXTHTMLIMPORT_GALLERIES + "/" + N_EXTHTMLIMPORT_IMAGE,
             "setImageGallery",
             0);
-        digester.addCallMethod("*/"
-            + N_EXTHTMLIMPORT
-            + "/"
-            + N_EXTHTMLIMPORT_GALLERIES
-            + "/"
-            + N_EXTHTMLIMPORT_EXTERNALLINK, "setLinkGallery", 0);
+        digester.addCallMethod(
+            "*/" + N_EXTHTMLIMPORT + "/" + N_EXTHTMLIMPORT_GALLERIES + "/" + N_EXTHTMLIMPORT_EXTERNALLINK,
+            "setLinkGallery",
+            0);
         digester.addCallMethod(
             "*/" + N_EXTHTMLIMPORT + "/" + N_EXTHTMLIMPORT_SETTINGS + "/" + N_EXTHTMLIMPORT_TEMPLATE,
             "setTemplate",
@@ -651,34 +844,36 @@ public class CmsImportExportConfiguration extends A_CmsXmlConfiguration {
             "*/" + N_EXTHTMLIMPORT + "/" + N_EXTHTMLIMPORT_SETTINGS + "/" + N_EXTHTMLIMPORT_ENCODING,
             "setEncoding",
             0);
-        digester.addCallMethod("*/"
-            + N_EXTHTMLIMPORT
-            + "/"
-            + N_EXTHTMLIMPORT_SETTINGS
-            + "/"
-            + N_EXTHTMLIMPORT_PATTERN
-            + "/"
-            + N_EXTHTMLIMPORT_PATTERN_START, "setStartPattern", 0);
-        digester.addCallMethod("*/"
-            + N_EXTHTMLIMPORT
-            + "/"
-            + N_EXTHTMLIMPORT_SETTINGS
-            + "/"
-            + N_EXTHTMLIMPORT_PATTERN
-            + "/"
-            + N_EXTHTMLIMPORT_PATTERN_END, "setEndPattern", 0);
-        digester.addCallMethod("*/"
-            + N_EXTHTMLIMPORT
-            + "/"
-            + N_EXTHTMLIMPORT_SETTINGS
-            + "/"
-            + N_EXTHTMLIMPORT_OVERWRITE, "setOverwrite", 0);
-        digester.addCallMethod("*/"
-            + N_EXTHTMLIMPORT
-            + "/"
-            + N_EXTHTMLIMPORT_SETTINGS
-            + "/"
-            + N_EXTHTMLIMPORT_KEEPBROKENLINKS, "setKeepBrokenLinks", 0);
+        digester.addCallMethod(
+            "*/"
+                + N_EXTHTMLIMPORT
+                + "/"
+                + N_EXTHTMLIMPORT_SETTINGS
+                + "/"
+                + N_EXTHTMLIMPORT_PATTERN
+                + "/"
+                + N_EXTHTMLIMPORT_PATTERN_START,
+            "setStartPattern",
+            0);
+        digester.addCallMethod(
+            "*/"
+                + N_EXTHTMLIMPORT
+                + "/"
+                + N_EXTHTMLIMPORT_SETTINGS
+                + "/"
+                + N_EXTHTMLIMPORT_PATTERN
+                + "/"
+                + N_EXTHTMLIMPORT_PATTERN_END,
+            "setEndPattern",
+            0);
+        digester.addCallMethod(
+            "*/" + N_EXTHTMLIMPORT + "/" + N_EXTHTMLIMPORT_SETTINGS + "/" + N_EXTHTMLIMPORT_OVERWRITE,
+            "setOverwrite",
+            0);
+        digester.addCallMethod(
+            "*/" + N_EXTHTMLIMPORT + "/" + N_EXTHTMLIMPORT_SETTINGS + "/" + N_EXTHTMLIMPORT_KEEPBROKENLINKS,
+            "setKeepBrokenLinks",
+            0);
     }
 
     /**
@@ -736,17 +931,17 @@ public class CmsImportExportConfiguration extends A_CmsXmlConfiguration {
         while (userTranslationKeys.hasNext()) {
             String from = userTranslationKeys.next();
             String to = m_importExportManager.getImportUserTranslations().get(from);
-            principalsElement.addElement(N_PRINCIPALTRANSLATION).addAttribute(A_TYPE, I_CmsPrincipal.PRINCIPAL_USER).addAttribute(
-                A_FROM,
-                from).addAttribute(A_TO, to);
+            principalsElement.addElement(N_PRINCIPALTRANSLATION).addAttribute(
+                A_TYPE,
+                I_CmsPrincipal.PRINCIPAL_USER).addAttribute(A_FROM, from).addAttribute(A_TO, to);
         }
         Iterator<String> groupTranslationKeys = m_importExportManager.getImportGroupTranslations().keySet().iterator();
         while (groupTranslationKeys.hasNext()) {
             String from = groupTranslationKeys.next();
             String to = m_importExportManager.getImportGroupTranslations().get(from);
-            principalsElement.addElement(N_PRINCIPALTRANSLATION).addAttribute(A_TYPE, I_CmsPrincipal.PRINCIPAL_GROUP).addAttribute(
-                A_FROM,
-                from).addAttribute(A_TO, to);
+            principalsElement.addElement(N_PRINCIPALTRANSLATION).addAttribute(
+                A_TYPE,
+                I_CmsPrincipal.PRINCIPAL_GROUP).addAttribute(A_FROM, from).addAttribute(A_TO, to);
         }
 
         // <ignoredproperties> node
@@ -755,6 +950,32 @@ public class CmsImportExportConfiguration extends A_CmsXmlConfiguration {
         while (ignoredProperties.hasNext()) {
             String property = ignoredProperties.next();
             propertiesElement.addElement(N_PROPERTY).addAttribute(A_NAME, property);
+        }
+
+        // <export> node
+        Element exportElement = importexportElement.addElement(N_EXPORT);
+        Map<TimestampMode, List<String>> defaultTimestampModes = m_importExportManager.getDefaultTimestampModes();
+        if (!defaultTimestampModes.isEmpty()) {
+
+            // <defaulttimestampmodes>
+            Element defaultTimestampModesElement = exportElement.addElement(N_EXPORT_DEFAULTTIMESTAMPMODES);
+            for (TimestampMode mode : defaultTimestampModes.keySet()) {
+
+                // <timestampmode>
+                Element timestampModeElement = defaultTimestampModesElement.addElement(N_EXPORT_TIMESTAMPMODE);
+                timestampModeElement.addAttribute(A_MODE, mode.toString().toLowerCase());
+                for (String resourcetypeName : defaultTimestampModes.get(mode)) {
+
+                    // <resourcetypename>
+                    Element resourcetypeElement = timestampModeElement.addElement(N_EXPORT_RESOURCETYPENAME);
+                    resourcetypeElement.addText(resourcetypeName);
+                }
+            }
+        }
+
+        List<String> tempExportpointPaths = m_importExportManager.getTempExportPointPaths();
+        for (String path : tempExportpointPaths) {
+            importexportElement.addElement(N_TEMP_EXPORTPONT_PATH).addText(path);
         }
 
         // <staticexport> node
@@ -771,7 +992,7 @@ public class CmsImportExportConfiguration extends A_CmsXmlConfiguration {
 
         // <exportpath> node
         String exportPathUnmodified = m_staticExportManager.getExportPathForConfiguration();
-        // cut path seperator        
+        // cut path seperator
         if (exportPathUnmodified.endsWith(File.separator)) {
             exportPathUnmodified = exportPathUnmodified.substring(0, exportPathUnmodified.length() - 1);
         }
@@ -780,7 +1001,7 @@ public class CmsImportExportConfiguration extends A_CmsXmlConfiguration {
         // <exportworkpath> node
         String exportWorkPathUnmodified = m_staticExportManager.getExportWorkPathForConfiguration();
         if (exportWorkPathUnmodified != null) {
-            // cut path seperator        
+            // cut path seperator
             if (exportWorkPathUnmodified.endsWith(File.separator)) {
                 exportWorkPathUnmodified = exportWorkPathUnmodified.substring(0, exportWorkPathUnmodified.length() - 1);
             }
@@ -844,7 +1065,8 @@ public class CmsImportExportConfiguration extends A_CmsXmlConfiguration {
             m_staticExportManager.getVfsPrefixForConfiguration());
 
         // <userelativelinks> node
-        rendersettingsElement.addElement(N_STATICEXPORT_RELATIVELINKS).addText(m_staticExportManager.getRelativeLinks());
+        rendersettingsElement.addElement(N_STATICEXPORT_RELATIVELINKS).addText(
+            m_staticExportManager.getRelativeLinks());
 
         // <exporturl> node
         rendersettingsElement.addElement(N_STATICEXPORT_EXPORTURL).addText(
@@ -886,11 +1108,11 @@ public class CmsImportExportConfiguration extends A_CmsXmlConfiguration {
                     modifiedElement.addElement(N_STATICEXPORT_REGEX).addText(regex.pattern());
                 }
                 // <export-resources> node and <uri> subnodes
-                Element exportElement = exportRuleElement.addElement(N_STATICEXPORT_EXPORT);
+                Element exportResourcesElement = exportRuleElement.addElement(N_STATICEXPORT_EXPORT);
                 Iterator<String> itExps = rule.getExportResourcePatterns().iterator();
                 while (itExps.hasNext()) {
                     String uri = itExps.next();
-                    exportElement.addElement(N_STATICEXPORT_URI).addText(uri);
+                    exportResourcesElement.addElement(N_STATICEXPORT_URI).addText(uri);
                 }
             }
         }
@@ -910,7 +1132,8 @@ public class CmsImportExportConfiguration extends A_CmsXmlConfiguration {
                 rfsRuleElement.addElement(N_STATICEXPORT_RFS_PREFIX).addText(rule.getRfsPrefixConfigured());
                 rfsRuleElement.addElement(N_STATICEXPORT_EXPORTPATH).addText(rule.getExportPathConfigured());
                 if (rule.getExportWorkPathConfigured() != null) {
-                    rfsRuleElement.addElement(N_STATICEXPORT_EXPORTWORKPATH).addText(rule.getExportWorkPathConfigured());
+                    rfsRuleElement.addElement(N_STATICEXPORT_EXPORTWORKPATH).addText(
+                        rule.getExportWorkPathConfigured());
                 }
                 if (rule.getExportBackups() != null) {
                     rfsRuleElement.addElement(N_STATICEXPORT_EXPORTBACKUPS).addText(
@@ -930,6 +1153,56 @@ public class CmsImportExportConfiguration extends A_CmsXmlConfiguration {
 
         }
 
+        if (m_storedContentDeliveryConfiguration.isConfigured()) {
+            // <storedcontentdelivery> node
+            Element storedContentDeliveryElement = parent.addElement(N_STOREDCONTENTDELIVERY);
+            storedContentDeliveryElement.addAttribute(
+                A_ENABLED,
+                String.valueOf(m_storedContentDeliveryConfiguration.isEnabled()));
+
+            // <enabledsuffixes> node and its <suffix> sub nodes
+            if (m_storedContentDeliveryConfiguration.hasEnabledSuffixes()) {
+                Element enabledSuffixesElement = storedContentDeliveryElement.addElement(
+                    N_STOREDCONTENTDELIVERY_ENABLEDSUFFIXES);
+                Iterator<String> enabledSuffixes = m_storedContentDeliveryConfiguration.getEnabledSuffixes().iterator();
+                while (enabledSuffixes.hasNext()) {
+                    String suffix = enabledSuffixes.next();
+                    Element suffixElement = enabledSuffixesElement.addElement(N_STATICEXPORT_SUFFIX);
+                    suffixElement.addAttribute(A_KEY, suffix);
+                }
+            }
+
+        }
+
+        if (m_sharedCacheConfiguration.isConfigured()) {
+            // <sharedcache> node and its policies
+            Element sharedCacheElement = parent.addElement(N_SHAREDCACHE);
+            sharedCacheElement.addAttribute(A_ENABLED, String.valueOf(m_sharedCacheConfiguration.isEnabled()));
+            for (CmsSharedCachePolicy policy : m_sharedCacheConfiguration.getCachePolicies()) {
+                Element policyElement = sharedCacheElement.addElement(N_SHAREDCACHE_CACHEPOLICY);
+                if (!policy.isDefault()) {
+                    policyElement.addAttribute("contenttype", policy.getContentType());
+                }
+                policyElement.addElement(N_SHAREDCACHE_CLIENTMAXAGE).addText(String.valueOf(policy.getClientMaxAge()));
+                policyElement.addElement(N_SHAREDCACHE_SHAREDMAXAGE).addText(String.valueOf(policy.getSharedMaxAge()));
+                if (policy.getStaleIfError() != CmsSharedCachePolicy.DURATION_UNSET) {
+                    policyElement.addElement(N_SHAREDCACHE_STALEIFERROR).addText(
+                        String.valueOf(policy.getStaleIfError()));
+                }
+            }
+        }
+
+        if (m_staticExportManager.getProtectedExportPath() != null) {
+            Element streamingEl = parent.addElement(N_PROTECTED_EXPORT);
+            streamingEl.addElement(N_STATICEXPORT_EXPORTPATH).setText(m_staticExportManager.getProtectedExportPath());
+            Element exportpoints = streamingEl.addElement(I_CmsXmlConfiguration.N_EXPORTPOINTS);
+            for (Entry<String, String> entry : m_staticExportManager.getProtectedExportPoints().entrySet()) {
+                Element point = exportpoints.addElement(I_CmsXmlConfiguration.N_EXPORTPOINT);
+                point.addAttribute(I_CmsXmlConfiguration.A_URI, entry.getKey());
+                point.addAttribute(I_CmsXmlConfiguration.A_DESTINATION, entry.getValue());
+            }
+        }
+
         if (m_importExportManager.getUserExportSettings() != null) {
             // <usercsvexport>
             Element userExportElement = parent.addElement(N_USERCSVEXPORT);
@@ -946,17 +1219,17 @@ public class CmsImportExportConfiguration extends A_CmsXmlConfiguration {
         }
 
         if (m_repositoryManager.isConfigured()) {
-            List<A_CmsRepository> repositories = m_repositoryManager.getRepositories();
+            List<I_CmsRepository> repositories = m_repositoryManager.getRepositories();
             if (repositories != null) {
 
                 // <repositories> node
                 Element repositoriesElement = parent.addElement(N_REPOSITORIES);
 
-                Iterator<A_CmsRepository> repositoriesIt = repositories.iterator();
+                Iterator<I_CmsRepository> repositoriesIt = repositories.iterator();
                 while (repositoriesIt.hasNext()) {
 
                     // <repository> node
-                    A_CmsRepository repository = repositoriesIt.next();
+                    I_CmsRepository repository = repositoriesIt.next();
                     Element repositoryElement = repositoriesElement.addElement(N_REPOSITORY);
                     repositoryElement.addAttribute(A_NAME, repository.getName());
                     repositoryElement.addAttribute(A_CLASS, repository.getClass().getName());
@@ -984,6 +1257,17 @@ public class CmsImportExportConfiguration extends A_CmsXmlConfiguration {
                             }
                         }
                     }
+
+                    CmsResourceTranslator translator = repository.getTranslation();
+                    if (translator != null) {
+                        boolean translationEnabled = repository.isTranslationEnabled();
+                        Element fileTransElem = repositoryElement.addElement(N_FILETRANSLATIONS);
+                        fileTransElem.addAttribute(A_ENABLED, "" + translationEnabled);
+                        String[] translationStrings = translator.getTranslations();
+                        for (String translation : translationStrings) {
+                            fileTransElem.addElement(N_TRANSLATION).setText(translation);
+                        }
+                    }
                 }
             }
         }
@@ -995,51 +1279,51 @@ public class CmsImportExportConfiguration extends A_CmsXmlConfiguration {
             if (!CmsStringUtil.isEmptyOrWhitespaceOnly(htmlimport.getDestinationDir())) {
                 htmlImportElement.addElement(N_EXTHTMLIMPORT_DESTINATION).setText(htmlimport.getDestinationDir());
             }
-            // <input> node   
+            // <input> node
             if (!CmsStringUtil.isEmptyOrWhitespaceOnly(htmlimport.getInputDir())) {
                 htmlImportElement.addElement(N_EXTHTMLIMPORT_INPUT).setText(htmlimport.getInputDir());
             }
 
-            // <galleries> node              
+            // <galleries> node
             Element galleryElement = htmlImportElement.addElement(N_EXTHTMLIMPORT_GALLERIES);
-            // <download> node    
+            // <download> node
             if (!CmsStringUtil.isEmptyOrWhitespaceOnly(htmlimport.getDownloadGallery())) {
                 galleryElement.addElement(N_EXTHTMLIMPORT_DOWNLOAD).setText(htmlimport.getDownloadGallery());
             }
-            // <image> node  
+            // <image> node
             if (!CmsStringUtil.isEmptyOrWhitespaceOnly(htmlimport.getImageGallery())) {
                 galleryElement.addElement(N_EXTHTMLIMPORT_IMAGE).setText(htmlimport.getImageGallery());
             }
-            // <externallink> node  
+            // <externallink> node
             if (!CmsStringUtil.isEmptyOrWhitespaceOnly(htmlimport.getLinkGallery())) {
                 galleryElement.addElement(N_EXTHTMLIMPORT_EXTERNALLINK).setText(htmlimport.getLinkGallery());
             }
 
-            // <settings> node              
+            // <settings> node
             Element settingElement = htmlImportElement.addElement(N_EXTHTMLIMPORT_SETTINGS);
-            // <template> node  
+            // <template> node
             settingElement.addElement(N_EXTHTMLIMPORT_TEMPLATE).setText(htmlimport.getTemplate());
-            // <element> node  
+            // <element> node
             settingElement.addElement(N_EXTHTMLIMPORT_ELEMENT).setText(htmlimport.getElement());
-            // <locale> node  
+            // <locale> node
             settingElement.addElement(N_EXTHTMLIMPORT_LOCALE).setText(htmlimport.getLocale());
-            // <encoding> node  
+            // <encoding> node
             settingElement.addElement(N_EXTHTMLIMPORT_ENCODING).setText(htmlimport.getEncoding());
 
-            // <pattern> node              
+            // <pattern> node
             Element patternElement = settingElement.addElement(N_EXTHTMLIMPORT_PATTERN);
-            // <start> node  
+            // <start> node
             if (!CmsStringUtil.isEmptyOrWhitespaceOnly(htmlimport.getStartPattern())) {
                 patternElement.addElement(N_EXTHTMLIMPORT_PATTERN_START).setText(htmlimport.getStartPattern());
             }
-            // <end> node  
+            // <end> node
             if (!CmsStringUtil.isEmptyOrWhitespaceOnly(htmlimport.getEndPattern())) {
                 patternElement.addElement(N_EXTHTMLIMPORT_PATTERN_END).setText(htmlimport.getEndPattern());
             }
 
-            // <overwrite> node  
+            // <overwrite> node
             settingElement.addElement(N_EXTHTMLIMPORT_OVERWRITE).setText(htmlimport.getOverwrite());
-            // <keepbrokenlinks> node  
+            // <keepbrokenlinks> node
             settingElement.addElement(N_EXTHTMLIMPORT_KEEPBROKENLINKS).setText(htmlimport.getKeepBrokenLinks());
             // </extendedhtmlimport>
         }
@@ -1058,7 +1342,7 @@ public class CmsImportExportConfiguration extends A_CmsXmlConfiguration {
 
     /**
      * Returns the initialized import/export manager.<p>
-     * 
+     *
      * @return the initialized import/export manager
      */
     public CmsImportExportManager getImportExportManager() {
@@ -1068,7 +1352,7 @@ public class CmsImportExportConfiguration extends A_CmsXmlConfiguration {
 
     /**
      * Returns the initialized repository manager.<p>
-     * 
+     *
      * @return the initialized repository manager
      */
     public CmsRepositoryManager getRepositoryManager() {
@@ -1077,8 +1361,18 @@ public class CmsImportExportConfiguration extends A_CmsXmlConfiguration {
     }
 
     /**
+     * Returns the shared cache configuration.<p>
+     *
+     * @return the shared cache configuration
+     */
+    public CmsSharedCacheConfiguration getSharedCacheConfiguration() {
+
+        return m_sharedCacheConfiguration;
+    }
+
+    /**
      * Returns the initialized static export manager.<p>
-     * 
+     *
      * @return the initialized static export manager
      */
     public CmsStaticExportManager getStaticExportManager() {
@@ -1087,7 +1381,17 @@ public class CmsImportExportConfiguration extends A_CmsXmlConfiguration {
     }
 
     /**
-     * Will be called when configuration of this object is finished.<p> 
+     * Returns the stored content delivery configuration.<p>
+     *
+     * @return the stored content delivery configuration
+     */
+    public CmsStoredContentDeliveryConfiguration getStoredContentDeliveryConfiguration() {
+
+        return m_storedContentDeliveryConfiguration;
+    }
+
+    /**
+     * Will be called when configuration of this object is finished.<p>
      */
     public void initializeFinished() {
 
@@ -1108,7 +1412,7 @@ public class CmsImportExportConfiguration extends A_CmsXmlConfiguration {
 
     /**
      * Sets the generated import/export manager.<p>
-     * 
+     *
      * @param manager the import/export manager to set
      */
     public void setImportExportManager(CmsImportExportManager manager) {
@@ -1120,8 +1424,18 @@ public class CmsImportExportConfiguration extends A_CmsXmlConfiguration {
     }
 
     /**
+     * Sets the protected export path.<p>
+     *
+     * @param exportPath the export path to set
+     */
+    public void setProtectedExportPath(String exportPath) {
+
+        m_staticExportManager.setProtectedExportPath(exportPath);
+    }
+
+    /**
      * Sets the generated repository manager.<p>
-     * 
+     *
      * @param manager the repository manager to set
      */
     public void setRepositoryManager(CmsRepositoryManager manager) {
@@ -1130,8 +1444,21 @@ public class CmsImportExportConfiguration extends A_CmsXmlConfiguration {
     }
 
     /**
+     * Sets the shared cache configuration.<p>
+     *
+     * @param configuration the shared cache configuration
+     */
+    public void setSharedCacheConfiguration(CmsSharedCacheConfiguration configuration) {
+
+        m_sharedCacheConfiguration = configuration;
+        if (CmsLog.INIT.isInfoEnabled()) {
+            CmsLog.INIT.info(Messages.get().getBundle().key(Messages.INIT_SHAREDCACHE_CONFIG_0));
+        }
+    }
+
+    /**
      * Sets the generated static export manager.<p>
-     * 
+     *
      * @param manager the static export manager to set
      */
     public void setStaticExportManager(CmsStaticExportManager manager) {
@@ -1143,13 +1470,61 @@ public class CmsImportExportConfiguration extends A_CmsXmlConfiguration {
     }
 
     /**
+     * Sets the stored content delivery configuration.<p>
+     *
+     * @param configuration the stored content delivery configuration
+     */
+    public void setStoredContentDeliveryConfiguration(CmsStoredContentDeliveryConfiguration configuration) {
+
+        m_storedContentDeliveryConfiguration = configuration;
+        if (CmsLog.INIT.isInfoEnabled()) {
+            CmsLog.INIT.info(Messages.get().getBundle().key(Messages.INIT_STOREDCONTENTDELIVERY_CONFIG_0));
+        }
+    }
+
+    /**
      * Sets the user settings for export and import.<p>
-     * 
+     *
      * @param userExportSettings the user settings for export and import
      */
     public void setUserExportSettings(CmsUserExportSettings userExportSettings) {
 
         m_importExportManager.setUserExportSettings(userExportSettings);
+    }
+
+    /**
+     * Validates configuration combinations which can not be expressed in the DTD.<p>
+     *
+     * @throws CmsConfigurationException if the configuration is invalid
+     */
+    public void validate() throws CmsConfigurationException {
+
+        m_sharedCacheConfiguration.validate();
+        if (!m_sharedCacheConfiguration.isEnabled()) {
+            return;
+        }
+        if (m_storedContentDeliveryConfiguration.isEnabled()) {
+            throw new CmsConfigurationException(
+                Messages.get().container(Messages.ERR_SHAREDCACHE_CONFLICT_STOREDCONTENT_0));
+        }
+        if (!m_staticExportManager.isStaticExportEnabled()) {
+            throw new CmsConfigurationException(
+                Messages.get().container(Messages.ERR_SHAREDCACHE_STATICEXPORT_DISABLED_0));
+        }
+        if (!(m_staticExportManager.getHandler() instanceof A_CmsOnDemandStaticExportHandler)) {
+            throw new CmsConfigurationException(
+                Messages.get().container(
+                    Messages.ERR_SHAREDCACHE_HANDLER_1,
+                    m_staticExportManager.getHandler().getClass().getName()));
+        }
+        for (String header : m_staticExportManager.getExportHeaders()) {
+            int separator = header.indexOf(':');
+            String name = separator < 0 ? header : header.substring(0, separator);
+            if ("cache-control".equalsIgnoreCase(name.trim())) {
+                throw new CmsConfigurationException(
+                    Messages.get().container(Messages.ERR_SHAREDCACHE_CACHE_CONTROL_HEADER_0));
+            }
+        }
     }
 
     /**

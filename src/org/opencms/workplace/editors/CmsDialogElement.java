@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -14,12 +14,12 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * Lesser General Public License for more details.
  *
- * For further information about Alkacon Software GmbH, please see the
- * company website: http://www.alkacon.com
+ * For further information about Alkacon Software GmbH & Co. KG, please see the
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -31,10 +31,10 @@ import org.opencms.util.CmsStringUtil;
 
 /**
  * Contains the setup information about a single dialog element.<p>
- * 
- * @since 6.0.0 
+ *
+ * @since 6.0.0
  */
-public class CmsDialogElement implements Comparable {
+public class CmsDialogElement implements Comparable<CmsDialogElement> {
 
     /** Indicates if the element is existing on the page or not. */
     private boolean m_existing;
@@ -53,14 +53,19 @@ public class CmsDialogElement implements Comparable {
 
     /**
      * Creates a new dialog element.<p>
-     * 
+     *
      * @param name the (system) name of the element
      * @param niceName the nice "display" name of the element
      * @param mandantory indicates if the element is mandatory
      * @param templateElement indicates if the element is defined as template-element
      * @param existing indicates if the element is existing on the xmlPage or not
      */
-    public CmsDialogElement(String name, String niceName, boolean mandantory, boolean templateElement, boolean existing) {
+    public CmsDialogElement(
+        String name,
+        String niceName,
+        boolean mandantory,
+        boolean templateElement,
+        boolean existing) {
 
         m_name = name;
         m_niceName = niceName;
@@ -72,25 +77,23 @@ public class CmsDialogElement implements Comparable {
     /**
      * @see java.lang.Comparable#compareTo(java.lang.Object)
      */
-    public int compareTo(Object obj) {
+    public int compareTo(CmsDialogElement obj) {
 
         if (obj == this) {
             return 0;
         }
-        if (obj instanceof CmsDialogElement) {
-            CmsDialogElement element = (CmsDialogElement)obj;
-            if (m_name == null) {
-                return (element.m_name == null) ? 0 : -1;
-            } else {
-                return m_name.compareToIgnoreCase(element.m_name);
-            }
+        CmsDialogElement element = obj;
+        if (m_name == null) {
+            return (element.m_name == null) ? 0 : -1;
+        } else {
+            return m_name.compareToIgnoreCase(element.m_name);
         }
-        return 0;
     }
 
     /**
      * @see java.lang.Object#equals(java.lang.Object)
      */
+    @Override
     public boolean equals(Object obj) {
 
         if (obj == this) {
@@ -152,6 +155,7 @@ public class CmsDialogElement implements Comparable {
     /**
      * @see java.lang.Object#hashCode()
      */
+    @Override
     public int hashCode() {
 
         if (m_name == null) {

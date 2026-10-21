@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -15,11 +15,11 @@
  * Lesser General Public License for more details.
  *
  * For further information about Alkacon Software, please see the
- * company website: http://www.alkacon.com
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -27,14 +27,15 @@
 
 package org.opencms.gwt;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.rpc.IsSerializable;
 
 /**
  * GWT RPC Exception. Wrapper for exceptions thrown while processing a RPC request.<p>
- * 
+ *
  * As of the current state of exception serialization within GWT,
  * details of the original throwable are kept to be available on the client.<p>
- * 
+ *
  * @since 8.0.0
  */
 public class CmsRpcException extends Exception implements IsSerializable {
@@ -64,8 +65,8 @@ public class CmsRpcException extends Exception implements IsSerializable {
 
     /**
      * Default constructor.<p>
-     * 
-     * @param t the cause 
+     *
+     * @param t the cause
      */
     public CmsRpcException(Throwable t) {
 
@@ -79,8 +80,23 @@ public class CmsRpcException extends Exception implements IsSerializable {
     }
 
     /**
+     * Override to make the method return something readable on the client side as well (because of its custom serializer).
+     *
+     * @see java.lang.Throwable#getMessage()
+     */
+    @Override
+    public String getMessage() {
+
+        if (GWT.isClient()) {
+            return getOriginalMessage();
+        } else {
+            return super.getMessage();
+        }
+    }
+
+    /**
      * Returns the cause message.<p>
-     * 
+     *
      * @return the cause message
      */
     public String getOriginalCauseMessage() {
@@ -110,7 +126,7 @@ public class CmsRpcException extends Exception implements IsSerializable {
 
     /**
      * Returns the original stack trace.<p>
-     * 
+     *
      * @return the original stack trace
      */
     public StackTraceElement[] getOriginalStackTrace() {
@@ -140,7 +156,7 @@ public class CmsRpcException extends Exception implements IsSerializable {
 
     /**
      * Sets the original cause message.<p>
-     * 
+     *
      * @param originalCauseMessage  the original cause message
      */
     protected void setOriginalCauseMessage(String originalCauseMessage) {
@@ -150,7 +166,7 @@ public class CmsRpcException extends Exception implements IsSerializable {
 
     /**
      * Sets the original stack trace.<p>
-     * 
+     *
      * @param trace the original stack trace
      */
     protected void setOriginalStackTrace(StackTraceElement[] trace) {

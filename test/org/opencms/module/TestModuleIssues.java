@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -14,12 +14,12 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * Lesser General Public License for more details.
  *
- * For further information about Alkacon Software GmbH, please see the
- * company website: http://www.alkacon.com
+ * For further information about Alkacon Software GmbH & Co. KG, please see the
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -34,82 +34,46 @@ import org.opencms.file.types.CmsResourceTypePlain;
 import org.opencms.importexport.CmsImportParameters;
 import org.opencms.lock.CmsLockException;
 import org.opencms.main.OpenCms;
+import org.opencms.module.CmsModule.ExportMode;
 import org.opencms.report.CmsShellReport;
 import org.opencms.report.I_CmsReport;
-import org.opencms.test.OpenCmsTestCase;
-import org.opencms.test.OpenCmsTestProperties;
+import org.opencms.test.OpenCmsTestRunner;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
-import junit.extensions.TestSetup;
-import junit.framework.Test;
-import junit.framework.TestSuite;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.MethodOrderer;
+import org.junit.jupiter.api.Order;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInfo;
+import org.junit.jupiter.api.TestMethodOrder;
 
 /**
  * Unit tests for issues found in the new module mechanism.<p>
  */
-public class TestModuleIssues extends OpenCmsTestCase {
+@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
+public class TestModuleIssues extends OpenCmsTestRunner {
 
     /**
-     * Default JUnit constructor.<p>
-     * 
-     * @param arg0 JUnit parameters
+     * @see org.opencms.test.OpenCmsTestRunner#$openCmsSetUp(org.junit.jupiter.api.TestInfo)
      */
-    public TestModuleIssues(String arg0) {
+    @Override
+    @BeforeAll
+    public void $openCmsSetUp(TestInfo testInfo) {
 
-        super(arg0);
-    }
-
-    /**
-     * Test suite for this test class.<p>
-     * 
-     * @return the test suite
-     */
-    public static Test suite() {
-
-        OpenCmsTestProperties.initialize(org.opencms.test.AllTests.TEST_PROPERTIES_PATH);
-
-        TestSuite suite = new TestSuite();
-        suite.setName(TestModuleIssues.class.getName());
-
-        suite.addTest(new TestModuleIssues("testAdditionalSystemFolder"));
-        suite.addTest(new TestModuleIssues("testModuleDeletion"));
-
-        // important: this must be the last called method since the OpenCms installation is removed from there
-        suite.addTest(new TestModuleIssues("testShutdownMethod"));
-
-        TestSetup wrapper = new TestSetup(suite) {
-
-            /**
-             * @see junit.extensions.TestSetup#setUp()
-             */
-            @Override
-            protected void setUp() {
-
-                setupOpenCms("simpletest", "/");
-            }
-
-            /**
-             * @see junit.extensions.TestSetup#tearDown()
-             */
-            @Override
-            protected void tearDown() {
-
-                // done in "testShutdownMethod"
-                // removeOpenCms();
-            }
-        };
-
-        return wrapper;
+        setupOpenCms(testInfo, "simpletest", "/");
     }
 
     /**
      * Issue: Additional "system" folder created in current site after module import.<p>
-     * 
+     *
      * @throws Throwable if something goes wrong
      */
+    @Order(1)
+    @Test
     public void testAdditionalSystemFolder() throws Throwable {
 
         CmsObject cms = getCmsObject();
@@ -144,9 +108,11 @@ public class TestModuleIssues extends OpenCmsTestCase {
 
     /**
      * Issue: Module can not be deleted if there are locked resources.<p>
-     * 
+     *
      * @throws Throwable if something goes wrong
      */
+    @Order(2)
+    @Test
     public void testModuleDeletion() throws Throwable {
 
         CmsObject cms = getCmsObject();
@@ -172,6 +138,10 @@ public class TestModuleIssues extends OpenCmsTestCase {
             "test",
             "test",
             null,
+            null,
+            null,
+            false,
+            ExportMode.DEFAULT,
             "test",
             new CmsModuleVersion("0.0.1"),
             "test",
@@ -182,6 +152,7 @@ public class TestModuleIssues extends OpenCmsTestCase {
             null,
             null,
             resources,
+            null,
             null);
         OpenCms.getModuleManager().addModule(cms, module);
 
@@ -200,7 +171,9 @@ public class TestModuleIssues extends OpenCmsTestCase {
             // ok, ignore
         }
         // the report error, and the module files, and the module itself
-        if (!report.hasError() || !cms.existsResource(fileOneName) || !OpenCms.getModuleManager().hasModule(moduleName)) {
+        if (!report.hasError()
+            || !cms.existsResource(fileOneName)
+            || !OpenCms.getModuleManager().hasModule(moduleName)) {
             fail("it should not be possible to delete a module containing a file locked by other user");
         }
 
@@ -219,7 +192,9 @@ public class TestModuleIssues extends OpenCmsTestCase {
             // ok, ignore
         }
         // the report error, and the module files, and the module itself
-        if (!report.hasError() || !cms.existsResource(fileOneName) || !OpenCms.getModuleManager().hasModule(moduleName)) {
+        if (!report.hasError()
+            || !cms.existsResource(fileOneName)
+            || !OpenCms.getModuleManager().hasModule(moduleName)) {
             fail("it should not be possible to delete a module when a super folder is locked by other user");
         }
 
@@ -237,7 +212,9 @@ public class TestModuleIssues extends OpenCmsTestCase {
             // ok, ignore
         }
         // the report error, and the module files, and the module itself
-        if (!report.hasError() || !cms.existsResource(fileOneName) || !OpenCms.getModuleManager().hasModule(moduleName)) {
+        if (!report.hasError()
+            || !cms.existsResource(fileOneName)
+            || !OpenCms.getModuleManager().hasModule(moduleName)) {
             fail("it should not be possible to delete a module when a super folder is locked by the same user");
         }
 
@@ -258,10 +235,13 @@ public class TestModuleIssues extends OpenCmsTestCase {
 
     /**
      * Issue: Shutdown method never called on module.<p>
-     * 
+     *
      * @throws Exception if something goes wrong
      */
-    public void testShutdownMethod() throws Exception {
+    @Order(3)
+    @DisplayName("testShutdownMethod")
+    @Test
+    public void testShutdownMethod(TestInfo testInfo) throws Exception {
 
         echo("Testing module shutdown method");
 
@@ -278,17 +258,17 @@ public class TestModuleIssues extends OpenCmsTestCase {
             fail("Module '" + moduleName + "' has no action instance!");
         }
 
-        if (!(actionInstance instanceof TestModuleActionImpl)) {
+        if (!(actionInstance instanceof CmsTestModuleActionImpl)) {
             fail("Module '" + moduleName + "' has action class of unexpected type!");
         }
 
         // remove OpenCms installations, must call shutdown
-        removeOpenCms();
+        removeOpenCms(testInfo);
 
         // check if shutdown flag was set to "true"
-        assertTrue(TestModuleActionImpl.m_shutDown);
+        assertTrue(CmsTestModuleActionImpl.m_shutDown);
 
         // reset flag for next test
-        TestModuleActionImpl.m_shutDown = false;
+        CmsTestModuleActionImpl.m_shutDown = false;
     }
 }

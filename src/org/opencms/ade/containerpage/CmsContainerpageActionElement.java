@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -15,11 +15,11 @@
  * Lesser General Public License for more details.
  *
  * For further information about Alkacon Software, please see the
- * company website: http://www.alkacon.com
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -28,13 +28,12 @@
 package org.opencms.ade.containerpage;
 
 import org.opencms.ade.containerpage.shared.CmsCntPageData;
-import org.opencms.ade.containerpage.shared.CmsContainer;
 import org.opencms.ade.containerpage.shared.rpc.I_CmsContainerpageService;
-import org.opencms.ade.galleries.CmsGalleryActionElement;
-import org.opencms.ade.publish.CmsPublishActionElement;
-import org.opencms.ade.upload.CmsUploadActionElement;
 import org.opencms.gwt.CmsGwtActionElement;
 import org.opencms.gwt.CmsRpcException;
+import org.opencms.gwt.shared.CmsCoreData;
+import org.opencms.main.OpenCms;
+import org.opencms.util.CmsRequestUtil;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -42,23 +41,26 @@ import javax.servlet.jsp.PageContext;
 
 /**
  * Action element for container-page editor includes.<p>
- * 
+ *
  * @since 8.0.0
  */
 public class CmsContainerpageActionElement extends CmsGwtActionElement {
 
-    /** The module name. */
-    public static final String MODULE_NAME = "containerpage";
+    /** The OpenCms module name. */
+    public static final String CMS_MODULE_NAME = "org.opencms.ade.containerpage";
+
+    /** The GWT module name. */
+    public static final String GWT_MODULE_NAME = CmsCoreData.ModuleKey.containerpage.name();
 
     /** The current container page data. */
     private CmsCntPageData m_cntPageData;
 
     /**
      * Constructor.<p>
-     * 
+     *
      * @param context the JSP page context object
-     * @param req the JSP request 
-     * @param res the JSP response 
+     * @param req the JSP request
+     * @param res the JSP response
      */
     public CmsContainerpageActionElement(PageContext context, HttpServletRequest req, HttpServletResponse res) {
 
@@ -71,12 +73,7 @@ public class CmsContainerpageActionElement extends CmsGwtActionElement {
     @Override
     public String export() throws Exception {
 
-        StringBuffer sb = new StringBuffer();
-        sb.append(ClientMessages.get().export(getRequest()));
-        String prefetchedData = serialize(I_CmsContainerpageService.class.getMethod("prefetch"), getCntPageData());
-        sb.append(CmsCntPageData.DICT_NAME).append("='").append(prefetchedData).append("';");
-        sb.append(CmsContainer.KEY_CONTAINER_DATA).append("= new Array();");
-        return wrapScript(sb).toString();
+        return "";
     }
 
     /**
@@ -85,18 +82,28 @@ public class CmsContainerpageActionElement extends CmsGwtActionElement {
     @Override
     public String exportAll() throws Exception {
 
+        CmsRequestUtil.disableCrossSiteFrameEmbedding(getResponse());
         StringBuffer sb = new StringBuffer();
         sb.append(super.export());
-        sb.append(new CmsPublishActionElement(null, getRequest(), null).export());
-        sb.append(new CmsGalleryActionElement(null, getRequest(), null).exportForContainerpage());
-        sb.append(export());
-        sb.append(new CmsUploadActionElement(getJspContext(), getRequest(), getResponse()).export());
-        sb.append(createNoCacheScript(MODULE_NAME));
+
+        String prefetchedData = exportDictionary(
+            CmsCntPageData.DICT_NAME,
+            I_CmsContainerpageService.class.getMethod("prefetch"),
+            getCntPageData());
+        sb.append(prefetchedData);
+        sb.append(exportModuleScriptTag(GWT_MODULE_NAME));
+        sb.append("<script src=\"");
+        sb.append(
+            OpenCms.getLinkManager().substituteLinkForRootPath(
+                getCmsObject(),
+                "/system/workplace/editors/tinymce/opencms_plugin.js"));
+        sb.append("\"></script>\n<style type=\"text/css\">\n    html {\n        overflow-y: scroll;\n    }\n</style>");
+
         return sb.toString();
     }
 
     /**
-     * Returns the needed server data for client-side usage.<p> 
+     * Returns the needed server data for client-side usage.<p>
      *
      * @return the needed server data for client-side usage
      */
@@ -104,8 +111,8 @@ public class CmsContainerpageActionElement extends CmsGwtActionElement {
 
         if (m_cntPageData == null) {
             try {
-                m_cntPageData = CmsContainerpageService.newInstance(getRequest()).prefetch();
-            } catch (CmsRpcException e) {
+                m_cntPageData = CmsContainerpageService.prefetch(getRequest());
+            } catch (@SuppressWarnings("unused") CmsRpcException e) {
                 // ignore, should never happen, and it is already logged
             }
         }

@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -14,12 +14,12 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * Lesser General Public License for more details.
  *
- * For further information about Alkacon Software GmbH, please see the
- * company website: http://www.alkacon.com
+ * For further information about Alkacon Software GmbH & Co. KG, please see the
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -30,6 +30,7 @@ package org.opencms.importexport;
 import org.opencms.file.CmsObject;
 import org.opencms.main.CmsException;
 import org.opencms.main.CmsIllegalArgumentException;
+import org.opencms.module.CmsModule.ExportMode;
 import org.opencms.module.CmsModuleXmlHandler;
 import org.opencms.report.I_CmsReport;
 import org.opencms.security.CmsRoleViolationException;
@@ -43,8 +44,8 @@ import org.dom4j.Element;
 
 /**
  * Import/export handler implementation for VFS data.<p>
- * 
- * @since 6.0.0 
+ *
+ * @since 6.0.0
  */
 public class CmsVfsImportExportHandler implements I_CmsImportExportHandler {
 
@@ -58,7 +59,7 @@ public class CmsVfsImportExportHandler implements I_CmsImportExportHandler {
     private CmsExportParameters m_exportParams;
 
     /** The VFS paths to be exported. */
-    private List m_exportPaths;
+    private List<String> m_exportPaths;
 
     /** The name of the export file in the real file system. */
     private boolean m_exportUserdata;
@@ -109,7 +110,8 @@ public class CmsVfsImportExportHandler implements I_CmsImportExportHandler {
                 isIncludeUnchanged(),
                 getContentAge(),
                 isRecursive(),
-                isProjectOnly());
+                isProjectOnly(),
+                ExportMode.DEFAULT);
         }
 
         report.println(Messages.get().container(Messages.RPT_EXPORT_DB_BEGIN_0), I_CmsReport.FORMAT_HEADLINE);
@@ -119,13 +121,14 @@ public class CmsVfsImportExportHandler implements I_CmsImportExportHandler {
 
     /**
      * Returns the timestamp to limit the resources to be exported by date.<p>
-     * 
+     *
      * Only resources that have been modified after this date will be exported.<p>
-     * 
+     *
      * @return the timestamp to limit the resources to be exported by date
-     * 
+     *
      * @deprecated use {@link #setExportParams(CmsExportParameters)} instead
      */
+    @Deprecated
     public long getContentAge() {
 
         return m_contentAge;
@@ -151,23 +154,25 @@ public class CmsVfsImportExportHandler implements I_CmsImportExportHandler {
 
     /**
      * Returns the list with VFS paths to be exported.<p>
-     * 
+     *
      * @return the list with VFS paths to be exported
-     * 
+     *
      * @deprecated use {@link #setExportParams(CmsExportParameters)} instead
      */
-    public List getExportPaths() {
+    @Deprecated
+    public List<String> getExportPaths() {
 
         return m_exportPaths;
     }
 
     /**
      * Returns the name of the export file in the real file system.<p>
-     * 
+     *
      * @return the name of the export file in the real file system
-     * 
+     *
      * @deprecated use {@link #setExportParams(CmsExportParameters)} instead
      */
+    @Deprecated
     public String getFileName() {
 
         return m_fileName;
@@ -199,9 +204,10 @@ public class CmsVfsImportExportHandler implements I_CmsImportExportHandler {
 
     /**
      * @see org.opencms.importexport.I_CmsImportExportHandler#importData(org.opencms.file.CmsObject, java.lang.String, java.lang.String, org.opencms.report.I_CmsReport)
-     * 
+     *
      * @deprecated use {@link #importData(CmsObject, I_CmsReport)} instead
      */
+    @Deprecated
     public void importData(CmsObject cms, String importFile, String importPath, I_CmsReport report)
     throws CmsXmlException, CmsImportExportException, CmsRoleViolationException, CmsException {
 
@@ -214,11 +220,12 @@ public class CmsVfsImportExportHandler implements I_CmsImportExportHandler {
 
     /**
      * Returns the boolean flag to decide whether user/group data should be exported or not.<p>
-     * 
+     *
      * @return true, if user/group data should be exported
-     * 
+     *
      * @deprecated use {@link #setExportParams(CmsExportParameters)} instead
      */
+    @Deprecated
     public boolean isExportUserdata() {
 
         return m_exportUserdata;
@@ -226,11 +233,12 @@ public class CmsVfsImportExportHandler implements I_CmsImportExportHandler {
 
     /**
      * Returns the boolean flag to decide whether VFS resources under /system/ should be exported or not.<p>
-     * 
+     *
      * @return true, if VFS resources under /system/ should not be exported
-     * 
+     *
      * @deprecated use {@link #setExportParams(CmsExportParameters)} instead
      */
+    @Deprecated
     public boolean isIncludeSystem() {
 
         return m_includeSystem;
@@ -238,11 +246,12 @@ public class CmsVfsImportExportHandler implements I_CmsImportExportHandler {
 
     /**
      * Returns the boolean flag to decide whether unchanged resources should be exported or not.<p>
-     * 
+     *
      * @return true, if unchanged resources should not be exported
-     * 
+     *
      * @deprecated use {@link #setExportParams(CmsExportParameters)} instead
      */
+    @Deprecated
     public boolean isIncludeUnchanged() {
 
         return m_includeUnchanged;
@@ -252,9 +261,10 @@ public class CmsVfsImportExportHandler implements I_CmsImportExportHandler {
      * Returns the projectOnly.<p>
      *
      * @return the projectOnly
-     * 
+     *
      * @deprecated use {@link #setExportParams(CmsExportParameters)} instead
      */
+    @Deprecated
     public boolean isProjectOnly() {
 
         return m_projectOnly;
@@ -264,9 +274,10 @@ public class CmsVfsImportExportHandler implements I_CmsImportExportHandler {
      * Returns the recursive flag.<p>
      *
      * @return the recursive flag
-     * 
+     *
      * @deprecated use {@link #setExportParams(CmsExportParameters)} instead
      */
+    @Deprecated
     public boolean isRecursive() {
 
         return m_recursive;
@@ -287,13 +298,14 @@ public class CmsVfsImportExportHandler implements I_CmsImportExportHandler {
 
     /**
      * Sets the timestamp to limit the resources to be exported by date.<p>
-     * 
+     *
      * Only resources that have been modified after this date will be exported.<p>
-     * 
+     *
      * @param contentAge the timestamp to limit the resources to be exported by date
-     * 
+     *
      * @deprecated use {@link #setExportParams(CmsExportParameters)} instead
      */
+    @Deprecated
     public void setContentAge(long contentAge) {
 
         if (contentAge < 0) {
@@ -323,23 +335,25 @@ public class CmsVfsImportExportHandler implements I_CmsImportExportHandler {
 
     /**
      * Sets the list with VFS paths to be exported.<p>
-     * 
+     *
      * @param exportPaths the list with VFS paths to be exported
-     * 
+     *
      * @deprecated use {@link #setExportParams(CmsExportParameters)} instead
      */
-    public void setExportPaths(List exportPaths) {
+    @Deprecated
+    public void setExportPaths(List<String> exportPaths) {
 
         m_exportPaths = exportPaths;
     }
 
     /**
      * Sets the boolean flag to decide whether user/group data should be exported or not.<p>
-     * 
+     *
      * @param exportUserdata true, if user/group data should not be exported
-     * 
+     *
      * @deprecated use {@link #setExportParams(CmsExportParameters)} instead
      */
+    @Deprecated
     public void setExportUserdata(boolean exportUserdata) {
 
         m_exportUserdata = exportUserdata;
@@ -347,11 +361,12 @@ public class CmsVfsImportExportHandler implements I_CmsImportExportHandler {
 
     /**
      * Sets the name of the export file in the real file system.<p>
-     * 
+     *
      * @param fileName the name of the export file in the real file system
-     * 
+     *
      * @deprecated use {@link #setExportParams(CmsExportParameters)} instead
      */
+    @Deprecated
     public void setFileName(String fileName) {
 
         if (CmsStringUtil.isEmpty(fileName) || !fileName.trim().equals(fileName)) {
@@ -372,11 +387,12 @@ public class CmsVfsImportExportHandler implements I_CmsImportExportHandler {
 
     /**
      * Sets the boolean flag to decide whether VFS resources under /system/ should be exported or not.<p>
-     * 
+     *
      * @param excludeSystem true, if VFS resources under /system/ should not be exported
-     * 
+     *
      * @deprecated use {@link #setExportParams(CmsExportParameters)} instead
      */
+    @Deprecated
     public void setIncludeSystem(boolean excludeSystem) {
 
         m_includeSystem = excludeSystem;
@@ -384,11 +400,12 @@ public class CmsVfsImportExportHandler implements I_CmsImportExportHandler {
 
     /**
      * Sets the boolean flag to decide whether unchanged resources should be exported or not.<p>
-     * 
+     *
      * @param excludeUnchanged true, if unchanged resources should not be exported
-     * 
+     *
      * @deprecated use {@link #setExportParams(CmsExportParameters)} instead
      */
+    @Deprecated
     public void setIncludeUnchanged(boolean excludeUnchanged) {
 
         m_includeUnchanged = excludeUnchanged;
@@ -398,9 +415,10 @@ public class CmsVfsImportExportHandler implements I_CmsImportExportHandler {
      * Sets the projectOnly.<p>
      *
      * @param projectOnly the projectOnly to set
-     * 
+     *
      * @deprecated use {@link #setExportParams(CmsExportParameters)} instead
      */
+    @Deprecated
     public void setProjectOnly(boolean projectOnly) {
 
         m_projectOnly = projectOnly;
@@ -410,9 +428,10 @@ public class CmsVfsImportExportHandler implements I_CmsImportExportHandler {
      * Sets the recursive flag.<p>
      *
      * @param recursive the recursive flag to set
-     * 
+     *
      * @deprecated use {@link #setExportParams(CmsExportParameters)} instead
      */
+    @Deprecated
     public void setRecursive(boolean recursive) {
 
         m_recursive = recursive;

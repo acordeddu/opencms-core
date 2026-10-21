@@ -1,0 +1,34 @@
+div.label{
+	font-weight: bold;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipse;
+}
+div.inputTextSmall{
+	width: 40px;
+}
+div.inlineLabel{
+	font-weight: bold;
+	margin-right: 10px;
+}
+div.inlineLabel, div.inputTextSmall{
+	vertical-align: middle;
+}
+div.inlineLabel, div.inputTextSmall, div.selectBox{
+	display: inline-block;
+}
+div.floatCheckbox{
+	float: left;
+}
+div.selectBox{
+	width: 70px;
+	vertical-align: middle;
+}
+div.selectBox *{
+	font-size: value("constants.css.fontSizeSmall");
+	line-height: 12px;
+}
+
+div.selectBox .input-selectBoxOpener {
+	line-height: 28px; 
+}

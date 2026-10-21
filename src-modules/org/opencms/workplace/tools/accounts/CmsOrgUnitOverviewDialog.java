@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -14,12 +14,12 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * Lesser General Public License for more details.
  *
- * For further information about Alkacon Software GmbH, please see the
- * company website: http://www.alkacon.com
+ * For further information about Alkacon Software GmbH & Co. KG, please see the
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -38,14 +38,14 @@ import javax.servlet.jsp.PageContext;
 
 /**
  * Dialog to get an overview of an organizational unit in the administration view.<p>
- * 
+ *
  * @since 6.5.6
  */
 public class CmsOrgUnitOverviewDialog extends A_CmsOrgUnitDialog {
 
     /**
      * Public constructor with JSP variables.<p>
-     * 
+     *
      * @param context the JSP page context
      * @param req the JSP request
      * @param res the JSP response
@@ -58,6 +58,7 @@ public class CmsOrgUnitOverviewDialog extends A_CmsOrgUnitDialog {
     /**
      * @see org.opencms.workplace.CmsWidgetDialog#actionCommit()
      */
+    @Override
     public void actionCommit() {
 
         // noop
@@ -65,12 +66,13 @@ public class CmsOrgUnitOverviewDialog extends A_CmsOrgUnitDialog {
 
     /**
      * Creates the dialog HTML for all defined widgets of the named dialog (page).<p>
-     * 
+     *
      * This overwrites the method from the super class to create a layout variation for the widgets.<p>
-     * 
+     *
      * @param dialog the dialog (page) to get the HTML for
      * @return the dialog HTML for all defined widgets of the named dialog (page)
      */
+    @Override
     protected String createDialogHtml(String dialog) {
 
         StringBuffer result = new StringBuffer(1024);
@@ -95,6 +97,7 @@ public class CmsOrgUnitOverviewDialog extends A_CmsOrgUnitDialog {
     /**
      * @see org.opencms.workplace.CmsWidgetDialog#defaultActionHtmlEnd()
      */
+    @Override
     protected String defaultActionHtmlEnd() {
 
         return "";
@@ -103,6 +106,7 @@ public class CmsOrgUnitOverviewDialog extends A_CmsOrgUnitDialog {
     /**
      * @see org.opencms.workplace.CmsWidgetDialog#defineWidgets()
      */
+    @Override
     protected void defineWidgets() {
 
         // initialize the user object to use for the dialog
@@ -118,8 +122,9 @@ public class CmsOrgUnitOverviewDialog extends A_CmsOrgUnitDialog {
 
     /**
      * Initializes the organizational unit object to work with depending on the dialog state and request parameters.<p>
-     * 
+     *
      */
+    @Override
     protected void initOrgUnitObject() {
 
         try {
@@ -133,9 +138,9 @@ public class CmsOrgUnitOverviewDialog extends A_CmsOrgUnitDialog {
                 m_orgUnitBean.setParentOu(orgunit.getParentFqn());
             }
             m_orgUnitBean.setFqn(orgunit.getName());
-            m_orgUnitBean.setResources(OpenCms.getOrgUnitManager().getResourcesForOrganizationalUnit(
-                getCms(),
-                orgunit.getName()));
+            setResourcesInBean(
+                m_orgUnitBean,
+                OpenCms.getOrgUnitManager().getResourcesForOrganizationalUnit(getCms(), orgunit.getName()));
         } catch (Exception e) {
             // noop
         }

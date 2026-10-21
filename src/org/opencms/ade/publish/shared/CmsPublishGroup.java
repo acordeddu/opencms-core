@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -15,11 +15,11 @@
  * Lesser General Public License for more details.
  *
  * For further information about Alkacon Software, please see the
- * company website: http://www.alkacon.com
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -34,10 +34,13 @@ import com.google.gwt.user.client.rpc.IsSerializable;
 
 /**
  * A publish group.<p>
- * 
- * @since 7.6 
+ *
+ * @since 7.6
  */
 public class CmsPublishGroup implements IsSerializable {
+
+    /** Flag which indicates whether the resource group is auto-selectable. */
+    private boolean m_autoSelectable = true;
 
     /** The group name.*/
     private String m_name;
@@ -45,21 +48,18 @@ public class CmsPublishGroup implements IsSerializable {
     /** The group resources.*/
     private List<CmsPublishResource> m_resources;
 
-    /** 
-     * Creates a new publish group bean.<p> 
-     * 
+    /**
+     * Creates a new publish group bean.<p>
+     *
      * @param name the group name
      * @param resources the resources
-     **/
+     */
     public CmsPublishGroup(String name, List<CmsPublishResource> resources) {
 
         m_name = name;
-        //        m_resources = ((resources == null)
-        //        ? Collections.<CmsPublishResource> emptyList()
-        //        : Collections.unmodifiableList(resources));
-        // HACK: GWT serialization does not like unmodifiable collections :(
-        m_resources = ((resources == null) ? new ArrayList<CmsPublishResource>() : new ArrayList<CmsPublishResource>(
-            resources));
+        m_resources = ((resources == null)
+        ? new ArrayList<CmsPublishResource>()
+        : new ArrayList<CmsPublishResource>(resources));
     }
 
     /**
@@ -88,5 +88,25 @@ public class CmsPublishGroup implements IsSerializable {
     public List<CmsPublishResource> getResources() {
 
         return m_resources;
+    }
+
+    /**
+     * Returns true if the GUI should be able to automatically select this group.<p>
+     *
+     * @return the value of the auto-selectable flag
+     */
+    public boolean isAutoSelectable() {
+
+        return m_autoSelectable;
+    }
+
+    /**
+     * Sets the auto-selectable flag.<p>
+     *
+     * @param autoSelectable the new flag value
+     */
+    public void setAutoSelectable(boolean autoSelectable) {
+
+        m_autoSelectable = autoSelectable;
     }
 }

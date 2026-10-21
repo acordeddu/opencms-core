@@ -1,0 +1,13 @@
+.menu{
+	min-width: 1px;
+	overflow: visible;
+	position:relative;
+}
+
+.menu{
+    display: inline-block;
+}
+
+.menu .button{
+	position: relative;
+}

@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -15,11 +15,11 @@
  * Lesser General Public License for more details.
  *
  * For further information about Alkacon Software, please see the
- * company website: http://www.alkacon.com
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -32,7 +32,7 @@ import com.google.gwt.user.client.Command;
 
 /**
  * Fade animation. Fading the element into view or fading it out.<p>
- * 
+ *
  * @since 8.0.0
  */
 public class CmsFadeAnimation extends A_CmsAnimation {
@@ -45,7 +45,7 @@ public class CmsFadeAnimation extends A_CmsAnimation {
 
     /**
      * Constructor.<p>
-     * 
+     *
      * @param element the element to animate
      * @param show <code>true</code> to show the element, <code>false</code> to hide it away
      * @param callback the callback executed after the animation is completed
@@ -59,11 +59,11 @@ public class CmsFadeAnimation extends A_CmsAnimation {
 
     /**
      * Fades the given element into view executing the callback afterwards.<p>
-     * 
+     *
      * @param element the element to fade in
      * @param callback the callback
      * @param duration the animation duration
-     * 
+     *
      * @return the running animation object
      */
     public static CmsFadeAnimation fadeIn(Element element, Command callback, int duration) {
@@ -75,11 +75,11 @@ public class CmsFadeAnimation extends A_CmsAnimation {
 
     /**
      * Fades the given element out of view executing the callback afterwards.<p>
-     * 
+     *
      * @param element the element to fade out
      * @param callback the callback
      * @param duration the animation duration
-     * 
+     *
      * @return the running animation object
      */
     public static CmsFadeAnimation fadeOut(Element element, Command callback, int duration) {

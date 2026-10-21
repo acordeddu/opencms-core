@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -15,11 +15,11 @@
  * Lesser General Public License for more details.
  *
  * For further information about Alkacon Software, please see the
- * company website: http://www.alkacon.com
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -28,18 +28,23 @@
 package org.opencms.ade.containerpage.shared;
 
 import org.opencms.gwt.shared.CmsAdditionalInfoBean;
+import org.opencms.gwt.shared.CmsGwtConstants;
+import org.opencms.gwt.shared.CmsListInfoBean;
+import org.opencms.gwt.shared.CmsTemplateContextInfo;
 import org.opencms.util.CmsStringUtil;
 import org.opencms.xml.content.CmsXmlContentProperty;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.NoSuchElementException;
 import java.util.Set;
 
 /**
  * Bean holding all element information including it's formatted contents.<p>
- * 
+ *
  * @since 8.0.0
  */
 public class CmsContainerElementData extends CmsContainerElement {
@@ -47,14 +52,25 @@ public class CmsContainerElementData extends CmsContainerElement {
     /** The contents by container type. */
     private Map<String, String> m_contents;
 
-    /** The required css resources. */
-    private Set<String> m_cssResources;
+    private CmsListInfoBean m_listInfo;
 
     /** The group-container description. */
     private String m_description;
 
-    /** Flag for indicating whether this is a group-container. */
-    private boolean m_isGroupContainer;
+    /** Dragging an element may require changing its settings, but this changes the id since it is computed from the settings. In the DND case this field contains the client id of the element with the changed settings. */
+    private String m_dndId;
+
+    /** The formatter configurations by container. */
+    private Map<String, CmsFormatterConfigCollection> m_formatters;
+
+    /** The inheritance infos off all sub-items. */
+    private List<CmsInheritanceInfo> m_inheritanceInfos = new ArrayList<CmsInheritanceInfo>();
+
+    /** The inheritance name. */
+    private String m_inheritanceName;
+
+    /** Indicates whether this element is used as a group. */
+    private boolean m_isGroup;
 
     /** The last user modifying the element. */
     private String m_lastModifiedByUser;
@@ -62,35 +78,36 @@ public class CmsContainerElementData extends CmsContainerElement {
     /** The date of last modification. */
     private long m_lastModifiedDate;
 
+    /** The time this element was loaded. */
+    private long m_loadTime;
+
     /** The element navText property. */
     private String m_navText;
-
-    /** The no edit reason. If empty editing is allowed. */
-    private String m_noEditReason;
 
     /** The settings for this container entry. */
     private Map<String, String> m_settings;
 
-    /** The setting for this container element. */
-    private Map<String, CmsXmlContentProperty> m_settingConfig;
-
-    /** The resource status. */
-    private char m_status;
-
     /** The contained sub-item id's. */
-    private List<String> m_subItems;
+    private List<String> m_subItems = new ArrayList<String>();
 
-    /** The element title property. */
+    /** The title. */
     private String m_title;
+
+    /** True if the element's type is disabled in the sitemap configuration. */
+    private boolean m_addDisabled;
 
     /** The supported container types of a group-container. */
     private Set<String> m_types;
 
-    /** 
-     * Indicates if the current user has view permissions on the element resource. 
-     * Without view permissions, the element can neither be edited, nor moved. 
-     **/
-    private boolean m_viewPermission;
+    private boolean m_copyDisabled;
+
+    /**
+     * Creates a new instance.
+     */
+    public CmsContainerElementData() {
+
+        // do nothing
+    }
 
     /**
      * Returns the contents.<p>
@@ -105,11 +122,14 @@ public class CmsContainerElementData extends CmsContainerElement {
     /**
      * Returns the required css resources.<p>
      *
+     * @param containerName the current container name
+     *
      * @return the required css resources
      */
-    public Set<String> getCssResources() {
+    public Set<String> getCssResources(String containerName) {
 
-        return m_cssResources;
+        CmsFormatterConfig formatterConfig = getFormatterConfig(containerName);
+        return formatterConfig != null ? formatterConfig.getCssResources() : Collections.<String> emptySet();
     }
 
     /**
@@ -123,19 +143,33 @@ public class CmsContainerElementData extends CmsContainerElement {
     }
 
     /**
+     * Dragging an element may require changing its settings, but this changes the id since it is computed from the settings. In the DND case this method returns the client id of the element with the changed settings.<p>
+     *
+     * @return the drag and drop element id, or null if it isn't available or needed
+     */
+    public String getDndId() {
+
+        return m_dndId;
+    }
+
+    /**
      * Returns the individual element settings formated with nice-names to be used as additional-info.<p>
-     * 
+     *
+     * @param containerId the container id
+     *
      * @return the settings list
      */
-    public List<CmsAdditionalInfoBean> getFormatedIndividualSettings() {
+    public List<CmsAdditionalInfoBean> getFormatedIndividualSettings(String containerId) {
 
         List<CmsAdditionalInfoBean> result = new ArrayList<CmsAdditionalInfoBean>();
-        if (m_settings != null) {
+        CmsFormatterConfig config = getFormatterConfig(containerId);
+        if ((m_settings != null) && (config != null)) {
             for (Entry<String, String> settingEntry : m_settings.entrySet()) {
                 String settingKey = settingEntry.getKey();
-                if (m_settingConfig.containsKey(settingEntry.getKey())) {
-                    String niceName = m_settingConfig.get(settingEntry.getKey()).getNiceName();
-                    if (CmsStringUtil.isNotEmptyOrWhitespaceOnly(m_settingConfig.get(settingEntry.getKey()).getNiceName())) {
+                if (config.getSettingConfig().containsKey(settingEntry.getKey())) {
+                    String niceName = config.getSettingConfig().get(settingEntry.getKey()).getNiceName();
+                    if (CmsStringUtil.isNotEmptyOrWhitespaceOnly(
+                        config.getSettingConfig().get(settingEntry.getKey()).getNiceName())) {
                         settingKey = niceName;
                     }
                 }
@@ -143,6 +177,79 @@ public class CmsContainerElementData extends CmsContainerElement {
             }
         }
         return result;
+    }
+
+    /**
+     * Returns the current formatter configuration.<p>
+     *
+     * @param containerName the current container name
+     *
+     * @return the current formatter configuration
+     */
+    public CmsFormatterConfig getFormatterConfig(String containerName) {
+
+        CmsFormatterConfig formatterConfig = null;
+        if (m_formatters != null) {
+            String keyOrId = getSettings().get(CmsFormatterConfig.getSettingsKeyForContainer(containerName));
+            if (keyOrId == null) {
+                keyOrId = getSettings().get(CmsFormatterConfig.getSettingsKeyForContainer(""));
+            }
+            CmsFormatterConfigCollection formattersForContainer = getFormatters().get(containerName);
+            if ((keyOrId != null) && (formattersForContainer != null)) {
+                formatterConfig = formattersForContainer.get(keyOrId);
+                if (formatterConfig == null) {
+                    int separatorPos = keyOrId.lastIndexOf(CmsGwtConstants.FORMATTER_SUBKEY_SEPARATOR);
+                    if (separatorPos != -1) {
+                        String parentKey = keyOrId.substring(0, separatorPos);
+                        formatterConfig = formattersForContainer.get(parentKey);
+                    }
+                }
+            }
+            if (formatterConfig == null) {
+                if (getFormatters().containsKey(containerName)) {
+                    try {
+                        formatterConfig = getFormatters().get(containerName).getFirstFormatter();
+                    } catch (NoSuchElementException e) {
+                        // formatterConfig remains null
+                    }
+                }
+            }
+        }
+        return formatterConfig;
+    }
+
+    /**
+     * Gets the formatter collections for the different containers.
+     *
+     * @return the formatter collections for the containers
+     */
+    public Map<String, CmsFormatterConfigCollection> getFormatters() {
+
+        return m_formatters;
+    }
+
+    /**
+     * Returns the inheritance infos off all sub-items.<p>
+     *
+     * @return the inheritance infos off all sub-items.
+     */
+    public List<CmsInheritanceInfo> getInheritanceInfos() {
+
+        if (isInheritContainer()) {
+            return m_inheritanceInfos;
+        } else {
+            throw new UnsupportedOperationException("Only inherit containers have inheritance infos");
+        }
+    }
+
+    /**
+     * Returns the inheritance name.<p>
+     *
+     * @return the inheritance name
+     */
+    public String getInheritanceName() {
+
+        return m_inheritanceName;
     }
 
     /**
@@ -166,6 +273,26 @@ public class CmsContainerElementData extends CmsContainerElement {
     }
 
     /**
+     * Gets the list info bean.
+     *
+     * @return the list info bean
+     */
+    public CmsListInfoBean getListInfo() {
+
+        return m_listInfo;
+    }
+
+    /**
+     * Returns the load time.<p>
+     *
+     * @return the load time
+     */
+    public long getLoadTime() {
+
+        return m_loadTime;
+    }
+
+    /**
      * Returns the navText.<p>
      *
      * @return the navText
@@ -176,43 +303,28 @@ public class CmsContainerElementData extends CmsContainerElement {
     }
 
     /**
-     * Returns the no edit reason. If empty editing is allowed.<p>
+     * Gets the setting configuration for this container element.<p>
      *
-     * @return the no edit reason
+     * @param containerName the current container name
+     *
+     * @return the setting configuration map
      */
-    public String getNoEditReason() {
+    public Map<String, CmsXmlContentProperty> getSettingConfig(String containerName) {
 
-        return m_noEditReason;
+        CmsFormatterConfig formatterConfig = getFormatterConfig(containerName);
+        return formatterConfig != null
+        ? formatterConfig.getSettingConfig()
+        : Collections.<String, CmsXmlContentProperty> emptyMap();
     }
 
     /**
      * Returns the settings for this container element.<p>
-     * 
+     *
      * @return a map of settings
      */
     public Map<String, String> getSettings() {
 
         return m_settings;
-    }
-
-    /**
-     * Gets the setting configuration for this container element.<p>
-     * 
-     * @return the setting configuration map 
-     */
-    public Map<String, CmsXmlContentProperty> getSettingConfig() {
-
-        return m_settingConfig;
-    }
-
-    /**
-     * Returns the status.<p>
-     *
-     * @return the status
-     */
-    public char getStatus() {
-
-        return m_status;
     }
 
     /**
@@ -222,21 +334,34 @@ public class CmsContainerElementData extends CmsContainerElement {
      */
     public List<String> getSubItems() {
 
-        return m_subItems;
+        if (isGroupContainer()) {
+            return m_subItems;
+        } else if (isInheritContainer()) {
+            List<String> result = new ArrayList<String>();
+            for (CmsInheritanceInfo info : m_inheritanceInfos) {
+                if (info.isVisible()) {
+                    result.add(info.getClientId());
+                }
+            }
+            return result;
+        } else {
+            throw new UnsupportedOperationException("Only group or inherit containers have sub-items");
+        }
     }
 
     /**
-     * Returns the title.<p>
+     * Returns the supported container types.<p>
      *
-     * @return the title
+     * @return the supported container types
      */
+    @Override
     public String getTitle() {
 
         return m_title;
     }
 
     /**
-     * Returns the supported container types.<p>
+     * If this element represents an element group, this method will return the supported container type.<p>
      *
      * @return the supported container types
      */
@@ -246,26 +371,87 @@ public class CmsContainerElementData extends CmsContainerElement {
     }
 
     /**
-     * Returns if the current user has view permissions for the element resource.<p>
+     * Returns if there are alternative formatters available for the given container.<p>
      *
-     * @return <code>true</code> if the current user has view permissions for the element resource
+     * @param containerName the container name
+     *
+     * @return <code>true</code> if there are alternative formatters available for the given container
      */
-    public boolean hasViewPermission() {
+    public boolean hasAlternativeFormatters(String containerName) {
 
-        return m_viewPermission;
+        return (m_formatters.get(containerName) != null) && (m_formatters.get(containerName).size() > 1);
     }
 
     /**
-     * Returns if the element is a group-container.<p>
-     *
-     * @return <code>true</code> if the element is a group-container
+     * @see org.opencms.ade.containerpage.shared.CmsContainerElement#hasSettings(java.lang.String)
      */
-    public boolean isGroupContainer() {
+    @Override
+    public boolean hasSettings(String containerId) {
 
-        if (m_subItems == null) {
-            m_subItems = new ArrayList<String>();
+        // in case formatter info is not available, do the simple check
+        if ((m_formatters == null) || m_formatters.isEmpty()) {
+            return super.hasSettings(containerId);
+        } else {
+            CmsFormatterConfig config = getFormatterConfig(containerId);
+            return (config != null) && (!config.getSettingConfig().isEmpty() || hasAlternativeFormatters(containerId));
         }
-        return m_isGroupContainer;
+    }
+
+    /**
+     * Returns true if the element's type is disabled in the sitemap configuration.
+     *
+     * @return true if the type is disabled
+     */
+    public boolean isAddDisabled() {
+
+        return m_addDisabled;
+    }
+
+    /**
+     * Returns true if copying of the element should be disabled.
+     *
+     * @return true if copying of the element should be disabled
+     */
+    public boolean isCopyDisabled() {
+
+        return m_copyDisabled;
+    }
+
+    /**
+     * Returns if this element is used as a group.<p>
+     *
+     * @return if this element is used as a group
+     */
+    public boolean isGroup() {
+
+        return m_isGroup;
+    }
+
+    /**
+     * Returns true if the element should be shown in the current template context.<p>
+     *
+     * @param currentContext the current template context
+     *
+     * @return true if the element should be shown
+     */
+    public boolean isShowInContext(String currentContext) {
+
+        if ((m_settings == null)
+            || !m_settings.containsKey(CmsTemplateContextInfo.SETTING)
+            || CmsStringUtil.isEmptyOrWhitespaceOnly(m_settings.get(CmsTemplateContextInfo.SETTING))) {
+            return true;
+        }
+        return CmsStringUtil.splitAsList(m_settings.get(CmsTemplateContextInfo.SETTING), "|").contains(currentContext);
+    }
+
+    /**
+     * Sets the 'is type disabled' flag (type is disabled in the sitemap configuration).
+     *
+     * @param typeDisabled the new value
+     */
+    public void setAddDisabled(boolean typeDisabled) {
+
+        m_addDisabled = typeDisabled;
     }
 
     /**
@@ -279,13 +465,13 @@ public class CmsContainerElementData extends CmsContainerElement {
     }
 
     /**
-     * Sets the required css resources.<p>
+     * Sets the 'copy disabled' status.
      *
-     * @param cssResources the required css resources to set
+     * @param copyDisabled true if copying should be disabled
      */
-    public void setCssResources(Set<String> cssResources) {
+    public void setCopyDisabled(boolean copyDisabled) {
 
-        m_cssResources = cssResources;
+        m_copyDisabled = copyDisabled;
     }
 
     /**
@@ -299,13 +485,53 @@ public class CmsContainerElementData extends CmsContainerElement {
     }
 
     /**
-     * Sets whether the element is a group-container.<p>
+     * During dragging and dropping in the container page editor, it may be required to substitute a different element for the element being dragged. This sets the id of the element to substitute.<p>
      *
-     * @param isGroupContainer <code>true</code> if the element is a group-container
+     * @param dndId the drag and drop replacement element's client id
      */
-    public void setGroupContainer(boolean isGroupContainer) {
+    public void setDndId(String dndId) {
 
-        m_isGroupContainer = isGroupContainer;
+        m_dndId = dndId;
+    }
+
+    /**
+     * Sets the formatter configurations.<p>
+     *
+     * @param formatters the formatter configurations to set
+     */
+    public void setFormatters(Map<String, CmsFormatterConfigCollection> formatters) {
+
+        m_formatters = formatters;
+    }
+
+    /**
+     * Sets if this element is used as a group.<p>
+     *
+     * @param isGroup if this element is used as a group
+     */
+    public void setGroup(boolean isGroup) {
+
+        m_isGroup = isGroup;
+    }
+
+    /**
+     * Sets the inheritance infos.<p>
+     *
+     * @param inheritanceInfos the inheritance infos to set
+     */
+    public void setInheritanceInfos(List<CmsInheritanceInfo> inheritanceInfos) {
+
+        m_inheritanceInfos = inheritanceInfos;
+    }
+
+    /**
+     * Sets the inheritance name.<p>
+     *
+     * @param inheritanceName the inheritance name to set
+     */
+    public void setInheritanceName(String inheritanceName) {
+
+        m_inheritanceName = inheritanceName;
     }
 
     /**
@@ -329,6 +555,26 @@ public class CmsContainerElementData extends CmsContainerElement {
     }
 
     /**
+     * Sets the list info bean.
+     *
+     * @param listInfo the list info bean
+     */
+    public void setListInfo(CmsListInfoBean listInfo) {
+
+        m_listInfo = listInfo;
+    }
+
+    /**
+     * Sets the load time.<p>
+     *
+     * @param loadTime the load time to set
+     */
+    public void setLoadTime(long loadTime) {
+
+        m_loadTime = loadTime;
+    }
+
+    /**
      * Sets the navText.<p>
      *
      * @param navText the navText to set
@@ -339,43 +585,13 @@ public class CmsContainerElementData extends CmsContainerElement {
     }
 
     /**
-     * Sets the no edit reason.<p>
-     *
-     * @param noEditReason the no edit reason to set
-     */
-    public void setNoEditReason(String noEditReason) {
-
-        m_noEditReason = noEditReason;
-    }
-
-    /**
      * Sets the settings for this container element.<p>
-     * 
+     *
      * @param settings the new settings
      */
     public void setSettings(Map<String, String> settings) {
 
         m_settings = settings;
-    }
-
-    /**
-     * Sets the setting configuration of this container element.<p>
-     * 
-     * @param settingConfig the new setting configuration 
-     */
-    public void setSettingConfig(Map<String, CmsXmlContentProperty> settingConfig) {
-
-        m_settingConfig = settingConfig;
-    }
-
-    /**
-     * Sets the status.<p>
-     *
-     * @param status the status to set
-     */
-    public void setStatus(char status) {
-
-        m_status = status;
     }
 
     /**
@@ -393,6 +609,7 @@ public class CmsContainerElementData extends CmsContainerElement {
      *
      * @param title the title to set
      */
+    @Override
     public void setTitle(String title) {
 
         m_title = title;
@@ -409,24 +626,14 @@ public class CmsContainerElementData extends CmsContainerElement {
     }
 
     /**
-     * Sets if the current user has view permissions for the element resource.<p>
-     *
-     * @param viewPermission the view permission to set
-     */
-    public void setViewPermission(boolean viewPermission) {
-
-        m_viewPermission = viewPermission;
-    }
-
-    /**
      * @see java.lang.Object#toString()
      */
     @Override
     public String toString() {
 
         StringBuffer result = new StringBuffer();
-        result.append("Title: ").append(m_title).append("  File: ").append(getSitePath()).append("  ClientId: ").append(
-            getClientId());
+        result.append("Title: ").append(getTitle()).append("  File: ").append(getSitePath()).append(
+            "  ClientId: ").append(getClientId());
         return result.toString();
     }
 

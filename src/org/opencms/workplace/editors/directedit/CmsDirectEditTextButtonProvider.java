@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -15,11 +15,11 @@
  * Lesser General Public License for more details.
  *
  * For further information about Alkacon Software, please see the
- * company website: http://www.alkacon.com
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -33,10 +33,10 @@ import org.opencms.workplace.editors.Messages;
 
 /**
  * Creates HTML for simple text based direct edit buttons.<p>
- * 
+ *
  * This provider support {@link CmsDirectEditMode#MANUAL} mode.<p>
- * 
- * @since 6.2.3 
+ *
+ * @since 6.2.3
  */
 public class CmsDirectEditTextButtonProvider extends CmsDirectEditDefaultProvider {
 
@@ -46,6 +46,7 @@ public class CmsDirectEditTextButtonProvider extends CmsDirectEditDefaultProvide
     /**
      * @see org.opencms.workplace.editors.directedit.CmsDirectEditDefaultProvider#endDirectEditDisabled()
      */
+    @Override
     public String endDirectEditDisabled() {
 
         return "";
@@ -54,6 +55,7 @@ public class CmsDirectEditTextButtonProvider extends CmsDirectEditDefaultProvide
     /**
      * @see org.opencms.workplace.editors.directedit.CmsDirectEditDefaultProvider#endDirectEditEnabled()
      */
+    @Override
     public String endDirectEditEnabled() {
 
         String result = "";
@@ -67,6 +69,7 @@ public class CmsDirectEditTextButtonProvider extends CmsDirectEditDefaultProvide
     /**
      * @see org.opencms.workplace.editors.directedit.I_CmsDirectEditProvider#isManual(org.opencms.workplace.editors.directedit.CmsDirectEditMode)
      */
+    @Override
     public boolean isManual(CmsDirectEditMode mode) {
 
         return (mode == CmsDirectEditMode.MANUAL)
@@ -76,6 +79,7 @@ public class CmsDirectEditTextButtonProvider extends CmsDirectEditDefaultProvide
     /**
      * @see org.opencms.workplace.editors.directedit.I_CmsDirectEditProvider#newInstance()
      */
+    @Override
     public I_CmsDirectEditProvider newInstance() {
 
         CmsDirectEditTextButtonProvider result = new CmsDirectEditTextButtonProvider();
@@ -86,6 +90,7 @@ public class CmsDirectEditTextButtonProvider extends CmsDirectEditDefaultProvide
     /**
      * @see org.opencms.workplace.editors.directedit.CmsDirectEditDefaultProvider#startDirectEditDisabled(org.opencms.workplace.editors.directedit.CmsDirectEditParams, org.opencms.workplace.editors.directedit.CmsDirectEditResourceInfo)
      */
+    @Override
     public String startDirectEditDisabled(CmsDirectEditParams params, CmsDirectEditResourceInfo resourceInfo) {
 
         StringBuffer result = new StringBuffer(256);
@@ -100,6 +105,7 @@ public class CmsDirectEditTextButtonProvider extends CmsDirectEditDefaultProvide
     /**
      * @see org.opencms.workplace.editors.directedit.CmsDirectEditDefaultProvider#startDirectEditEnabled(org.opencms.workplace.editors.directedit.CmsDirectEditParams, org.opencms.workplace.editors.directedit.CmsDirectEditResourceInfo)
      */
+    @Override
     public String startDirectEditEnabled(CmsDirectEditParams params, CmsDirectEditResourceInfo resourceInfo) {
 
         String editId = getNextDirectEditId();
@@ -114,15 +120,15 @@ public class CmsDirectEditTextButtonProvider extends CmsDirectEditDefaultProvide
             result.append("</a>]");
         }
         if (params.getButtonSelection().isShowDelete()) {
-            result.append("\n[<a href=\"#\" class=\"ocms_txt\" onclick=\"javascript:submitOcms(\'").append(editId).append(
-                "\', \'").append(CmsDirectEditButtonSelection.VALUE_DELETE).append("\');\">");
+            result.append("\n[<a href=\"#\" class=\"ocms_txt\" onclick=\"javascript:submitOcms(\'").append(
+                editId).append("\', \'").append(CmsDirectEditButtonSelection.VALUE_DELETE).append("\');\">");
             result.append(m_messages.key(Messages.GUI_DIRECTEDIT_TEXT_DELETE_0));
             result.append("</a>]");
         }
         if (params.getButtonSelection().isShowNew()) {
-            result.append("\n[<a href=\"#\" class=\"ocms_txt\" onclick=\"javascript:submitOcms(\'").append(editId).append(
-                "\', \'").append(CmsDirectEditButtonSelection.VALUE_NEW).append("\', \'").append(linkForNew).append(
-                "\');\">");
+            result.append("\n[<a href=\"#\" class=\"ocms_txt\" onclick=\"javascript:submitOcms(\'").append(
+                editId).append("\', \'").append(CmsDirectEditButtonSelection.VALUE_NEW).append("\', \'").append(
+                    linkForNew).append("\');\">");
             result.append(m_messages.key(Messages.GUI_DIRECTEDIT_TEXT_NEW_0));
             result.append("</a>]");
         }

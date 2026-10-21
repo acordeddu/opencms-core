@@ -1,0 +1,334 @@
+@external cms_type_icon, oc-inline-editable, navMode, html-face;
+.itemContainer .itemAdditional{
+	display: none;
+}
+
+.itemContainer.open .itemAdditional{
+	display: block;
+}
+
+div.itemContainer{
+	border: 1px solid value("constants.css.borderColor");
+	background: value("constants.css.backgroundColorDialog");
+	line-height: 16px;
+	color: value("constants.css.textColor");
+}
+
+li div.itemContainer{
+	border: 1px solid value("constants.css.borderColorListItem");
+}
+
+li div.itemContainer.cmsHovering{
+	border: 1px solid value("constants.css.borderColor");
+}
+
+div.titleRow div, .itemAdditional div {
+	font-family: value("constants.css.fontFamily");
+	font-size: value("constants.css.fontSizeSmall");
+	line-height: 17px !important;
+}
+
+.itemContainer .titleInput{
+	font-weight: bold;
+	font-family: value("constants.css.fontFamily");
+	font-size: value("constants.css.fontSize");
+	display: inline-block; 
+}
+
+.itemContent div.stateIcon{
+	left: 0px;
+    position: absolute;
+    top: 20px;
+    z-index: value("constants.css.zIndexInline");
+}
+
+
+.itemContent div.stateIcon.export:after { 
+	font-family: opencms-font;
+	content:"\e910";
+	font-size: 12px;
+	height: 12px;
+	width: 12px;
+	line-height: 10px;
+
+	-webkit-font-smoothing: antialiased;
+	-moz-osx-font-smoothing: grayscale;
+}
+
+.itemContent div.stateIcon.secure:after { 
+	font-family: opencms-font;
+	content:"\e905";
+	font-size: 12px;
+	height: 12px;
+	width: 12px;
+	line-height: 10px;
+
+	-webkit-font-smoothing: antialiased;
+	-moz-osx-font-smoothing: grayscale;
+}
+.itemContent div.stateIcon.copyModel:after { 
+	font-family: opencms-font;
+	content:"\e90c";
+	font-size: 12px;
+	height: 12px;
+	width: 12px;
+	line-height: 10px;
+
+	-webkit-font-smoothing: antialiased;
+	-moz-osx-font-smoothing: grayscale;
+}
+
+.itemContent div.lockIcon{
+    position: absolute;
+    left: 16px;
+    top: 16px;
+    z-index: value("constants.css.zIndexInline");
+}
+
+@external sitemap;
+
+body.sitemap .itemContent div.lockIcon, body.sitemap .itemContent div.stateIcon, body.sitemap .itemContent div.topRightIcon {
+	z-index: 5000;
+}
+
+.itemContent div.topRightIcon {
+	position: absolute;
+	left: 20px;
+	top: -2px;
+	z-index: value("constants.css.zIndexInline");
+}
+
+.lockClosed, .lockSharedClosed, .lockOpen, .lockSharedOpen{
+	height: 16px;
+	width: 16px;
+	background-size: 16px 16px;
+}
+
+/*  SVG source:
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
+<path fill="rgb(0, 0, 0)" d="M352 64c-106.368 0-192 85.632-192 192v192h-96v352c0 88.64 71.36 160 160 160h320c88.64 0 160-71.36 160-160v-352h-96v-192c0-106.368-85.632-192-192-192h-64zM352 160h64c53.184 0 96 42.816 96 96v192h-256v-192c0-53.184 42.816-96 96-96z"></path>
+<path fill="rgb(255, 255, 255)" d="M379.539 544.102c-33.574 1.61-62.466 20.235-78.396 47.384-8.354 14.237-13.145 30.818-13.145 48.517 0 35.318 19.072 66.182 47.479 82.853 5.009 2.918 10.313 5.396 15.852 7.379l0.67 101.764c0 17.728 14.272 32 32 32s32-14.272 32-32v-101.523c21.862-7.875 39.587-22.788 50.849-41.955 8.357-14.237 13.148-30.821 13.148-48.523 0-35.313-19.067-66.173-47.468-82.847l-0.475-0.261c-13.782-8.105-30.359-12.893-48.054-12.893-1.569 0-3.13 0.038-4.68 0.112z"></path>
+</svg>
+*/
+.lockClosed, .lockSharedClosed{
+	background-image: url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxMDI0IiBoZWlnaHQ9IjEwMjQiIHZpZXdCb3g9IjAgMCAxMDI0IDEwMjQiPg0KPHBhdGggZmlsbD0icmdiKDAsIDAsIDApIiBkPSJNMzUyIDY0Yy0xMDYuMzY4IDAtMTkyIDg1LjYzMi0xOTIgMTkydjE5MmgtOTZ2MzUyYzAgODguNjQgNzEuMzYgMTYwIDE2MCAxNjBoMzIwYzg4LjY0IDAgMTYwLTcxLjM2IDE2MC0xNjB2LTM1MmgtOTZ2LTE5MmMwLTEwNi4zNjgtODUuNjMyLTE5Mi0xOTItMTkyaC02NHpNMzUyIDE2MGg2NGM1My4xODQgMCA5NiA0Mi44MTYgOTYgOTZ2MTkyaC0yNTZ2LTE5MmMwLTUzLjE4NCA0Mi44MTYtOTYgOTYtOTZ6Ij48L3BhdGg+DQo8cGF0aCBmaWxsPSJyZ2IoMjU1LCAyNTUsIDI1NSkiIGQ9Ik0zNzkuNTM5IDU0NC4xMDJjLTMzLjU3NCAxLjYxLTYyLjQ2NiAyMC4yMzUtNzguMzk2IDQ3LjM4NC04LjM1NCAxNC4yMzctMTMuMTQ1IDMwLjgxOC0xMy4xNDUgNDguNTE3IDAgMzUuMzE4IDE5LjA3MiA2Ni4xODIgNDcuNDc5IDgyLjg1MyA1LjAwOSAyLjkxOCAxMC4zMTMgNS4zOTYgMTUuODUyIDcuMzc5bDAuNjcgMTAxLjc2NGMwIDE3LjcyOCAxNC4yNzIgMzIgMzIgMzJzMzItMTQuMjcyIDMyLTMydi0xMDEuNTIzYzIxLjg2Mi03Ljg3NSAzOS41ODctMjIuNzg4IDUwLjg0OS00MS45NTUgOC4zNTctMTQuMjM3IDEzLjE0OC0zMC44MjEgMTMuMTQ4LTQ4LjUyMyAwLTM1LjMxMy0xOS4wNjctNjYuMTczLTQ3LjQ2OC04Mi44NDdsLTAuNDc1LTAuMjYxYy0xMy43ODItOC4xMDUtMzAuMzU5LTEyLjg5My00OC4wNTQtMTIuODkzLTEuNTY5IDAtMy4xMyAwLjAzOC00LjY4IDAuMTEyeiI+PC9wYXRoPg0KPC9zdmc+");
+}
+
+/*  SVG source:
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
+<path fill="rgb(0, 0, 0)" d="M704 64c-106.368 0-192 85.632-192 192v192h-448v352c0 88.64 71.36 160 160 160h320c88.64 0 160-71.36 160-160v-352h-96v-192c0-53.184 42.816-96 96-96h64c53.184 0 96 42.816 96 96v192h96v-192c0-106.368-85.632-192-192-192h-64z"></path>
+<path fill="rgb(255, 255, 255)" d="M379.539 544.102c-33.574 1.61-62.466 20.235-78.396 47.384-8.354 14.237-13.145 30.818-13.145 48.517 0 35.318 19.072 66.182 47.479 82.853 5.009 2.918 10.313 5.396 15.852 7.379l0.67 101.764c0 17.728 14.272 32 32 32s32-14.272 32-32v-101.523c21.862-7.875 39.587-22.788 50.849-41.955 8.357-14.237 13.148-30.821 13.148-48.523 0-35.313-19.067-66.173-47.468-82.847l-0.475-0.261c-13.782-8.105-30.359-12.893-48.054-12.893-1.569 0-3.13 0.038-4.68 0.112z"></path>
+</svg>
+*/
+.lockOpen{
+	background-image: url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxMDI0IiBoZWlnaHQ9IjEwMjQiIHZpZXdCb3g9IjAgMCAxMDI0IDEwMjQiPg0KPHBhdGggZmlsbD0icmdiKDAsIDAsIDApIiBkPSJNNzA0IDY0Yy0xMDYuMzY4IDAtMTkyIDg1LjYzMi0xOTIgMTkydjE5MmgtNDQ4djM1MmMwIDg4LjY0IDcxLjM2IDE2MCAxNjAgMTYwaDMyMGM4OC42NCAwIDE2MC03MS4zNiAxNjAtMTYwdi0zNTJoLTk2di0xOTJjMC01My4xODQgNDIuODE2LTk2IDk2LTk2aDY0YzUzLjE4NCAwIDk2IDQyLjgxNiA5NiA5NnYxOTJoOTZ2LTE5MmMwLTEwNi4zNjgtODUuNjMyLTE5Mi0xOTItMTkyaC02NHoiPjwvcGF0aD4NCjxwYXRoIGZpbGw9InJnYigyNTUsIDI1NSwgMjU1KSIgZD0iTTM3OS41MzkgNTQ0LjEwMmMtMzMuNTc0IDEuNjEtNjIuNDY2IDIwLjIzNS03OC4zOTYgNDcuMzg0LTguMzU0IDE0LjIzNy0xMy4xNDUgMzAuODE4LTEzLjE0NSA0OC41MTcgMCAzNS4zMTggMTkuMDcyIDY2LjE4MiA0Ny40NzkgODIuODUzIDUuMDA5IDIuOTE4IDEwLjMxMyA1LjM5NiAxNS44NTIgNy4zNzlsMC42NyAxMDEuNzY0YzAgMTcuNzI4IDE0LjI3MiAzMiAzMiAzMnMzMi0xNC4yNzIgMzItMzJ2LTEwMS41MjNjMjEuODYyLTcuODc1IDM5LjU4Ny0yMi43ODggNTAuODQ5LTQxLjk1NSA4LjM1Ny0xNC4yMzcgMTMuMTQ4LTMwLjgyMSAxMy4xNDgtNDguNTIzIDAtMzUuMzEzLTE5LjA2Ny02Ni4xNzMtNDcuNDY4LTgyLjg0N2wtMC40NzUtMC4yNjFjLTEzLjc4Mi04LjEwNS0zMC4zNTktMTIuODkzLTQ4LjA1NC0xMi44OTMtMS41NjkgMC0zLjEzIDAuMDM4LTQuNjggMC4xMTJ6Ij48L3BhdGg+DQo8L3N2Zz4=");
+}
+/*  SVG source:
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
+<path fill="rgb(0, 0, 0)" d="M704 64c-106.368 0-192 85.632-192 192v192h-448v352c0 88.64 71.36 160 160 160h320c88.64 0 160-71.36 160-160v-352h-96v-192c0-53.184 42.816-96 96-96h64c53.184 0 96 42.816 96 96v192h96v-192c0-106.368-85.632-192-192-192h-64z"></path>
+<path fill="rgb(255, 255, 255)" d="M142.561 512h482.877c8.042 0 14.561 6.519 14.561 14.561v34.877c0 8.042-6.519 14.561-14.561 14.561h-482.877c-8.042 0-14.561-6.519-14.561-14.561v-34.877c0-8.042 6.519-14.561 14.561-14.561z"></path>
+<path fill="rgb(255, 255, 255)" d="M142.561 640h482.877c8.042 0 14.561 6.519 14.561 14.561v34.877c0 8.042-6.519 14.561-14.561 14.561h-482.877c-8.042 0-14.561-6.519-14.561-14.561v-34.877c0-8.042 6.519-14.561 14.561-14.561z"></path>
+<path fill="rgb(255, 255, 255)" d="M142.561 768h482.877c8.042 0 14.561 6.519 14.561 14.561v34.877c0 8.042-6.519 14.561-14.561 14.561h-482.877c-8.042 0-14.561-6.519-14.561-14.561v-34.877c0-8.042 6.519-14.561 14.561-14.561z"></path>
+</svg>
+*/
+.lockSharedOpen{
+	background-image: url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxMDI0IiBoZWlnaHQ9IjEwMjQiIHZpZXdCb3g9IjAgMCAxMDI0IDEwMjQiPg0KPHBhdGggZmlsbD0icmdiKDAsIDAsIDApIiBkPSJNNzA0IDY0Yy0xMDYuMzY4IDAtMTkyIDg1LjYzMi0xOTIgMTkydjE5MmgtNDQ4djM1MmMwIDg4LjY0IDcxLjM2IDE2MCAxNjAgMTYwaDMyMGM4OC42NCAwIDE2MC03MS4zNiAxNjAtMTYwdi0zNTJoLTk2di0xOTJjMC01My4xODQgNDIuODE2LTk2IDk2LTk2aDY0YzUzLjE4NCAwIDk2IDQyLjgxNiA5NiA5NnYxOTJoOTZ2LTE5MmMwLTEwNi4zNjgtODUuNjMyLTE5Mi0xOTItMTkyaC02NHoiPjwvcGF0aD4NCjxwYXRoIGZpbGw9InJnYigyNTUsIDI1NSwgMjU1KSIgZD0iTTE0Mi41NjEgNTEyaDQ4Mi44NzdjOC4wNDIgMCAxNC41NjEgNi41MTkgMTQuNTYxIDE0LjU2MXYzNC44NzdjMCA4LjA0Mi02LjUxOSAxNC41NjEtMTQuNTYxIDE0LjU2MWgtNDgyLjg3N2MtOC4wNDIgMC0xNC41NjEtNi41MTktMTQuNTYxLTE0LjU2MXYtMzQuODc3YzAtOC4wNDIgNi41MTktMTQuNTYxIDE0LjU2MS0xNC41NjF6Ij48L3BhdGg+DQo8cGF0aCBmaWxsPSJyZ2IoMjU1LCAyNTUsIDI1NSkiIGQ9Ik0xNDIuNTYxIDY0MGg0ODIuODc3YzguMDQyIDAgMTQuNTYxIDYuNTE5IDE0LjU2MSAxNC41NjF2MzQuODc3YzAgOC4wNDItNi41MTkgMTQuNTYxLTE0LjU2MSAxNC41NjFoLTQ4Mi44NzdjLTguMDQyIDAtMTQuNTYxLTYuNTE5LTE0LjU2MS0xNC41NjF2LTM0Ljg3N2MwLTguMDQyIDYuNTE5LTE0LjU2MSAxNC41NjEtMTQuNTYxeiI+PC9wYXRoPg0KPHBhdGggZmlsbD0icmdiKDI1NSwgMjU1LCAyNTUpIiBkPSJNMTQyLjU2MSA3NjhoNDgyLjg3N2M4LjA0MiAwIDE0LjU2MSA2LjUxOSAxNC41NjEgMTQuNTYxdjM0Ljg3N2MwIDguMDQyLTYuNTE5IDE0LjU2MS0xNC41NjEgMTQuNTYxaC00ODIuODc3Yy04LjA0MiAwLTE0LjU2MS02LjUxOS0xNC41NjEtMTQuNTYxdi0zNC44NzdjMC04LjA0MiA2LjUxOS0xNC41NjEgMTQuNTYxLTE0LjU2MXoiPjwvcGF0aD4NCjwvc3ZnPg==");
+}
+.changed:after { 
+	font-family: opencms-font;
+	content:"\e62b";
+	color: value("constants.css.textColorImportant");
+	font-size: 12px;
+	height: 12px;
+	width: 12px;
+	line-height: 10px;
+
+	-webkit-font-smoothing: antialiased;
+	-moz-osx-font-smoothing: grayscale;
+}
+
+div.itemContent {
+	background-image: value("constants.css.gradientListItem");
+    height: 38px;
+	position: relative;
+	white-space: nowrap;
+}
+
+div.itemContent:before{
+	content: "";
+	position: absolute;
+	top:0;
+	left: 0;
+	right: 0;
+	bottom: 0;
+	backgound: transparent;
+	opacity: 0.4;
+	z-index: 0;
+	border-radius: value("constants.css.borderRadius");
+}
+
+.itemContent > div {
+	position: relative;
+}
+
+.itemActive div.itemContent:before {
+    background-color: value("constants.css.backgroundColorStateHover");
+}
+
+.disabledItem div.itemContent:before {
+	background-color: value("constants.css.backgroundColorStateDisabled");
+}
+
+.itemBlue div.itemContent:before {
+    background-color: value("constants.css.backgroundColorStateNew");
+}
+
+.itemRed div.itemContent:before {
+    background-color: value("constants.css.backgroundColorStateChanged");
+}
+
+.itemYellow div.itemContent:before {
+    background-color: value("constants.css.backgroundColorStateSubSitemap");
+}
+
+div.itemIcon{
+	height: 24px;
+	width: 24px;
+	float: left;
+	margin: 7px 4px;
+	position: relative;
+}
+
+.itemIcon .cms_type_icon{
+	height: 24px;
+	width: 24px;
+	background-repeat: no-repeat;
+}
+
+.itemIcon .cms_type_icon > span {
+	position: absolute;
+	top: 2px;
+	left: 2px;
+}
+
+.itemIcon .cms_type_icon > span.pageDetailType {
+	top: 5px;
+	left: 8px;
+}
+
+.itemContainer .itemTitle{
+	font-size: value("constants.css.fontSize");
+	font-weight: bold;
+    vertical-align: middle;
+    white-space: nowrap;
+    display: inline;
+}
+div.titleRow{
+	margin-left: 38px;
+}
+
+.itemContainer .itemSubtitle {
+	margin-left: 6px; 
+}
+
+
+.cmsHovering .buttonPanel{
+	display: block;
+}
+
+.itemContent div.buttonPanel, div.buttonPanel{
+	position: absolute;
+	right: 5px;
+	top: 9px;
+	overflow: visible;
+	z-index: value("constants.css.zIndexInline");
+}
+
+.buttonPanel > * {
+	visibility: hidden;
+}
+
+.buttonPanel > .permaVisible, .cmsHovering .buttonPanel > * {
+	visibility: visible;
+}
+
+div.buttonPanel > * {
+	float: right;
+	margin-left: 2px;
+}
+
+div.itemAdditional{
+	padding: 5px 0px 0px 4px;
+}
+
+.itemInfoRow {
+	display: -ms-flex;
+	display: flex;
+}
+
+
+
+div.itemAdditionalTitle{
+	height:16px;
+	margin-right:5px;
+	overflow:hidden;
+	vertical-align:top;
+	width:90px;
+}
+
+div.itemAdditionalValue{
+	-ms-flex: 1; 
+	flex: 1;
+	vertical-align:top;
+	height:16px;
+}
+
+li.expired div.itemContent{
+	background-image: value("constants.css.gradientInvalid");
+}
+
+/** These styles are for dragging. */
+li.dragging, div.dragging{
+	list-style-type: none !important;
+	position: absolute !important;
+	margin: 0px !important;
+	z-index: value("constants.css.zIndexDND") !important;
+}
+
+.dragging .buttonPanel > * {
+	display: none !important;
+}
+
+@external cmsMoveHandle; 
+
+.dragging .buttonPanel > .cmsMoveHandle { 
+	display: inline-block !important;  
+}
+
+.dragging .itemContainer {
+		box-shadow: value("constants.css.boxShadow");
+} 
+
+/** following classes have to be implemented but are not used within this CSS **/
+.cmsState{}
+.cmsState-up{}
+.cmsState-up-hovering{}
+.cmsState-up-disabled{}
+.cmsState-down{}
+.cmsState-down-hovering{}
+.cmsState-down-disabled{}
+
+.unselectable  * {
+	-webkit-touch-callout: none;
+	-webkit-user-select: none;
+	-khtml-user-select: none;
+	-moz-user-select: none;
+	-o-user-select: none;
+	-ms-user-select: none;
+	user-select: none;
+}
+
+
+.itemContainer .titleDeleted { 
+	text-decoration: line-through; 
+}

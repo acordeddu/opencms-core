@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -14,12 +14,12 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * Lesser General Public License for more details.
  *
- * For further information about Alkacon Software GmbH, please see the
- * company website: http://www.alkacon.com
+ * For further information about Alkacon Software GmbH & Co. KG, please see the
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -55,7 +55,7 @@ import javax.servlet.jsp.PageContext;
 
 /**
  * Organizational unit users view.<p>
- * 
+ *
  * @since 6.5.6
  */
 public class CmsOrgUnitUsersList extends A_CmsOrgUnitUsersList {
@@ -73,11 +73,11 @@ public class CmsOrgUnitUsersList extends A_CmsOrgUnitUsersList {
     public static final String LIST_MACTION_REMOVE = "mr";
 
     /** a set of action id's to use for removing. */
-    protected static Set m_removeActionIds = new HashSet();
+    protected static Set<String> m_removeActionIds = new HashSet<String>();
 
     /**
      * Public constructor.<p>
-     * 
+     *
      * @param jsp an initialized JSP action element
      */
     public CmsOrgUnitUsersList(CmsJspActionElement jsp) {
@@ -87,7 +87,7 @@ public class CmsOrgUnitUsersList extends A_CmsOrgUnitUsersList {
 
     /**
      * Public constructor with JSP variables.<p>
-     * 
+     *
      * @param context the JSP page context
      * @param req the JSP request
      * @param res the JSP response
@@ -110,6 +110,7 @@ public class CmsOrgUnitUsersList extends A_CmsOrgUnitUsersList {
     /**
      * @see org.opencms.workplace.list.A_CmsListDialog#actionDialog()
      */
+    @Override
     public void actionDialog() throws JspException, ServletException, IOException {
 
         if (getAction() == ACTION_CANCEL) {
@@ -120,11 +121,12 @@ public class CmsOrgUnitUsersList extends A_CmsOrgUnitUsersList {
 
         if (getAction() == ACTION_DEFAULT) {
 
-            List ouUsers = (ArrayList)getJsp().getRequest().getSession().getAttribute(
+            @SuppressWarnings("unchecked")
+            List<CmsUser> ouUsers = (ArrayList<CmsUser>)getJsp().getRequest().getSession().getAttribute(
                 A_CmsOrgUnitUsersList.ORGUNIT_USERS);
-            Iterator itOuUsers = ouUsers.iterator();
+            Iterator<CmsUser> itOuUsers = ouUsers.iterator();
             while (itOuUsers.hasNext()) {
-                CmsUser user = (CmsUser)itOuUsers.next();
+                CmsUser user = itOuUsers.next();
 
                 try {
                     OpenCms.getOrgUnitManager().setUsersOrganizationalUnit(getCms(), getParamOufqn(), user.getName());
@@ -142,25 +144,28 @@ public class CmsOrgUnitUsersList extends A_CmsOrgUnitUsersList {
     /**
      * @see org.opencms.workplace.list.A_CmsListDialog#executeListMultiActions()
      */
+    @Override
     public void executeListMultiActions() throws CmsRuntimeException {
 
         if (getParamListAction().equals(LIST_MACTION_REMOVE)) {
             // execute the remove multiaction
-            Iterator itItems = getSelectedItems().iterator();
+            Iterator<CmsListItem> itItems = getSelectedItems().iterator();
             while (itItems.hasNext()) {
-                CmsListItem listItem = (CmsListItem)itItems.next();
+                CmsListItem listItem = itItems.next();
                 String userName = (String)listItem.get(LIST_COLUMN_LOGIN);
                 try {
                     CmsUser user = getCms().readUser(userName);
-                    List ouUsers = (ArrayList)getJsp().getRequest().getSession().getAttribute(
+                    @SuppressWarnings("unchecked")
+                    List<CmsUser> ouUsers = (ArrayList<CmsUser>)getJsp().getRequest().getSession().getAttribute(
                         A_CmsOrgUnitUsersList.ORGUNIT_USERS);
                     if (ouUsers == null) {
-                        ouUsers = new ArrayList();
+                        ouUsers = new ArrayList<CmsUser>();
                     }
                     ouUsers.remove(user);
                     setOuUsers(ouUsers);
 
-                    List notOuUsers = (ArrayList)getJsp().getRequest().getSession().getAttribute(
+                    @SuppressWarnings("unchecked")
+                    List<CmsUser> notOuUsers = (ArrayList<CmsUser>)getJsp().getRequest().getSession().getAttribute(
                         A_CmsOrgUnitUsersList.NOT_ORGUNIT_USERS);
                     notOuUsers.add(user);
                     setNotOuUsers(notOuUsers);
@@ -177,6 +182,7 @@ public class CmsOrgUnitUsersList extends A_CmsOrgUnitUsersList {
     /**
      * @see org.opencms.workplace.list.A_CmsListDialog#executeListSingleActions()
      */
+    @Override
     public void executeListSingleActions() throws CmsRuntimeException {
 
         if (m_removeActionIds.contains(getParamListAction())) {
@@ -184,15 +190,17 @@ public class CmsOrgUnitUsersList extends A_CmsOrgUnitUsersList {
             try {
 
                 CmsUser user = getCms().readUser((String)listItem.get(LIST_COLUMN_LOGIN));
-                List ouUsers = (ArrayList)getJsp().getRequest().getSession().getAttribute(
+                @SuppressWarnings("unchecked")
+                List<CmsUser> ouUsers = (ArrayList<CmsUser>)getJsp().getRequest().getSession().getAttribute(
                     A_CmsOrgUnitUsersList.ORGUNIT_USERS);
                 if (ouUsers == null) {
-                    ouUsers = new ArrayList();
+                    ouUsers = new ArrayList<CmsUser>();
                 }
                 ouUsers.remove(user);
                 setOuUsers(ouUsers);
 
-                List notOuUsers = (ArrayList)getJsp().getRequest().getSession().getAttribute(
+                @SuppressWarnings("unchecked")
+                List<CmsUser> notOuUsers = (ArrayList<CmsUser>)getJsp().getRequest().getSession().getAttribute(
                     A_CmsOrgUnitUsersList.NOT_ORGUNIT_USERS);
                 notOuUsers.add(user);
                 setNotOuUsers(notOuUsers);
@@ -209,12 +217,15 @@ public class CmsOrgUnitUsersList extends A_CmsOrgUnitUsersList {
     /**
      * @see org.opencms.workplace.tools.accounts.A_CmsOrgUnitUsersList#getUsers()
      */
-    protected List getUsers() {
+    @Override
+    protected List<CmsUser> getUsers() {
 
-        List ouUsers = (ArrayList)getJsp().getRequest().getSession().getAttribute(A_CmsOrgUnitUsersList.ORGUNIT_USERS);
+        @SuppressWarnings("unchecked")
+        List<CmsUser> ouUsers = (ArrayList<CmsUser>)getJsp().getRequest().getSession().getAttribute(
+            A_CmsOrgUnitUsersList.ORGUNIT_USERS);
 
         if (ouUsers == null) {
-            ouUsers = new ArrayList();
+            ouUsers = new ArrayList<CmsUser>();
             setOuUsers(ouUsers);
         } else {
             setOuUsers(ouUsers);
@@ -226,6 +237,7 @@ public class CmsOrgUnitUsersList extends A_CmsOrgUnitUsersList {
     /**
      * @see org.opencms.workplace.tools.accounts.A_CmsOrgUnitUsersList#setDefaultAction(org.opencms.workplace.list.CmsListColumnDefinition)
      */
+    @Override
     protected void setDefaultAction(CmsListColumnDefinition loginCol) {
 
         // add default remove action
@@ -240,6 +252,7 @@ public class CmsOrgUnitUsersList extends A_CmsOrgUnitUsersList {
     /**
      * @see org.opencms.workplace.tools.accounts.A_CmsOrgUnitUsersList#setIconAction(org.opencms.workplace.list.CmsListColumnDefinition)
      */
+    @Override
     protected void setIconAction(CmsListColumnDefinition iconCol) {
 
         CmsListDirectAction iconAction = new CmsListDirectAction(LIST_ACTION_ICON) {
@@ -247,6 +260,7 @@ public class CmsOrgUnitUsersList extends A_CmsOrgUnitUsersList {
             /**
              * @see org.opencms.workplace.tools.I_CmsHtmlIconButton#getIconPath()
              */
+            @Override
             public String getIconPath() {
 
                 return ((A_CmsOrgUnitUsersList)getWp()).getIconPath(getItem());
@@ -262,6 +276,7 @@ public class CmsOrgUnitUsersList extends A_CmsOrgUnitUsersList {
     /**
      * @see org.opencms.workplace.list.A_CmsListDialog#setMultiActions(org.opencms.workplace.list.CmsListMetadata)
      */
+    @Override
     protected void setMultiActions(CmsListMetadata metadata) {
 
         // add remove multi action
@@ -275,6 +290,7 @@ public class CmsOrgUnitUsersList extends A_CmsOrgUnitUsersList {
     /**
      * @see org.opencms.workplace.tools.accounts.A_CmsOrgUnitUsersList#setStateActionCol(org.opencms.workplace.list.CmsListMetadata)
      */
+    @Override
     protected void setStateActionCol(CmsListMetadata metadata) {
 
         // create column for state change

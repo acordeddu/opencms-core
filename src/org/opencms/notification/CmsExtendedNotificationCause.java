@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -15,11 +15,11 @@
  * Lesser General Public License for more details.
  *
  * For further information about Alkacon Software, please see the
- * company website: http://www.alkacon.com
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -33,9 +33,9 @@ import java.util.Date;
 
 /**
  * Class to encapsulate a resource and the cause of its notification.<p>
- * 
+ *
  */
-public class CmsExtendedNotificationCause implements Comparable {
+public class CmsExtendedNotificationCause implements Comparable<CmsExtendedNotificationCause> {
 
     /** The notification is sent because the resource will expire soon. */
     public static final int RESOURCE_EXPIRES = 0;
@@ -60,7 +60,7 @@ public class CmsExtendedNotificationCause implements Comparable {
 
     /**
      * Creates a new CmsNotificationResourceInfo.<p>
-     * 
+     *
      * @param resource the specific resource
      * @param cause that the resource occures in the notification
      * @param date when the event will happen
@@ -73,43 +73,31 @@ public class CmsExtendedNotificationCause implements Comparable {
     }
 
     /**
-     * 
+     *
      * @see java.lang.Comparable#compareTo(java.lang.Object)
      */
-    public int compareTo(Object o) {
+    public int compareTo(CmsExtendedNotificationCause o) {
 
-        if (o instanceof CmsExtendedNotificationCause) {
-            return getDate().compareTo(((CmsExtendedNotificationCause)o).getDate());
-        } else {
-            return -1;
-        }
+        return getDate().compareTo(o.getDate());
     }
 
     /**
      * Returns true if the Object equals to the corresponding CmsResourceInfo, that means a resource info
      * with the same resource and cause.
-     * 
+     *
      * @return true if the resource info is equal to a notification cause or resource info with the same resource and cause
-     * 
+     *
      * @param o the object to check for equality
-     * 
+     *
      * @see org.opencms.notification.CmsNotificationCause#equals(java.lang.Object)
      */
+    @Override
     public boolean equals(Object o) {
 
         if (!(o instanceof CmsExtendedNotificationCause) && !(o instanceof CmsNotificationCause)) {
             return false;
         }
         return hashCode() == o.hashCode();
-    }
-
-    /**
-     * 
-     * @see java.lang.Object#hashCode()
-     */
-    public int hashCode() {
-
-        return m_cause + m_resource.getStructureId().hashCode();
     }
 
     /**
@@ -140,6 +128,16 @@ public class CmsExtendedNotificationCause implements Comparable {
     public CmsResource getResource() {
 
         return m_resource;
+    }
+
+    /**
+     *
+     * @see java.lang.Object#hashCode()
+     */
+    @Override
+    public int hashCode() {
+
+        return m_cause + m_resource.getStructureId().hashCode();
     }
 
     /**

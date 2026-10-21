@@ -21,79 +21,58 @@
 			<mailhost name="alternative.smtp.server" port="25" order="20" protocol="smtp"/>
 			<mailhost name="another.alternative.smtp.server" port="25" order="30" protocol="smtp"/>
 		</mail>
-		<scheduler>
-			<job>
-				<name>Test job name</name>
-				<class>org.opencms.scheduler.TestScheduledJob</class>
-				<reuseinstance>false</reuseinstance>
-				<active>true</active>
-				<cronexpression><![CDATA[0/2 * * * * ?]]></cronexpression>
-				<context>
-					<user>Admin</user>
-					<project>Offline</project>
-					<siteroot>/sites/default</siteroot>
-					<requesteduri>/index.html</requesteduri>
-					<locale>en</locale>
-					<encoding>UTF-8</encoding>
-					<remoteaddr>127.0.0.1</remoteaddr>
-				</context>
-				<parameters>
-					<param name="param1">value1</param>
-					<param name="param2">value2</param>
-				</parameters>
-			</job>		
-			<job>
-				<name>Another job name</name>
-				<class>org.opencms.scheduler.TestScheduledJob</class>
-				<reuseinstance>true</reuseinstance>
-				<active>false</active>
-				<cronexpression><![CDATA[0/10 * * * * ?]]></cronexpression>
-				<context>
-					<user>Admin</user>
-					<project>Offline</project>
-					<siteroot>/sites/default</siteroot>
-					<requesteduri>/index.html</requesteduri>
-					<locale>en</locale>
-					<encoding>UTF-8</encoding>
-					<remoteaddr>127.0.0.1</remoteaddr>
-				</context>
-			</job>			
-		</scheduler>
 		<events>
 			<eventmanager class="org.opencms.main.CmsTestEventManager"/>
 		</events>	
 	   	<versionhistory enabled="true" count="10" deleted="4" />
 		<resourceinit>
-			<resourceinithandler class="org.opencms.configuration.CmsTestDummyResourceInit" />
+			<resourceinithandler class="org.opencms.configuration.CmsTestDummyResourceInit">
+                <param name="key1">value1</param>
+                <param name="key2">value2</param>
+                <param name="key3">value3</param>
+            </resourceinithandler>
 			<resourceinithandler class="org.opencms.file.history.CmsHistoryResourceHandler"/>
 			<resourceinithandler class="org.opencms.main.CmsPermalinkResourceHandler"/>
 		</resourceinit>
-		<requesthandlers/>
+		<requesthandlers>
+            <requesthandler class="org.opencms.configuration.CmsTestDummyRequestHandler">
+                <param name="key1">value1</param>
+                <param name="key2">value2</param>
+                <param name="key3">value3</param>
+            </requesthandler>
+        </requesthandlers>
 		<passwordhandler class="org.opencms.security.CmsDefaultPasswordHandler">
 			<encoding>UTF-8</encoding>
-			<digest-type>MD5</digest-type>
+			<digest-type>scrypt</digest-type>
 			<param name="compatibility.convert.digestencoding">false</param>
+            <param name="scrypt.settings">16384,8,1</param>			
 		</passwordhandler>
 		<validationhandler class="org.opencms.security.CmsDefaultValidationHandler" />	
 		<loginmanager>	
 			<disableMinutes>20</disableMinutes>
 			<maxBadAttempts>3</maxBadAttempts>
 			<enableSecurity>false</enableSecurity>
-		</loginmanager>	
-		<loginmessage>
-			<enabled>false</enabled>
-			<message><![CDATA[This is just a test login message]]></message>
-			<loginForbidden>false</loginForbidden>
-		</loginmessage>
-		<sites>
-			<workplace-server>http://localhost:8080</workplace-server>
-			<default-uri>/sites/default/</default-uri>
-			<site server="http://localhost:8080" uri="/sites/default/" >
-              <secure server="http://www.mysecureserver.com" exclusive="true" error="true" />			
-              <alias server="http://www.aliasserver.com"/>              			
-              <alias server="http://www.yetanotheraliasserver.com"/>			
-			</site>
-		</sites>
+            <requireOrgUnit>true</requireOrgUnit>
+			<logoutUri>/foo/bar</logoutUri>
+			<forceLogoutForUnprivilegedUsers>true</forceLogoutForUnprivilegedUsers>
+		</loginmanager>
+		<custom-login class="org.opencms.configuration.CmsTestCustomLogin">
+			<param name="foo">bar</param>
+		</custom-login>		
+		
+		<two-factor-authentication>
+		  <enabled>false</enabled>
+		  <secret>password</secret>
+		  <issuer>XYZ</issuer>
+		  <include-users>
+		      <group>TwoFactorAuthenticated</group>
+		      <orgunit>special</orgunit>
+		  </include-users>
+		  <exclude-users>
+		      <pattern>.*/nl_.*</pattern>
+		  </exclude-users>
+		</two-factor-authentication>	
+		<sax-impl-system-properties>true</sax-impl-system-properties>
 		<runtimeproperties>
 			<param name="compatibility.support.oldlocales">false</param>
 			<param name="compatibility.support.webAppNames">/opencms/opencms/</param>
@@ -106,7 +85,6 @@
 			<user-guest>Guest</user-guest>
 			<user-export>Export</user-export>
 			<group-administrators>Administrators</group-administrators>
-			<group-projectmanagers>Projectmanagers</group-projectmanagers>
 			<group-users>Users</group-users>
 			<group-guests>Guests</group-guests>
 		</defaultusers>		
@@ -125,6 +103,13 @@
 			<maxentrybytes>400000</maxentrybytes>
 			<maxkeys>2000</maxkeys>
 		</flexcache>
+		<imagecache>
+			<retention mode="renew-on-use" max-age="P60D" renewal-window="P30D" renewal-jitter="P14D" />
+			<cleanup max-deletes-per-run="10000" max-runtime="PT5M" />
+			<rfs touch-minimum-interval="PT1H" />
+			<fs touch-concurrency="1" />
+			<s3 delete-batch-size="1000" delete-concurrency="1" copy-concurrency="2" max-copies-per-second="20" renewal-queue-capacity="10000" />
+		</imagecache>
 		<http-authentication>
 			<browser-based>true</browser-based>
 			<form-based>/system/login/index.html</form-based>
@@ -144,15 +129,35 @@
 			<size-accesscontrollists>1024</size-accesscontrollists>	
 			<size-permissions>1024</size-permissions>
 		</resultcache>		
+		<storedcontentinfocache>
+			<storedcontentinfocache-factory>org.opencms.db.storage.CmsInMemoryStoredContentInfoCacheFactory</storedcontentinfocache-factory>
+			<storedcontentinfocache-enabled>true</storedcontentinfocache-enabled>
+			<storedcontentinfocache-size>10000</storedcontentinfocache-size>
+			<storedcontentinfocache-ttl>300</storedcontentinfocache-ttl>
+		</storedcontentinfocache>
 		<content-notification>
             <notification-time>365</notification-time>
             <notification-project>Offline</notification-project>
         </content-notification>
 		<authorizationhandler class="org.opencms.security.CmsDefaultAuthorizationHandler" />
+		<api-authorizations>
+            <api-authorization>
+                <name>test</name>
+                <class>org.opencms.configuration.CmsTestDummyApiAuthorization</class>
+                <param name="alpha">1</param>
+                <param name="beta">2</param>
+            </api-authorization>
+        </api-authorizations>
+        <encryption>
+        	<text-encryption class="org.opencms.crypto.CmsAESTextEncryption" name="default">
+        		<param name="secret">the quick brown fox jumps over the lazy dog</param>
+        	</text-encryption> 
+        </encryption>
 		<publishmanager>
 			<history-size>100</history-size>
 			<queue-persistance>false</queue-persistance>
 		    <queue-shutdowntime>1</queue-shutdowntime>
+            <auto-cleanup-history-entries>true</auto-cleanup-history-entries>
 		</publishmanager>
 		<session-storageprovider class="org.opencms.main.CmsDefaultSessionStorageProvider" />
 		<permissionhandler class="org.opencms.security.CmsDefaultPermissionHandler" />
@@ -168,5 +173,26 @@
             </ade-cache>
         </ade>
         <subscriptionmanager enabled="false" poolname="default" maxvisited="100" />
+        <secret-store class="org.opencms.configuration.CmsTestDummySecretStore">
+        	<param name="key1">value1</param>
+        	<param name="key2">value2</param>
+        </secret-store>
+
+        <edit-marker-handler class="org.opencms.configuration.CmsTestDummyElementMarker">
+            <param name="testKey1">testValue1</param>
+            <param name="testKey2">testValue2</param>
+        </edit-marker-handler>
+
+        <detail-page-handler class="org.opencms.ade.detailpage.CmsDefaultDetailPageHandler">
+            <param name="testKey1">testValue1</param>
+            <param name="testKey2">testValue2</param>
+            <param name="testKey3">testValue3</param>
+        </detail-page-handler>
+        
+        <userdata>
+            <userdata-domain class="org.opencms.jsp.userdata.CmsUserDataHeader" />
+            <userdata-domain class="org.opencms.jsp.userdata.CmsDefaultUserDataDomain" />
+        </userdata> 
+        
 	</system>
 </opencms>

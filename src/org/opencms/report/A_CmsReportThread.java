@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -14,12 +14,12 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * Lesser General Public License for more details.
  *
- * For further information about Alkacon Software GmbH, please see the
- * company website: http://www.alkacon.com
+ * For further information about Alkacon Software GmbH & Co. KG, please see the
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -34,10 +34,10 @@ import org.opencms.util.CmsUUID;
 import java.util.List;
 import java.util.Locale;
 
-/** 
+/**
  * Provides a common Thread class for the reports.<p>
- * 
- * @since 6.0.0 
+ *
+ * @since 6.0.0
  */
 public abstract class A_CmsReportThread extends Thread implements I_CmsReportThread {
 
@@ -51,7 +51,7 @@ public abstract class A_CmsReportThread extends Thread implements I_CmsReportThr
     private CmsUUID m_id;
 
     /** The report that belongs to the thread. */
-    private I_CmsReport m_report;
+    protected I_CmsReport m_report;
 
     /** The time this report is running. */
     private long m_starttime;
@@ -59,7 +59,7 @@ public abstract class A_CmsReportThread extends Thread implements I_CmsReportThr
     /**
      * Constructs a new report Thread with the given name.<p>
      *
-     * @param cms the current OpenCms context object 
+     * @param cms the current OpenCms context object
      * @param name the name of the Thread
      */
     protected A_CmsReportThread(CmsObject cms, String name) {
@@ -83,7 +83,7 @@ public abstract class A_CmsReportThread extends Thread implements I_CmsReportThr
 
     /**
      * Adds an error object to the list of errors that occurred during the report.<p>
-     * 
+     *
      * @param obj the error object
      */
     public void addError(Object obj) {
@@ -94,24 +94,9 @@ public abstract class A_CmsReportThread extends Thread implements I_CmsReportThr
     }
 
     /**
-     * Returns the time of last report entry.<p>
-     * 
-     * Will return zero if no entry has been written.<p>
-     * 
-     * @return time of last report entry
-     */
-    public long getLastEntryTime() {
-
-        if (getReport() == null) {
-            return 0;
-        }
-        return getReport().getLastEntryTime();
-    }
-
-    /**
      * Returns the error exception in case there was an error during the execution of
      * this Thread, null otherwise.<p>
-     * 
+     *
      * @return the error exception in case there was an error, null otherwise
      */
     public Throwable getError() {
@@ -121,7 +106,7 @@ public abstract class A_CmsReportThread extends Thread implements I_CmsReportThr
 
     /**
      * Returns a list of all errors that occurred during the report.<p>
-     * 
+     *
      * @return an error list that occurred during the report
      */
     public List<Object> getErrors() {
@@ -134,15 +119,54 @@ public abstract class A_CmsReportThread extends Thread implements I_CmsReportThr
     }
 
     /**
+     * Returns the time of last report entry.<p>
+     *
+     * Will return zero if no entry has been written.<p>
+     *
+     * @return time of last report entry
+     */
+    public long getLastEntryTime() {
+
+        if (getReport() == null) {
+            return 0;
+        }
+        return getReport().getLastEntryTime();
+    }
+
+    /**
+     * Returns the logger to which the report output should also be directed.<p>
+     *
+     * If this returns null, report output is not sent to a logger.
+     *
+     * @return the logger to which report output should be sent.
+     */
+    public Object getLogChannel() {
+
+        return null;
+    }
+
+    /**
      * Returns the part of the report that is ready for output.<p>
-     * 
+     *
      * @return the part of the report that is ready for output
      */
     public abstract String getReportUpdate();
 
-    /** 
+    /**
+     * Gets the report update content using the specified report update formatter.<p>
+     *
+     * @param formatter the report update formatter
+     *
+     * @return the report output
+     */
+    public String getReportUpdate(I_CmsReportUpdateFormatter formatter) {
+
+        return getReport().getReportUpdate(formatter);
+    }
+
+    /**
      * Returns the time this report has been running.<p>
-     * 
+     *
      * @return the time this report has been running
      */
     public synchronized long getRuntime() {
@@ -156,7 +180,7 @@ public abstract class A_CmsReportThread extends Thread implements I_CmsReportThr
 
     /**
      * Returns the OpenCms UUID of this report thread.<p>
-     * 
+     *
      * @return the OpenCms UUID of this report thread
      */
     public CmsUUID getUUID() {
@@ -166,7 +190,7 @@ public abstract class A_CmsReportThread extends Thread implements I_CmsReportThr
 
     /**
      * Returns if the report generated an error output.<p>
-     * 
+     *
      * @return true if the report generated an error, otherwise false
      */
     public boolean hasError() {
@@ -180,11 +204,11 @@ public abstract class A_CmsReportThread extends Thread implements I_CmsReportThr
 
     /**
      * Returns true if this thread is already "doomed" to be deleted.<p>
-     * 
-     * A OpenCms deamon Thread (the "Grim Reaper") will collect all 
+     *
+     * A OpenCms deamon Thread (the "Grim Reaper") will collect all
      * doomed Threads, i.e. threads that are not longer active for some
      * time.<p>
-     * 
+     *
      * @return true if this thread is already "doomed" to be deleted
      */
     public synchronized boolean isDoomed() {
@@ -197,7 +221,7 @@ public abstract class A_CmsReportThread extends Thread implements I_CmsReportThr
             // not longer active, and already doomed, so rest in peace...
             return true;
         }
-        // condemn the Thread to be collected by the grim reaper next time  
+        // condemn the Thread to be collected by the grim reaper next time
         m_starttime = getRuntime();
         m_doomed = true;
         return false;
@@ -205,7 +229,7 @@ public abstract class A_CmsReportThread extends Thread implements I_CmsReportThr
 
     /**
      * Returns the OpenCms context object this Thread is initialized with.<p>
-     * 
+     *
      * @return the OpenCms context object this Thread is initialized with
      */
     protected CmsObject getCms() {
@@ -215,7 +239,7 @@ public abstract class A_CmsReportThread extends Thread implements I_CmsReportThr
 
     /**
      * Returns the report where the output of this Thread is written to.<p>
-     * 
+     *
      * @return the report where the output of this Thread is written to
      */
     protected I_CmsReport getReport() {
@@ -225,22 +249,25 @@ public abstract class A_CmsReportThread extends Thread implements I_CmsReportThr
 
     /**
      * Initialize a HTML report for this Thread.<p>
-     * 
+     *
      * @param locale the locale for the report output messages
      */
     protected void initHtmlReport(Locale locale) {
 
-        m_report = new CmsHtmlReport(locale, m_cms.getRequestContext().getSiteRoot());
+        m_report = new CmsWorkplaceReport(locale, m_cms.getRequestContext().getSiteRoot(), getLogChannel());
     }
 
     /**
      * Initialize a HTML report for this Thread.<p>
-     * 
+     *
      * This method is reserved for older report threads that still use
      * XML templates to generate their output.<p>
-     * 
+     *
+     * <em>This report type will not work correctly with the new workplace, so don't use it anymore.</em>
+     *
      * @param locale the locale for the report output messages
      */
+    @Deprecated
     protected void initOldHtmlReport(Locale locale) {
 
         m_report = new CmsHtmlReport(locale, m_cms.getRequestContext().getSiteRoot(), true, false);

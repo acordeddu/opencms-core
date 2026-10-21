@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -15,11 +15,11 @@
  * Lesser General Public License for more details.
  *
  * For further information about Alkacon Software, please see the
- * company website: http://www.alkacon.com
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -28,18 +28,14 @@
 package org.opencms.gwt.client.ui.tree;
 
 import org.opencms.gwt.client.Messages;
-import org.opencms.gwt.client.ui.css.I_CmsImageBundle;
-import org.opencms.gwt.client.ui.css.I_CmsLayoutBundle;
-import org.opencms.gwt.client.ui.css.I_CmsLayoutBundle.I_CmsListTreeCss;
 import org.opencms.gwt.client.ui.input.CmsCheckBox;
 
-import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.Widget;
 
 /**
  * Tree item for lazily loaded list trees.<p>
- * 
+ *
  * @since 8.0.0
  */
 public class CmsLazyTreeItem extends CmsTreeItem {
@@ -71,9 +67,6 @@ public class CmsLazyTreeItem extends CmsTreeItem {
         }
     }
 
-    /** The CSS bundle used for this widget. */
-    private static final I_CmsListTreeCss CSS = I_CmsLayoutBundle.INSTANCE.listTreeCss();
-
     /** The loading item. */
     private LoadingItem m_loadingItem = new LoadingItem();
 
@@ -85,8 +78,8 @@ public class CmsLazyTreeItem extends CmsTreeItem {
 
     /**
      * Constructs a new lazy tree item with a main widget and a check box.<p>
-     * 
-     * @param checkbox the check box 
+     *
+     * @param checkbox the check box
      * @param widget the main widget
      * @param useLoadItem <code>true</code> to show a load item while children are being loaded
      */
@@ -98,8 +91,8 @@ public class CmsLazyTreeItem extends CmsTreeItem {
 
     /**
      * Constructs a new lazy tree item with a main widget.<p>
-     * 
-     * @param widget the main widget 
+     *
+     * @param widget the main widget
      * @param useLoadItem <code>true</code> to show a load item while children are being loaded
      */
     public CmsLazyTreeItem(Widget widget, boolean useLoadItem) {
@@ -110,7 +103,7 @@ public class CmsLazyTreeItem extends CmsTreeItem {
 
     /**
      * Gets the load state of the tree item.<p>
-     * 
+     *
      * @return a load state
      */
     public LoadState getLoadState() {
@@ -120,7 +113,7 @@ public class CmsLazyTreeItem extends CmsTreeItem {
 
     /**
      * Returns if tree item children have been loaded.<p>
-     * 
+     *
      * @return <code>true</code> if tree item children have been loaded
      */
     public boolean isLoaded() {
@@ -133,8 +126,6 @@ public class CmsLazyTreeItem extends CmsTreeItem {
      */
     public void onFinishLoading() {
 
-        m_opener.setUpFace("", CSS.plus());
-        m_opener.setDownFace("", CSS.minus());
         m_loadState = LoadState.LOADED;
         if (m_useLoadItem) {
             m_loadingItem.removeFromParent();
@@ -151,20 +142,6 @@ public class CmsLazyTreeItem extends CmsTreeItem {
         if (m_useLoadItem) {
             addChild(m_loadingItem);
         }
-        m_opener.getUpFace().setImage(getLoadingImage());
-        m_opener.getDownFace().setImage(getLoadingImage());
-    }
-
-    /**
-     * Returns the loading image.<p>
-     * 
-     * @return the loading image
-     */
-    protected Image getLoadingImage() {
-
-        Image image = new Image(I_CmsImageBundle.INSTANCE.loadingSmallImage());
-        image.setPixelSize(11, 11);
-        return image;
     }
 
     /**
@@ -177,4 +154,5 @@ public class CmsLazyTreeItem extends CmsTreeItem {
             super.onChangeChildren();
         }
     }
+
 }

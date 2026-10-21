@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -14,12 +14,12 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * Lesser General Public License for more details.
  *
- * For further information about Alkacon Software GmbH, please see the
- * company website: http://www.alkacon.com
+ * For further information about Alkacon Software GmbH & Co. KG, please see the
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -49,7 +49,7 @@ import org.apache.commons.logging.Log;
 
 /**
  * A resource collector that collects resources changed in a given time frame and supports flexible sorting based on resource dates.<p>
- * 
+ *
  * @since 8.0
  */
 public class CmsChangedResourceCollector extends A_CmsResourceCollector {
@@ -117,6 +117,15 @@ public class CmsChangedResourceCollector extends A_CmsResourceCollector {
     public List<CmsResource> getResults(CmsObject cms, String collectorName, String param)
     throws CmsDataAccessException, CmsException {
 
+        return getResults(cms, collectorName, param, -1);
+    }
+
+    /**
+     * @see org.opencms.file.collectors.I_CmsResourceCollector#getResults(org.opencms.file.CmsObject, java.lang.String, java.lang.String)
+     */
+    public List<CmsResource> getResults(CmsObject cms, String collectorName, String param, int numResults)
+    throws CmsDataAccessException, CmsException {
+
         // if action is not set use default
         if (collectorName == null) {
             collectorName = COLLECTORS[0];
@@ -125,38 +134,43 @@ public class CmsChangedResourceCollector extends A_CmsResourceCollector {
         switch (COLLECTORS_LIST.indexOf(collectorName)) {
             case 0:
                 // "allChangedInFolderDateDesc"
-                return allChangedInFolderDate(cms, param, false, false);
+                return allChangedInFolderDate(cms, param, false, false, numResults);
             case 1:
                 // "allChangedInFolderDateAsc"
-                return allChangedInFolderDate(cms, param, false, true);
+                return allChangedInFolderDate(cms, param, false, true, numResults);
             case 2:
                 // "allChangedInSubTreeDateDesc"
-                return allChangedInFolderDate(cms, param, true, false);
+                return allChangedInFolderDate(cms, param, true, false, numResults);
             case 3:
                 // "allChangedInSubTreeDateAsc"
-                return allChangedInFolderDate(cms, param, true, true);
+                return allChangedInFolderDate(cms, param, true, true, numResults);
             default:
-                throw new CmsDataAccessException(Messages.get().container(
-                    Messages.ERR_COLLECTOR_NAME_INVALID_1,
-                    collectorName));
+                throw new CmsDataAccessException(
+                    Messages.get().container(Messages.ERR_COLLECTOR_NAME_INVALID_1, collectorName));
         }
     }
 
     /**
-     * Returns a List of all changed resources in the folder pointed to by the parameter 
+     * Returns a List of all changed resources in the folder pointed to by the parameter
      * sorted by the date attributes specified in the parameter.<p>
-     * 
+     *
      * @param cms the current CmsObject
      * @param param must contain an extended collector parameter set as described by {@link CmsExtendedCollectorData}
      * @param tree if true, look in folder and all child folders, if false, look only in given folder
-     * @param asc if <code>true</code>, the sort is ascending (old dates first), otherwise it is descending 
+     * @param asc if <code>true</code>, the sort is ascending (old dates first), otherwise it is descending
      *      (new dates first)
-     * 
+     * @param numResults number of results
+     *
      * @return a List of all resources in the folder pointed to by the parameter sorted by the selected dates
-     * 
+     *
      * @throws CmsException if something goes wrong
      */
-    protected List<CmsResource> allChangedInFolderDate(CmsObject cms, String param, boolean tree, boolean asc)
+    protected List<CmsResource> allChangedInFolderDate(
+        CmsObject cms,
+        String param,
+        boolean tree,
+        boolean asc,
+        int numResults)
     throws CmsException {
 
         Map<String, String> params = getParameters(param);
@@ -173,9 +187,10 @@ public class CmsChangedResourceCollector extends A_CmsResourceCollector {
                 dateFrom = Long.parseLong(params.get(PARAM_KEY_DATEFROM));
             } catch (NumberFormatException e) {
                 // error parsing from date
-                LOG.error(Messages.get().getBundle().key(
-                    Messages.ERR_COLLECTOR_PARAM_INVALID_1,
-                    PARAM_KEY_DATEFROM + "=" + params.get(PARAM_KEY_DATEFROM)));
+                LOG.error(
+                    Messages.get().getBundle().key(
+                        Messages.ERR_COLLECTOR_PARAM_INVALID_1,
+                        PARAM_KEY_DATEFROM + "=" + params.get(PARAM_KEY_DATEFROM)));
                 throw e;
             }
         }
@@ -184,16 +199,17 @@ public class CmsChangedResourceCollector extends A_CmsResourceCollector {
                 dateTo = Long.parseLong(params.get(PARAM_KEY_DATETO));
             } catch (NumberFormatException e) {
                 // error parsing to date
-                LOG.error(Messages.get().getBundle().key(
-                    Messages.ERR_COLLECTOR_PARAM_INVALID_1,
-                    PARAM_KEY_DATETO + "=" + params.get(PARAM_KEY_DATETO)));
+                LOG.error(
+                    Messages.get().getBundle().key(
+                        Messages.ERR_COLLECTOR_PARAM_INVALID_1,
+                        PARAM_KEY_DATETO + "=" + params.get(PARAM_KEY_DATETO)));
                 throw e;
             }
         }
 
         // create the filter to read the resources
-        CmsResourceFilter filter = CmsResourceFilter.DEFAULT_FILES.addExcludeFlags(CmsResource.FLAG_TEMPFILE).addRequireLastModifiedAfter(
-            dateFrom).addRequireLastModifiedBefore(dateTo);
+        CmsResourceFilter filter = CmsResourceFilter.DEFAULT_FILES.addExcludeFlags(
+            CmsResource.FLAG_TEMPFILE).addRequireLastModifiedAfter(dateFrom).addRequireLastModifiedBefore(dateTo);
 
         // check if a resource type has to be excluded
         if (params.containsKey(PARAM_KEY_EXCLUDETYPE)) {
@@ -210,16 +226,19 @@ public class CmsChangedResourceCollector extends A_CmsResourceCollector {
                     I_CmsResourceType resourceType = OpenCms.getResourceManager().getResourceType(typeInt);
                     typeId = resourceType.getTypeId();
                     if (LOG.isWarnEnabled()) {
-                        LOG.warn(Messages.get().getBundle().key(
-                            Messages.LOG_RESTYPE_INTID_2,
-                            resourceType.getTypeName(),
-                            new Integer(resourceType.getTypeId())));
+                        LOG.warn(
+                            Messages.get().getBundle().key(
+                                Messages.LOG_RESTYPE_INTID_2,
+                                resourceType.getTypeName(),
+                                Integer.valueOf(resourceType.getTypeId())));
                     }
                 } catch (NumberFormatException e2) {
                     // bad number format used for type
-                    throw new CmsRuntimeException(Messages.get().container(
-                        Messages.ERR_COLLECTOR_PARAM_INVALID_1,
-                        PARAM_KEY_EXCLUDETYPE + "=" + params.get(PARAM_KEY_EXCLUDETYPE)), e2);
+                    throw new CmsRuntimeException(
+                        Messages.get().container(
+                            Messages.ERR_COLLECTOR_PARAM_INVALID_1,
+                            PARAM_KEY_EXCLUDETYPE + "=" + params.get(PARAM_KEY_EXCLUDETYPE)),
+                        e2);
                 } catch (CmsLoaderException e2) {
                     // this resource type does not exist
                     throw new CmsRuntimeException(
@@ -253,14 +272,15 @@ public class CmsChangedResourceCollector extends A_CmsResourceCollector {
                 count = Integer.parseInt(params.get(PARAM_KEY_COUNT));
             } catch (NumberFormatException e) {
                 // error parsing the count
-                LOG.error(Messages.get().getBundle().key(
-                    Messages.ERR_COLLECTOR_PARAM_INVALID_1,
-                    PARAM_KEY_COUNT + "=" + params.get(PARAM_KEY_COUNT)));
+                LOG.error(
+                    Messages.get().getBundle().key(
+                        Messages.ERR_COLLECTOR_PARAM_INVALID_1,
+                        PARAM_KEY_COUNT + "=" + params.get(PARAM_KEY_COUNT)));
                 throw e;
             }
         }
-        if (count > 0) {
-            return shrinkToFit(result, count);
+        if ((count > 0) || (numResults > 0)) {
+            return shrinkToFit(result, count, numResults);
         } else {
             return result;
         }
@@ -268,9 +288,9 @@ public class CmsChangedResourceCollector extends A_CmsResourceCollector {
 
     /**
      * Returns the collector parameters.<p>
-     * 
+     *
      * @param param the collector parameter
-     * 
+     *
      * @return the collector parameters
      */
     private Map<String, String> getParameters(String param) {

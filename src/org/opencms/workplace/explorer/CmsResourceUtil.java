@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -14,12 +14,12 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * Lesser General Public License for more details.
  *
- * For further information about Alkacon Software GmbH, please see the
- * company website: http://www.alkacon.com
+ * For further information about Alkacon Software GmbH & Co. KG, please see the
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -37,35 +37,46 @@ import org.opencms.file.CmsResource;
 import org.opencms.file.CmsResourceFilter;
 import org.opencms.file.history.I_CmsHistoryResource;
 import org.opencms.file.types.CmsResourceTypePlain;
+import org.opencms.file.types.CmsResourceTypeUnknownFile;
+import org.opencms.file.types.CmsResourceTypeUnknownFolder;
+import org.opencms.file.types.CmsResourceTypeXmlContainerPage;
 import org.opencms.file.types.I_CmsResourceType;
 import org.opencms.i18n.CmsMessages;
+import org.opencms.jsp.CmsJspNavBuilder;
 import org.opencms.lock.CmsLock;
 import org.opencms.main.CmsException;
 import org.opencms.main.CmsLog;
 import org.opencms.main.OpenCms;
+import org.opencms.search.galleries.CmsGallerySearch;
+import org.opencms.search.galleries.CmsGallerySearchResult;
 import org.opencms.security.CmsOrganizationalUnit;
 import org.opencms.security.CmsPermissionSet;
 import org.opencms.security.CmsPermissionSetCustom;
 import org.opencms.security.CmsPrincipal;
+import org.opencms.ui.CmsCssIcon;
 import org.opencms.util.A_CmsModeIntEnumeration;
 import org.opencms.util.CmsStringUtil;
 import org.opencms.util.CmsUUID;
 import org.opencms.workplace.CmsWorkplace;
-import org.opencms.workplace.commons.CmsTouch;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 
 import org.apache.commons.logging.Log;
 
+import com.google.common.collect.Maps;
+import com.vaadin.server.ExternalResource;
+import com.vaadin.server.Resource;
+
 /**
  * Provides {@link CmsResource} utility functions.<p>
- * 
+ *
  * This class provides in java all resource information used by the explorer view,
  * mostly generated in javascript (see explorer.js)<p>
- * 
- * @since 6.0.0 
+ *
+ * @since 6.0.0
  */
 public final class CmsResourceUtil {
 
@@ -91,7 +102,7 @@ public final class CmsResourceUtil {
 
         /**
          * Default constructor.<p>
-         * 
+         *
          * @param mode the mode descriptor
          */
         protected CmsResourceProjectState(int mode) {
@@ -101,7 +112,7 @@ public final class CmsResourceUtil {
 
         /**
          * Checks if this is a {@link #LOCKED_FOR_PUBLISHING} state.<p>
-         * 
+         *
          * @return <code>true</code> if this is a {@link #LOCKED_FOR_PUBLISHING} state
          */
         public boolean isLockedForPublishing() {
@@ -111,7 +122,7 @@ public final class CmsResourceUtil {
 
         /**
          * Checks if this is a {@link #MODIFIED_IN_CURRENT_PROJECT} state.<p>
-         * 
+         *
          * @return <code>true</code> if this is a {@link #MODIFIED_IN_CURRENT_PROJECT} state
          */
         public boolean isModifiedInCurrentProject() {
@@ -121,7 +132,7 @@ public final class CmsResourceUtil {
 
         /**
          * Checks if this is a {@link #MODIFIED_IN_OTHER_PROJECT} state.<p>
-         * 
+         *
          * @return <code>true</code> if this is a {@link #MODIFIED_IN_OTHER_PROJECT} state
          */
         public boolean isModifiedInOtherProject() {
@@ -131,7 +142,7 @@ public final class CmsResourceUtil {
 
         /**
          * Checks if this is a {@link #CLEAN} state.<p>
-         * 
+         *
          * @return <code>true</code> if this is a {@link #CLEAN} state
          */
         public boolean isUnlocked() {
@@ -220,12 +231,15 @@ public final class CmsResourceUtil {
     /** The current resource type. */
     private I_CmsResourceType m_resourceType;
 
+    /** The search result map. */
+    private Map<Locale, CmsGallerySearchResult> m_searchResultMap = Maps.newHashMap();
+
     /** The current site mode. */
     private CmsResourceUtilSiteMode m_siteMode = SITE_MODE_CURRENT;
 
     /**
-     * Creates a new {@link CmsResourceUtil} object.<p> 
-     * 
+     * Creates a new {@link CmsResourceUtil} object.<p>
+     *
      * @param cms the cms context
      */
     public CmsResourceUtil(CmsObject cms) {
@@ -234,8 +248,8 @@ public final class CmsResourceUtil {
     }
 
     /**
-     * Creates a new {@link CmsResourceUtil} object.<p> 
-     * 
+     * Creates a new {@link CmsResourceUtil} object.<p>
+     *
      * @param cms the cms context
      * @param resource the resource
      */
@@ -246,8 +260,8 @@ public final class CmsResourceUtil {
     }
 
     /**
-     * Creates a new {@link CmsResourceUtil} object.<p> 
-     * 
+     * Creates a new {@link CmsResourceUtil} object.<p>
+     *
      * @param resource the resource
      */
     public CmsResourceUtil(CmsResource resource) {
@@ -256,17 +270,104 @@ public final class CmsResourceUtil {
     }
 
     /**
+     * Returns the big icon resource for the given resource.<p>
+     *
+     * @param explorerType the resource explorer type settings
+     * @param resourceName the resource name
+     *
+     * @return the icon resource
+     */
+    public static Resource getBigIconResource(CmsExplorerTypeSettings explorerType, String resourceName) {
+
+        if (explorerType == null) {
+            explorerType = OpenCms.getWorkplaceManager().getExplorerTypeSetting(
+                (resourceName == null) && !CmsResource.isFolder(resourceName)
+                ? CmsResourceTypeUnknownFile.RESOURCE_TYPE_NAME
+                : CmsResourceTypeUnknownFolder.RESOURCE_TYPE_NAME);
+        }
+        if (!explorerType.getIconRules().isEmpty() && (resourceName != null)) {
+            String extension = CmsResource.getExtension(resourceName);
+            if (extension != null) {
+                CmsIconRule rule = explorerType.getIconRules().get(extension);
+                if ((rule != null) && (rule.getBigIconStyle() != null)) {
+                    return new CmsCssIcon(rule.getBigIconStyle());
+                }
+            }
+        }
+        if (explorerType.getBigIconStyle() != null) {
+            return new CmsCssIcon(explorerType.getBigIconStyle());
+        } else if (explorerType.getBigIcon() != null) {
+            return new ExternalResource(
+                CmsWorkplace.getResourceUri(CmsWorkplace.RES_PATH_FILETYPES + explorerType.getBigIcon()));
+        } else {
+            return new CmsCssIcon(CmsExplorerTypeSettings.ICON_STYLE_DEFAULT_BIG);
+        }
+    }
+
+    /**
+     * Returns the small icon resource for the given resource.<p>
+     *
+     * @param explorerType the resource explorer type settings
+     * @param resourceName the resource name
+     *
+     * @return the icon resource
+     */
+    public static Resource getSmallIconResource(CmsExplorerTypeSettings explorerType, String resourceName) {
+
+        if (explorerType == null) {
+            explorerType = OpenCms.getWorkplaceManager().getExplorerTypeSetting(
+                (resourceName == null) && !CmsResource.isFolder(resourceName)
+                ? CmsResourceTypeUnknownFile.RESOURCE_TYPE_NAME
+                : "unknown_folder");
+        }
+
+        if (!explorerType.getIconRules().isEmpty() && (resourceName != null)) {
+            String extension = CmsResource.getExtension(resourceName);
+            if (extension != null) {
+                CmsIconRule rule = explorerType.getIconRules().get(extension);
+                if ((rule != null) && (rule.getSmallIconStyle() != null)) {
+                    return new CmsCssIcon(rule.getSmallIconStyle());
+                }
+            }
+        }
+        if (explorerType.getSmallIconStyle() != null) {
+            return new CmsCssIcon(explorerType.getSmallIconStyle());
+        } else {
+            return new ExternalResource(
+                CmsWorkplace.getResourceUri(CmsWorkplace.RES_PATH_FILETYPES + explorerType.getOriginalIcon()));
+        }
+    }
+
+    /**
      * Returns the path abbreviation length.<p>
      *
      * If greater than zero, the path will be formatted to this number of chars.<p>
-     * 
-     * This only affects the generation of the path for the current resource.<p> 
+     *
+     * This only affects the generation of the path for the current resource.<p>
      *
      * @return the path abbreviation Length
      */
     public int getAbbrevLength() {
 
         return m_abbrevLength;
+    }
+
+    /**
+     * Returns the big icon resource of the current resource.<p>
+     *
+     * @return the icon resource
+     */
+    public Resource getBigIconResource() {
+
+        if ((m_cms != null) && CmsJspNavBuilder.isNavLevelFolder(m_cms, m_resource)) {
+            return new CmsCssIcon(CmsExplorerTypeSettings.ICON_STYLE_NAV_LEVEL_BIG);
+        }
+        if ((m_cms != null) && CmsResourceTypeXmlContainerPage.isModelCopyGroup(m_cms, m_resource)) {
+            return new CmsCssIcon(CmsExplorerTypeSettings.ICON_STYLE_MODEL_GROUP_COPY_BIG);
+        }
+        I_CmsResourceType type = getResourceType();
+        CmsExplorerTypeSettings explorerType = OpenCms.getWorkplaceManager().getExplorerTypeSetting(type.getTypeName());
+        return getBigIconResource(explorerType, m_resource != null ? m_resource.getName() : null);
     }
 
     /**
@@ -281,7 +382,7 @@ public final class CmsResourceUtil {
 
     /**
      * Returns the formatted date of expiration.<p>
-     * 
+     *
      * @return the formatted date of expiration
      */
     public String getDateExpired() {
@@ -290,13 +391,13 @@ public final class CmsResourceUtil {
         if (release != CmsResource.DATE_EXPIRED_DEFAULT) {
             return getMessages().getDateTime(release);
         } else {
-            return CmsTouch.DEFAULT_DATE_STRING;
+            return CmsWorkplace.DEFAULT_DATE_STRING;
         }
     }
 
     /**
      * Returns the formatted date of release.<p>
-     * 
+     *
      * @return the formatted date of release
      */
     public String getDateReleased() {
@@ -305,13 +406,13 @@ public final class CmsResourceUtil {
         if (release != CmsResource.DATE_RELEASED_DEFAULT) {
             return getMessages().getDateTime(release);
         } else {
-            return CmsTouch.DEFAULT_DATE_STRING;
+            return CmsWorkplace.DEFAULT_DATE_STRING;
         }
     }
 
     /**
      * Returns the path of the current resource, taking into account just the site mode.<p>
-     * 
+     *
      * @return the full path
      */
     public String getFullPath() {
@@ -327,14 +428,38 @@ public final class CmsResourceUtil {
     }
 
     /**
+     * Returns the gallery description of the current resource.<p>
+     *
+     * @param locale the content locale
+     *
+     * @return the gallery description
+     */
+    public String getGalleryDescription(Locale locale) {
+
+        return getSearchResult(locale).getDescription();
+    }
+
+    /**
+     * Returns the gallery title of the current resource.<p>
+     *
+     * @param locale the content locale
+     *
+     * @return the gallery title
+     */
+    public String getGalleryTitle(Locale locale) {
+
+        return getSearchResult(locale).getTitle();
+    }
+
+    /**
      * Returns the resource icon path displayed in the explorer view for the given resource.<p>
-     * 
+     *
      * Relative to <code>/system/workplace/resources/</code>.<p>
-     * 
+     *
      * If the resource has no sibling it is the same as {@link #getIconPathResourceType()}.<p>
-     * 
+     *
      * @return the resource icon path displayed in the explorer view for the given resource
-     * 
+     *
      * @see #getStyleSiblings()
      */
     public String getIconPathExplorer() {
@@ -355,11 +480,11 @@ public final class CmsResourceUtil {
 
     /**
      * Returns the lock icon path for the given resource.<p>
-     * 
+     *
      * Relative to <code>/system/workplace/resources/</code>.<p>
-     * 
+     *
      * Returns <code>explorer/project_none.gif</code> if request context is <code>null</code>.<p>
-     * 
+     *
      * @return the lock icon path for the given resource
      */
     public String getIconPathLock() {
@@ -388,9 +513,9 @@ public final class CmsResourceUtil {
 
     /**
      * Returns the project state icon path for the given resource.<p>
-     * 
+     *
      * Relative to <code>/system/workplace/resources/</code>.<p>
-     * 
+     *
      * @return the project state icon path for the given resource
      */
     public String getIconPathProjectState() {
@@ -411,16 +536,17 @@ public final class CmsResourceUtil {
 
     /**
      * Returns the resource type icon path for the given resource.<p>
-     * 
+     *
      * Relative to <code>/system/workplace/resources/</code>.<p>
-     * 
+     *
      * @return the resource type icon path for the given resource
      */
     public String getIconPathResourceType() {
 
         if (!isEditable()) {
             return CmsWorkplace.RES_PATH_FILETYPES
-                + OpenCms.getWorkplaceManager().getExplorerTypeSetting(CmsResourceTypePlain.getStaticTypeName()).getIcon();
+                + OpenCms.getWorkplaceManager().getExplorerTypeSetting(
+                    CmsResourceTypePlain.getStaticTypeName()).getIcon();
         }
         return CmsWorkplace.RES_PATH_FILETYPES
             + OpenCms.getWorkplaceManager().getExplorerTypeSetting(getResourceTypeName()).getIcon();
@@ -428,13 +554,13 @@ public final class CmsResourceUtil {
 
     /**
      * Returns an integer representation for the link type.<p>
-     * 
+     *
      * <ul>
      *   <li><code>0</code>: No sibling
      *   <li><code>1</code>: Sibling
      *   <li><code>2</code>: Labeled sibling
      * </ul>
-     * 
+     *
      * @return an integer representation for the link type
      */
     public int getLinkType() {
@@ -456,7 +582,7 @@ public final class CmsResourceUtil {
 
     /**
      * Returns the the lock for the given resource.<p>
-     * 
+     *
      * @return the lock the given resource
      */
     public CmsLock getLock() {
@@ -474,7 +600,7 @@ public final class CmsResourceUtil {
 
     /**
      * Returns the user name who owns the lock for the given resource.<p>
-     * 
+     *
      * @return the user name who owns the lock for the given resource
      */
     public String getLockedByName() {
@@ -484,9 +610,8 @@ public final class CmsResourceUtil {
             // user
             lockedBy = getLock().getUserId().toString();
             try {
-                lockedBy = getCurrentOuRelativeName(CmsPrincipal.readPrincipalIncludingHistory(
-                    getCms(),
-                    getLock().getUserId()).getName());
+                lockedBy = getCurrentOuRelativeName(
+                    CmsPrincipal.readPrincipalIncludingHistory(getCms(), getLock().getUserId()).getName());
             } catch (Throwable e) {
                 lockedBy = e.getMessage();
             }
@@ -496,7 +621,7 @@ public final class CmsResourceUtil {
 
     /**
      * Returns the id of the project in which the given resource is locked.<p>
-     * 
+     *
      * @return the id of the project in which the given resource is locked
      */
     public CmsUUID getLockedInProjectId() {
@@ -517,7 +642,7 @@ public final class CmsResourceUtil {
 
     /**
      * Returns the project name that locked the current resource's.<p>
-     * 
+     *
      * @return the the project name that locked the current resource's
      */
     public String getLockedInProjectName() {
@@ -541,7 +666,7 @@ public final class CmsResourceUtil {
 
     /**
      * Returns the lock state of the current resource.<p>
-     * 
+     *
      * @return the lock state of the current resource
      */
     public int getLockState() {
@@ -565,7 +690,7 @@ public final class CmsResourceUtil {
 
     /**
      * Returns the navtext of a resource.<p>
-     * 
+     *
      * @return the navtext for that resource
      */
     public String getNavText() {
@@ -587,7 +712,7 @@ public final class CmsResourceUtil {
             } catch (Exception e1) {
                 // should usually never happen
                 if (LOG.isInfoEnabled()) {
-                    LOG.info(e);
+                    LOG.info(e.getLocalizedMessage(), e);
                 }
             } finally {
                 getCms().getRequestContext().setSiteRoot(storedSiteRoot);
@@ -601,11 +726,11 @@ public final class CmsResourceUtil {
 
     /**
      * Checks is the current resource can be edited by the current user.<p>
-     * 
-     * @param locale the locale to use for the messages 
-     * 
+     *
+     * @param locale the locale to use for the messages
+     *
      * @return an empty string if editable, or a localized string with the reason
-     * 
+     *
      * @throws CmsException if something goes wrong
      */
     public String getNoEditReason(Locale locale) throws CmsException {
@@ -615,12 +740,12 @@ public final class CmsResourceUtil {
 
     /**
      * Checks is the current resource can be edited by the current user.<p>
-     * 
-     * @param locale the locale to use for the messages 
+     *
+     * @param locale the locale to use for the messages
      * @param ignoreExpiration <code>true</code> to ignore resource release and expiration date
-     * 
+     *
      * @return an empty string if editable, or a localized string with the reason
-     * 
+     *
      * @throws CmsException if something goes wrong
      */
     public String getNoEditReason(Locale locale, boolean ignoreExpiration) throws CmsException {
@@ -628,27 +753,32 @@ public final class CmsResourceUtil {
         String reason = "";
         if (m_resource instanceof I_CmsHistoryResource) {
             reason = Messages.get().getBundle(locale).key(Messages.GUI_NO_EDIT_REASON_HISTORY_0);
-        } else if (!m_cms.hasPermissions(m_resource, CmsPermissionSet.ACCESS_WRITE, false, ignoreExpiration
-        ? CmsResourceFilter.IGNORE_EXPIRATION
-        : CmsResourceFilter.DEFAULT)
-            || !isEditable()) {
+        } else if (!m_cms.hasPermissions(
+            m_resource,
+            CmsPermissionSet.ACCESS_WRITE,
+            false,
+            ignoreExpiration ? CmsResourceFilter.IGNORE_EXPIRATION : CmsResourceFilter.DEFAULT) || !isEditable()) {
             reason = Messages.get().getBundle(locale).key(Messages.GUI_NO_EDIT_REASON_PERMISSION_0);
         } else if (!getLock().isLockableBy(m_cms.getRequestContext().getCurrentUser())) {
-            reason = Messages.get().getBundle(locale).key(Messages.GUI_NO_EDIT_REASON_LOCK_1, getLockedByName());
+            if (getLock().getSystemLock().isPublish()) {
+                reason = Messages.get().getBundle(locale).key(Messages.GUI_PUBLISH_TOOLTIP_0);
+            } else {
+                reason = Messages.get().getBundle(locale).key(Messages.GUI_NO_EDIT_REASON_LOCK_1, getLockedByName());
+            }
         }
         return reason;
     }
 
     /**
      * Returns the path of the current resource.<p>
-     * 
+     *
      * Taking into account following settings:<br>
      * <ul>
      *    <li>site mode
      *    <li>abbreviation length
      *    <li>relative to
      * </ul>
-     * 
+     *
      * @return the path
      */
     public String getPath() {
@@ -681,7 +811,7 @@ public final class CmsResourceUtil {
 
     /**
      * Returns the permission set for the given resource.<p>
-     * 
+     *
      * @return the permission set for the given resource
      */
     public CmsPermissionSet getPermissionSet() {
@@ -698,7 +828,11 @@ public final class CmsResourceUtil {
             LOG.error(e.getLocalizedMessage());
         }
         try {
-            if (getCms().hasPermissions(resource, CmsPermissionSet.ACCESS_DIRECT_PUBLISH, false, CmsResourceFilter.ALL)) {
+            if (getCms().hasPermissions(
+                resource,
+                CmsPermissionSet.ACCESS_DIRECT_PUBLISH,
+                false,
+                CmsResourceFilter.ALL)) {
                 pset.grantPermissions(CmsPermissionSet.PERMISSION_DIRECT_PUBLISH);
             } else {
                 pset.denyPermissions(CmsPermissionSet.PERMISSION_DIRECT_PUBLISH);
@@ -739,7 +873,7 @@ public final class CmsResourceUtil {
 
     /**
      * Returns the permissions string for the given resource.<p>
-     * 
+     *
      * @return the permissions string for the given resource
      */
     public String getPermissionString() {
@@ -749,7 +883,7 @@ public final class CmsResourceUtil {
 
     /**
      * Returns the id of the project which the resource belongs to.<p>
-     * 
+     *
      * @return the id of the project which the resource belongs to
      */
     public CmsUUID getProjectId() {
@@ -764,13 +898,13 @@ public final class CmsResourceUtil {
 
     /**
      * Returns the project state of the given resource.<p>
-     * 
+     *
      * <ul>
      *   <li>null: unchanged.</li>
      *   <li>true: locked in current project.</li>
      *   <li>false: not locked in current project.</li>
      * </ul>
-     * 
+     *
      * @return the project state of the given resource
      */
     public CmsResourceProjectState getProjectState() {
@@ -804,7 +938,7 @@ public final class CmsResourceUtil {
     /**
      * Returns the 'relative to' path.<p>
      *
-     * This only affects the generation of the path for the current resource.<p> 
+     * This only affects the generation of the path for the current resource.<p>
      *
      * @return the 'relative to' path
      */
@@ -825,7 +959,7 @@ public final class CmsResourceUtil {
 
     /**
      * Returns the resource type for the given resource.<p>
-     * 
+     *
      * @return the resource type for the given resource
      */
     public I_CmsResourceType getResourceType() {
@@ -838,9 +972,10 @@ public final class CmsResourceUtil {
 
     /**
      * Returns the resource type id for the given resource.<p>
-     * 
+     *
      * @return the resource type id for the given resource
      */
+    @SuppressWarnings("deprecation")
     public int getResourceTypeId() {
 
         return getResourceType().getTypeId();
@@ -848,7 +983,7 @@ public final class CmsResourceUtil {
 
     /**
      * Returns the resource type name for the given resource.<p>
-     * 
+     *
      * @return the resource type name for the given resource
      */
     public String getResourceTypeName() {
@@ -857,9 +992,30 @@ public final class CmsResourceUtil {
     }
 
     /**
+     * Returns the SOLR search result for the current resource.<p>
+     *
+     * @param locale the content locale
+     *
+     * @return the search result
+     */
+    public CmsGallerySearchResult getSearchResult(Locale locale) {
+
+        if (!m_searchResultMap.containsKey(locale)) {
+            CmsGallerySearchResult sResult;
+            try {
+                sResult = CmsGallerySearch.searchById(m_cms, m_resource.getStructureId(), locale);
+                m_searchResultMap.put(locale, sResult);
+            } catch (CmsException e) {
+                LOG.error(e.getLocalizedMessage(), e);
+            }
+        }
+        return m_searchResultMap.get(locale);
+    }
+
+    /**
      * Returns the site of the current resources,
      * taking into account the set site mode.<p>
-     * 
+     *
      * @return the site path
      */
     public String getSite() {
@@ -878,7 +1034,7 @@ public final class CmsResourceUtil {
     /**
      * Returns the site mode.<p>
      *
-     * This only affects the generation of the path for the current resource.<p> 
+     * This only affects the generation of the path for the current resource.<p>
      *
      * @return the site mode
      */
@@ -889,7 +1045,7 @@ public final class CmsResourceUtil {
 
     /**
      * Returns the title of the site.<p>
-     * 
+     *
      * @return the title of the site
      */
     public String getSiteTitle() {
@@ -909,9 +1065,9 @@ public final class CmsResourceUtil {
 
     /**
      * Returns the size of the given resource as a String.<p>
-     * 
+     *
      * For directories it returns <code>SIZE_DIR</code>.<p>
-     * 
+     *
      * @return the size of the given resource as a String
      */
     public String getSizeString() {
@@ -920,8 +1076,26 @@ public final class CmsResourceUtil {
     }
 
     /**
+     * Returns the small icon resource of the current resource.<p>
+     *
+     * @return the icon resource
+     */
+    public Resource getSmallIconResource() {
+
+        if ((m_cms != null) && CmsJspNavBuilder.isNavLevelFolder(m_cms, m_resource)) {
+            return new CmsCssIcon(CmsExplorerTypeSettings.ICON_STYLE_NAV_LEVEL_BIG);
+        }
+        if ((m_cms != null) && CmsResourceTypeXmlContainerPage.isModelCopyGroup(m_cms, m_resource)) {
+            return new CmsCssIcon(CmsExplorerTypeSettings.ICON_STYLE_MODEL_GROUP_COPY_BIG);
+        }
+        I_CmsResourceType type = getResourceType();
+        CmsExplorerTypeSettings explorerType = OpenCms.getWorkplaceManager().getExplorerTypeSetting(type.getTypeName());
+        return getSmallIconResource(explorerType, m_resource != null ? m_resource.getName() : null);
+    }
+
+    /**
      * Returns resource state abbreviation.<p>
-     * 
+     *
      * @return resource state abbreviation
      */
     public char getStateAbbreviation() {
@@ -931,9 +1105,9 @@ public final class CmsResourceUtil {
 
     /**
      * Returns the state name for a resource.<p>
-     * 
+     *
      * Uses default locale if request context is <code>null</code>.<p>
-     * 
+     *
      * @return the state name for that resource
      */
     public String getStateName() {
@@ -952,9 +1126,9 @@ public final class CmsResourceUtil {
 
     /**
      * Returns the style class to use for the given resource.<p>
-     * 
+     *
      * @return style class name
-     * 
+     *
      * @see org.opencms.workplace.list.CmsListExplorerColumn#getExplorerStyleDef()
      */
     public String getStyleClassName() {
@@ -975,11 +1149,11 @@ public final class CmsResourceUtil {
 
     /**
      * Returns additional style sheets for the resource type icon depending on siblings.<p>
-     * 
+     *
      * That is, depending on {@link CmsResource#getSiblingCount()}
-     * 
+     *
      * Use it with the {@link #getIconPathExplorer} method.<p>
-     * 
+     *
      * @return additional style sheets depending on siblings
      */
     public String getStyleSiblings() {
@@ -996,9 +1170,9 @@ public final class CmsResourceUtil {
 
     /**
      * Returns the system lock information tooltip for the explorer view.<p>
-     * 
+     *
      * @param forExplorer if the tool tip should be generated for the explorer view
-     * 
+     *
      * @return the system lock information tooltip
      */
     public String getSystemLockInfo(boolean forExplorer) {
@@ -1016,12 +1190,12 @@ public final class CmsResourceUtil {
 
     /**
      * Returns additional style sheets depending on publication constraints.<p>
-     * 
-     * That is, depending on {@link CmsResource#getDateReleased()} and 
+     *
+     * That is, depending on {@link CmsResource#getDateReleased()} and
      * {@link CmsResource#getDateExpired()}.<p>
-     * 
+     *
      * @return additional style sheets depending on publication constraints
-     * 
+     *
      * @see #getTimeWindowLayoutType()
      */
     public String getTimeWindowLayoutStyle() {
@@ -1031,15 +1205,15 @@ public final class CmsResourceUtil {
 
     /**
      * Returns the layout style for the current time window state.<p>
-     * 
+     *
      * <ul>
      *   <li><code>{@link CmsResourceUtil#LAYOUTSTYLE_INRANGE}</code>: The time window is in range
      *   <li><code>{@link CmsResourceUtil#LAYOUTSTYLE_BEFORERELEASE}</code>: The resource is not yet released
      *   <li><code>{@link CmsResourceUtil#LAYOUTSTYLE_AFTEREXPIRE}</code>: The resource has already expired
      * </ul>
-     * 
+     *
      * @return the layout style for the current time window state
-     * 
+     *
      * @see #getTimeWindowLayoutStyle()
      */
     public int getTimeWindowLayoutType() {
@@ -1055,7 +1229,7 @@ public final class CmsResourceUtil {
 
     /**
      * Returns the title of a resource.<p>
-     * 
+     *
      * @return the title for that resource
      */
     public String getTitle() {
@@ -1077,7 +1251,7 @@ public final class CmsResourceUtil {
             } catch (Exception e1) {
                 // should usually never happen
                 if (LOG.isInfoEnabled()) {
-                    LOG.info(e);
+                    LOG.info(e.getLocalizedMessage(), e);
                 }
             } finally {
                 getCms().getRequestContext().setSiteRoot(storedSiteRoot);
@@ -1091,16 +1265,15 @@ public final class CmsResourceUtil {
 
     /**
      * Returns the name of the user who created the given resource.<p>
-     * 
+     *
      * @return the name of the user who created the given resource
      */
     public String getUserCreated() {
 
         String user = m_resource.getUserCreated().toString();
         try {
-            user = getCurrentOuRelativeName(CmsPrincipal.readPrincipalIncludingHistory(
-                getCms(),
-                m_resource.getUserCreated()).getName());
+            user = getCurrentOuRelativeName(
+                CmsPrincipal.readPrincipalIncludingHistory(getCms(), m_resource.getUserCreated()).getName());
         } catch (Throwable e) {
             LOG.info(e.getLocalizedMessage());
         }
@@ -1109,16 +1282,15 @@ public final class CmsResourceUtil {
 
     /**
      * Returns the name of the user who last modified the given resource.<p>
-     * 
+     *
      * @return the name of the user who last modified the given resource
      */
     public String getUserLastModified() {
 
         String user = m_resource.getUserLastModified().toString();
         try {
-            user = getCurrentOuRelativeName(CmsPrincipal.readPrincipalIncludingHistory(
-                getCms(),
-                m_resource.getUserLastModified()).getName());
+            user = getCurrentOuRelativeName(
+                CmsPrincipal.readPrincipalIncludingHistory(getCms(), m_resource.getUserLastModified()).getName());
         } catch (Throwable e) {
             LOG.info(e.getLocalizedMessage());
         }
@@ -1127,9 +1299,9 @@ public final class CmsResourceUtil {
 
     /**
      * Returns <code>true</code> if the given resource is editable by the current user.<p>
-     * 
+     *
      * Returns <code>false</code> if no request context is set.<p>
-     * 
+     *
      * @return <code>true</code> if the given resource is editable by the current user
      */
     public boolean isEditable() {
@@ -1156,11 +1328,11 @@ public final class CmsResourceUtil {
 
     /**
      * Returns <code>true</code> if the given resource is in the reference project.<p>
-     * 
+     *
      * Returns <code>false</code> if the request context is <code>null</code>.<p>
-     * 
+     *
      * @return <code>true</code> if the given resource is in the reference project
-     * 
+     *
      * @see #getReferenceProject()
      */
     public boolean isInsideProject() {
@@ -1170,11 +1342,11 @@ public final class CmsResourceUtil {
 
     /**
      * Returns <code>true</code> if the stored resource has been released and has not expired.<p>
-     * 
+     *
      * If no request context is available, the current time is used for the validation check.<p>
-     * 
+     *
      * @return <code>true</code> if the stored resource has been released and has not expired
-     * 
+     *
      * @see CmsResource#isReleasedAndNotExpired(long)
      */
     public boolean isReleasedAndNotExpired() {
@@ -1193,7 +1365,7 @@ public final class CmsResourceUtil {
      *
      * If greater than zero, the path will be formatted to this number of chars.<p>
      *
-     * This only affects the generation of the path for the current resource.<p> 
+     * This only affects the generation of the path for the current resource.<p>
      *
      * @param abbrevLength the path abbreviation length to set
      */
@@ -1230,7 +1402,7 @@ public final class CmsResourceUtil {
     /**
      * Sets the 'relative to' path.<p>
      *
-     * This only affects the generation of the path for the current resource.<p> 
+     * This only affects the generation of the path for the current resource.<p>
      *
      * @param relativeTo the 'relative to' path to set
      */
@@ -1264,7 +1436,7 @@ public final class CmsResourceUtil {
     /**
      * Sets the site mode.<p>
      *
-     * This only affects the generation of the path for the current resource.<p> 
+     * This only affects the generation of the path for the current resource.<p>
      *
      * @param siteMode the site mode to set
      */
@@ -1275,9 +1447,9 @@ public final class CmsResourceUtil {
 
     /**
      * Returns the simple name if the ou is the same as the current user's ou.<p>
-     * 
+     *
      * @param name the fully qualified name to check
-     * 
+     *
      * @return the simple name if the ou is the same as the current user's ou
      */
     private String getCurrentOuRelativeName(String name) {
@@ -1294,14 +1466,14 @@ public final class CmsResourceUtil {
 
     /**
      * Returns the message bundle for formatting dates, depends on the request locale.<p>
-     * 
+     *
      * @return the message bundle for formatting dates
      */
     private CmsMessages getMessages() {
 
         if (m_messages == null) {
-            if (m_request != null) {
-                m_messages = Messages.get().getBundle(m_request.getLocale());
+            if (m_cms != null) {
+                m_messages = Messages.get().getBundle(OpenCms.getWorkplaceManager().getWorkplaceLocale(m_cms));
             } else {
                 m_messages = Messages.get().getBundle();
             }
@@ -1311,7 +1483,7 @@ public final class CmsResourceUtil {
 
     /**
      * Returns the reference project resources.<p>
-     * 
+     *
      * @return the reference project resources
      */
     private List<String> getProjectResources() {

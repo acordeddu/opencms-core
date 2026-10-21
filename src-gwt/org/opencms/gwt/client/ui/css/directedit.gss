@@ -1,0 +1,122 @@
+@external oc-option-bar, opencms-icon, opencms-icon-edit-point, cmsState, cmsState-up, cmsState-up-hovering, cmsState-up-disabled, cmsState-down, cmsState-down-hovering, cmsState-down-disabled;
+
+.directEditButtons{
+	position: absolute;
+	text-align: right;
+}
+
+oc-editpoint {
+	display: block;
+}
+
+
+oc-editpoint.oc-option-bar.directEditButtons .cmsState{
+	display: inline-block;
+}
+
+/** Unused classes. */
+.showButtons {} 
+
+
+oc-editpoint.oc-option-bar{
+	border: 1px solid transparent;
+	position: absolute;
+	top: 2px;
+	right: 2px;
+	z-index: value("constants.css.zIndexMenu");
+	margin: 0;
+	padding: 0;
+	color: value("constants.css.textColor");
+	font-family: value("constants.css.fontFamily");
+	font-size: value("constants.css.fontSize");
+	font-weight: normal;
+	line-height: value("constants.css.lineHeight");
+	background: transparent;
+	text-align: right;
+	height: auto;
+	width: auto;
+	min-height: 0;
+	max-height: none;
+	min-width: 0;
+	max-width: none;
+}
+oc-editpoint.oc-option-bar, oc-editpoint.oc-option-bar *{
+	box-sizing: border-box;
+	-moz-box-sizing: border-box;
+}
+
+oc-editpoint.oc-option-bar div, oc-editpoint.oc-option-bar span {
+	margin: 0;
+	padding: 0;
+	border: none;
+	color: value("constants.css.textColor");
+	font-family: value("constants.css.fontFamily");
+	font-size: value("constants.css.fontSize");
+	font-weight: normal;
+	line-height: value("constants.css.lineHeight");
+	background: transparent;
+	text-align: left;
+	height: auto;
+	width: auto;
+	min-height: 0;
+	max-height: none;
+	min-width: 0;
+	max-width: none;
+}
+
+div.expiredListElementOverlay{
+	background-image: value("constants.css.gradientInvalid");
+	box-sizing: border-box;
+	padding: 0px;
+	margin: 0px;
+	position: absolute;
+	z-index: 1;
+}
+
+div.expiredListElementOverlay {
+    opacity: 0.6;
+}
+
+.oc-edit-buttons-visible .oc-option-bar.cmsHovering{
+	height: auto;
+	border: 1px solid value("constants.css.borderColor");
+	background: value("constants.css.backgroundColorDialog");
+}
+
+.oc-edit-buttons-visible .oc-option-bar.cmsHovering{
+	border-radius: value("constants.css.borderRadius");
+}
+
+.oc-edit-buttons-invisible {} 
+
+.oc-option-bar div.cmsState {
+	display: none;
+}
+
+.hideButtons .oc-option-bar { 
+	display: none !important;
+}
+
+.oc-edit-buttons-visible .oc-option-bar .cmsState:last-child, 
+.oc-edit-buttons-visible .oc-option-bar.cmsHovering .cmsState{
+	display: inline-block;
+}
+
+.oc-option-bar .opencms-icon .opencms-icon-edit-point:before {
+	background-image: url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxNjAiIGhlaWdodD0iMTYwIiB2aWV3Qm94PSIwIDAgMTYwIDE2MCI+DQogIDxwYXRoIGQ9Ik0xMTYgMTcuN2E3MiA3MiAwIDAgMSAyNi4zIDk4LjRBNzIgNzIgMCAwIDEgNDQgMTQyLjUgNzIgNzIgMCAwIDEgMTcuNiA0NCA3MiA3MiAwIDAgMSAxMTYgMTcuNyIvPg0KICA8cGF0aCBmaWxsPSIjZmZmIiBkPSJNMTA0IDM4LjVhNDggNDggMCAwIDEgMTcuNSA2NS41QTQ4IDQ4IDAgMCAxIDU2IDEyMS41IDQ4IDQ4IDAgMCAxIDM4LjUgNTYgNDggNDggMCAwIDEgMTA0IDM4LjQiLz4NCiAgPHBhdGggZD0iTTkyIDU5LjJhMjQgMjQgMCAwIDEgOC44IDMyLjggMjQgMjQgMCAwIDEtMzIuOCA4LjhBMjQgMjQgMCAwIDEgNTkuMiA2OCAyNCAyNCAwIDAgMSA5MiA1OS4yIi8+DQo8L3N2Zz4=");
+	background-size: 100% 100%;
+    content: "";
+    display: block;
+    height: 20px;
+    width: 20px;
+    opacity: 0.45;
+}
+
+.oc-option-bar.cmsHovering .editableElement.opencms-icon .opencms-icon-edit-point:before {
+	background: transparent;
+	content: "\e902";
+	opacity: 1;
+}
+
+.elementInfoChanged {} 
+.elementInfoUnchanged {} 

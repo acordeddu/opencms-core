@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -15,11 +15,11 @@
  * Lesser General Public License for more details.
  *
  * For further information about Alkacon Software, please see the
- * company website: http://www.alkacon.com
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -29,10 +29,13 @@ package org.opencms.ade.sitemap.client.toolbar;
 
 import org.opencms.ade.publish.client.CmsPublishDialog;
 import org.opencms.ade.sitemap.client.control.CmsSitemapController;
-import org.opencms.gwt.client.ui.CmsToggleButton;
+import org.opencms.gwt.client.ui.CmsPushButton;
 import org.opencms.gwt.client.ui.I_CmsButton;
 import org.opencms.gwt.client.ui.I_CmsButton.ButtonStyle;
-import org.opencms.gwt.client.util.CmsDomUtil;
+import org.opencms.gwt.client.ui.I_CmsButton.Size;
+import org.opencms.gwt.client.ui.contenteditor.I_CmsContentEditorHandler;
+
+import java.util.HashMap;
 
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
@@ -42,22 +45,27 @@ import com.google.gwt.user.client.ui.PopupPanel;
 
 /**
  * Sitemap toolbar publish button.<p>
- * 
+ *
  * @since 8.0.0
  */
-public class CmsToolbarPublishButton extends CmsToggleButton {
+public class CmsToolbarPublishButton extends CmsPushButton {
+
+    /** The content editor handler. */
+    private I_CmsContentEditorHandler m_editorHandler;
 
     /**
      * Constructor.<p>
-     * 
+     *
      * @param toolbar the toolbar instance
-     * @param controller the sitemap controller 
+     * @param controller the sitemap controller
      */
     public CmsToolbarPublishButton(final CmsSitemapToolbar toolbar, final CmsSitemapController controller) {
 
-        setImageClass(I_CmsButton.ButtonData.PUBLISH.getIconClass());
-        setTitle(I_CmsButton.ButtonData.PUBLISH.getTitle());
-        setButtonStyle(ButtonStyle.IMAGE, null);
+        m_editorHandler = toolbar.getToolbarHandler().getEditorHandler();
+        setImageClass(I_CmsButton.ButtonData.PUBLISH_BUTTON.getIconClass());
+        setTitle(I_CmsButton.ButtonData.PUBLISH_BUTTON.getTitle());
+        setButtonStyle(ButtonStyle.FONT_ICON, null);
+        setSize(Size.big);
 
         addClickHandler(new ClickHandler() {
 
@@ -67,8 +75,6 @@ public class CmsToolbarPublishButton extends CmsToggleButton {
             public void onClick(ClickEvent event) {
 
                 toolbar.onButtonActivation(CmsToolbarPublishButton.this);
-                CmsDomUtil.ensureMouseOut(getElement());
-                setDown(false);
                 setEnabled(false);
                 openPublish();
             }
@@ -80,7 +86,7 @@ public class CmsToolbarPublishButton extends CmsToggleButton {
      */
     protected void openPublish() {
 
-        CmsPublishDialog.showPublishDialog(new CloseHandler<PopupPanel>() {
+        CmsPublishDialog.showPublishDialog(new HashMap<String, String>(), new CloseHandler<PopupPanel>() {
 
             /**
              * @see com.google.gwt.event.logical.shared.CloseHandler#onClose(CloseEvent)
@@ -89,6 +95,13 @@ public class CmsToolbarPublishButton extends CmsToggleButton {
 
                 setEnabled(true);
             }
-        });
+        }, new Runnable() {
+
+            public void run() {
+
+                openPublish();
+            }
+
+        }, m_editorHandler);
     }
 }

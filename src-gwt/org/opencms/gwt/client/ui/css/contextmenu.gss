@@ -1,0 +1,110 @@
+@external html-face;
+
+.popup, .popupContent{}
+
+
+
+.menuPanel{ /* the panel (table) the context menu is set as widget. */
+	background: value("constants.css.backgroundColorDialog");
+	border-collapse:collapse;
+}
+div.cmsMenuBar { /* the outer menu bar */
+	background: value("constants.css.backgroundColorDialog");
+	color: value("constants.css.textColor");
+	padding: 2px 0;
+}
+.cmsMenuBar .cmsMenuItem { /* menu items */
+	cursor: pointer;
+	clear: both;
+	padding: 2px value("constants.css.defaultSpace");
+	min-width: 180px;
+	display: block;
+	margin: 5px 2px 0;
+	position: relative;
+	border-radius: value("constants.css.borderRadius");
+}
+
+.cmsMenuBar .cmsMenuItem:before{
+	content:"";
+	position: absolute;
+	margin-top:-5px;
+	left: -2px;
+	right: -2px;
+	height: 0;
+	border-style: solid;
+	border-width: 1px 0px 0px 0px;
+	border-color: value("constants.css.borderColor");
+}
+.cmsMenuBar .cmsMenuItem:first-child{
+	margin-top: 0;
+}
+.cmsMenuBar .cmsMenuItem:first-child:before {
+	border: 0;
+}
+.cmsMenuBar .cmsMenuItem.selected { /* selected menu items */ 
+	background: #356EE1;
+	color: #EFF2F8;
+}
+
+div.cmsMenuBar .cmsMenuItem.selected * {
+	color: #EFF2F8;
+}
+.cmsMenuBar .cmsMenuItem.disabled, .cmsMenuBar .cmsMenuItem.disabled .label, .cmsMenuBar .cmsMenuItem.disabled .html-face { /* menu item disabled */
+	color: value("constants.css.textColorDisabled");
+	cursor: default;
+}
+.cmsMenuBar .cmsMenuItem .label, .cmsMenuBar .cmsMenuItem .html-face { /* menu item label */
+	padding: 4px;
+	margin: 0px 0px 0px 20px;
+	font-size: value("constants.css.fontSizeBig");
+	text-align: left;
+	line-height: value("constants.css.lineHeight");
+}
+
+.cmsMenuBar .cmsMenuItem > div{
+	display: block;
+}
+
+.cmsMenuItem .iconBox { 
+	float: left;
+	width: 24px; 
+}
+
+.cmsMenuItem .label {
+	white-space: nowrap; 
+}
+
+.cmsMenuBar .cmsMenuItem .html-face > span{
+	margin-right: 6px;
+}
+
+.cmsMenuBar .cmsMenuItem .arrow { /* symbol for sub menus */
+	float: right;
+	margin-right: 2px;
+	margin-top: 6px;
+	font-size: 16px;
+}
+
+
+.cmsMenuBar .menuItemSeparator { /* section breaks between menu items */ 
+	height: 3px;
+	line-height: 0px;
+	margin: 0px;
+	padding: 0px;
+	border: none;
+	/** Use the border color as background color because this CSS class behaves like a border. */
+	background-color: value("constants.css.borderColorDialog");
+	zoom: 1;
+	overflow: hidden;
+	clear: both;
+}
+div.menuInfoLabel {
+	background-color: value("constants.css.backgroundColorDialog");
+	font-size: value("constants.css.fontSizeBig");
+	padding: 8px 26px;
+	cursor: default;
+}
+
+
+
+

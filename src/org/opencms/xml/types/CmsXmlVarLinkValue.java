@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -14,12 +14,12 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * Lesser General Public License for more details.
  *
- * For further information about Alkacon Software GmbH, please see the
- * company website: http://www.alkacon.com
+ * For further information about Alkacon Software GmbH & Co. KG, please see the
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -28,7 +28,10 @@
 package org.opencms.xml.types;
 
 import org.opencms.file.CmsObject;
+import org.opencms.json.JSONException;
+import org.opencms.main.CmsException;
 import org.opencms.main.CmsIllegalArgumentException;
+import org.opencms.main.CmsLog;
 import org.opencms.main.CmsRuntimeException;
 import org.opencms.main.OpenCms;
 import org.opencms.relations.CmsLink;
@@ -38,8 +41,12 @@ import org.opencms.util.CmsRequestUtil;
 import org.opencms.util.CmsStringUtil;
 import org.opencms.xml.I_CmsXmlDocument;
 import org.opencms.xml.page.CmsXmlPage;
+import org.opencms.xml.xml2json.I_CmsJsonFormattableValue;
+import org.opencms.xml.xml2json.renderer.CmsJsonRendererXmlContent;
 
 import java.util.Locale;
+
+import org.apache.commons.logging.Log;
 
 import org.dom4j.Attribute;
 import org.dom4j.Element;
@@ -48,10 +55,13 @@ import org.dom4j.Element;
  * Describes the XML content type "OpenCmsVarLink".<p>
  *
  * This type allows a link to either an internal VFS resource, or to an external website.<p>
- * 
- * @since 7.0.0 
+ *
+ * @since 7.0.0
  */
-public class CmsXmlVarLinkValue extends A_CmsXmlContentValue {
+public class CmsXmlVarLinkValue extends A_CmsXmlContentValue implements I_CmsJsonFormattableValue {
+
+    /** Logger instance for this class. */
+    private static final Log LOG = CmsLog.getLog(CmsXmlVarLinkValue.class);
 
     /** Value to mark that no link is defined, "none". */
     public static final String NO_LINK = "none";
@@ -81,7 +91,7 @@ public class CmsXmlVarLinkValue extends A_CmsXmlContentValue {
 
     /**
      * Creates a new XML content value of type "OpenCmsVfsFile".<p>
-     * 
+     *
      * @param document the XML content instance this value belongs to
      * @param element the XML element that contains this value
      * @param locale the locale this value is created for
@@ -94,7 +104,7 @@ public class CmsXmlVarLinkValue extends A_CmsXmlContentValue {
 
     /**
      * Creates a new schema type descriptor for the type "OpenCmsVfsFile".<p>
-     * 
+     *
      * @param name the name of the XML node containing the value according to the XML schema
      * @param minOccurs minimum number of occurrences of this type according to the XML schema
      * @param maxOccurs maximum number of occurrences of this type according to the XML schema
@@ -102,6 +112,52 @@ public class CmsXmlVarLinkValue extends A_CmsXmlContentValue {
     public CmsXmlVarLinkValue(String name, String minOccurs, String maxOccurs) {
 
         super(name, minOccurs, maxOccurs);
+    }
+
+    /**
+     * Converts the value for a VarLink field to the form "root path + query string" if it's an internal link, and returns null if it's an external link.
+     *
+     * @param cms the CMS context
+     * @param value the value to convert
+     * @return the root path with the query if value is an internal link, and null otherwise
+     */
+    public static String getInternalPathAndQuery(CmsObject cms, String value) {
+
+        String path = value;
+        if (cms != null) {
+            String siteRoot = OpenCms.getSiteManager().getSiteRoot(value);
+            String oldSite = cms.getRequestContext().getSiteRoot();
+            try {
+                if (siteRoot != null) {
+                    // only switch the site if needed
+                    cms.getRequestContext().setSiteRoot(siteRoot);
+                    // remove the site root, because the link manager call will append it anyway
+                    path = cms.getRequestContext().removeSiteRoot(value);
+                }
+                // remove parameters, if not the link manager call might fail
+                String query = "";
+                int pos = path.indexOf(CmsRequestUtil.URL_DELIMITER);
+                int anchorPos = path.indexOf('#');
+                if ((pos == -1) || ((anchorPos > -1) && (pos > anchorPos))) {
+                    pos = anchorPos;
+                }
+                if (pos > -1) {
+                    query = path.substring(pos);
+                    path = path.substring(0, pos);
+                }
+                // get the root path
+                path = OpenCms.getLinkManager().getRootPath(cms, path);
+                if (path != null) {
+                    // append parameters again
+                    path += query;
+                }
+            } finally {
+                if (siteRoot != null) {
+                    cms.getRequestContext().setSiteRoot(oldSite);
+                }
+            }
+        }
+        return path;
     }
 
     /**
@@ -131,10 +187,10 @@ public class CmsXmlVarLinkValue extends A_CmsXmlContentValue {
 
     /**
      * Returns the link object represented by this XML content value.<p>
-     * 
-     * @param cms the cms context, can be <code>null</code> but in this case no link check is performed, 
+     *
+     * @param cms the cms context, can be <code>null</code> but in this case no link check is performed,
      *      and the target is marked as "external"
-     * 
+     *
      * @return the link object represented by this XML content value
      */
     public CmsLink getLink(CmsObject cms) {
@@ -145,8 +201,7 @@ public class CmsXmlVarLinkValue extends A_CmsXmlContentValue {
             if (linkElement == null) {
                 setStringValue(cms, m_element.getText());
             } else {
-                CmsLinkUpdateUtil.updateType(linkElement, getContentDefinition().getContentHandler().getRelationType(
-                    getPath()));
+                CmsLinkUpdateUtil.updateType(linkElement, getRelationType(getPath()));
                 CmsLink link = new CmsLink(linkElement);
                 if (link.isInternal()) {
                     // link management check
@@ -182,7 +237,7 @@ public class CmsXmlVarLinkValue extends A_CmsXmlContentValue {
 
         // the schema definition is located in a separate file for easier editing
         if (m_schemaDefinition == null) {
-            m_schemaDefinition = readSchemaDefinition("org/opencms/xml/types/XmlVfsFileValue.xsd");
+            m_schemaDefinition = readSchemaDefinition("org/opencms/xml/types/XmlVarLinkValue.xsd");
         }
         return m_schemaDefinition;
     }
@@ -239,44 +294,12 @@ public class CmsXmlVarLinkValue extends A_CmsXmlContentValue {
             // no valid value given
             return;
         }
-        String path = value;
-        if (cms != null) {
-            String siteRoot = OpenCms.getSiteManager().getSiteRoot(value);
-            String oldSite = cms.getRequestContext().getSiteRoot();
-            try {
-                if (siteRoot != null) {
-                    // only switch the site if needed
-                    cms.getRequestContext().setSiteRoot(siteRoot);
-                    // remove the site root, because the link manager call will append it anyway
-                    path = cms.getRequestContext().removeSiteRoot(value);
-                }
-                // remove parameters, if not the link manager call might fail
-                String query = "";
-                int pos = path.indexOf(CmsRequestUtil.URL_DELIMITER);
-                int anchorPos = path.indexOf('#');
-                if ((pos == -1) || ((anchorPos > -1) && (pos > anchorPos))) {
-                    pos = anchorPos;
-                }
-                if (pos > -1) {
-                    query = path.substring(pos);
-                    path = path.substring(0, pos);
-                }
-                // get the root path
-                path = OpenCms.getLinkManager().getRootPath(cms, path);
-                if (path != null) {
-                    // append parameters again
-                    path += query;
-                }
-            } finally {
-                if (siteRoot != null) {
-                    cms.getRequestContext().setSiteRoot(oldSite);
-                }
-            }
-        }
+
+        String path = getInternalPathAndQuery(cms, value);
         boolean internal = (path != null);
         CmsRelationType type;
         if (internal) {
-            type = getContentDefinition().getContentHandler().getRelationType(getPath());
+            type = getRelationType(getPath());
         } else {
             // use original value for external links
             path = value;
@@ -295,10 +318,42 @@ public class CmsXmlVarLinkValue extends A_CmsXmlContentValue {
     }
 
     /**
+     * @see org.opencms.xml.xml2json.I_CmsJsonFormattableValue#toJson(org.opencms.file.CmsObject)
+     */
+    public Object toJson(CmsObject cms) {
+
+        try {
+            CmsXmlVarLinkValue linkValue = this;
+            // Use the CmsObject with current site for the link, so that the resulting link
+            // works in the context (i.e. domain) of the original JSON handler request,
+            // but CmsObject with site set to root site so we get the root path, which
+            // can then be used to construct further JSON handler URLs.
+            CmsLink linkObj = linkValue.getLink(cms);
+            String link = null;
+            if (linkObj != null) {
+                link = linkObj.getLink(cms);
+            }
+            CmsObject rootCms = OpenCms.initCmsObject(cms);
+            String path = linkValue.getStringValue(rootCms);
+            if (path.startsWith("http")) {
+                // external link
+                path = null;
+            }
+            return CmsJsonRendererXmlContent.linkAndPath(link, path, cms);
+        } catch (JSONException e) {
+            return null;
+        } catch (CmsException e) {
+            LOG.error(e.getLocalizedMessage(), e);
+            return null;
+        }
+
+    }
+
+    /**
      * Creates the String value for this VarLink value element.<p>
-     * 
+     *
      * @param cms the current users OpenCms context
-     * 
+     *
      * @return the String value for this VarLink value element
      */
     private String createStringValue(CmsObject cms) {

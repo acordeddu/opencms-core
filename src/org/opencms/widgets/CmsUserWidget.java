@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -14,12 +14,12 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * Lesser General Public License for more details.
  *
- * For further information about Alkacon Software GmbH, please see the
- * company website: http://www.alkacon.com
+ * For further information about Alkacon Software GmbH & Co. KG, please see the
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -28,22 +28,31 @@
 package org.opencms.widgets;
 
 import org.opencms.file.CmsObject;
+import org.opencms.file.CmsUser;
+import org.opencms.main.CmsLog;
 import org.opencms.main.OpenCms;
 import org.opencms.util.CmsStringUtil;
 import org.opencms.workplace.CmsWorkplace;
 
+import java.util.ArrayList;
+import java.util.List;
+
+import org.apache.commons.logging.Log;
+
 /**
  * Provides a OpenCms User selection widget, for use on a widget dialog.<p>
- * 
- * @since 6.0.0 
+ *
+ * @since 6.0.0
  */
-public class CmsUserWidget extends A_CmsWidget {
+public class CmsUserWidget extends CmsSelectWidget {
 
     /** Configuration parameter to set the flags of the users to display, optional. */
     public static final String CONFIGURATION_FLAGS = "flags";
 
     /** Configuration parameter to set the group of users to display, optional. */
     public static final String CONFIGURATION_GROUP = "group";
+
+    private static final Log LOG = CmsLog.getLog(CmsUserWidget.class);
 
     /** The the flags used in the popup window. */
     private Integer m_flags;
@@ -62,7 +71,7 @@ public class CmsUserWidget extends A_CmsWidget {
 
     /**
      * Creates a new user selection widget with the parameters to configure the popup window behaviour.<p>
-     * 
+     *
      * @param flags the group flags to restrict the group selection, can be <code>null</code>
      * @param groupName the group to restrict the user selection, can be <code>null</code>
      */
@@ -74,7 +83,7 @@ public class CmsUserWidget extends A_CmsWidget {
 
     /**
      * Creates a new user selection widget with the given configuration.<p>
-     * 
+     *
      * @param configuration the configuration to use
      */
     public CmsUserWidget(String configuration) {
@@ -132,7 +141,8 @@ public class CmsUserWidget extends A_CmsWidget {
         StringBuffer result = new StringBuffer(128);
 
         result.append("<td class=\"xmlTd\">");
-        result.append("<table border=\"0\" cellpadding=\"0\" cellspacing=\"0\" class=\"maxwidth\"><tr><td style=\"width: 100%;\">");
+        result.append(
+            "<table border=\"0\" cellpadding=\"0\" cellspacing=\"0\" class=\"maxwidth\"><tr><td style=\"width: 100%;\">");
         result.append("<input style=\"width: 99%;\" class=\"xmlInput");
         if (param.hasError()) {
             result.append(" xmlInputError");
@@ -145,7 +155,8 @@ public class CmsUserWidget extends A_CmsWidget {
         result.append(id);
         result.append("\"></td>");
         result.append(widgetDialog.dialogHorizontalSpacer(10));
-        result.append("<td><table class=\"editorbuttonbackground\" border=\"0\" cellpadding=\"0\" cellspacing=\"0\"><tr>");
+        result.append(
+            "<td><table class=\"editorbuttonbackground\" border=\"0\" cellpadding=\"0\" cellspacing=\"0\"><tr>");
 
         StringBuffer buttonJs = new StringBuffer(8);
         buttonJs.append("javascript:openUserWin('");
@@ -171,12 +182,13 @@ public class CmsUserWidget extends A_CmsWidget {
         }
         buttonJs.append(");");
 
-        result.append(widgetDialog.button(
-            buttonJs.toString(),
-            null,
-            "user",
-            org.opencms.workplace.Messages.GUI_DIALOG_BUTTON_SEARCH_0,
-            widgetDialog.getButtonStyle()));
+        result.append(
+            widgetDialog.button(
+                buttonJs.toString(),
+                null,
+                "user",
+                org.opencms.workplace.Messages.GUI_DIALOG_BUTTON_SEARCH_0,
+                widgetDialog.getButtonStyle()));
         result.append("</tr></table>");
         result.append("</td></tr></table>");
 
@@ -203,6 +215,14 @@ public class CmsUserWidget extends A_CmsWidget {
     public String getGroupName() {
 
         return m_groupName;
+    }
+
+    /**
+     * @see org.opencms.widgets.I_CmsADEWidget#getWidgetName()
+     */
+    public String getWidgetName() {
+
+        return CmsSelectWidget.class.getName();
     }
 
     /**
@@ -248,5 +268,33 @@ public class CmsUserWidget extends A_CmsWidget {
             }
         }
         super.setConfiguration(configuration);
+    }
+
+    /**
+     * @see org.opencms.widgets.A_CmsSelectWidget#parseSelectOptions(org.opencms.file.CmsObject, org.opencms.widgets.I_CmsWidgetDialog, org.opencms.widgets.I_CmsWidgetParameter)
+     */
+    @Override
+    protected List<CmsSelectWidgetOption> parseSelectOptions(
+        CmsObject cms,
+        I_CmsWidgetDialog widgetDialog,
+        I_CmsWidgetParameter param) {
+
+        List<CmsSelectWidgetOption> options = new ArrayList<>();
+        options.add(new CmsSelectWidgetOption("", true, ""));
+        try {
+            List<CmsUser> users;
+            if (m_groupName != null) {
+                users = cms.getUsersOfGroup(m_groupName);
+            } else {
+                users = OpenCms.getOrgUnitManager().getUsers(cms, "/", true);
+            }
+            for (CmsUser user : users) {
+                CmsSelectWidgetOption option = new CmsSelectWidgetOption(user.getName(), false, user.getFullName());
+                options.add(option);
+            }
+        } catch (Exception e) {
+            LOG.error(e.getLocalizedMessage(), e);
+        }
+        return options;
     }
 }

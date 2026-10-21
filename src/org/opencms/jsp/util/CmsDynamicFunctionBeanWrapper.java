@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (C) Alkacon Software (http://www.alkacon.com)
+ * Copyright (C) Alkacon Software (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -15,11 +15,11 @@
  * Lesser General Public License for more details.
  *
  * For further information about Alkacon Software, please see the
- * company website: http://www.alkacon.com
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -28,14 +28,14 @@
 package org.opencms.jsp.util;
 
 import org.opencms.file.CmsObject;
+import org.opencms.util.CmsCollectionsGenericWrapper;
 import org.opencms.xml.containerpage.CmsDynamicFunctionBean;
 import org.opencms.xml.containerpage.CmsDynamicFunctionBean.Format;
 
 import java.util.Collections;
 import java.util.Map;
 
-import com.google.common.base.Function;
-import com.google.common.collect.MapMaker;
+import org.apache.commons.collections.Transformer;
 
 /**
  * A wrapper class for using dynamic function beans inside JSPs via the EL.<p>
@@ -50,9 +50,9 @@ public class CmsDynamicFunctionBeanWrapper {
 
     /**
      * Creates a new wrapper instance.<p>
-     * 
-     * @param cms the CMS context to use 
-     * @param functionBean the dynamic function bean to wrap 
+     *
+     * @param cms the CMS context to use
+     * @param functionBean the dynamic function bean to wrap
      */
     public CmsDynamicFunctionBeanWrapper(CmsObject cms, CmsDynamicFunctionBean functionBean) {
 
@@ -62,15 +62,14 @@ public class CmsDynamicFunctionBeanWrapper {
 
     /**
      * Gets the lazy map for accessing the various function formats.<p>
-     * 
-     * @return a map which allows access to the various function formats 
+     *
+     * @return a map which allows access to the various function formats
      */
     public Object getFormatFor() {
 
-        MapMaker mm = new MapMaker();
-        Function<Object, Object> mapFunction = new Function<Object, Object>() {
+        Transformer mapFunction = new Transformer() {
 
-            public Object apply(Object param) {
+            public Object transform(Object param) {
 
                 if (m_functionBean == null) {
                     return new CmsDynamicFunctionFormatWrapper(m_cms, null);
@@ -97,13 +96,13 @@ public class CmsDynamicFunctionBeanWrapper {
                 return wrapper;
             }
         };
-        return mm.makeComputingMap(mapFunction);
+        return CmsCollectionsGenericWrapper.createLazyMap(mapFunction);
     }
 
     /**
      * Gets the JSP file name of the wrapped dynamic function bean's main format.<p>
-     * 
-     * @return a jsp file name 
+     *
+     * @return a jsp file name
      */
     public String getJsp() {
 
@@ -117,8 +116,8 @@ public class CmsDynamicFunctionBeanWrapper {
 
     /**
      * Gets the parameters of the wrapped dynamic function bean's main format.<p>
-     * 
-     * @return the map of parameters 
+     *
+     * @return the map of parameters
      */
     public Map<String, String> getParam() {
 
@@ -127,8 +126,8 @@ public class CmsDynamicFunctionBeanWrapper {
 
     /**
      * Gets the parameters of the wrapped dynamic function bean's main format.<p>
-     * 
-     * @return the map of parameters 
+     *
+     * @return the map of parameters
      */
     public Map<String, String> getParameters() {
 

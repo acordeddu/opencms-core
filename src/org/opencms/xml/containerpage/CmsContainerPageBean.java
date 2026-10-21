@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -14,12 +14,12 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * Lesser General Public License for more details.
  *
- * For further information about Alkacon Software GmbH, please see the
- * company website: http://www.alkacon.com
+ * For further information about Alkacon Software GmbH & Co. KG, please see the
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -35,7 +35,6 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 
@@ -43,7 +42,7 @@ import org.apache.commons.collections.Transformer;
 
 /**
  * Describes one locale of a container page.<p>
- * 
+ *
  * @since 8.0
  */
 public class CmsContainerPageBean {
@@ -60,25 +59,20 @@ public class CmsContainerPageBean {
     /** The container elements. */
     private transient List<CmsContainerElementBean> m_elements;
 
-    /** The locale. */
-    private final Locale m_locale;
-
     /** The container names in the right order. */
     private final List<String> m_names;
 
     /** The supported types. */
     private final Set<String> m_types;
 
-    /** 
-     * Creates a new container page bean.<p> 
-     * 
-     * @param locale the locale
+    /**
+     * Creates a new container page bean.<p>
+     *
      * @param containers the containers
-     **/
-    public CmsContainerPageBean(Locale locale, List<CmsContainerBean> containers) {
+     */
+    public CmsContainerPageBean(List<CmsContainerBean> containers) {
 
-        m_locale = locale;
-        // we want to preserve container order 
+        // we want to preserve container order
         Map<String, CmsContainerBean> cnts = new LinkedHashMap<String, CmsContainerBean>();
         Set<String> types = new HashSet<String>();
         List<String> names = new ArrayList<String>();
@@ -94,9 +88,9 @@ public class CmsContainerPageBean {
 
     /**
      * Returns <code>true</code> if the element with the provided id is contained in this container.<p>
-     *  
+     *
      * @param elementId the element id to check
-     * 
+     *
      * @return <code>true</code> if the element with the provided id is contained in this container
      */
     public boolean containsElement(CmsUUID elementId) {
@@ -116,7 +110,7 @@ public class CmsContainerPageBean {
 
     /**
      * Returns a lazy initialized map that describes if a certain element if part of this container.<p>
-     * 
+     *
      * @return a lazy initialized map that describes if a certain element if part of this container
      */
     public Map<CmsUUID, Boolean> getContainsElement() {
@@ -151,7 +145,7 @@ public class CmsContainerPageBean {
 
     /**
      * Returns the elements of all containers in this page.<p>
-     * 
+     *
      * @return the elements of all containers in this page
      */
     public List<CmsContainerElementBean> getElements() {
@@ -163,16 +157,6 @@ public class CmsContainerPageBean {
             }
         }
         return m_elements;
-    }
-
-    /**
-     * Returns the locale.<p>
-     *
-     * @return the locale
-     */
-    public Locale getLocale() {
-
-        return m_locale;
     }
 
     /**

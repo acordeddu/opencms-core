@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -14,12 +14,12 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * Lesser General Public License for more details.
  *
- * For further information about Alkacon Software GmbH, please see the
- * company website: http://www.alkacon.com
+ * For further information about Alkacon Software GmbH & Co. KG, please see the
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -33,20 +33,24 @@ import org.opencms.util.CmsStringUtil;
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.io.StringWriter;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.tika.metadata.DublinCore;
-import org.apache.tika.metadata.MSOffice;
 import org.apache.tika.metadata.Metadata;
+import org.apache.tika.metadata.Office;
+import org.apache.tika.metadata.OfficeOpenXMLCore;
+import org.apache.tika.metadata.OfficeOpenXMLExtended;
+import org.apache.tika.metadata.PDF;
 import org.apache.tika.parser.ParseContext;
 import org.apache.tika.parser.Parser;
 import org.apache.tika.sax.BodyContentHandler;
 
 /**
  * Base utility class that allows extraction of the indexable "plain" text from a given document format.<p>
- * 
- * @since 6.0.0 
+ *
+ * @since 6.0.0
  */
 public abstract class A_CmsTextExtractor implements I_CmsTextExtractor {
 
@@ -55,7 +59,7 @@ public abstract class A_CmsTextExtractor implements I_CmsTextExtractor {
      */
     public I_CmsExtractionResult extractText(byte[] content) throws Exception {
 
-        // call stream based method of extraction without encoding     
+        // call stream based method of extraction without encoding
         return extractText(new ByteArrayInputStream(content));
     }
 
@@ -90,9 +94,9 @@ public abstract class A_CmsTextExtractor implements I_CmsTextExtractor {
     }
 
     /**
-     * Combines a meta information item extracted from the document with the main content buffer and 
+     * Combines a meta information item extracted from the document with the main content buffer and
      * also stores the individual information as item in the Map of content items.<p>
-     * 
+     *
      * @param itemValue the value of the item to store
      * @param itemKey the key in the Map of content items
      * @param content a buffer where to append the content item
@@ -113,17 +117,33 @@ public abstract class A_CmsTextExtractor implements I_CmsTextExtractor {
 
     /**
      * Parses the given input stream with the provided parser and returns the result as a map of content items.<p>
-     * 
+     *
      * @param in the input stream for the content to parse
      * @param parser the parser to use
-     * 
+     *
      * @return the result of the parsing as a map of content items
-     * 
+     *
      * @throws Exception in case something goes wrong
      */
     protected CmsExtractionResult extractText(InputStream in, Parser parser) throws Exception {
 
-        Map<String, String> contentItems = new HashMap<String, String>();
+        return extractText(in, parser, true);
+    }
+
+    /**
+     * Parses the given input stream with the provided parser and returns the result as a map of content items.<p>
+     *
+     * @param in the input stream for the content to parse
+     * @param parser the parser to use
+     * @param addMetaData flag, indicating if extracted meta data should be added to the extraction result.
+     *
+     * @return the result of the parsing as a map of content items
+     *
+     * @throws Exception in case something goes wrong
+     */
+    protected CmsExtractionResult extractText(InputStream in, Parser parser, boolean addMetaData) throws Exception {
+
+        LinkedHashMap<String, String> contentItems = new LinkedHashMap<>();
 
         StringWriter writer = new StringWriter();
         BodyContentHandler handler = new BodyContentHandler(writer);
@@ -132,7 +152,6 @@ public abstract class A_CmsTextExtractor implements I_CmsTextExtractor {
 
         parser.parse(in, handler, meta, context);
         in.close();
-
         String result = writer.toString();
 
         // add the main document text
@@ -142,31 +161,86 @@ public abstract class A_CmsTextExtractor implements I_CmsTextExtractor {
         }
 
         // appends all known document meta data as content items
-        combineContentItem(meta.get(DublinCore.TITLE), I_CmsExtractionResult.ITEM_TITLE, content, contentItems);
-        combineContentItem(meta.get(MSOffice.KEYWORDS), I_CmsExtractionResult.ITEM_KEYWORDS, content, contentItems);
-        combineContentItem(meta.get(DublinCore.SUBJECT), I_CmsExtractionResult.ITEM_SUBJECT, content, contentItems);
-        combineContentItem(meta.get(MSOffice.AUTHOR), I_CmsExtractionResult.ITEM_AUTHOR, content, contentItems);
-        combineContentItem(meta.get(DublinCore.CREATOR), I_CmsExtractionResult.ITEM_CREATOR, content, contentItems);
-        combineContentItem(meta.get(MSOffice.CATEGORY), I_CmsExtractionResult.ITEM_CATEGORY, content, contentItems);
-        combineContentItem(meta.get(MSOffice.COMMENTS), I_CmsExtractionResult.ITEM_COMMENTS, content, contentItems);
-        combineContentItem(meta.get(MSOffice.COMPANY), I_CmsExtractionResult.ITEM_COMPANY, content, contentItems);
-        combineContentItem(meta.get(MSOffice.MANAGER), I_CmsExtractionResult.ITEM_MANAGER, content, contentItems);
-        // this constant seems to be missing from TIKA
-        combineContentItem(
-            meta.get(I_CmsExtractionResult.ITEM_PRODUCER),
-            I_CmsExtractionResult.ITEM_PRODUCER,
-            content,
-            contentItems);
+        if (addMetaData) {
+            combineContentItem(meta.get(DublinCore.TITLE), I_CmsExtractionResult.ITEM_TITLE, content, contentItems);
+            String keywords = meta.get(PDF.DOC_INFO_KEY_WORDS);
+            if (StringUtils.isBlank(keywords)) {
+                keywords = meta.get(Office.KEYWORDS);
+            }
+            combineContentItem(keywords, I_CmsExtractionResult.ITEM_KEYWORDS, content, contentItems);
+            String subject = null;
+            if (StringUtils.isBlank(subject)) {
+                subject = meta.get(PDF.DOC_INFO_SUBJECT);
+            }
+            if (StringUtils.isBlank(subject)) {
+                subject = meta.get(I_CmsExtractionResult.ITEM_SUBJECT);
+            }
+            if (StringUtils.isBlank(subject)) {
+                subject = meta.get(DublinCore.SUBJECT);
+            }
+            combineContentItem(subject, I_CmsExtractionResult.ITEM_SUBJECT, content, contentItems);
+            if (meta.get(Office.AUTHOR) != null) {
+                combineContentItem(meta.get(Office.AUTHOR), I_CmsExtractionResult.ITEM_AUTHOR, content, contentItems);
+            } else {
+                combineContentItem(
+                    meta.get(DublinCore.CREATOR),
+                    I_CmsExtractionResult.ITEM_AUTHOR,
+                    content,
+                    contentItems);
+            }
+            String creator = meta.get("xmp:CreatorTool");
+            if (StringUtils.isBlank(creator)) {
+                creator = meta.get(DublinCore.CREATOR);
+            }
+            if (StringUtils.isBlank(creator)) {
+                creator = meta.get(I_CmsExtractionResult.ITEM_CREATOR);
+            }
+            combineContentItem(creator, I_CmsExtractionResult.ITEM_CREATOR, content, contentItems);
+            //
+            combineContentItem(
+                meta.get(OfficeOpenXMLCore.CATEGORY),
+                I_CmsExtractionResult.ITEM_CATEGORY,
+                content,
+                contentItems);
+            //
+            if (meta.get(OfficeOpenXMLExtended.COMMENTS) != null) {
+                combineContentItem(
+                    meta.get(OfficeOpenXMLExtended.COMMENTS),
+                    I_CmsExtractionResult.ITEM_COMMENTS,
+                    content,
+                    contentItems);
+            } else {
+                combineContentItem(
+                    meta.get(DublinCore.DESCRIPTION),
+                    I_CmsExtractionResult.ITEM_COMMENTS,
+                    content,
+                    contentItems);
 
+            }
+            String company = meta.get(OfficeOpenXMLExtended.COMPANY);
+            combineContentItem(company, I_CmsExtractionResult.ITEM_COMPANY, content, contentItems);
+            //
+            combineContentItem(
+                meta.get(OfficeOpenXMLExtended.MANAGER),
+                I_CmsExtractionResult.ITEM_MANAGER,
+                content,
+                contentItems);
+
+            String producer = meta.get(PDF.DOC_INFO_PRODUCER);
+            if (StringUtils.isBlank(producer)) {
+                producer = meta.get(I_CmsExtractionResult.ITEM_PRODUCER);
+            }
+            combineContentItem(producer, I_CmsExtractionResult.ITEM_PRODUCER, content, contentItems);
+        }
         // return the final result
         return new CmsExtractionResult(content.toString(), contentItems);
     }
 
     /**
      * Removes "unwanted" control chars from the given content.<p>
-     * 
+     *
      * @param content the content to remove the unwanted control chars from
-     * 
+     *
      * @return the content with the unwanted control chars removed
      */
     protected String removeControlChars(String content) {

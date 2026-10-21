@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -14,12 +14,12 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * Lesser General Public License for more details.
  *
- * For further information about Alkacon Software GmbH, please see the
- * company website: http://www.alkacon.com
+ * For further information about Alkacon Software GmbH & Co. KG, please see the
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -28,21 +28,21 @@
 package org.opencms.util;
 
 import org.opencms.i18n.CmsEncoder;
-
-import junit.framework.TestCase;
+import org.opencms.test.OpenCmsTestRunner;
 
 import org.htmlparser.Node;
 import org.htmlparser.NodeFilter;
 import org.htmlparser.Parser;
 import org.htmlparser.filters.NodeClassFilter;
 import org.htmlparser.nodes.TextNode;
+import org.junit.jupiter.api.Test;
 
-/** 
+/**
  * Test case for <code>{@link org.opencms.util.CmsHtmlExtractor}</code>.<p>
- * 
+ *
  * @since 6.2.0
  */
-public class TestCmsHtmlExtractor extends TestCase {
+public class TestCmsHtmlExtractor extends OpenCmsTestRunner {
 
     private static final String HTML_PAGE_1 = "<html><title>This is the title</title><body><h1>A headline</h1>This is a test.<br>"
         + "This  is&nbsp;a <a href=\"http://www.opencms.org\">link</a> in a    paragraph.<p>Some more text here. "
@@ -56,47 +56,79 @@ public class TestCmsHtmlExtractor extends TestCase {
         + "This is a very long line, because this is long line, because this is long line, because this is long line, because this is long line. "
         + "<div><p>This is a p in a div<p>This is another p in a div<p></div>"
         + "</body></html>";
-        
-    /**
-     * Default JUnit constructor.<p>
-     * 
-     * @param arg0 JUnit parameters
-     */
-    public TestCmsHtmlExtractor(String arg0) {
-
-        super(arg0);
-    }
 
     /**
      * Extracts plain text from a String that contains HTML.<p>
-     * 
+     *
      * @param content the HTML content to extract the text from
-     * 
+     *
      * @return the extracted plain text
-     * 
+     *
      * @throws Exception in case something goes wrong
      */
     public static String extractFromHtml2(String content) throws Exception {
-        
+
         Parser parser = new Parser();
         parser.setInputHTML(content);
 
-        StringBean stringBean = new StringBean();
+        CmsTestStringBean stringBean = new CmsTestStringBean();
         stringBean.setLinks(true);
         stringBean.setCollapse(true);
-        
+
         parser.visitAllNodesWith(stringBean);
 
         return stringBean.getStrings();
     }
 
     /**
+     * Tests the HTML extractor.<p>
+     *
+     * @throws Exception in case the test fails
+     */
+    @Test
+    public void testHtmlExtractor() throws Exception {
+
+        String result;
+
+        result = CmsHtmlExtractor.extractText(HTML_PAGE_1, CmsEncoder.ENCODING_ISO_8859_1);
+        System.out.println(result + "\n\n");
+
+        result = extractFromHtml(HTML_PAGE_1);
+        System.out.println(result + "\n\n");
+
+        result = extractFromHtml2(HTML_PAGE_1);
+        System.out.println(result + "\n\n");
+    }
+
+    /**
+     * Tests the HTML extractor with an empty input String.<p>
+     *
+     * @throws Exception in case the test fails
+     */
+    @Test
+    public void testHtmlExtractorWithEmptyInput() throws Exception {
+
+        String input, result;
+        input = "";
+        result = CmsHtmlExtractor.extractText(input, CmsEncoder.ENCODING_ISO_8859_1);
+        assertEquals(input, result, "Empty input should generate empty output");
+
+        input = null;
+        result = CmsHtmlExtractor.extractText(input, CmsEncoder.ENCODING_ISO_8859_1);
+        assertEquals(input, result, "null input should generate null output");
+
+        input = "   \t\r\n  ";
+        result = CmsHtmlExtractor.extractText(input, CmsEncoder.ENCODING_ISO_8859_1);
+        assertEquals("", result, "Whitespace only input should generate empty String output");
+    }
+
+    /**
      * Extracts plain text from a String that contains HTML.<p>
-     * 
+     *
      * @param content the HTML content to extract the text from
-     * 
+     *
      * @return the extracted plain text
-     * 
+     *
      * @throws Exception in case something goes wrong
      */
     private String extractFromHtml(String content) throws Exception {
@@ -106,7 +138,7 @@ public class TestCmsHtmlExtractor extends TestCase {
         myParser = Parser.createParser(content, null);
 
         NodeFilter filter = new NodeClassFilter(TextNode.class);
-        
+
         nodes = myParser.extractAllNodesThatMatch(filter).toNodeArray();
 
         StringBuffer result = new StringBuffer();
@@ -118,45 +150,5 @@ public class TestCmsHtmlExtractor extends TestCase {
         }
 
         return result.toString();
-    }
-
-    /**
-     * Tests the HTML extractor.<p>
-     * 
-     * @throws Exception in case the test fails
-     */
-    public void testHtmlExtractor() throws Exception {
-
-        String result;
-        
-        result = CmsHtmlExtractor.extractText(HTML_PAGE_1, CmsEncoder.ENCODING_ISO_8859_1);        
-        System.out.println(result + "\n\n");
-        
-        result = extractFromHtml(HTML_PAGE_1);
-        System.out.println(result + "\n\n");
-        
-        result = extractFromHtml2(HTML_PAGE_1);
-        System.out.println(result + "\n\n");
-    }
-    
-    /**
-     * Tests the HTML extractor with an empty input String.<p>
-     * 
-     * @throws Exception in case the test fails
-     */
-    public void testHtmlExtractorWithEmptyInput() throws Exception {
-
-        String input, result;
-        input = "";
-        result = CmsHtmlExtractor.extractText(input, CmsEncoder.ENCODING_ISO_8859_1);        
-        assertEquals("Empty input should generate empty output", input, result);
-        
-        input = null;
-        result = CmsHtmlExtractor.extractText(input, CmsEncoder.ENCODING_ISO_8859_1);      
-        assertEquals("null input should generate null output", input, result);
-        
-        input = "   \t\r\n  ";
-        result = CmsHtmlExtractor.extractText(input, CmsEncoder.ENCODING_ISO_8859_1);      
-        assertEquals("Whitespace only input should generate empty String output", "", result);
     }
 }

@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -14,12 +14,12 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * Lesser General Public License for more details.
  *
- * For further information about Alkacon Software GmbH, please see the
- * company website: http://www.alkacon.com
+ * For further information about Alkacon Software GmbH & Co. KG, please see the
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -29,12 +29,11 @@ package org.opencms.widgets;
 
 import org.opencms.i18n.CmsMessageContainer;
 import org.opencms.main.CmsException;
-import org.opencms.workplace.CmsWidgetDialogParameter;
 
 /**
  * Describes errors that occur in the context of the OpenCms widgets.<p>
- * 
- * @since 6.0.0 
+ *
+ * @since 6.0.0
  */
 public class CmsWidgetException extends CmsException {
 
@@ -42,25 +41,25 @@ public class CmsWidgetException extends CmsException {
     private static final long serialVersionUID = -7003923645953106868L;
 
     /** The widget that caused the error. */
-    private transient CmsWidgetDialogParameter m_widget;
+    private transient Object m_widget;
 
     /**
      * Creates a new localized Exception.<p>
-     * 
+     *
      * @param container the localized message container to use
      */
     public CmsWidgetException(CmsMessageContainer container) {
 
-        this(container, (CmsWidgetDialogParameter)null);
+        this(container, null, null);
     }
 
     /**
      * Creates a new localized Exception.<p>
-     * 
+     *
      * @param container the localized message container to use
      * @param widget the widget that caused the error
      */
-    public CmsWidgetException(CmsMessageContainer container, CmsWidgetDialogParameter widget) {
+    public CmsWidgetException(CmsMessageContainer container, Object widget) {
 
         super(container);
         m_widget = widget;
@@ -68,7 +67,7 @@ public class CmsWidgetException extends CmsException {
 
     /**
      * Creates a new localized Exception that also containes a root cause.<p>
-     * 
+     *
      * @param container the localized message container to use
      * @param cause the Exception root cause
      */
@@ -79,12 +78,12 @@ public class CmsWidgetException extends CmsException {
 
     /**
      * Creates a new localized Exception that also containes a root cause.<p>
-     * 
+     *
      * @param container the localized message container to use
      * @param cause the Exception root cause
      * @param widget the widget that caused the error
      */
-    public CmsWidgetException(CmsMessageContainer container, Throwable cause, CmsWidgetDialogParameter widget) {
+    public CmsWidgetException(CmsMessageContainer container, Throwable cause, Object widget) {
 
         super(container, cause);
         m_widget = widget;
@@ -109,7 +108,7 @@ public class CmsWidgetException extends CmsException {
      *
      * @return the widget that caused the error
      */
-    public CmsWidgetDialogParameter getWidget() {
+    public Object getWidget() {
 
         return m_widget;
     }

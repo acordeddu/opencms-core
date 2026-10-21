@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -14,12 +14,12 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * Lesser General Public License for more details.
  *
- * For further information about Alkacon Software GmbH, please see the
- * company website: http://www.alkacon.com
+ * For further information about Alkacon Software GmbH & Co. KG, please see the
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -27,10 +27,11 @@
 
 package org.opencms.workplace.editors;
 
+import org.opencms.ade.contenteditor.CmsWidgetUtil;
+import org.opencms.file.CmsObject;
 import org.opencms.main.CmsLog;
 import org.opencms.widgets.I_CmsWidget;
 import org.opencms.widgets.Messages;
-import org.opencms.xml.CmsXmlException;
 import org.opencms.xml.content.I_CmsXmlContentValueVisitor;
 import org.opencms.xml.types.I_CmsXmlContentValue;
 
@@ -43,12 +44,12 @@ import java.util.Map;
 import org.apache.commons.logging.Log;
 
 /**
- * Visitor implementation that collects the different widgets for all visited values and all widgets for the found values.<p> 
- * 
- * This implementation is needed when creating the html output of the xmlcontent editor 
+ * Visitor implementation that collects the different widgets for all visited values and all widgets for the found values.<p>
+ *
+ * This implementation is needed when creating the html output of the xmlcontent editor
  * {@link org.opencms.workplace.editors.CmsXmlContentEditor}.<p>
- * 
- * @since 6.0.0 
+ *
+ * @since 6.0.0
  */
 public class CmsXmlContentWidgetVisitor implements I_CmsXmlContentValueVisitor {
 
@@ -64,30 +65,38 @@ public class CmsXmlContentWidgetVisitor implements I_CmsXmlContentValueVisitor {
     /** The values corresponding to the found widgets. */
     private Map<String, I_CmsXmlContentValue> m_values;
 
+    /** The CMS context. */
+    private CmsObject m_cms;
+
     /** The widgets found in the XML content. */
     private Map<String, I_CmsWidget> m_widgets;
 
     /**
-     * Creates a new widget collector node visitor.<p> 
+     * Creates a new widget collector node visitor.<p>
+     *
+     * @param cms the CMS context
      */
-    public CmsXmlContentWidgetVisitor() {
+    public CmsXmlContentWidgetVisitor(CmsObject cms) {
 
+        m_cms = cms;
         initialize(null);
     }
 
     /**
-     * Creates a new widget collector node visitor.<p> 
-     * 
+     * Creates a new widget collector node visitor.<p>
+     *
+     * @param cms the CMS context
      * @param locale the Locale to get the widgets from
      */
-    public CmsXmlContentWidgetVisitor(Locale locale) {
+    public CmsXmlContentWidgetVisitor(CmsObject cms, Locale locale) {
 
+        m_cms = cms;
         initialize(locale);
     }
 
     /**
      * Returns the locale to get the widgets from.<p>
-     * 
+     *
      * @return the locale to get the widgets from
      */
     public Locale getLocale() {
@@ -97,19 +106,19 @@ public class CmsXmlContentWidgetVisitor implements I_CmsXmlContentValueVisitor {
 
     /**
      * Returns the unique widgets that were found in the content.<p>
-     * 
+     *
      * @return the unique widgets that were found in the content
      */
-    public List getUniqueWidgets() {
+    public List<I_CmsWidget> getUniqueWidgets() {
 
         return m_uniqueWidgets;
     }
 
     /**
      * Returns all simple values that were found in the content.<p>
-     * 
+     *
      * The map key is the complete xpath of the value.<p>
-     * 
+     *
      * @return all simple values that were found in the content
      */
     public Map<String, I_CmsXmlContentValue> getValues() {
@@ -119,9 +128,9 @@ public class CmsXmlContentWidgetVisitor implements I_CmsXmlContentValueVisitor {
 
     /**
      * Returns all widgets that were found in the content.<p>
-     * 
+     *
      * The map key is the complete xpath of the corresponding value.<p>
-     * 
+     *
      * @return all widgets that were found in the content
      */
     public Map<String, I_CmsWidget> getWidgets() {
@@ -135,9 +144,10 @@ public class CmsXmlContentWidgetVisitor implements I_CmsXmlContentValueVisitor {
     public void visit(I_CmsXmlContentValue value) {
 
         if (LOG.isDebugEnabled()) {
-            LOG.debug(org.opencms.workplace.editors.Messages.get().getBundle().key(
-                org.opencms.workplace.editors.Messages.LOG_VISITING_1,
-                value.getPath()));
+            LOG.debug(
+                org.opencms.workplace.editors.Messages.get().getBundle().key(
+                    org.opencms.workplace.editors.Messages.LOG_VISITING_1,
+                    value.getPath()));
         }
 
         if (value.isSimpleType()) {
@@ -146,18 +156,17 @@ public class CmsXmlContentWidgetVisitor implements I_CmsXmlContentValueVisitor {
             if ((useLocale && (value.getLocale().equals(getLocale()))) || (!useLocale)) {
                 try {
                     // get widget for value
-                    I_CmsWidget widget = value.getContentDefinition().getContentHandler().getWidget(value);
+                    I_CmsWidget widget = CmsWidgetUtil.collectWidgetInfo(m_cms, value).getWidget();
                     if (!m_uniqueWidgets.contains(widget)) {
                         m_uniqueWidgets.add(widget);
                     }
                     m_widgets.put(value.getPath(), widget);
                     m_values.put(value.getPath(), value);
                     if (LOG.isDebugEnabled()) {
-                        LOG.debug(Messages.get().getBundle().key(
-                            Messages.LOG_DEBUG_WIDGETCOLLECTOR_ADD_1,
-                            value.getPath()));
+                        LOG.debug(
+                            Messages.get().getBundle().key(Messages.LOG_DEBUG_WIDGETCOLLECTOR_ADD_1, value.getPath()));
                     }
-                } catch (CmsXmlException e) {
+                } catch (Exception e) {
                     // should usually not happen
                     if (LOG.isErrorEnabled()) {
                         LOG.error(Messages.get().getBundle().key(Messages.ERR_WIDGETCOLLECTOR_ADD_1, value), e);
@@ -168,8 +177,8 @@ public class CmsXmlContentWidgetVisitor implements I_CmsXmlContentValueVisitor {
     }
 
     /**
-     * Initializes the necessary members of the collector.<p> 
-     * 
+     * Initializes the necessary members of the collector.<p>
+     *
      * @param locale the Locale to get the widgets from
      */
     private void initialize(Locale locale) {

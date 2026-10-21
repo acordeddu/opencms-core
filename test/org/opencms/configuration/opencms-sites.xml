@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE opencms SYSTEM "http://www.opencms.org/dtd/6.0/opencms-sites.dtd">
+
+<opencms>
+	<sites>
+		<workplace-server sslmode="no">http://localhost:8080</workplace-server>
+		<default-uri>/sites/default/</default-uri>
+		<oldStyleSecureServer>true</oldStyleSecureServer>
+		<site server="http://localhost:8080" uri="/sites/default/" position="10.0" webserver="true" sslmode="secure-server" subsiteSelection="true">
+			<secure server="http://www.mysecureserver.com" exclusive="true" error="true"/>	
+            <parameters>
+            	<param name="test1">test1</param>
+              	<param name="test2">test2</param>
+            </parameters> 	
+            <alias server="http://www.aliasserver.com" redirect="false"/>              			
+            <alias server="http://www.yetanotheraliasserver.com" redirect="false"/>			
+		</site>
+        <site server="http://other.localhost:8080" uri="/sites/other/" position="10.0" webserver="true" sslmode="secure-server" subsiteSelection="true">
+            <alias server="http://blah.localhost:8080" redirect="false" offset="500"  />
+            <alias server="http://temporary.localhost:8080" redirect="true"  />
+            <alias server="http://permanent.localhost:8080" redirect="permanent"  />
+            <alternative-site-root uri="/sites/foobar" title-suffix="alternative">
+                <path>/foobar-folder1</path>
+                <path>/foobar-folder2</path>
+            </alternative-site-root>
+        </site>
+	</sites>
+</opencms>

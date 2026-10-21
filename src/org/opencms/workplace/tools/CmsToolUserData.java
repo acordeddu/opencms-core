@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -14,12 +14,12 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * Lesser General Public License for more details.
  *
- * For further information about Alkacon Software GmbH, please see the
- * company website: http://www.alkacon.com
+ * For further information about Alkacon Software GmbH & Co. KG, please see the
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -33,16 +33,16 @@ import java.util.Map;
 /**
  * Store for some administration view parameters,
  * for each user, used by the <code>{@link CmsToolManager}</code>.<p>
- * 
- * @since 6.0.0 
+ *
+ * @since 6.0.0
  */
 public class CmsToolUserData {
 
     /** base tool for the user, root-based. */
-    private Map m_baseTools;
+    private Map<String, String> m_baseTools;
 
     /** Current used tool paths, root-based. */
-    private Map m_currentToolPaths;
+    private Map<String, String> m_currentToolPaths;
 
     /** root key for the user. */
     private String m_rootKey;
@@ -52,32 +52,32 @@ public class CmsToolUserData {
      */
     public CmsToolUserData() {
 
-        m_baseTools = new HashMap();
-        m_currentToolPaths = new HashMap();
+        m_baseTools = new HashMap<String, String>();
+        m_currentToolPaths = new HashMap<String, String>();
     }
 
     /**
      * Returns the base tool.<p>
      *
      * @param rootKey the tool root
-     * 
+     *
      * @return the base tool
      */
     public String getBaseTool(String rootKey) {
 
-        return (String)m_baseTools.get(rootKey);
+        return m_baseTools.get(rootKey);
     }
 
     /**
      * Returns the current tool path.<p>
      *
      * @param rootKey the tool root
-     * 
+     *
      * @return the current tool path
      */
     public String getCurrentToolPath(String rootKey) {
 
-        return (String)m_currentToolPaths.get(rootKey);
+        return m_currentToolPaths.get(rootKey);
     }
 
     /**

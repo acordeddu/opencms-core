@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -14,34 +14,34 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * Lesser General Public License for more details.
  *
- * For further information about Alkacon Software GmbH, please see the
- * company website: http://www.alkacon.com
+ * For further information about Alkacon Software GmbH & Co. KG, please see the
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
- * 
+ *
  * This file is based on:
  * org.json.XMLTokener
  * from the JSON in Java implementation.
- * 
+ *
  * Copyright (c) 2002 JSON.org
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
  * in the Software without restriction, including without limitation the rights
  * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
  * copies of the Software, and to permit persons to whom the Software is
  * furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included in all
  * copies or substantial portions of the Software.
- * 
+ *
  * The Software shall be used for Good, not Evil.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -56,27 +56,17 @@ package org.opencms.json;
 /**
  * The XMLTokener extends the JSONTokener to provide additional methods
  * for the parsing of XML texts.<p>
- * 
+ *
  */
 public class XMLTokener extends JSONTokener {
 
     /** The table of ENTITY values. It initially contains Character values for
      * amp, apos, gt, lt, quot.
      */
-    public static final java.util.HashMap ENTITY;
-
-    /**
-     * Construct an XMLTokener from a string.<p>
-     * 
-     * @param s a source string
-     */
-    public XMLTokener(String s) {
-
-        super(s);
-    }
+    public static final java.util.HashMap<String, Character> ENTITY;
 
     static {
-        ENTITY = new java.util.HashMap(8);
+        ENTITY = new java.util.HashMap<String, Character>(8);
         ENTITY.put("amp", XML.AMP);
         ENTITY.put("apos", XML.APOS);
         ENTITY.put("gt", XML.GT);
@@ -85,8 +75,18 @@ public class XMLTokener extends JSONTokener {
     }
 
     /**
+     * Construct an XMLTokener from a string.<p>
+     *
+     * @param s a source string
+     */
+    public XMLTokener(String s) {
+
+        super(s);
+    }
+
+    /**
      * Get the text in the CDATA block.<p>
-     * 
+     *
      * @return the string up to the <code>]]&gt;</code>
      * @throws JSONException if the <code>]]&gt;</code> is not found
      */
@@ -102,7 +102,7 @@ public class XMLTokener extends JSONTokener {
             }
             sb.append(c);
             i = sb.length() - 3;
-            if (i >= 0 && sb.charAt(i) == ']' && sb.charAt(i + 1) == ']' && sb.charAt(i + 2) == '>') {
+            if ((i >= 0) && (sb.charAt(i) == ']') && (sb.charAt(i + 1) == ']') && (sb.charAt(i + 2) == '>')) {
                 sb.setLength(i);
                 return sb.toString();
             }
@@ -111,11 +111,11 @@ public class XMLTokener extends JSONTokener {
 
     /**
      * Get the next XML outer token, trimming whitespace.<p>
-     * 
-     * There are two kinds of tokens: the '<' character which begins a markup tag, and the content
+     *
+     * There are two kinds of tokens: the '&lt;' character which begins a markup tag, and the content
      * text between markup tags.<p>
      *
-     * @return  a string, or a '<' Character, or null if there is no more source text
+     * @return  a string, or a '&lt;' Character, or null if there is no more source text
      * @throws JSONException if something goes wrong
      */
     public Object nextContent() throws JSONException {
@@ -133,7 +133,7 @@ public class XMLTokener extends JSONTokener {
         }
         sb = new StringBuffer();
         for (;;) {
-            if (c == '<' || c == 0) {
+            if ((c == '<') || (c == 0)) {
                 back();
                 return sb.toString().trim();
             }
@@ -149,7 +149,7 @@ public class XMLTokener extends JSONTokener {
     /**
      * Return the next ENTITY. These entities are translated to Characters:
      *     <code>&amp;  &apos;  &gt;  &lt;  &quot;</code>.<p>
-     *     
+     *
      * @param a an ampersand character
      * @return  a Character or an entity String if the entity is not recognized
      * @throws JSONException if missing ';' in XML entity
@@ -159,7 +159,7 @@ public class XMLTokener extends JSONTokener {
         StringBuffer sb = new StringBuffer();
         for (;;) {
             char c = next();
-            if (Character.isLetterOrDigit(c) || c == '#') {
+            if (Character.isLetterOrDigit(c) || (c == '#')) {
                 sb.append(Character.toLowerCase(c));
             } else if (c == ';') {
                 break;
@@ -173,10 +173,10 @@ public class XMLTokener extends JSONTokener {
     }
 
     /**
-     * Returns the next XML meta token. This is used for skipping over <!...>
-     * and <?...?> structures.<p>
-     * 
-     * @return syntax characters (<code>< > / = ! ?</code>) are returned as
+     * Returns the next XML meta token. This is used for skipping over &lt;!...&gt;
+     * and &lt;?...?&gt; structures.<p>
+     *
+     * @return syntax characters (<code>&lt; &gt; / = ! ?</code>) are returned as
      *  Character, and strings and names are returned as Boolean. We don't care
      *  what the values actually are
      * @throws JSONException if a string is not properly closed or if the XML
@@ -242,12 +242,12 @@ public class XMLTokener extends JSONTokener {
 
     /**
      * Get the next XML Token.<p>
-     * 
+     *
      * These tokens are found inside of angle
      * brackets. It may be one of these characters: <code>/ > = ! ?</code> or it
      * may be a string wrapped in single quotes or double quotes, or it may be a
      * name.<p>
-     * 
+     *
      * @return a string or a Character
      * @throws JSONException if the XML is not well formed
      */
@@ -275,7 +275,7 @@ public class XMLTokener extends JSONTokener {
             case '?':
                 return XML.QUEST;
 
-                // Quoted string
+            // Quoted string
 
             case '"':
             case '\'':
@@ -330,9 +330,9 @@ public class XMLTokener extends JSONTokener {
 
     /**
      * Skip characters until past the requested string.<p>
-     * 
+     *
      * If it is not found, we are left at the end of the source with a result of false.<p>
-     * 
+     *
      * @param to a string to skip past
      * @return the truth
      * @throws JSONException if something goes wrong
@@ -366,7 +366,7 @@ public class XMLTokener extends JSONTokener {
             j = offset;
             b = true;
             /*
-             * Compare the circle buffer with the to string. 
+             * Compare the circle buffer with the to string.
              */
             for (i = 0; i < n; i += 1) {
                 if (circle[j] != to.charAt(i)) {
@@ -392,7 +392,7 @@ public class XMLTokener extends JSONTokener {
                 return false;
             }
             /*
-             * Shove the character in the circle buffer and advance the 
+             * Shove the character in the circle buffer and advance the
              * circle offset. The offset is mod n.
              */
             circle[offset] = c;

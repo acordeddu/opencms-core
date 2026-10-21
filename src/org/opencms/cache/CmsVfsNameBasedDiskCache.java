@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -15,11 +15,11 @@
  * Lesser General Public License for more details.
  *
  * For further information about Alkacon Software, please see the
- * company website: http://www.alkacon.com
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -28,50 +28,72 @@
 package org.opencms.cache;
 
 import org.opencms.file.CmsResource;
+import org.opencms.main.CmsLog;
 import org.opencms.util.CmsFileUtil;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.UnsupportedEncodingException;
+
+import org.apache.commons.codec.digest.DigestUtils;
+import org.apache.commons.logging.Log;
 
 /**
  * Implements a name based RFS file based disk cache, that handles parameter based versions of VFS files.<p>
- * 
- * This RFS cache operates on file names, plus a hash code calculated from 
- * {@link org.opencms.file.CmsResource#getDateLastModified()}, {@link org.opencms.file.CmsResource#getDateCreated()} 
- * and {@link org.opencms.file.CmsResource#getLength()}. Optional parameters can be appended to this name, 
- * which will be added as a second hash code. This way a file can have multiple versions based on different parameters.<p> 
- * 
- * This cache is usable for resources from the online AND the offline project at the same time, 
+ *
+ * This RFS cache operates on file names, plus a hash code calculated from
+ * {@link org.opencms.file.CmsResource#getDateLastModified()}, {@link org.opencms.file.CmsResource#getDateCreated()}
+ * and {@link org.opencms.file.CmsResource#getLength()}. Optional parameters can be appended to this name,
+ * which will be added as a second hash code. This way a file can have multiple versions based on different parameters.<p>
+ *
+ * This cache is usable for resources from the online AND the offline project at the same time,
  * because any change to a resource will result in a changed hash code. This means a resource changed in the offline
- * project will have a new hash code compared to the online project. If the resource is identical in the online and 
+ * project will have a new hash code compared to the online project. If the resource is identical in the online and
  * the offline project, the generated hash codes will be the same.<p>
- * 
+ *
  * @since 6.2.0
  */
 public class CmsVfsNameBasedDiskCache {
+
+    /** Logger instance for this class. */
+    private static final Log LOG = CmsLog.getLog(CmsVfsNameBasedDiskCache.class);
 
     /** The name of the cache base repository folder in the RFS. */
     private String m_rfsRepository;
 
     /**
      * Creates a new disk cache.<p>
-     * 
+     *
      * @param basepath the base path for the cache in the RFS
      * @param foldername the folder name for this cache, to be used a sub-folder for the base folder
      */
     public CmsVfsNameBasedDiskCache(String basepath, String foldername) {
 
-        // normalize the given folder name 
+        // normalize the given folder name
         m_rfsRepository = CmsFileUtil.normalizePath(basepath + foldername + File.separatorChar);
+    }
+
+    /**
+     * Creates the file for the requested disk cache entry and its parent folders.<p>
+     *
+     * @param rfsName the file RFS name to create
+     *
+     * @return the cache file
+     */
+    public File createCacheFile(String rfsName) {
+
+        return CmsVfsDiskCache.createFile(rfsName);
     }
 
     /**
      * Returns the content of the requested file in the disk cache, or <code>null</code> if the
      * file is not found in the cache, or is found but outdated.<p>
-     * 
-     * @param rfsName the file RFS name to look up in the cache 
-     * 
-     * @return the content of the requested file in the disk cache, or <code>null</code> 
+     *
+     * @param rfsName the file RFS name to look up in the cache
+     *
+     * @return the content of the requested file in the disk cache, or <code>null</code>
      */
     public byte[] getCacheContent(String rfsName) {
 
@@ -87,21 +109,61 @@ public class CmsVfsNameBasedDiskCache {
             }
         } catch (IOException e) {
             // unable to read content
+            LOG.debug("Unable to read file " + rfsName, e);
         }
         return null;
     }
 
     /**
-     * Returns the RFS name to use for caching the given VFS resource with parameters in the disk cache.<p>  
-     * 
+     * Returns the file for the requested disk cache entry, or <code>null</code> if the file is not available.<p>
+     *
+     * @param rfsName the file RFS name to look up in the cache
+     *
+     * @return the cache file, or <code>null</code>
+     */
+    public File getCacheFile(String rfsName) {
+
+        File f = new File(rfsName);
+        if (f.exists()) {
+            long age = f.lastModified();
+            if ((System.currentTimeMillis() - age) > 3600000) {
+                // file has not been touched for 1 hour, touch the file with the current date
+                f.setLastModified(System.currentTimeMillis());
+            }
+            return f;
+        }
+        return null;
+    }
+
+    /**
+     * Returns an input stream for the requested disk cache entry, or <code>null</code> if the file is not available.<p>
+     *
+     * @param rfsName the file RFS name to look up in the cache
+     *
+     * @return the cache input stream, or <code>null</code>
+     *
+     * @throws IOException in case of disk access errors
+     */
+    public InputStream getCacheInputStream(String rfsName) throws IOException {
+
+        File cacheFile = getCacheFile(rfsName);
+        if (cacheFile != null) {
+            return new FileInputStream(cacheFile);
+        }
+        return null;
+    }
+
+    /**
+     * Returns the RFS name to use for caching the given VFS resource with parameters in the disk cache.<p>
+     *
      * @param resource the VFS resource to generate the cache name for
      * @param parameters the parameters of the request to the VFS resource
-     * 
-     * @return the RFS name to use for caching the given VFS resource with parameters 
+     *
+     * @return the RFS name to use for caching the given VFS resource with parameters
      */
     public String getCacheName(CmsResource resource, String parameters) {
 
-        // calculate the base cache path for the resource        
+        // calculate the base cache path for the resource
         String rfsName = m_rfsRepository + resource.getRootPath();
         String extension = CmsFileUtil.getExtension(rfsName);
 
@@ -109,7 +171,7 @@ public class CmsVfsNameBasedDiskCache {
         StringBuffer buf = new StringBuffer(rfsName.length() + 24);
         buf.append(rfsName.substring(0, rfsName.length() - extension.length()));
 
-        // calculate a hash code that contains the resource DateLastModified, DateCreated and Length    
+        // calculate a hash code that contains the resource DateLastModified, DateCreated and Length
         StringBuffer ext = new StringBuffer(48);
         ext.append(resource.getDateLastModified());
         ext.append(';');
@@ -118,14 +180,19 @@ public class CmsVfsNameBasedDiskCache {
             ext.append(';');
             ext.append(resource.getLength());
         }
-        // append hash code to the result buffer 
+        // append hash code to the result buffer
         buf.append('_');
         buf.append(ext.toString().hashCode());
 
         // check if parameters are provided, if so add them as well
         if (parameters != null) {
             buf.append('_');
-            buf.append(parameters.hashCode());
+            try {
+                buf.append(DigestUtils.md5Hex(parameters.getBytes("UTF-8")));
+            } catch (UnsupportedEncodingException e) {
+                // can't happen
+                LOG.error(e.getLocalizedMessage(), e);
+            }
         }
 
         // finally append the extension from the original file name
@@ -135,7 +202,7 @@ public class CmsVfsNameBasedDiskCache {
 
     /**
      * Returns the absolute path of the cache repository in the RFS.<p>
-     * 
+     *
      * @return the absolute path of the cache repository in the RFS
      */
     public String getRepositoryPath() {
@@ -144,14 +211,43 @@ public class CmsVfsNameBasedDiskCache {
     }
 
     /**
-     * Saves the given file content in the disk cache.<p> 
-     * 
+     * Returns the the requested file is available within the cache.<p>
+     *
+     * @param rfsName the file name
+     *
+     * @return <code>true</code> if the file is available
+     */
+    public boolean hasCacheContent(String rfsName) {
+
+        File f = new File(rfsName);
+        if (f.exists()) {
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * Saves the given file content in the disk cache.<p>
+     *
      * @param rfsName the RFS name of the file to save the content in
      * @param content the content of the file to save
-     * 
+     *
      * @throws IOException in case of disk access errors
      */
     public void saveCacheFile(String rfsName, byte[] content) throws IOException {
+
+        CmsVfsDiskCache.saveFile(rfsName, content);
+    }
+
+    /**
+     * Saves the given input stream content in the disk cache.<p>
+     *
+     * @param rfsName the RFS name of the file to save the content in
+     * @param content the input stream to save
+     *
+     * @throws IOException in case of disk access errors
+     */
+    public void saveCacheFile(String rfsName, InputStream content) throws IOException {
 
         CmsVfsDiskCache.saveFile(rfsName, content);
     }

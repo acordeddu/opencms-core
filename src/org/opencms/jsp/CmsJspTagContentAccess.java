@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -14,12 +14,12 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * Lesser General Public License for more details.
  *
- * For further information about Alkacon Software GmbH, please see the
- * company website: http://www.alkacon.com
+ * For further information about Alkacon Software GmbH & Co. KG, please see the
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -43,18 +43,18 @@ import javax.servlet.jsp.JspTagException;
 import javax.servlet.jsp.tagext.Tag;
 
 /**
- * Used to access XML content item information from the current open <code>&lt;cms:contentload&gt;</code> 
+ * Used to access XML content item information from the current open <code>&lt;cms:contentload&gt;</code>
  * tag using JSP page context and the JSP EL.<p>
- * 
+ *
  * The tag will create an instance of a {@link CmsJspContentAccessBean} that is stored in the selected context.
  * Use the options provided by the bean to access the XML content directly.<p>
- * 
+ *
  * For example together with the JSTL, use this tag inside an open tag like this:<pre>
  * &lt;cms:contentload ... &gt;
  *     &lt;cms:contentaccess var="myVarName" val="myValueVarName" scope="page" /&gt;
  *     ... other code ...
  * &lt;/cms:contentload&gt;</pre>
- * 
+ *
  * @since 7.0.2
  */
 public class CmsJspTagContentAccess extends CmsJspScopedVarBodyTagSuport {
@@ -134,7 +134,7 @@ public class CmsJspTagContentAccess extends CmsJspScopedVarBodyTagSuport {
 
     /**
      * Returns the name for the optional attribute that provides direct access to the content value map.<p>
-     * 
+     *
      * @return the name for the optional attribute that provides direct access to the content value map
      */
     public String getVal() {
@@ -169,7 +169,7 @@ public class CmsJspTagContentAccess extends CmsJspScopedVarBodyTagSuport {
 
     /**
      * Sets the name for the optional attribute that provides direct access to the content value map.<p>
-     * 
+     *
      * @param val the name for the optional attribute that provides direct access to the content value map
      */
     public void setVal(String val) {

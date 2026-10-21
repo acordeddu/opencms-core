@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -15,11 +15,11 @@
  * Lesser General Public License for more details.
  *
  * For further information about Alkacon Software, please see the
- * company website: http://www.alkacon.com
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -39,7 +39,7 @@ import java.util.Map;
 
 /**
  * Oracle implementation to create the new tables for version 7 of OpenCms.<p>
- * 
+ *
  * @since 7.0.0
  */
 public class CmsUpdateDBNewTables extends org.opencms.setup.db.update7to8.CmsUpdateDBNewTables {
@@ -49,7 +49,7 @@ public class CmsUpdateDBNewTables extends org.opencms.setup.db.update7to8.CmsUpd
 
     /**
      * Constructor.<p>
-     * 
+     *
      * @throws IOException if the sql queries properties file could not be read
      */
     public CmsUpdateDBNewTables()
@@ -108,6 +108,19 @@ public class CmsUpdateDBNewTables extends org.opencms.setup.db.update7to8.CmsUpd
         elements.put("CMS_ONLINE_URLNAME_MAPPINGS", indexes);
         indexes.add("CREATE_INDEX_CMS_ONLINE_MAPPINGS_01_IDX");
         indexes.add("CREATE_INDEX_CMS_ONLINE_MAPPINGS_02_IDX");
+
+        indexes = new ArrayList<String>();
+        elements.put("CMS_ALIASES", indexes);
+        indexes.add("CMS_ALIASES_IDX_1");
+
+        indexes = new ArrayList<String>();
+        elements.put("CMS_USER_PUBLISH_LIST", indexes);
+        indexes.add("CMS_USERPUBLIST_IDX_01");
+        indexes.add("CMS_USERPUBLIST_IDX_02");
+
+        indexes = new ArrayList<String>();
+        elements.put("CMS_REWRITES", indexes);
+        indexes.add("CMS_REWRITES_IDX_01");
 
         Map<String, String> replacer = Collections.singletonMap("${indexTablespace}", indexTablespace);
         for (Map.Entry<String, List<String>> entry : elements.entrySet()) {

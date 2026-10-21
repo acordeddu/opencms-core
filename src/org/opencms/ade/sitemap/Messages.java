@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -14,12 +14,12 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * Lesser General Public License for more details.
  *
- * For further information about Alkacon Software GmbH, please see the
- * company website: http://www.alkacon.com
+ * For further information about Alkacon Software GmbH & Co. KG, please see the
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -31,14 +31,29 @@ import org.opencms.i18n.A_CmsMessageBundle;
 import org.opencms.i18n.I_CmsMessageBundle;
 
 /**
- * Convenience class to access the localized messages of this OpenCms package.<p> 
- * 
- * @since 8.0.0 
+ * Convenience class to access the localized messages of this OpenCms package.<p>
+ *
+ * @since 8.0.0
  */
 public final class Messages extends A_CmsMessageBundle {
 
     /** Message constant for key in the resource bundle. */
+    public static final String ERR_ALIAS_DUPLICATE_ALIAS_PATH_0 = "ERR_ALIAS_DUPLICATE_ALIAS_PATH_0";
+
+    /** Message constant for key in the resource bundle. */
+    public static final String ERR_ALIAS_INVALID_ALIAS_PATH_0 = "ERR_ALIAS_INVALID_ALIAS_PATH_0";
+
+    /** Message constant for key in the resource bundle. */
+    public static final String ERR_ALIAS_RESOURCE_NOT_FOUND_0 = "ERR_ALIAS_RESOURCE_NOT_FOUND_0";
+
+    /** Message constant for key in the resource bundle. */
     public static final String ERR_CREATING_SUB_SITEMAP_WRONG_CONFIG_FILE_TYPE_2 = "ERR_CREATING_SUB_SITEMAP_WRONG_CONFIG_FILE_TYPE_2";
+
+    /** Message constant for key in the resource bundle. */
+    public static final String GUI_DEFAULT_DETAIL_PAGE_DESCRIPTION_0 = "GUI_DEFAULT_DETAIL_PAGE_DESCRIPTION_0";
+
+    /** Message constant for key in the resource bundle. */
+    public static final String GUI_DEFAULT_DETAIL_PAGE_TITLE_0 = "GUI_DEFAULT_DETAIL_PAGE_TITLE_0";
 
     /** Message constant for key in the resource bundle. */
     public static final String ERR_NO_FUNCTION_DETAIL_CONTAINER_1 = "ERR_NO_FUNCTION_DETAIL_CONTAINER_1";
@@ -50,10 +65,22 @@ public final class Messages extends A_CmsMessageBundle {
     public static final String GUI_EDITOR_TITLE_1 = "GUI_EDITOR_TITLE_1";
 
     /** Message constant for key in the resource bundle. */
+    public static final String GUI_NAVIGATION_LEVEL_SUBTITLE_0 = "GUI_NAVIGATION_LEVEL_SUBTITLE_0";
+
+    /** Message constant for key in the resource bundle. */
+    public static final String GUI_NAVIGATION_LEVEL_TITLE_0 = "GUI_NAVIGATION_LEVEL_TITLE_0";
+
+    /** Message constant for key in the resource bundle. */
+    public static final String GUI_REDIRECT_SUB_LEVEL_0 = "GUI_REDIRECT_SUB_LEVEL_0";
+
+    /** Message constant for key in the resource bundle. */
     public static final String GUI_REDIRECT_TARGET_LABEL_0 = "GUI_REDIRECT_TARGET_LABEL_0";
 
     /** Message constant for key in the resource bundle. */
     public static final String GUI_SITEMAP_NO_EDIT_0 = "GUI_SITEMAP_NO_EDIT_0";
+
+    /** Message constant for key in the resource bundle. */
+    public static final String GUI_VFS_PATH_0 = "GUI_VFS_PATH_0";
 
     /** Message constant for key in the resource bundle. */
     public static final String GUI_SITEMAP_NO_EDIT_ONLINE_0 = "GUI_SITEMAP_NO_EDIT_ONLINE_0";
@@ -74,7 +101,7 @@ public final class Messages extends A_CmsMessageBundle {
 
     /**
      * Returns an instance of this localized message accessor.<p>
-     * 
+     *
      * @return an instance of this localized message accessor
      */
     public static I_CmsMessageBundle get() {
@@ -84,7 +111,7 @@ public final class Messages extends A_CmsMessageBundle {
 
     /**
      * Returns the bundle name for this OpenCms package.<p>
-     * 
+     *
      * @return the bundle name for this OpenCms package
      */
     public String getBundleName() {

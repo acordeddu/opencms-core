@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -15,11 +15,11 @@
  * Lesser General Public License for more details.
  *
  * For further information about Alkacon Software, please see the
- * company website: http://www.alkacon.com
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -27,26 +27,27 @@
 
 package org.opencms.ade.upload;
 
-import org.opencms.ade.upload.shared.CmsUploadProgessInfo;
-import org.opencms.ade.upload.shared.CmsUploadProgessInfo.UPLOAD_STATE;
+import org.opencms.gwt.shared.CmsUploadProgessInfo;
+import org.opencms.gwt.shared.CmsUploadProgessInfo.UPLOAD_STATE;
 import org.opencms.main.CmsLog;
 import org.opencms.util.CmsUUID;
 
 import java.io.Serializable;
 
-import org.apache.commons.fileupload.ProgressListener;
+import org.apache.commons.fileupload2.core.ProgressListener;
 import org.apache.commons.logging.Log;
 
 /**
  * Provides the upload listener for the upload widget.<p>
- * 
- * @since 8.0.0 
+ *
+ * @since 8.0.0
  */
 public class CmsUploadListener implements ProgressListener, Serializable {
 
     /** The log object for this class. */
     private static final Log LOG = CmsLog.getLog(CmsUploadListener.class);
 
+    /** The serial version id. */
     private static final long serialVersionUID = -6431275569719042836L;
 
     /** The content length of the request (larger than the sum of file sizes). */
@@ -78,20 +79,20 @@ public class CmsUploadListener implements ProgressListener, Serializable {
 
     /**
      * The public constructor for the listener.<p>
-     * 
+     *
      * @param requestSize content length of the request (larger than the sum of file sizes)
      */
     public CmsUploadListener(int requestSize) {
 
         m_id = new CmsUUID();
-        m_contentLength = new Long(requestSize).longValue();
+        m_contentLength = Long.valueOf(requestSize).longValue();
         startWatcher();
     }
 
     /**
      * Sets the exception that should cancel the upload on the next update.<p>
-     * 
-     * @param e the exception 
+     *
+     * @param e the exception
      */
     public void cancelUpload(CmsUploadException e) {
 
@@ -100,7 +101,7 @@ public class CmsUploadListener implements ProgressListener, Serializable {
 
     /**
      * Returns the bytes transfered so far.<p>
-     * 
+     *
      * @return the bytes transfered so far
      */
     public long getBytesRead() {
@@ -110,7 +111,7 @@ public class CmsUploadListener implements ProgressListener, Serializable {
 
     /**
      * Returns the content length of the request (larger than the sum of file sizes).<p>
-     * 
+     *
      * @return the content length of the request (larger than the sum of file sizes)
      */
     public long getContentLength() {
@@ -130,7 +131,7 @@ public class CmsUploadListener implements ProgressListener, Serializable {
 
     /**
      * Returns the listeners UUID.<p>
-     * 
+     *
      * @return the listeners UUID
      */
     public CmsUUID getId() {
@@ -140,7 +141,7 @@ public class CmsUploadListener implements ProgressListener, Serializable {
 
     /**
      * Returns the current progress info of the upload.<p>
-     * 
+     *
      * @return the progress info
      */
     public CmsUploadProgessInfo getInfo() {
@@ -167,7 +168,7 @@ public class CmsUploadListener implements ProgressListener, Serializable {
      * <li>0 = no item so far
      * <li>1 = first item is being read, ...
      * </ul>
-
+     *
      * @return the number of the field, which is currently being read.
      */
     public int getItem() {
@@ -177,17 +178,17 @@ public class CmsUploadListener implements ProgressListener, Serializable {
 
     /**
      * Returns the percent done of the current upload.<p>
-     * 
+     *
      * @return the percent done of the current upload
      */
     public long getPercent() {
 
-        return m_contentLength != 0 ? m_bytesRead * 100 / m_contentLength : 0;
+        return m_contentLength != 0 ? (m_bytesRead * 100) / m_contentLength : 0;
     }
 
     /**
      * Returns <code>true</code> if the process has been canceled due to an error or by the user.<p>
-     * 
+     *
      * @return boolean<code>true</code> if the process has been canceled due to an error or by the user
      */
     public boolean isCanceled() {
@@ -250,8 +251,8 @@ public class CmsUploadListener implements ProgressListener, Serializable {
      * <li> slows down the upload process if it's configured
      * <li> stops the watcher if the upload has reached more than 100 percent
      * </ul>
-     * 
-     * @see org.apache.commons.fileupload.ProgressListener#update(long, long, int)
+     *
+     * This method implements the Commons FileUpload progress listener update callback.
      */
     public void update(long done, long total, int item) {
 
@@ -263,7 +264,7 @@ public class CmsUploadListener implements ProgressListener, Serializable {
         m_contentLength = total;
         m_item = item;
 
-        // If an other request has set an exception, it is thrown so the commons-fileupload's 
+        // If an other request has set an exception, it is thrown so the commons-fileupload's
         // parser stops and the connection is closed.
         if (isCanceled()) {
             m_exceptionTrhown = true;
@@ -293,10 +294,8 @@ public class CmsUploadListener implements ProgressListener, Serializable {
                 m_watcher = new CmsUploadTimeoutWatcher(this);
                 m_watcher.start();
             } catch (Exception e) {
-                LOG.info(Messages.get().getBundle().key(
-                    Messages.LOG_UPLOAD_CREATE_WATCH_DOG_2,
-                    getId(),
-                    e.getMessage()));
+                LOG.info(
+                    Messages.get().getBundle().key(Messages.LOG_UPLOAD_CREATE_WATCH_DOG_2, getId(), e.getMessage()));
             }
         }
     }

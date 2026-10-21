@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -15,11 +15,11 @@
  * Lesser General Public License for more details.
  *
  * For further information about Alkacon Software, please see the
- * company website: http://www.alkacon.com
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -33,24 +33,22 @@ import org.opencms.ade.sitemap.client.control.CmsSitemapController;
 import org.opencms.ade.sitemap.shared.CmsClientSitemapEntry;
 import org.opencms.gwt.client.ui.CmsConfirmDialog;
 import org.opencms.gwt.client.ui.I_CmsConfirmDialogHandler;
-import org.opencms.gwt.client.ui.css.I_CmsImageBundle;
 
 /**
  * Sitemap context menu merge entry.<p>
- * 
+ *
  * @since 8.0.0
  */
 public class CmsMergeMenuEntry extends A_CmsSitemapMenuEntry {
 
     /**
      * Constructor.<p>
-     * 
-     * @param hoverbar the hoverbar 
+     *
+     * @param hoverbar the hoverbar
      */
     public CmsMergeMenuEntry(CmsSitemapHoverbar hoverbar) {
 
         super(hoverbar);
-        setImageClass(I_CmsImageBundle.INSTANCE.contextMenuIcons().mergeSitemap());
         setLabel(Messages.get().key(Messages.GUI_HOVERBAR_MERGE_SUB_0));
         setActive(true);
     }
@@ -60,9 +58,8 @@ public class CmsMergeMenuEntry extends A_CmsSitemapMenuEntry {
      */
     public void execute() {
 
-        String sitePath = getHoverbar().getSitePath();
         final CmsSitemapController controller = getHoverbar().getController();
-        final CmsClientSitemapEntry entry = controller.getEntry(sitePath);
+        final CmsClientSitemapEntry entry = getHoverbar().getEntry();
         String confirmTitle = Messages.get().key(Messages.GUI_MERGE_SITEMAP_CONFIRM_TITLE_0);
         String confirmMessage = Messages.get().key(Messages.GUI_MERGE_SITEMAP_CONFIRM_TEXT_0);
         CmsConfirmDialog confirmDialog = new CmsConfirmDialog(confirmTitle, confirmMessage);
@@ -88,16 +85,15 @@ public class CmsMergeMenuEntry extends A_CmsSitemapMenuEntry {
     }
 
     /**
-     * @see org.opencms.ade.sitemap.client.hoverbar.A_CmsSitemapMenuEntry#onShow(org.opencms.ade.sitemap.client.hoverbar.CmsHoverbarShowEvent)
+     * @see org.opencms.ade.sitemap.client.hoverbar.A_CmsSitemapMenuEntry#onShow()
      */
     @Override
-    public void onShow(CmsHoverbarShowEvent event) {
+    public void onShow() {
 
-        if (CmsSitemapView.getInstance().isNavigationMode()) {
-            String sitePath = getHoverbar().getSitePath();
+        if (getHoverbar().getController().isEditable() && CmsSitemapView.getInstance().isNavigationMode()) {
             CmsSitemapController controller = getHoverbar().getController();
-            CmsClientSitemapEntry entry = controller.getEntry(sitePath);
-            boolean show = (entry != null) && entry.isSubSitemapType() && !controller.isRoot(sitePath);
+            CmsClientSitemapEntry entry = getHoverbar().getEntry();
+            boolean show = (entry != null) && entry.isSubSitemapType() && !controller.isRoot(entry.getSitePath());
             setVisible(show);
         } else {
             setVisible(false);

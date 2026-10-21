@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -15,11 +15,11 @@
  * Lesser General Public License for more details.
  *
  * For further information about Alkacon Software, please see the
- * company website: http://www.alkacon.com
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -36,7 +36,7 @@ import java.util.Set;
 
 /**
  * An object which represents search criteria for retrieving users.<p>
- * 
+ *
  * @since 8.0.0
  */
 public class CmsUserSearchParameters {
@@ -80,6 +80,9 @@ public class CmsUserSearchParameters {
 
     /** Indicates whether search should be case sensitive. */
     private boolean m_caseSensitive = true;
+
+    /** The email address to filter. */
+    private String m_email;
 
     /** Indicates whether only users which match the given group's OU should be returned. */
     private boolean m_filterByGroupOu;
@@ -128,8 +131,8 @@ public class CmsUserSearchParameters {
 
     /**
      * Adds a search key.<p>
-     * 
-     * @param key the search key to add 
+     *
+     * @param key the search key to add
      */
     public void addSearch(SearchKey key) {
 
@@ -138,8 +141,8 @@ public class CmsUserSearchParameters {
 
     /**
      * Returns the list of OUs from which users may be returned.<p>
-     * 
-     * @return a list of OUs 
+     *
+     * @return a list of OUs
      */
     public List<CmsOrganizationalUnit> getAllowedOus() {
 
@@ -148,8 +151,8 @@ public class CmsUserSearchParameters {
 
     /**
      * Returns the collection of groups such that returned users must be in at least one of them.<p>
-     * 
-     * @return a collection of groups 
+     *
+     * @return a collection of groups
      */
     public Collection<CmsGroup> getAnyGroups() {
 
@@ -157,9 +160,19 @@ public class CmsUserSearchParameters {
     }
 
     /**
+     * Gets the email address to search for.
+     *
+     * @return the email address to search for
+     */
+    public String getEmail() {
+
+        return m_email;
+    }
+
+    /**
      * Returns the flags to filter by.<p>
-     * 
-     * @return the flags 
+     *
+     * @return the flags
      */
     public int getFlags() {
 
@@ -168,8 +181,8 @@ public class CmsUserSearchParameters {
 
     /**
      * Returns the group such that users which are not in the group will be filtered out.<p>
-     * 
-     * @return a group 
+     *
+     * @return a group
      */
     public CmsGroup getGroup() {
 
@@ -178,8 +191,8 @@ public class CmsUserSearchParameters {
 
     /**
      * Returns the groups whose users may not appear in the search results.<p>
-     * 
-     * @return the groups whose users may not appear in the search results 
+     *
+     * @return the groups whose users may not appear in the search results
      */
     public Collection<CmsGroup> getNotAnyGroups() {
 
@@ -188,8 +201,8 @@ public class CmsUserSearchParameters {
 
     /**
      * Returns the group such that users not in that group will be filtered out.<p>
-     * 
-     * @return a group 
+     *
+     * @return a group
      */
     public CmsGroup getNotGroup() {
 
@@ -198,8 +211,8 @@ public class CmsUserSearchParameters {
 
     /**
      * Gets the organizational unit to which a user must belong.
-     * 
-     * @return the organizational unit 
+     *
+     * @return the organizational unit
      */
     public CmsOrganizationalUnit getOrganizationalUnit() {
 
@@ -208,28 +221,28 @@ public class CmsUserSearchParameters {
 
     /**
      * Returns the results page index.<p>
-     * 
-     * @return the results page index 
+     *
+     * @return the results page index
      */
     public int getPage() {
 
         return m_page;
     }
 
-    /** 
+    /**
      * Returns the maximum results page size.<p>
-     * 
-     * @return the page size 
+     *
+     * @return the page size
      */
     public int getPageSize() {
 
         return m_pageSize;
     }
 
-    /** 
+    /**
      * Returns the search term.
-     * 
-     * @return the search term 
+     *
+     * @return the search term
      */
     public String getSearchFilter() {
 
@@ -238,8 +251,8 @@ public class CmsUserSearchParameters {
 
     /**
      * Returns the set of search keys.<p>
-     * 
-     * @return the set of search keys 
+     *
+     * @return the set of search keys
      */
     public Set<SearchKey> getSearchKeys() {
 
@@ -248,8 +261,8 @@ public class CmsUserSearchParameters {
 
     /**
      * Returns the bit mask to be used for ordering by flags.<p>
-     * 
-     * @return the bit mask to be used for ordering by flags 
+     *
+     * @return the bit mask to be used for ordering by flags
      */
     public int getSortFlags() {
 
@@ -258,8 +271,8 @@ public class CmsUserSearchParameters {
 
     /**
      * Returns the key indicating by which column the results should be sorted.<p>
-     * 
-     * @return the sort key 
+     *
+     * @return the sort key
      */
     public SortKey getSortKey() {
 
@@ -267,9 +280,9 @@ public class CmsUserSearchParameters {
     }
 
     /**
-     * If true, the results should be sorted in ascending order, else in descending order.<p> 
-     * 
-     * @return the flag indicating the sort order 
+     * If true, the results should be sorted in ascending order, else in descending order.<p>
+     *
+     * @return the flag indicating the sort order
      */
     public boolean isAscending() {
 
@@ -278,10 +291,10 @@ public class CmsUserSearchParameters {
 
     /**
      * Returns true if the search filter should be case sensitive.<p>
-     * 
+     *
      * The default  value is <code>true</code>.
-     * 
-     * @return true if the search filter should be case sensitive 
+     *
+     * @return true if the search filter should be case sensitive
      */
     public boolean isCaseSensitive() {
 
@@ -290,8 +303,8 @@ public class CmsUserSearchParameters {
 
     /**
      * Returns true if users of different OUs than the search group's OU will be filtered out.<p>
-     * 
-     * @return the "filter by group OU" flag 
+     *
+     * @return the "filter by group OU" flag
      */
     public boolean isFilterByGroupOu() {
 
@@ -300,8 +313,8 @@ public class CmsUserSearchParameters {
 
     /**
      * Returns true if non-core users should be filtered out.<p>
-     *  
-     * @return true if non-core users should be filtered out 
+     *
+     * @return true if non-core users should be filtered out
      */
     public boolean isFilterCore() {
 
@@ -310,7 +323,7 @@ public class CmsUserSearchParameters {
 
     /**
      * Return true if core users should not be filtered out if filtering by flag.<p>
-     * 
+     *
      * @return true if core users should not be filtered out if filtering by flag.<p>
      */
     public boolean keepCoreUsers() {
@@ -320,8 +333,8 @@ public class CmsUserSearchParameters {
 
     /**
      * Returns true if sub-OU users will be returned in the result.<p>
-     * 
-     * @return true if sub-OU users will be returned in the result 
+     *
+     * @return true if sub-OU users will be returned in the result
      */
     public boolean recursiveOrgUnits() {
 
@@ -330,18 +343,18 @@ public class CmsUserSearchParameters {
 
     /**
      * Sets the OUs from which users should be returned.<p>
-     * 
-     * @param ous a list of OUs 
+     *
+     * @param ous a list of OUs
      */
     public void setAllowedOus(List<CmsOrganizationalUnit> ous) {
 
         m_allowedOus = ous;
     }
 
-    /** 
+    /**
      * Sets the groups such that returned users must be in at least one of them.<p>
-     * 
-     * @param anyGroups the groups 
+     *
+     * @param anyGroups the groups
      */
     public void setAnyGroups(Collection<CmsGroup> anyGroups) {
 
@@ -350,7 +363,7 @@ public class CmsUserSearchParameters {
 
     /**
      * Sets the case sensitivity for the search filter.<p>
-     * 
+     *
      * @param caseSensitive if true, the search filter will be case sensitive.
      */
     public void setCaseSensitive(boolean caseSensitive) {
@@ -360,10 +373,10 @@ public class CmsUserSearchParameters {
 
     /**
      * Sets the "filter by group OU" flag.<p>
-     * 
+     *
      * If the flag is true, users of a different OU than the search group's OU will be filtered out.<p>
-     * 
-     * @param filterByGroupOu the "filter by group OU" flag 
+     *
+     * @param filterByGroupOu the "filter by group OU" flag
      */
     public void setFilterByGroupOu(boolean filterByGroupOu) {
 
@@ -372,18 +385,28 @@ public class CmsUserSearchParameters {
 
     /**
      * Enables or disables the filtering of non-core users.<p>
-     * 
-     * @param filterCore if true, non-core users will be filtered out 
+     *
+     * @param filterCore if true, non-core users will be filtered out
      */
     public void setFilterCore(boolean filterCore) {
 
         m_filterCore = filterCore;
     }
 
-    /** 
+    /**
+     * Sets the email address to search for.
+     *
+     * @param email the email address to search for
+     */
+    public void setFilterEmail(String email) {
+
+        m_email = email;
+    }
+
+    /**
      * Sets the flags to filter by.<p>
-     * 
-     * @param flags the flags 
+     *
+     * @param flags the flags
      */
     public void setFlags(int flags) {
 
@@ -392,8 +415,8 @@ public class CmsUserSearchParameters {
 
     /**
      * Sets the group such that users which are not in the group will be filtered out.<p>
-     * 
-     * @param group a group 
+     *
+     * @param group a group
      */
     public void setGroup(CmsGroup group) {
 
@@ -402,8 +425,8 @@ public class CmsUserSearchParameters {
 
     /**
      * If this is set to true, core users will not be filtered out if filtering by flag.<p>
-     * 
-     * @param keepCoreUsers true if core users should not be filtered out when filtering by flag 
+     *
+     * @param keepCoreUsers true if core users should not be filtered out when filtering by flag
      */
     public void setKeepCoreUsers(boolean keepCoreUsers) {
 
@@ -412,18 +435,18 @@ public class CmsUserSearchParameters {
 
     /**
      * Sets the groups whose users may not appear in the search results.<p>
-     * 
-     * @param groups the groups whose users may not appear in the search results 
+     *
+     * @param groups the groups whose users may not appear in the search results
      */
     public void setNotAnyGroups(Collection<CmsGroup> groups) {
 
         m_notAnyGroups = groups;
     }
 
-    /** 
+    /**
      * Sets the group such that users not in that group will be filtered out.<p>
-     *   
-     * @param group a group 
+     *
+     * @param group a group
      */
     public void setNotGroup(CmsGroup group) {
 
@@ -432,7 +455,7 @@ public class CmsUserSearchParameters {
 
     /**
      * Sets the organizational unit to which a user must belong.<p>
-     *  
+     *
      *  @param ou the organizational unit
      */
     public void setOrganizationalUnit(CmsOrganizationalUnit ou) {
@@ -442,9 +465,9 @@ public class CmsUserSearchParameters {
 
     /**
      * Sets the paging parameters.<p>
-     * 
-     * @param pageSize the maximum page size 
-     * @param page the page index 
+     *
+     * @param pageSize the maximum page size
+     * @param page the page index
      */
     public void setPaging(int pageSize, int page) {
 
@@ -452,10 +475,10 @@ public class CmsUserSearchParameters {
         m_page = page;
     }
 
-    /** 
+    /**
      * Enables fetching of users of sub-OUs (if an OU has been set).<p>
-     * 
-     * @param recursive if true, enable sub-OU users in the result 
+     *
+     * @param recursive if true, enable sub-OU users in the result
      */
     public void setRecursiveOrgUnits(boolean recursive) {
 
@@ -464,8 +487,8 @@ public class CmsUserSearchParameters {
 
     /**
      * Sets the search term.<p>
-     * 
-     * @param searchFilter the search term 
+     *
+     * @param searchFilter the search term
      */
     public void setSearchFilter(String searchFilter) {
 
@@ -474,8 +497,8 @@ public class CmsUserSearchParameters {
 
     /**
      * Sets the bit mask used when the results should be ordered by flags.<p>
-     * 
-     * @param sortFlags the bit mask for ordering by flags 
+     *
+     * @param sortFlags the bit mask for ordering by flags
      */
     public void setSortFlags(int sortFlags) {
 
@@ -484,8 +507,8 @@ public class CmsUserSearchParameters {
 
     /**
      * Sets the sort key and order.<p>
-     * 
-     * @param key the sort key 
+     *
+     * @param key the sort key
      * @param ascending the sort order (ascending if true, descending if false)
      */
     public void setSorting(SortKey key, boolean ascending) {

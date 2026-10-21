@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -14,12 +14,12 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * Lesser General Public License for more details.
  *
- * For further information about Alkacon Software GmbH, please see the
- * company website: http://www.alkacon.com
+ * For further information about Alkacon Software GmbH & Co. KG, please see the
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -28,70 +28,42 @@
 package org.opencms.jsp.decorator;
 
 import org.opencms.i18n.CmsEncoder;
-import org.opencms.test.OpenCmsTestCase;
-import org.opencms.test.OpenCmsTestProperties;
+import org.opencms.test.OpenCmsTestRunner;
 
 import java.util.Locale;
 
-import junit.extensions.TestSetup;
-import junit.framework.Test;
-import junit.framework.TestSuite;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.MethodOrderer;
+import org.junit.jupiter.api.Order;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInfo;
+import org.junit.jupiter.api.TestMethodOrder;
 
 /**
  * Tests for the decoration postprocessor.<p>
- * 
+ *
  * @since 6.1.3
  */
-public class TestDecorator extends OpenCmsTestCase {
+@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
+public class TestDecorator extends OpenCmsTestRunner {
 
     /**
-     * Default JUnit constructor.<p>
-     * 
-     * @param arg0 JUnit parameters
+     * @see org.opencms.test.OpenCmsTestRunner#$openCmsSetUp(org.junit.jupiter.api.TestInfo)
      */
-    public TestDecorator(String arg0) {
+    @Override
+    @BeforeAll
+    public void $openCmsSetUp(TestInfo testInfo) {
 
-        super(arg0);
-    }
-
-    /**
-     * Test suite for this test class.<p>
-     * 
-     * @return the test suite
-     */
-    public static Test suite() {
-
-        OpenCmsTestProperties.initialize(org.opencms.test.AllTests.TEST_PROPERTIES_PATH);
-
-        TestSuite suite = new TestSuite();
-        suite.setName(TestDecorator.class.getName());
-
-        suite.addTest(new TestDecorator("testDecoratorBasics"));
-        suite.addTest(new TestDecorator("testDecoratorConfiguration"));
-
-        TestSetup wrapper = new TestSetup(suite) {
-
-            @Override
-            protected void setUp() {
-
-                setupOpenCms("decoration", "/sites/default/");
-            }
-
-            @Override
-            protected void tearDown() {
-
-                removeOpenCms();
-            }
-        };
-
-        return wrapper;
+        setupOpenCms(testInfo, "decoration", "/sites/default/");
     }
 
     /**
      * Tests the decoration postprocessor.<p>
-     * 
+     *
      * @throws Exception if something goes wrong
      */
+    @Test
+    @Order(1)
     public void testDecoratorBasics() throws Exception {
 
         // define test values and results
@@ -104,8 +76,16 @@ public class TestDecorator extends OpenCmsTestCase {
         String inputText3 = "This is a test for VFS&nbsp;RFS and VFS.";
         String resultText3 = "This is a test for <abbr>VFS</abbr>&nbsp;<abbr>RFS</abbr> and <abbr>VFS</abbr>.";
 
-        String inputText4 = "This is a test German Umlaute: TÜV is fine, but does T&UumlV work as well?";
-        String resultText4 = "This is a test German Umlaute: <abbr title=\"Technischer Überwachungsverein\">TÜV</abbr> is fine, but does <abbr>TÜV</abbr> work as well?";
+        String inputText4 = "This is a test German Umlaute: T"
+            + C_UUML_UPPER
+            + "V is fine, but does T&UumlV work as well?";
+        String resultText4 = "This is a test German Umlaute: <abbr title=\"Technischer "
+            + C_UUML_UPPER
+            + "berwachungsverein\">T"
+            + C_UUML_UPPER
+            + "V</abbr> is fine, but does <abbr>T"
+            + C_UUML_UPPER
+            + "V</abbr> work as well?";
 
         String inputText5 = "The CMS has a nice user interface, the so called CMS-UI . This must not be mixed up with the CMS-IU!";
         String resultText5 = "The <abbr>CMS</abbr> has a nice user interface, the so called <abbr title=\"Content Management System User Interface\">CMS-UI</abbr> . This must not be mixed up with the <abbr>CMS</abbr>-IU!";
@@ -171,28 +151,28 @@ public class TestDecorator extends OpenCmsTestCase {
         decorationMap.put("CMS", new CmsDecorationObject("CMS", "Content Management System", decDef1, locale));
         decorationMap.put("VFS", new CmsDecorationObject("VFS", "Virtual File System", decDef1, locale));
         decorationMap.put("RFS", new CmsDecorationObject("RFS", "Real File System", decDef1, locale));
-        decorationMap.put("TÜV", new CmsDecorationObject("TÜV", "Technischer Überwachungsverein", decDef1, locale));
+        decorationMap.put(
+            "T" + C_UUML_UPPER + "V",
+            new CmsDecorationObject(
+                "T" + C_UUML_UPPER + "V",
+                "Technischer " + C_UUML_UPPER + "berwachungsverein",
+                decDef1,
+                locale));
         decorationMap.put("Dr.", new CmsDecorationObject("Dr.", "Doctor", decDef1, locale));
         decorationMap.put("z. B.", new CmsDecorationObject("z. B.", "zum Beispiel", decDef1, locale));
         decorationMap.put("e.g.", new CmsDecorationObject("e.g.", "example given", decDef1, locale));
         decorationMap.put(
             "ZB MED",
             new CmsDecorationObject("ZB MED", "a decoarion with a blank in it", decDef1, locale));
-        decorationMap.put("ZB&nbsp;MED", new CmsDecorationObject(
+        decorationMap.put(
             "ZB&nbsp;MED",
-            "a decoarion with a blank in it",
-            decDef1,
-            locale));
-        decorationMap.put("CMS-UI", new CmsDecorationObject(
+            new CmsDecorationObject("ZB&nbsp;MED", "a decoarion with a blank in it", decDef1, locale));
+        decorationMap.put(
             "CMS-UI",
-            "Content Management System User Interface",
-            decDef1,
-            locale));
-        decorationMap.put("ABC@DEF", new CmsDecorationObject(
+            new CmsDecorationObject("CMS-UI", "Content Management System User Interface", decDef1, locale));
+        decorationMap.put(
             "ABC@DEF",
-            "A strange thing with a @ in it",
-            decDef1,
-            locale));
+            new CmsDecorationObject("ABC@DEF", "A strange thing with a @ in it", decDef1, locale));
 
         // create a decorator  configuration
         CmsDecoratorConfiguration configuration = new CmsDecoratorConfiguration(getCmsObject());
@@ -313,9 +293,11 @@ public class TestDecorator extends OpenCmsTestCase {
 
     /**
      * Tests the decoration configuration.<p>
-     * 
+     *
      * @throws Exception if something goes wrong
      */
+    @Test
+    @Order(2)
     public void testDecoratorConfiguration() throws Exception {
 
         String configFile = "/decoration/configuration.xml";

@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -14,12 +14,12 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * Lesser General Public License for more details.
  *
- * For further information about Alkacon Software GmbH, please see the
- * company website: http://www.alkacon.com
+ * For further information about Alkacon Software GmbH & Co. KG, please see the
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -34,16 +34,17 @@ import org.opencms.file.CmsUser;
 import org.opencms.main.CmsException;
 import org.opencms.main.CmsLog;
 import org.opencms.main.OpenCms;
+import org.opencms.monitor.CmsMemoryMonitor;
 import org.opencms.security.CmsAccessControlEntry;
 import org.opencms.security.CmsAccessControlList;
 import org.opencms.security.CmsPermissionSet;
 import org.opencms.security.CmsPermissionSetCustom;
 import org.opencms.security.CmsRole;
 import org.opencms.security.I_CmsPrincipal;
-import org.opencms.util.CmsCollectionsGenericWrapper;
 import org.opencms.util.CmsUUID;
 
-import java.util.Collections;
+import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -53,16 +54,27 @@ import org.apache.commons.logging.Log;
 
 /**
  * Explorer type access object, encapsulates access control entries and lists of a explorer type.<p>
- * 
- * @since 6.0.0 
+ *
+ * @since 6.0.0
  */
-public class CmsExplorerTypeAccess {
+public class CmsExplorerTypeAccess implements Serializable {
 
     /** Principal key name for the default permission settings. */
     public static final String PRINCIPAL_DEFAULT = "DEFAULT";
 
+    /** The listener used to flush cached access settings. */
+    protected static CmsExplorerTypeAccessFlushListener flushListener;
+
     /** The log object for this class. */
     private static final Log LOG = CmsLog.getLog(CmsExplorerTypeAccess.class);
+
+    /** The serial version id. */
+    private static final long serialVersionUID = 1119068085158682112L;
+
+    static {
+        flushListener = new CmsExplorerTypeAccessFlushListener();
+        flushListener.install();
+    }
 
     /** The map of configured access control entries. */
     private Map<String, String> m_accessControl;
@@ -71,7 +83,7 @@ public class CmsExplorerTypeAccess {
     private CmsAccessControlList m_accessControlList;
 
     /** Cached permissions based on roles. */
-    private Map<String, CmsPermissionSetCustom> m_permissionsCache;
+    private transient Map<String, CmsPermissionSetCustom> m_permissionsCache;
 
     /**
      * Constructor, creates an empty, CmsExplorerTypeAccess object.<p>
@@ -79,14 +91,15 @@ public class CmsExplorerTypeAccess {
     public CmsExplorerTypeAccess() {
 
         m_accessControl = new HashMap<String, String>();
+        flushListener.add(this);
     }
 
-    /** 
+    /**
      * Adds a single access entry to the map of access entries of the explorer type setting.<p>
-     * 
-     * This stores the configuration data in a map which is used in the initialize process 
-     * to create the access control list.<p> 
-     * 
+     *
+     * This stores the configuration data in a map which is used in the initialize process
+     * to create the access control list.<p>
+     *
      * @param key the principal of the ace
      * @param value the permissions for the principal
      */
@@ -98,11 +111,11 @@ public class CmsExplorerTypeAccess {
         }
     }
 
-    /** 
+    /**
      * Creates the access control list from the temporary map.<p>
-     *  
-     * @param resourceType the name of the resource type 
-     * 
+     *
+     * @param resourceType the name of the resource type
+     *
      * @throws CmsException if something goes wrong
      */
     public void createAccessControlList(String resourceType) throws CmsException {
@@ -112,9 +125,8 @@ public class CmsExplorerTypeAccess {
             return;
         }
         if (m_permissionsCache == null) {
-            Map<String, CmsPermissionSetCustom> lruMap = CmsCollectionsGenericWrapper.createLRUMap(2048);
-            m_permissionsCache = Collections.synchronizedMap(lruMap);
-            OpenCms.getMemoryMonitor().register(this.getClass().getName() + "." + resourceType, lruMap);
+            m_permissionsCache = CmsMemoryMonitor.createLRUCacheMap(2048);
+            OpenCms.getMemoryMonitor().register(this.getClass().getName() + "." + resourceType, m_permissionsCache);
         } else {
             m_permissionsCache.clear();
         }
@@ -182,7 +194,7 @@ public class CmsExplorerTypeAccess {
 
     /**
      * Returns the map of access entries of the explorer type setting.<p>
-     * 
+     *
      * @return the map of access entries of the explorer type setting
      */
     public Map<String, String> getAccessEntries() {
@@ -191,13 +203,13 @@ public class CmsExplorerTypeAccess {
     }
 
     /**
-     * Calculates the permissions for this explorer type settings 
-     * for the user in the given OpenCms user context.<p>  
-     *  
+     * Calculates the permissions for this explorer type settings
+     * for the user in the given OpenCms user context.<p>
+     *
      * @param cms the OpenCms user context to calculate the permissions for
      * @param resource the resource to check the permissions for
-     * 
-     * @return the permissions for this explorer type settings for the user in the given OpenCms user context 
+     *
+     * @return the permissions for this explorer type settings for the user in the given OpenCms user context
      */
     public CmsPermissionSet getPermissions(CmsObject cms, CmsResource resource) {
 
@@ -219,13 +231,32 @@ public class CmsExplorerTypeAccess {
             // error reading the groups of the current user
             LOG.error(Messages.get().getBundle().key(Messages.LOG_READ_GROUPS_OF_USER_FAILED_1, user.getName()), e);
         }
-        List<CmsRole> roles = null;
+        List<CmsRole> roles = new ArrayList<>();
         try {
-            roles = OpenCms.getRoleManager().getRolesForResource(cms, user.getName(), cms.getSitePath(resource));
+            roles.addAll(OpenCms.getRoleManager().getRolesForResource(cms, user, resource));
         } catch (CmsException e) {
             // error reading the roles of the current user
             LOG.error(Messages.get().getBundle().key(Messages.LOG_READ_GROUPS_OF_USER_FAILED_1, user.getName()), e);
         }
+
+        // getRolesForResource does not return OU indepent roles - so now we add them separately
+        try {
+            List<CmsRole> userRoles = OpenCms.getRoleManager().getRolesOfUser(
+                cms,
+                user.getName(),
+                "",
+                false,
+                false,
+                false);
+            for (CmsRole role : userRoles) {
+                if (role.isOrganizationalUnitIndependent() && !roles.contains(role)) {
+                    roles.add(role);
+                }
+            }
+        } catch (CmsException e) {
+            LOG.error(Messages.get().getBundle().key(Messages.LOG_READ_GROUPS_OF_USER_FAILED_1, user.getName()), e);
+        }
+
         String defaultPermissions = m_accessControl.get(PRINCIPAL_DEFAULT);
         // add the default permissions to the acl
         if ((defaultPermissions != null) && !user.isGuestUser()) {
@@ -274,7 +305,7 @@ public class CmsExplorerTypeAccess {
 
     /**
      * Tests if there are any access information stored.<p>
-     * 
+     *
      * @return true or false
      */
     public boolean isEmpty() {
@@ -283,15 +314,25 @@ public class CmsExplorerTypeAccess {
     }
 
     /**
+     * Flushes the permission cache.<p>
+     */
+    protected void flushCache() {
+
+        if (m_permissionsCache != null) {
+            m_permissionsCache.clear();
+        }
+    }
+
+    /**
      * Returns the cache key for the roles and groups of the current user and the given resource.<p>
-     * 
+     *
      * In this way, it does not matter if the resource and/or user permissions changes, so we never need to clean the cache.<p>
-     * 
-     * And since the cache is a LRU map, old trash entries will be automatically removed.<p> 
-     * 
+     *
+     * And since the cache is a LRU map, old trash entries will be automatically removed.<p>
+     *
      * @param cms the current cms context
      * @param resource the resource
-     * 
+     *
      * @return the cache key
      */
     private String getPermissionsCacheKey(CmsObject cms, CmsResource resource) {
@@ -305,7 +346,13 @@ public class CmsExplorerTypeAccess {
                 CmsGroup group = (CmsGroup)itGroups.next();
                 key.append(group.getName()).append("_");
             }
-            Iterator<?> itRoles = OpenCms.getRoleManager().getRolesOfUser(cms, userName, "", true, true, false).iterator();
+            Iterator<?> itRoles = OpenCms.getRoleManager().getRolesOfUser(
+                cms,
+                userName,
+                "",
+                true,
+                true,
+                false).iterator();
             while (itRoles.hasNext()) {
                 CmsRole role = (CmsRole)itRoles.next();
                 key.append(role.getGroupName()).append("_");

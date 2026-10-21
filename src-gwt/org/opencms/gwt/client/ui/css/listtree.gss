@@ -1,0 +1,88 @@
+li.listTreeItem {
+	margin: 2px 0;
+	display: block;
+	clear: both;
+	list-style-type: none;
+}
+
+li.listTreeItem  div.listTreeItemOpener {
+	margin-left: 1px;
+	cursor: pointer;
+	outline: none;
+	height: auto !important;
+}
+
+div.listTreeItemOpener, div.listTreeItemOpener *{
+	line-height: value("constants.css.lineHeight");
+}
+
+div.listTreeItemOpener > img {
+	background-position: center !important;
+}
+
+div.listTreeItemOpener {
+	display: inline-block;
+}
+
+.listTreeItemContent {
+	
+}
+
+ul.listTreeItemChildren {
+	list-style-type: none;
+	margin:0px 0px 0px 19px;
+	padding-left: 0px;
+}
+
+ul.listTreeItemChildren.bigIndentation {
+	margin-left: 35px;
+}
+
+ul.list {
+	list-style-type: none;
+	margin: 0px;
+	padding: 0px;
+}
+
+ul.list, ul.listTreeItemChildren{
+	list-style-image: none;
+	list-style-position: outside;
+}
+
+.listTreeItemOpen {
+	
+}
+
+
+
+.listTreeItemClosed ul.listTreeItemChildren {
+	display: none;
+}
+
+li.listTreeItemLeaf ul.listTreeItemChildren{
+	display: none;
+}
+
+li.listTreeItemLeaf .listTreeItemOpener {
+	/* we do not use display: none  because otherwise a leaf's first content widget
+	would line up with the handler icon of a non-leaf at the same level. */ 
+	visibility: hidden;
+}
+
+.listTreeItemInternal {
+}
+
+
+
+.listTreeItemNoOpeners .listTreeItemOpener {
+	display: none;
+}
+
+.listTreeItemNoOpeners ul.listTreeItemChildren {
+	display: list-item ;
+}
+
+.listScrollable {
+	height: 100%;
+	overflow: auto;
+}

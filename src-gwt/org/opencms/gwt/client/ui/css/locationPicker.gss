@@ -1,0 +1,131 @@
+@external gm-err-content;
+
+div.locationMainPanel div.mapCanvas {
+	float: left;
+	height: 410px;
+	width: 600px;
+}
+
+div.locationMainPanel div.locationFields {
+	float: left;
+	height: 410px;
+	width: 400px;
+}
+
+div.locationMainPanel div.buttonBar {
+	position: absolute;
+	bottom:5px;
+	right: 5px;
+	text-align: right;
+}
+
+div.gm-err-content, div.mapPreview > div > div:empty{
+	position: relative;
+}
+div.gm-err-content:after, div.mapPreview > div > div:empty:after{
+	content: "Missing API key";
+	text-align: center;
+	position: absolute;
+	background: value("constants.css.backgroundColorInputError");
+	white-space: pre-wrap;
+	top: 0;
+	left: 0;
+	right: 0;
+	bottom: 0;
+	z-index: 3;
+}
+
+div.locationMainPanel div.buttonBar > div{
+	margin-left:6px;
+}
+
+div.locationFields>div {
+	margin: 5px;
+}
+
+div.locationFields div.inlineField {
+	display: inline-block;
+	width: 60px;
+	vertical-align: middle;
+}
+
+div>div.fader{
+	right: 20px;
+	cursor: text;
+	top: 0px;
+}
+
+div.displayBox{
+	border: 1px solid #bbbbbb;
+	background: white;
+	position:relative;
+}
+div.locationField input[type="text"]{
+	border: none;
+    box-shadow: none;
+    outline: none;
+    color: value("constants.css.textColor");
+    height: 18px;
+    padding: 0;
+    width:100%;
+    margin:0px;
+}
+div.locationField.hasPreview{
+	height: 82px;
+	position: relative;
+}
+div.inputContainer{
+	margin: 0px 21px 0px 4px;
+	padding: 0px;
+}
+
+div.locationField input[type="text"]:focus{
+	box-shadow: none;
+    outline: none;
+}
+div.opener{
+	position: absolute;
+	right: 6px;
+	top: 6px;
+}
+
+div.locationInfo{
+	min-height: 40px;
+	border: 1px solid #bbbbbb;
+	padding: 2px;
+	max-height: 80px;
+	overflow: auto;
+}
+
+div.locationInfo p{
+	padding: 1px;
+	line-height: 12px;
+	font-size: 10px;
+}
+div.locationInfo span{
+	width: 20%;
+	display: inline-block;
+	line-height: 12px;
+	font-size: 10px;
+}
+
+div.mapPreview {
+	border: 1px solid #bbbbbb;
+	width: auto;
+	text-align: center;
+	float: left;
+	display: none;
+	overflow: hidden;
+	position: relative;
+}
+
+div.mapPreview > div{
+	height: 110px;
+	width: 165px;
+	background: white;
+	text-align: center;
+}
+
+.hasPreview div.mapPreview {
+	display: block;
+}

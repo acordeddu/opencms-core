@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -15,11 +15,11 @@
  * Lesser General Public License for more details.
  *
  * For further information about Alkacon Software, please see the
- * company website: http://www.alkacon.com
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -31,7 +31,7 @@ import com.google.gwt.user.client.rpc.IsSerializable;
 
 /**
  * Sitemap info object. Contains descriptive info about the current site/sub-site.<p>
- * 
+ *
  * @since 8.0.2
  */
 public class CmsSitemapInfo implements IsSerializable {
@@ -52,15 +52,8 @@ public class CmsSitemapInfo implements IsSerializable {
     private String m_title;
 
     /**
-     * Constructor for serialization only.<p>
-     */
-    protected CmsSitemapInfo() {
-
-    }
-
-    /**
      * Constructor.<p>
-     * 
+     *
      * @param currentProject the current project
      * @param description the site description
      * @param siteLocale the site default locale
@@ -74,6 +67,13 @@ public class CmsSitemapInfo implements IsSerializable {
         m_siteLocale = siteLocale;
         m_siteHost = siteHost;
         m_title = title;
+    }
+
+    /**
+     * Constructor for serialization only.<p>
+     */
+    protected CmsSitemapInfo() {
+
     }
 
     /**
@@ -97,16 +97,6 @@ public class CmsSitemapInfo implements IsSerializable {
     }
 
     /**
-     * Returns the site default locale.<p>
-     *
-     * @return the site default locale
-     */
-    public String getSiteLocale() {
-
-        return m_siteLocale;
-    }
-
-    /**
      * Returns the host of the current site.<p>
      *
      * @return the host of the current site
@@ -114,6 +104,16 @@ public class CmsSitemapInfo implements IsSerializable {
     public String getSiteHost() {
 
         return m_siteHost;
+    }
+
+    /**
+     * Returns the site default locale.<p>
+     *
+     * @return the site default locale
+     */
+    public String getSiteLocale() {
+
+        return m_siteLocale;
     }
 
     /**

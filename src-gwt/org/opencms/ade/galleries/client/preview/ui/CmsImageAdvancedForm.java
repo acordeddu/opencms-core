@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -15,11 +15,11 @@
  * Lesser General Public License for more details.
  *
  * For further information about Alkacon Software, please see the
- * company website: http://www.alkacon.com
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -38,6 +38,7 @@ import org.opencms.gwt.client.ui.input.CmsTextBox;
 import org.opencms.gwt.client.ui.input.CmsVfsLinkWidget;
 import org.opencms.gwt.client.ui.input.I_CmsFormWidget;
 import org.opencms.gwt.client.util.CmsJSONMap;
+import org.opencms.gwt.client.util.I_CmsSimpleCallback;
 import org.opencms.util.CmsStringUtil;
 
 import java.util.HashMap;
@@ -53,7 +54,7 @@ import com.google.gwt.user.client.ui.Widget;
 
 /**
  * Advanced image tag properties form, use in editor mode only.<p>
- * 
+ *
  * @since 8.0.
  */
 public class CmsImageAdvancedForm extends Composite {
@@ -169,6 +170,7 @@ public class CmsImageAdvancedForm extends Composite {
         m_selectTextDirection.addOption("rtl", Messages.get().key(Messages.GUI_ADVANCED_TAB_VALUE_RIGHT_TO_LEFT_0));
         m_inputUrl.setButtonSize(Size.small);
         m_inputUrl.addInputStyleName(I_CmsLayoutBundle.INSTANCE.imageAdvancedFormCss().input());
+        m_inputUrl.addStyleName(I_CmsLayoutBundle.INSTANCE.imageAdvancedFormCss().linkWidget());
         m_fields = new HashMap<Attribute, I_CmsFormWidget>();
         m_fields.put(Attribute.linkTarget, m_selectTarget);
         m_fields.put(Attribute.dir, m_selectTextDirection);
@@ -182,10 +184,10 @@ public class CmsImageAdvancedForm extends Composite {
 
     /**
      * Displays the provided image information.<p>
-     * 
+     *
      * @param imageInfo the image information
      * @param imageAttributes the image attributes
-     * @param initialFill flag to indicate that a new image has been selected 
+     * @param initialFill flag to indicate that a new image has been selected
      */
     public void fillContent(CmsImageInfoBean imageInfo, CmsJSONMap imageAttributes, boolean initialFill) {
 
@@ -203,11 +205,15 @@ public class CmsImageAdvancedForm extends Composite {
 
     /**
      * Adds necessary attributes to the map.<p>
-     * 
+     *
      * @param attributes the attribute map
-     * @return the attribute map
+     * @param callback the callback to execute
      */
-    public Map<String, String> getImageAttributes(Map<String, String> attributes) {
+    public void getImageAttributes(
+        final Map<String, String> attributes,
+        final I_CmsSimpleCallback<Map<String, String>> callback) {
+
+        boolean requiresLink = false;
 
         for (Entry<Attribute, I_CmsFormWidget> entry : m_fields.entrySet()) {
             String val = entry.getValue().getFormValueAsString();
@@ -215,12 +221,25 @@ public class CmsImageAdvancedForm extends Composite {
                 continue;
             }
             if (entry.getKey() == Attribute.linkPath) {
-                attributes.put(entry.getKey().name(), CmsCoreProvider.get().substituteLinkForRootPath(val));
+                requiresLink = true;
             } else {
                 attributes.put(entry.getKey().name(), val);
             }
         }
-        return attributes;
+        if (requiresLink) {
+            CmsCoreProvider.get().substituteLinkForRootPath(
+                m_fields.get(Attribute.linkPath).getFormValueAsString(),
+                new I_CmsSimpleCallback<String>() {
+
+                    public void execute(String arg) {
+
+                        attributes.put(Attribute.linkPath.name(), arg);
+                        callback.execute(attributes);
+                    }
+                });
+        } else {
+            callback.execute(attributes);
+        }
     }
 
 }

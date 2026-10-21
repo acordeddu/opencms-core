@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -14,12 +14,12 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * Lesser General Public License for more details.
  *
- * For further information about Alkacon Software GmbH, please see the
- * company website: http://www.alkacon.com
+ * For further information about Alkacon Software GmbH & Co. KG, please see the
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -33,17 +33,30 @@ import java.util.regex.Pattern;
 
 /**
  * Module group data.<p>
- * 
+ *
  * @since 7.0.4
  */
 public class CmsSetupComponent {
 
+    /** The default check flag. */
     private boolean m_checked;
+
+    /** The dependencies of the setup component. */
     private List<String> m_dependencies;
+
+    /** The description for the setup component. */
     private String m_description;
+
+    /** The ID of the setup component. */
     private String m_id;
+
+    /** The module's regex. */
     private Pattern m_modulesRegex;
+
+    /** The name of the setup component. */
     private String m_name;
+
+    /** The position of the setup component. */
     private int m_position;
 
     /**
@@ -118,9 +131,9 @@ public class CmsSetupComponent {
 
     /**
      * Matches the module regular expression against the given module name.
-     * 
+     *
      * @param module the module name to match
-     * 
+     *
      * @return <code>true</code> if it matches
      */
     public boolean match(String module) {

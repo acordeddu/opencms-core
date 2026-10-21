@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -15,11 +15,11 @@
  * Lesser General Public License for more details.
  *
  * For further information about Alkacon Software, please see the
- * company website: http://www.alkacon.com
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -29,19 +29,19 @@ package org.opencms.ade.containerpage.client.ui;
 
 import org.opencms.gwt.client.ui.CmsList;
 import org.opencms.gwt.client.ui.CmsListItem;
+import org.opencms.gwt.client.ui.CmsScrollPanel;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
-import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.Widget;
 
 /**
  * Content of the tool-bar menu recent tab.<p>
- * 
+ *
  * @since 8.0.0
  */
-public class CmsRecentTab extends Composite {
+public class CmsRecentTab extends A_CmsClipboardTab {
 
     /** The ui-binder interface for this widget. */
     interface I_CmsRecentTabUiBinder extends UiBinder<Widget, CmsRecentTab> {
@@ -55,6 +55,10 @@ public class CmsRecentTab extends Composite {
     @UiField(provided = true)
     protected CmsList<CmsListItem> m_listPanel = new CmsList<CmsListItem>();
 
+    /** The scroll panel. */
+    @UiField
+    protected CmsScrollPanel m_scrollPanel;
+
     /**
      * Constructor.<p>
      */
@@ -64,21 +68,20 @@ public class CmsRecentTab extends Composite {
     }
 
     /**
-     * Adds an item to the recent list.<p>
-     * 
-     * @param item the item to add
+     * @see org.opencms.ade.containerpage.client.ui.A_CmsClipboardTab#getList()
      */
-    public void addListItem(CmsListItem item) {
+    @Override
+    public CmsList<CmsListItem> getList() {
 
-        m_listPanel.add(item);
+        return m_listPanel;
     }
 
     /**
-     * Clears the recent list.<p>
+     * @see org.opencms.ade.containerpage.client.ui.A_CmsClipboardTab#getScrollPanel()
      */
-    public void clearList() {
+    @Override
+    public CmsScrollPanel getScrollPanel() {
 
-        m_listPanel.clear();
+        return m_scrollPanel;
     }
-
 }

@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -15,11 +15,11 @@
  * Lesser General Public License for more details.
  *
  * For further information about Alkacon Software, please see the
- * company website: http://www.alkacon.com
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -29,6 +29,7 @@ package org.opencms.gwt.client.util;
 
 import org.opencms.gwt.client.ui.css.I_CmsLayoutBundle;
 
+import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.HasAllMouseHandlers;
 import com.google.gwt.event.dom.client.MouseMoveEvent;
@@ -39,14 +40,13 @@ import com.google.gwt.event.dom.client.MouseOverEvent;
 import com.google.gwt.event.dom.client.MouseOverHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.DOM;
-import com.google.gwt.user.client.Element;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.RootPanel;
 
 /**
  * A tool-tip handler. Allowing to show any HTML as a tool-tip on mouse over.<p>
- * 
+ *
  * @since 8.0.0
  */
 public class CmsToolTipHandler implements MouseOverHandler, MouseMoveHandler, MouseOutHandler {
@@ -56,6 +56,9 @@ public class CmsToolTipHandler implements MouseOverHandler, MouseMoveHandler, Mo
 
     /** The default tool-tip top offset. */
     private static final int DEFAULT_OFFSET_TOP = 10;
+
+    /** Time to wait before removing the tool tip. */
+    private static final int REMOVE_SCHEDULE = 10000;
 
     /** The mouse move handler registration. */
     private HandlerRegistration m_moveHandlerRegistration;
@@ -72,6 +75,9 @@ public class CmsToolTipHandler implements MouseOverHandler, MouseMoveHandler, Mo
     /** The mouse over handler registration. */
     private HandlerRegistration m_overHandlerRegistration;
 
+    /** Timer to remove the tool tip again. */
+    private Timer m_removeTimer;
+
     /** Flag indicating if the tool-tip is currently showing. */
     private boolean m_showing;
 
@@ -84,13 +90,9 @@ public class CmsToolTipHandler implements MouseOverHandler, MouseMoveHandler, Mo
     /** The tool-tip HTML to show. */
     private String m_toolTipHtml;
 
-    private Timer m_removeTimer;
-
-    private static final int REMOVE_SCHEDULE = 2000;
-
     /**
      * Constructor. Adds the tool-tip handler to the target.<p>
-     * 
+     *
      * @param target the target to show the tool-tip on
      * @param toolTipHtml the tool-tip content
      */
@@ -101,6 +103,27 @@ public class CmsToolTipHandler implements MouseOverHandler, MouseMoveHandler, Mo
         m_offsetLeft = DEFAULT_OFFSET_LEFT;
         m_offsetTop = DEFAULT_OFFSET_TOP;
         m_overHandlerRegistration = m_target.addMouseOverHandler(this);
+    }
+
+    /**
+     * Removes the tool-tip and mouse move and out handlers.<p>
+     */
+    public void clearShowing() {
+
+        m_showing = false;
+        if (m_toolTip != null) {
+            m_toolTip.removeFromParent();
+            m_toolTip = null;
+        }
+        if (m_moveHandlerRegistration != null) {
+            m_moveHandlerRegistration.removeHandler();
+            m_moveHandlerRegistration = null;
+        }
+        if (m_outHandlerRegistration != null) {
+            m_outHandlerRegistration.removeHandler();
+            m_outHandlerRegistration = null;
+        }
+        m_removeTimer = null;
     }
 
     /**
@@ -217,26 +240,8 @@ public class CmsToolTipHandler implements MouseOverHandler, MouseMoveHandler, Mo
     }
 
     /**
-     * Removes the tool-tip and mouse move and out handlers.<p>
+     * Creates the remove tool tip timer.<p>
      */
-    public void clearShowing() {
-
-        m_showing = false;
-        if (m_toolTip != null) {
-            m_toolTip.removeFromParent();
-            m_toolTip = null;
-        }
-        if (m_moveHandlerRegistration != null) {
-            m_moveHandlerRegistration.removeHandler();
-            m_moveHandlerRegistration = null;
-        }
-        if (m_outHandlerRegistration != null) {
-            m_outHandlerRegistration.removeHandler();
-            m_outHandlerRegistration = null;
-        }
-        m_removeTimer = null;
-    }
-
     private void createTimer() {
 
         m_removeTimer = new Timer() {
@@ -252,27 +257,29 @@ public class CmsToolTipHandler implements MouseOverHandler, MouseMoveHandler, Mo
         };
     }
 
-    /** 
+    /**
      * Sets the tool-tip position.<p>
-     * 
-     * @param absLeft the mouse pointer absolute left
-     * @param absTop the mouse pointer absolute top
+     *
+     * @param clientLeft the mouse pointer left position relative to the client window
+     * @param clientTop the mouse pointer top  position relative to the client window
      */
-    private void setToolTipPosition(int absLeft, int absTop) {
+    private void setToolTipPosition(int clientLeft, int clientTop) {
 
         if (m_toolTip != null) {
             int height = m_toolTip.getOffsetHeight();
             int width = m_toolTip.getOffsetWidth();
             int windowHeight = Window.getClientHeight();
             int windowWidth = Window.getClientWidth();
-            int left = absLeft + m_offsetLeft;
-            if ((left + width) > windowWidth) {
-                left = windowWidth - m_offsetLeft - width;
+            int scrollLeft = Window.getScrollLeft();
+            int scrollTop = Window.getScrollTop();
+            int left = clientLeft + scrollLeft + m_offsetLeft;
+            if ((left + width) > (windowWidth + scrollLeft)) {
+                left = (windowWidth + scrollLeft) - m_offsetLeft - width;
             }
             m_toolTip.getStyle().setLeft(left, Unit.PX);
-            int top = absTop + m_offsetTop;
-            if (((top + height) > windowHeight) && ((height + m_offsetTop) < absTop)) {
-                top = absTop - m_offsetTop - height;
+            int top = clientTop + scrollTop + m_offsetTop;
+            if (((top + height) > (windowHeight + scrollTop)) && ((height + m_offsetTop) < clientTop)) {
+                top = (clientTop + scrollTop) - m_offsetTop - height;
             }
             m_toolTip.getStyle().setTop(top, Unit.PX);
         }

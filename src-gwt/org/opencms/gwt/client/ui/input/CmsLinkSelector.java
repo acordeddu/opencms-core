@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -15,11 +15,11 @@
  * Lesser General Public License for more details.
  *
  * For further information about Alkacon Software, please see the
- * company website: http://www.alkacon.com
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -31,9 +31,9 @@ import org.opencms.gwt.client.CmsCoreProvider;
 import org.opencms.gwt.client.Messages;
 import org.opencms.gwt.client.ui.CmsPushButton;
 import org.opencms.gwt.client.ui.I_CmsAutoHider;
+import org.opencms.gwt.client.ui.I_CmsButton;
 import org.opencms.gwt.client.ui.I_CmsButton.ButtonStyle;
-import org.opencms.gwt.client.ui.css.I_CmsImageBundle;
-import org.opencms.gwt.client.ui.css.I_CmsInputLayoutBundle;
+import org.opencms.gwt.client.ui.I_CmsButton.Size;
 import org.opencms.gwt.client.ui.input.form.CmsWidgetFactoryRegistry;
 import org.opencms.gwt.client.ui.input.form.I_CmsFormWidgetFactory;
 import org.opencms.gwt.shared.CmsLinkBean;
@@ -42,6 +42,7 @@ import org.opencms.util.CmsStringUtil;
 import java.util.List;
 import java.util.Map;
 
+import com.google.common.base.Optional;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.dom.client.Style.Cursor;
@@ -58,7 +59,7 @@ import com.google.gwt.user.client.ui.Panel;
 
 /**
  * Widget for selecting an internal or external link.<p>
- * 
+ *
  * @since 8.0.0
  */
 public class CmsLinkSelector extends Composite implements I_CmsFormWidget, I_CmsHasGhostValue {
@@ -98,7 +99,7 @@ public class CmsLinkSelector extends Composite implements I_CmsFormWidget, I_Cms
     /** True if the widget is in "internal" mode. */
     private boolean m_internal;
 
-    /** 
+    /**
      * Constructs a new gallery widget.<p>
      */
     public CmsLinkSelector() {
@@ -107,10 +108,9 @@ public class CmsLinkSelector extends Composite implements I_CmsFormWidget, I_Cms
         m_id = m_textbox.getId();
         String label = Messages.get().key(Messages.GUI_LINK_CHECKBOX_EXTERNAL_0);
         m_externalCheckbox.setText(label);
-        m_inputRow.setCellWidth(m_textbox, "330px");
-        m_editButton.setImageClass(I_CmsInputLayoutBundle.INSTANCE.inputCss().linkEdit());
-        m_editButton.setButtonStyle(ButtonStyle.TRANSPARENT, null);
-
+        m_inputRow.setCellWidth(m_textbox.getTextBox(), "330px");
+        m_editButton.setButtonStyle(ButtonStyle.FONT_ICON, null);
+        m_editButton.setImageClass(I_CmsButton.PEN_SMALL);
         m_editButton.addClickHandler(new ClickHandler() {
 
             public void onClick(ClickEvent event) {
@@ -128,7 +128,7 @@ public class CmsLinkSelector extends Composite implements I_CmsFormWidget, I_Cms
         setInternal(false);
     }
 
-    /**  
+    /**
      * Initializes this class.<p>
      */
     public static void initClass() {
@@ -137,11 +137,11 @@ public class CmsLinkSelector extends Composite implements I_CmsFormWidget, I_Cms
         CmsWidgetFactoryRegistry.instance().registerFactory(WIDGET_TYPE, new I_CmsFormWidgetFactory() {
 
             /**
-             * @see org.opencms.gwt.client.ui.input.form.I_CmsFormWidgetFactory#createWidget(java.util.Map)
+             * @see org.opencms.gwt.client.ui.input.form.I_CmsFormWidgetFactory#createWidget(java.util.Map, com.google.common.base.Optional)
              */
-            public I_CmsFormWidget createWidget(Map<String, String> widgetParams) {
+            public I_CmsFormWidget createWidget(Map<String, String> widgetParams, Optional<String> defaultValue) {
 
-                return new CmsGalleryField();
+                return new CmsLinkSelector();
             }
         });
     }
@@ -181,7 +181,7 @@ public class CmsLinkSelector extends Composite implements I_CmsFormWidget, I_Cms
 
     /**
      * Returns the selected link target string.<p>
-     * 
+     *
      * @return the link target string
      */
     public String getLink() {
@@ -191,8 +191,8 @@ public class CmsLinkSelector extends Composite implements I_CmsFormWidget, I_Cms
 
     /**
      * Returns the selected link as a bean.<p>
-     * 
-     * @return the selected link as a bean 
+     *
+     * @return the selected link as a bean
      */
     public CmsLinkBean getLinkBean() {
 
@@ -204,6 +204,16 @@ public class CmsLinkSelector extends Composite implements I_CmsFormWidget, I_Cms
     }
 
     /**
+     * Returns the text box of this widget.<p>
+     *
+     * @return the CmsTextBox.
+     */
+    public CmsTextBox getTextBox() {
+
+        return m_textbox;
+    }
+
+    /**
      * @see org.opencms.gwt.client.ui.input.I_CmsFormWidget#isEnabled()
      */
     public boolean isEnabled() {
@@ -211,10 +221,10 @@ public class CmsLinkSelector extends Composite implements I_CmsFormWidget, I_Cms
         return !m_textbox.isReadOnly();
     }
 
-    /** 
+    /**
      * Returns true if the widget is in internal mode.
-     *  
-     * @return true if the widget is in internal mode 
+     *
+     * @return true if the widget is in internal mode
      */
     public boolean isInternal() {
 
@@ -234,7 +244,7 @@ public class CmsLinkSelector extends Composite implements I_CmsFormWidget, I_Cms
      */
     public void setAutoHideParent(I_CmsAutoHider autoHideParent) {
 
-        // do nothing 
+        // do nothing
     }
 
     /**
@@ -250,7 +260,7 @@ public class CmsLinkSelector extends Composite implements I_CmsFormWidget, I_Cms
      */
     public void setErrorMessage(String errorMessage) {
 
-        // do nothing 
+        // do nothing
     }
 
     /**
@@ -289,8 +299,8 @@ public class CmsLinkSelector extends Composite implements I_CmsFormWidget, I_Cms
 
     /**
      * Sets the widget's mode to internal or external.<p>
-     * 
-     * @param internal if true, sets the mode to internal, else to external 
+     *
+     * @param internal if true, sets the mode to internal, else to external
      */
     public void setInternal(boolean internal) {
 
@@ -304,7 +314,7 @@ public class CmsLinkSelector extends Composite implements I_CmsFormWidget, I_Cms
 
     /**
      * Sets the link target.<p>
-     * 
+     *
      * @param link the link target
      */
     public void setLink(String link) {
@@ -317,8 +327,8 @@ public class CmsLinkSelector extends Composite implements I_CmsFormWidget, I_Cms
 
     /**
      * Sets the link from a bean.<p>
-     * 
-     * @param link the link bean 
+     *
+     * @param link the link bean
      */
     public void setLinkBean(CmsLinkBean link) {
 
@@ -330,13 +340,24 @@ public class CmsLinkSelector extends Composite implements I_CmsFormWidget, I_Cms
     }
 
     /**
+     * Sets the name of the input field.<p>
+     *
+     * @param name of the input field
+     */
+    public void setName(String name) {
+
+        m_textbox.setName(name);
+
+    }
+
+    /**
      * Creates the URL for the gallery dialog IFrame.<p>
-     * 
-     * @return the URL for the gallery dialog IFrame 
+     *
+     * @return the URL for the gallery dialog IFrame
      */
     protected String buildGalleryUrl() {
 
-        String basePath = "/system/modules/org.opencms.ade.galleries/gallery.jsp";
+        String basePath = "/system/workplace/commons/gallery.jsp";
         return CmsCoreProvider.get().link(basePath + "?dialogmode=widget&fieldid=" + m_id);
     }
 
@@ -361,8 +382,9 @@ public class CmsLinkSelector extends Composite implements I_CmsFormWidget, I_Cms
         popup.getFrame().setSize("700px", "490px");
         popup.center();
 
-        CmsPushButton button = new CmsPushButton(I_CmsImageBundle.INSTANCE.style().closeIcon());
-
+        CmsPushButton button = new CmsPushButton(I_CmsButton.DELETE_SMALL);
+        button.setButtonStyle(ButtonStyle.FONT_ICON, null);
+        button.setSize(Size.small);
         Style style = button.getElement().getStyle();
         style.setRight(4, Unit.PX);
         style.setTop(0, Unit.PX);
@@ -384,7 +406,7 @@ public class CmsLinkSelector extends Composite implements I_CmsFormWidget, I_Cms
 
     /**
      * Called if the user changed the state to internal or external.<p>
-     * 
+     *
      * @param external if the new state is "external"
      */
     protected void userChangedExternal(boolean external) {

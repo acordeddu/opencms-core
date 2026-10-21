@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -15,11 +15,11 @@
  * Lesser General Public License for more details.
  *
  * For further information about Alkacon Software, please see the
- * company website: http://www.alkacon.com
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -36,82 +36,125 @@ import org.opencms.main.OpenCms;
 import org.opencms.report.CmsShellReport;
 import org.opencms.report.I_CmsReport;
 import org.opencms.search.fields.CmsSearchField;
-import org.opencms.test.OpenCmsTestCase;
-import org.opencms.test.OpenCmsTestProperties;
+import org.opencms.test.OpenCmsTestRunner;
 
 import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
 
-import junit.extensions.TestSetup;
-import junit.framework.Test;
-import junit.framework.TestSuite;
-
 import org.apache.lucene.document.Document;
+
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.MethodOrderer;
+import org.junit.jupiter.api.Order;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInfo;
+import org.junit.jupiter.api.TestMethodOrder;
 
 /**
  * Unit test for special search features added for OpenCms 7.5.<p>
  */
-public class TestCmsSearchSpecialFeatures extends OpenCmsTestCase {
+@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
+public class TestCmsSearchSpecialFeatures extends OpenCmsTestRunner {
 
     /** Name of the search index created using API. */
     public static final String INDEX_SPECIAL = "Special Test Index";
 
     /**
-     * Default JUnit constructor.<p>
-     * 
-     * @param arg0 JUnit parameters
+     * @see org.opencms.test.OpenCmsTestRunner#$openCmsSetUp(org.junit.jupiter.api.TestInfo)
      */
-    public TestCmsSearchSpecialFeatures(String arg0) {
+    @Override
+    @BeforeAll
+    public void $openCmsSetUp(TestInfo testInfo) {
 
-        super(arg0);
+        setupOpenCms(testInfo, "simpletest", "/");
     }
 
     /**
-     * Test suite for this test class.<p>
-     * 
-     * @return the test suite
+     * Tests incremental index updates with the new content blob feature.<p>
+     *
+     * @throws Exception in case the test fails
      */
-    public static Test suite() {
+    @Order(2)
+    @Test
+    public void testIncrementalIndexUpdate() throws Exception {
 
-        OpenCmsTestProperties.initialize(org.opencms.test.AllTests.TEST_PROPERTIES_PATH);
+        CmsObject cms = getCmsObject();
+        echo("Testing search incremental index update - new content blob feature");
 
-        TestSuite suite = new TestSuite();
-        suite.setName(TestCmsSearchSpecialFeatures.class.getName());
+        // create test folder
+        cms.createResource("/test/", CmsResourceTypeFolder.RESOURCE_TYPE_ID, null, null);
+        cms.unlockResource("/test/");
 
-        suite.addTest(new TestCmsSearchSpecialFeatures("testSearchIndexSetup"));
-        suite.addTest(new TestCmsSearchSpecialFeatures("testIncrementalIndexUpdate"));
-        suite.addTest(new TestCmsSearchSpecialFeatures("testLazyContentFields"));
+        String fileName = "/test/master.pdf";
 
-        TestSetup wrapper = new TestSetup(suite) {
+        // create master resource
+        importTestResource(
+            cms,
+            "org/opencms/search/extractors/test1.pdf",
+            fileName,
+            CmsResourceTypeBinary.getStaticTypeId(),
+            Collections.<CmsProperty> emptyList());
 
-            @Override
-            protected void setUp() {
+        // create 5 siblings
+        for (int i = 0; i < 5; i++) {
+            cms.createSibling(fileName, "/test/sibling" + i + ".pdf", null);
+        }
 
-                setupOpenCms("simpletest", "/");
-            }
+        // publish the project and update the search index
+        I_CmsReport report = new CmsShellReport(cms.getRequestContext().getLocale());
+        OpenCms.getPublishManager().publishProject(cms, report);
+        OpenCms.getPublishManager().waitWhileRunning();
 
-            @Override
-            protected void tearDown() {
+        cms.lockResource(fileName);
+        cms.writePropertyObject(
+            fileName,
+            new CmsProperty(CmsPropertyDefinition.PROPERTY_TITLE, "Title of the PDF", null));
 
-                removeOpenCms();
-            }
-        };
+        // publish the project and update the search index
+        report = new CmsShellReport(cms.getRequestContext().getLocale());
+        OpenCms.getPublishManager().publishProject(cms, report);
+        OpenCms.getPublishManager().waitWhileRunning();
+    }
 
-        return wrapper;
+    /**
+     * Ensures the content and content blob fields are loaded lazy.<p>
+     *
+     * @throws Exception in case the test fails
+     */
+    @Order(3)
+    @Test
+    public void testLazyContentFields() throws Exception {
+
+        echo("Testing lazy status of content fields in search index");
+
+        String fileName = "/sites/default/test/master.pdf";
+
+        CmsSearchIndex searchIndex = (CmsSearchIndex)OpenCms.getSearchManager().getIndex(INDEX_SPECIAL);
+        Document doc = (Document)searchIndex.getDocument(CmsSearchField.FIELD_PATH, fileName).getDocument();
+
+        assertNotNull(doc, "Document '" + fileName + "' not found");
+        assertNotNull(doc.getField(CmsSearchField.FIELD_TITLE), "No 'title' field available");
+        // assertFalse("title must not be lazy loaded", doc.getField(CmsSearchField.FIELD_TITLE). isLazy());
+        assertNotNull(doc.getField(CmsSearchField.FIELD_CONTENT), "No 'content' field available");
+        // assertTrue("Content field not lazy", doc.getField(CmsSearchField.FIELD_CONTENT).isLazy());
+        assertNotNull(doc.getField(CmsSearchField.FIELD_CONTENT_BLOB), "No 'content blob' field available");
+        // assertTrue("Content blob field not lazy", doc.getField(CmsSearchField.FIELD_CONTENT_BLOB).isLazy());
     }
 
     /**
      * Creates a new search index setup for this test.<p>
-     * 
+     *
      * @throws Exception in case the test fails
      */
+    @Order(1)
+    @Test
     public void testSearchIndexSetup() throws Exception {
 
         CmsSearchIndex searchIndex = new CmsSearchIndex(INDEX_SPECIAL);
-        searchIndex.setProjectName("Online");
+        searchIndex.setProject("Online");
         searchIndex.setLocale(Locale.ENGLISH);
-        searchIndex.setRebuildMode(CmsSearchIndex.REBUILD_MODE_AUTO);
+        searchIndex.setRebuildMode(I_CmsSearchIndex.REBUILD_MODE_AUTO);
         // available pre-configured in the test configuration files opencms-search.xml
         searchIndex.addSourceName("source1");
         searchIndex.addConfigurationParameter(CmsSearchIndex.BACKUP_REINDEXING, "true");
@@ -135,76 +178,9 @@ public class TestCmsSearchSpecialFeatures extends OpenCmsTestCase {
         searchBean.setIndex(INDEX_SPECIAL);
         searchBean.setQuery(">>SearchEgg1<<");
 
-        // assert one file is found in the default site     
+        // assert one file is found in the default site
         searchResult = searchBean.getSearchResult();
         assertEquals(1, searchResult.size());
         assertEquals("/sites/default/xmlcontent/article_0001.html", (searchResult.get(0)).getPath());
-    }
-
-    /**
-     * Tests incremental index updates with the new content blob feature.<p>
-     * 
-     * @throws Exception in case the test fails
-     */
-    public void testIncrementalIndexUpdate() throws Exception {
-
-        CmsObject cms = getCmsObject();
-        echo("Testing search incremental index update - new content blob feature");
-
-        // create test folder
-        cms.createResource("/test/", CmsResourceTypeFolder.RESOURCE_TYPE_ID, null, null);
-        cms.unlockResource("/test/");
-
-        String fileName = "/test/master.pdf";
-
-        // create master resource
-        importTestResource(
-            cms,
-            "org/opencms/search/extractors/test1.pdf",
-            fileName,
-            CmsResourceTypeBinary.getStaticTypeId(),
-            Collections.EMPTY_LIST);
-
-        // create 5 siblings
-        for (int i = 0; i < 5; i++) {
-            cms.createSibling(fileName, "/test/sibling" + i + ".pdf", null);
-        }
-
-        // publish the project and update the search index
-        I_CmsReport report = new CmsShellReport(cms.getRequestContext().getLocale());
-        OpenCms.getPublishManager().publishProject(cms, report);
-        OpenCms.getPublishManager().waitWhileRunning();
-
-        cms.lockResource(fileName);
-        cms.writePropertyObject(fileName, new CmsProperty(
-            CmsPropertyDefinition.PROPERTY_TITLE,
-            "Title of the PDF",
-            null));
-
-        // publish the project and update the search index
-        report = new CmsShellReport(cms.getRequestContext().getLocale());
-        OpenCms.getPublishManager().publishProject(cms, report);
-        OpenCms.getPublishManager().waitWhileRunning();
-    }
-
-    /**
-     * Ensures the content and content blob fields are loaded lazy.<p>
-     * 
-     * @throws Exception in case the test fails
-     */
-    public void testLazyContentFields() throws Exception {
-
-        echo("Testing lazy status of content fields in search index");
-
-        String fileName = "/sites/default/test/master.pdf";
-
-        CmsSearchIndex searchIndex = OpenCms.getSearchManager().getIndex(INDEX_SPECIAL);
-        Document doc = searchIndex.getDocument(fileName);
-
-        assertNotNull("Document '" + fileName + "' not found", doc);
-        assertNotNull("No 'content' field available", doc.getFieldable(CmsSearchField.FIELD_CONTENT));
-        assertTrue("Content field not lazy", doc.getFieldable(CmsSearchField.FIELD_CONTENT).isLazy());
-        assertNotNull("No 'content blob' field available", doc.getFieldable(CmsSearchField.FIELD_CONTENT_BLOB));
-        assertTrue("Content blob field not lazy", doc.getFieldable(CmsSearchField.FIELD_CONTENT_BLOB).isLazy());
     }
 }

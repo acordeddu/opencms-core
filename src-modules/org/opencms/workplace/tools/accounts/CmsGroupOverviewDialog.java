@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -14,12 +14,12 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * Lesser General Public License for more details.
  *
- * For further information about Alkacon Software GmbH, please see the
- * company website: http://www.alkacon.com
+ * For further information about Alkacon Software GmbH & Co. KG, please see the
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -46,8 +46,8 @@ import javax.servlet.jsp.PageContext;
 
 /**
  * The group overview and group info widget dialog.<p>
- * 
- * @since 6.0.0 
+ *
+ * @since 6.0.0
  */
 public class CmsGroupOverviewDialog extends CmsWidgetDialog {
 
@@ -71,7 +71,7 @@ public class CmsGroupOverviewDialog extends CmsWidgetDialog {
 
     /**
      * Public constructor with JSP action element.<p>
-     * 
+     *
      * @param jsp an initialized JSP action element
      */
     public CmsGroupOverviewDialog(CmsJspActionElement jsp) {
@@ -82,7 +82,7 @@ public class CmsGroupOverviewDialog extends CmsWidgetDialog {
 
     /**
      * Public constructor with JSP variables.<p>
-     * 
+     *
      * @param context the JSP page context
      * @param req the JSP request
      * @param res the JSP response
@@ -95,15 +95,16 @@ public class CmsGroupOverviewDialog extends CmsWidgetDialog {
     /**
      * Commits the edited group to the db.<p>
      */
+    @Override
     public void actionCommit() {
 
         // no saving needed
-        setCommitErrors(new ArrayList());
+        setCommitErrors(new ArrayList<Throwable>());
     }
 
     /**
      * Returns the description of the parent ou.<p>
-     * 
+     *
      * @return the description of the parent ou
      */
     public String getAssignedOu() {
@@ -118,7 +119,7 @@ public class CmsGroupOverviewDialog extends CmsWidgetDialog {
 
     /**
      * Returns the localized description of the group if the description is a message key.<p>
-     * 
+     *
      * @return the localized description of the group if the description is a message key
      */
     public String getDescription() {
@@ -128,7 +129,7 @@ public class CmsGroupOverviewDialog extends CmsWidgetDialog {
 
     /**
      * Returns the simple name of the user object.<p>
-     * 
+     *
      * @return the simple name of the user object
      */
     public String getName() {
@@ -136,6 +137,11 @@ public class CmsGroupOverviewDialog extends CmsWidgetDialog {
         return m_group.getSimpleName();
     }
 
+    /**
+     * Returns the groups nice name.<p>
+     *
+     * @return the groups nice name
+     */
     public String getNiceName() {
 
         return OpenCms.getWorkplaceManager().translateGroupName(m_group.getName(), false);
@@ -143,7 +149,7 @@ public class CmsGroupOverviewDialog extends CmsWidgetDialog {
 
     /**
      * Returns the user id parameter value.<p>
-     * 
+     *
      * @return the user id parameter value
      */
     public String getParamGroupid() {
@@ -163,7 +169,7 @@ public class CmsGroupOverviewDialog extends CmsWidgetDialog {
 
     /**
      * Setter for widget definition.<p>
-     * 
+     *
      * @param assignedOu the ou description
      */
     public void setAssignedOu(String assignedOu) {
@@ -173,7 +179,7 @@ public class CmsGroupOverviewDialog extends CmsWidgetDialog {
 
     /**
      * Sets the description of the group.<p>
-     * 
+     *
      * @param description the description of the group
      */
     public void setDescription(String description) {
@@ -183,7 +189,7 @@ public class CmsGroupOverviewDialog extends CmsWidgetDialog {
 
     /**
      * Sets the name of the user object.<p>
-     * 
+     *
      * @param name the name of the user object
      */
     public void setName(String name) {
@@ -193,17 +199,17 @@ public class CmsGroupOverviewDialog extends CmsWidgetDialog {
 
     /**
      * Dummy setter for the nice name property.<p>
-     * 
+     *
      * @param name a name string
      */
     public void setNiceName(String name) {
 
-        // if this method doesn't exist, the constructor of CmsWidgetDialogParameter throws an exception; not sure why  
+        // if this method doesn't exist, the constructor of CmsWidgetDialogParameter throws an exception; not sure why
     }
 
     /**
      * Sets the user id parameter value.<p>
-     * 
+     *
      * @param userId the user id parameter value
      */
     public void setParamGroupid(String userId) {
@@ -233,12 +239,13 @@ public class CmsGroupOverviewDialog extends CmsWidgetDialog {
 
     /**
      * Creates the dialog HTML for all defined widgets of the named dialog (page).<p>
-     * 
+     *
      * This overwrites the method from the super class to create a layout variation for the widgets.<p>
-     * 
+     *
      * @param dialog the dialog (page) to get the HTML for
      * @return the dialog HTML for all defined widgets of the named dialog (page)
      */
+    @Override
     protected String createDialogHtml(String dialog) {
 
         StringBuffer result = new StringBuffer(1024);
@@ -257,13 +264,6 @@ public class CmsGroupOverviewDialog extends CmsWidgetDialog {
             result.append(createDialogRowsHtml(0, n));
             result.append(createWidgetTableEnd());
             result.append(dialogBlockEnd());
-            if (isOverview()) {
-                result.append(dialogBlockStart(key(Messages.GUI_GROUP_EDITOR_LABEL_FLAGS_BLOCK_0)));
-                result.append(createWidgetTableStart());
-                result.append(createDialogRowsHtml(5, 6));
-                result.append(createWidgetTableEnd());
-                result.append(dialogBlockEnd());
-            }
         }
 
         // close widget table
@@ -275,6 +275,7 @@ public class CmsGroupOverviewDialog extends CmsWidgetDialog {
     /**
      * @see org.opencms.workplace.CmsWidgetDialog#defaultActionHtmlEnd()
      */
+    @Override
     protected String defaultActionHtmlEnd() {
 
         return "";
@@ -283,6 +284,7 @@ public class CmsGroupOverviewDialog extends CmsWidgetDialog {
     /**
      * Creates the list of widgets for this dialog.<p>
      */
+    @Override
     protected void defineWidgets() {
 
         // initialize the user object to use for the dialog
@@ -301,14 +303,13 @@ public class CmsGroupOverviewDialog extends CmsWidgetDialog {
             addWidget(new CmsWidgetDialogParameter(this, "assignedOu", PAGES[0], new CmsDisplayWidget()));
             addWidget(new CmsWidgetDialogParameter(this, "parentGroup", PAGES[0], new CmsDisplayWidget()));
             addWidget(new CmsWidgetDialogParameter(m_group, "enabled", PAGES[0], new CmsDisplayWidget()));
-            addWidget(new CmsWidgetDialogParameter(m_group, "projectManager", PAGES[0], new CmsDisplayWidget()));
-            addWidget(new CmsWidgetDialogParameter(m_group, "projectCoWorker", PAGES[0], new CmsDisplayWidget()));
         }
     }
 
     /**
      * @see org.opencms.workplace.CmsWidgetDialog#getPageArray()
      */
+    @Override
     protected String[] getPageArray() {
 
         return PAGES;
@@ -331,6 +332,7 @@ public class CmsGroupOverviewDialog extends CmsWidgetDialog {
     /**
      * @see org.opencms.workplace.CmsWorkplace#initMessages()
      */
+    @Override
     protected void initMessages() {
 
         // add specific dialog resource bundle
@@ -341,9 +343,10 @@ public class CmsGroupOverviewDialog extends CmsWidgetDialog {
 
     /**
      * Overridden to set the online help path for this dialog.<p>
-     * 
+     *
      * @see org.opencms.workplace.CmsWorkplace#initWorkplaceMembers(org.opencms.jsp.CmsJspActionElement)
      */
+    @Override
     protected void initWorkplaceMembers(CmsJspActionElement jsp) {
 
         super.initWorkplaceMembers(jsp);
@@ -353,6 +356,7 @@ public class CmsGroupOverviewDialog extends CmsWidgetDialog {
     /**
      * @see org.opencms.workplace.CmsWidgetDialog#validateParamaters()
      */
+    @Override
     protected void validateParamaters() throws Exception {
 
         // test the needed parameters
@@ -361,7 +365,7 @@ public class CmsGroupOverviewDialog extends CmsWidgetDialog {
 
     /**
      * Checks if the group overview has to be displayed.<p>
-     * 
+     *
      * @return <code>true</code> if the group overview has to be displayed
      */
     private boolean isOverview() {

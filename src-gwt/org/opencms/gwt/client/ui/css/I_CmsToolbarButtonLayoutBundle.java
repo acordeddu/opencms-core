@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -15,11 +15,11 @@
  * Lesser General Public License for more details.
  *
  * For further information about Alkacon Software, please see the
- * company website: http://www.alkacon.com
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -28,119 +28,64 @@
 package org.opencms.gwt.client.ui.css;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.CssResource.Shared;
 
 /**
  * Resource bundle to access CSS and image resources for tool-bar buttons.<p>
- * 
+ *
  * @since 8.0.0
  */
-public interface I_CmsToolbarButtonLayoutBundle extends I_CmsBigIconBundle {
+public interface I_CmsToolbarButtonLayoutBundle extends ClientBundle {
 
     /** The button CSS. */
     @Shared
     public interface I_CmsToolbarButtonCss extends I_CmsLayoutBundle.I_CmsStateCss {
 
-        /** Access method.<p>
-         * 
+        /**
+         *  Access method.<p>
+         *
          * @return the CSS class name
          */
-        String toolbarAdd();
+        @ClassName("oc-edit-buttons-invisible")
+        String editButtonsInvisible();
+
+        /**
+         *  Access method.<p>
+         *
+         * @return the CSS class name
+         */
+        @ClassName("oc-edit-buttons-visible")
+        String editButtonsVisible();
 
         /** Access method.<p>
-         * 
+         *
          * @return the CSS class name
          */
-        String toolbarBack();
+        String elementInfoChanged();
 
         /** Access method.<p>
-         * 
+         *
          * @return the CSS class name
          */
-        String toolbarClipboard();
-
-        /** Access method.<p>
-         * 
-         * @return the CSS class name
-         */
-        String toolbarContext();
-
-        /** Access method.<p>
-         * 
-         * @return the CSS class name
-         */
-        String toolbarDelete();
-
-        /** Access method.<p>
-         * 
-         * @return the CSS class name
-         */
-        String toolbarEdit();
-
-        /** Access method.<p>
-         * 
-         * @return the CSS class name
-         */
-        String toolbarMove();
-
-        /** Access method.<p>
-         * 
-         * @return the CSS class name
-         */
-        String toolbarNew();
-
-        /** Access method.<p>
-         * 
-         * @return the CSS class name
-         */
-        String toolbarProperties();
-
-        /** Access method.<p>
-         * 
-         * @return the CSS class name
-         */
-        String toolbarPublish();
-
-        /** Access method.<p>
-         * 
-         * @return the CSS class name
-         */
-        String toolbarRemove();
-
-        /** Access method.<p>
-         * 
-         * @return the CSS class name
-         */
-        String toolbarReset();
-
-        /** Access method.<p>
-         * 
-         * @return the CSS class name
-         */
-        String toolbarSave();
-
-        /** Access method.<p>
-         * 
-         * @return the CSS class name
-         */
-        String toolbarSelection();
-
-        /** Access method.<p>
-         * 
-         * @return the CSS class name
-         */
-        String toolbarSitemap();
+        String elementInfoUnchanged();
     }
 
     /** The bundle instance. */
     I_CmsToolbarButtonLayoutBundle INSTANCE = GWT.create(I_CmsToolbarButtonLayoutBundle.class);
 
     /**
+     * The CSS constants bundle.<p>
+     *
+     * @return a bundle of CSS constants
+     */
+    I_CmsConstantsBundle constants();
+
+    /**
      * Access method.<p>
-     * 
+     *
      * @return the button CSS
      */
-    @Source("toolbarButton.css")
+    @Source("toolbarButton.gss")
     I_CmsToolbarButtonCss toolbarButtonCss();
-
 }

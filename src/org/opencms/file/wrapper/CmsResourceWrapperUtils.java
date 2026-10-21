@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -14,12 +14,12 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * Lesser General Public License for more details.
  *
- * For further information about Alkacon Software GmbH, please see the
- * company website: http://www.alkacon.com
+ * For further information about Alkacon Software GmbH & Co. KG, please see the
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -33,11 +33,11 @@ import org.opencms.file.CmsProperty;
 import org.opencms.file.CmsPropertyDefinition;
 import org.opencms.file.CmsResource;
 import org.opencms.file.types.CmsResourceTypePlain;
+import org.opencms.file.types.I_CmsResourceType;
 import org.opencms.i18n.CmsEncoder;
 import org.opencms.main.CmsException;
 import org.opencms.main.OpenCms;
 import org.opencms.util.CmsStringUtil;
-import org.opencms.workplace.commons.CmsPropertyAdvanced;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -54,17 +54,20 @@ import java.util.regex.Pattern;
 /**
  * Helper class with several methods used by different implementations of the
  * interface {@link I_CmsResourceWrapper}.<p>
- * 
+ *
  * It provides methods to add or remove file extensions to resources, to handle
  * creating and writing property files and to add the byte order mask to UTF-8
  * byte contents.<p>
- * 
+ *
  * @since 6.2.4
  */
 public final class CmsResourceWrapperUtils {
 
     /** The extension to use for the property file. */
     public static final String EXTENSION_PROPERTIES = "properties";
+
+    /** Property name used for reading / changing the resource type. */
+    public static final String PROPERTY_RESOURCE_TYPE = "resourceType";
 
     /** The prefix used for a shared property entry. */
     public static final String SUFFIX_PROP_INDIVIDUAL = ".i";
@@ -88,18 +91,18 @@ public final class CmsResourceWrapperUtils {
 
     /**
      * Adds a file extension to the resource name.<p>
-     * 
+     *
      * If the file with the new extension already exists, an index count will be
      * added before the final extension.<p>
-     * 
+     *
      * For example: <code>index.html.1.jsp</code>.<p>
-     * 
+     *
      * @see #removeFileExtension(CmsObject, String, String)
-     * 
+     *
      * @param cms the actual CmsObject
      * @param resourcename the name of the resource where to add the file extension
      * @param extension the extension to add
-     * 
+     *
      * @return the resource name with the added file extension
      */
     public static String addFileExtension(CmsObject cms, String resourcename, String extension) {
@@ -124,9 +127,9 @@ public final class CmsResourceWrapperUtils {
 
     /**
      * Adds the UTF-8 marker add the beginning of the byte array.<p>
-     * 
+     *
      * @param content the byte array where to add the UTF-8 marker
-     * 
+     *
      * @return the byte with the added UTF-8 marker at the beginning
      */
     public static byte[] addUtf8Marker(byte[] content) {
@@ -153,19 +156,19 @@ public final class CmsResourceWrapperUtils {
 
     /**
      * Creates a virtual CmsFile with the individual and shared properties as content.<p>
-     * 
+     *
      * For example looks like this:<br/>
      * Title.i=The title of the resource set as individual property<br/>
      * Title.s=The title of the resource set as shared property<br/>
-     * 
+     *
      * @see #writePropertyFile(CmsObject, String, byte[])
-     * 
+     *
      * @param cms the initialized CmsObject
      * @param res the resource where to read the properties from
-     * @param path the full path to set for the created property file 
-     * 
+     * @param path the full path to set for the created property file
+     *
      * @return the created CmsFile with the individual and shared properties as the content
-     * 
+     *
      * @throws CmsException if something goes wrong
      */
     public static CmsFile createPropertyFile(CmsObject cms, CmsResource res, String path) throws CmsException {
@@ -182,9 +185,12 @@ public final class CmsResourceWrapperUtils {
         content.append("# ${property_name}.s :     shared property\n\n");
 
         List<CmsPropertyDefinition> propertyDef = cms.readAllPropertyDefinitions();
-        Map<String, CmsProperty> activeProperties = CmsPropertyAdvanced.getPropertyMap(cms.readPropertyObjects(
-            res,
-            false));
+        Map<String, CmsProperty> activeProperties = CmsProperty.getPropertyMap(cms.readPropertyObjects(res, false));
+
+        String resourceType = OpenCms.getResourceManager().getResourceType(res).getTypeName();
+        content.append("resourceType=");
+        content.append(resourceType);
+        content.append("\n\n");
 
         // iterate over all possible properties for the resource
         Iterator<CmsPropertyDefinition> i = propertyDef.iterator();
@@ -226,7 +232,8 @@ public final class CmsResourceWrapperUtils {
 
         CmsWrappedResource wrap = new CmsWrappedResource(res);
         wrap.setRootPath(addFileExtension(cms, path, EXTENSION_PROPERTIES));
-        int plainId = OpenCms.getResourceManager().getResourceType(CmsResourceTypePlain.getStaticTypeName()).getTypeId();
+        int plainId = OpenCms.getResourceManager().getResourceType(
+            CmsResourceTypePlain.getStaticTypeName()).getTypeId();
         wrap.setTypeId(plainId);
         wrap.setFolder(false);
 
@@ -244,7 +251,7 @@ public final class CmsResourceWrapperUtils {
 
     /**
      * Removes an added file extension from the resource name.<p>
-     * 
+     *
      * <ul>
      * <li>If there is only one extension, nothing will be removed.</li>
      * <li>If there are two extensions, the last one will be removed.</li>
@@ -252,13 +259,13 @@ public final class CmsResourceWrapperUtils {
      * if then the last extension is a number, the extension with the number
      * will be removed too.</li>
      * </ul>
-     * 
+     *
      * @see #addFileExtension(CmsObject, String, String)
-     * 
+     *
      * @param cms the initialized CmsObject
      * @param resourcename the resource name to remove the file extension from
      * @param extension the extension to remove
-     * 
+     *
      * @return the resource name without the removed file extension
      */
     public static String removeFileExtension(CmsObject cms, String resourcename, String extension) {
@@ -281,7 +288,7 @@ public final class CmsResourceWrapperUtils {
 
                 suffix = "." + extension;
 
-                // check if there is another extension with a numeric index 
+                // check if there is another extension with a numeric index
                 if (tokens.length > 3) {
 
                     try {
@@ -295,7 +302,7 @@ public final class CmsResourceWrapperUtils {
             }
         } else if (tokens.length == 2) {
 
-            // there is only one extension!! 
+            // there is only one extension!!
             // only remove the last extension, if the resource without the extension exists
             // and the extension fits
             if ((cms.existsResource(CmsResource.getFolderPath(resourcename) + tokens[0]))
@@ -315,9 +322,9 @@ public final class CmsResourceWrapperUtils {
 
     /**
      * Removes the UTF-8 marker from the beginning of the byte array.<p>
-     * 
+     *
      * @param content the byte array where to remove the UTF-8 marker
-     * 
+     *
      * @return the byte with the removed UTF-8 marker at the beginning
      */
     public static byte[] removeUtf8Marker(byte[] content) {
@@ -340,13 +347,13 @@ public final class CmsResourceWrapperUtils {
     /**
      * Takes the content which should be formatted as a property file and set them
      * as properties to the resource.<p>
-     * 
+     *
      * @see #createPropertyFile(CmsObject, CmsResource, String)
-     * 
+     *
      * @param cms the initialized CmsObject
      * @param resourcename the name of the resource where to set the properties
      * @param content the properties to set (formatted as a property file)
-     * 
+     *
      * @throws CmsException if something goes wrong
      */
     public static void writePropertyFile(CmsObject cms, String resourcename, byte[] content) throws CmsException {
@@ -368,19 +375,23 @@ public final class CmsResourceWrapperUtils {
                 String value = (String)e.getValue();
 
                 if (key.endsWith(SUFFIX_PROP_SHARED)) {
-                    propList.add(new CmsProperty(
-                        key.substring(0, key.length() - SUFFIX_PROP_SHARED.length()),
-                        null,
-                        value));
+                    propList.add(
+                        new CmsProperty(key.substring(0, key.length() - SUFFIX_PROP_SHARED.length()), null, value));
                 } else if (key.endsWith(SUFFIX_PROP_INDIVIDUAL)) {
-                    propList.add(new CmsProperty(
-                        key.substring(0, key.length() - SUFFIX_PROP_INDIVIDUAL.length()),
-                        value,
-                        null));
+                    propList.add(
+                        new CmsProperty(key.substring(0, key.length() - SUFFIX_PROP_INDIVIDUAL.length()), value, null));
                 }
             }
 
             cms.writePropertyObjects(resourcename, propList);
+            String newType = properties.getProperty(PROPERTY_RESOURCE_TYPE);
+            if (newType != null) {
+                newType = newType.trim();
+                if (OpenCms.getResourceManager().hasResourceType(newType)) {
+                    I_CmsResourceType newTypeObj = OpenCms.getResourceManager().getResourceType(newType);
+                    cms.chtype(resourcename, newTypeObj.getTypeId());
+                }
+            }
         } catch (IOException e) {
             // noop
         }
@@ -388,15 +399,15 @@ public final class CmsResourceWrapperUtils {
     }
 
     /**
-     * Escapes the value of a property in OpenCms to be displayed 
+     * Escapes the value of a property in OpenCms to be displayed
      * correctly in a property file.<p>
-     * 
+     *
      * Mainly handles all escaping sequences that start with a backslash.<p>
-     * 
+     *
      * @see #unescapeString(String)
-     * 
+     *
      * @param value the value with the string to be escaped
-     * 
+     *
      * @return the escaped string
      */
     private static String escapeString(String value) {
@@ -410,15 +421,15 @@ public final class CmsResourceWrapperUtils {
     }
 
     /**
-     * Unescapes the value of a property in a property file to 
+     * Unescapes the value of a property in a property file to
      * be saved correctly in OpenCms.<p>
-     * 
+     *
      * Mainly handles all escaping sequences that start with a backslash.<p>
-     * 
+     *
      * @see #escapeString(String)
-     * 
+     *
      * @param value the value taken form the property file
-     * 
+     *
      * @return the unescaped string value
      */
     private static String unescapeString(String value) {

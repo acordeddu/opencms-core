@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -14,12 +14,12 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * Lesser General Public License for more details.
  *
- * For further information about Alkacon Software GmbH, please see the
- * company website: http://www.alkacon.com
+ * For further information about Alkacon Software GmbH & Co. KG, please see the
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -34,7 +34,7 @@ import java.util.List;
 
 /**
  * Organizational unit bean for use in new organizational unit dialog.<p>
- * 
+ *
  * @since 6.5.6
  */
 public class CmsOrgUnitBean {
@@ -58,7 +58,7 @@ public class CmsOrgUnitBean {
     private String m_parentOuDesc;
 
     /** The resource list of this object. */
-    private List m_resources;
+    private List<String> m_resources;
 
     /** The webusers flag. */
     private boolean m_webusers;
@@ -68,7 +68,7 @@ public class CmsOrgUnitBean {
      */
     public CmsOrgUnitBean() {
 
-        m_resources = new ArrayList();
+        m_resources = new ArrayList<String>();
     }
 
     /**
@@ -83,7 +83,7 @@ public class CmsOrgUnitBean {
 
     /**
      * Returns the flag value depending on the boolean flag set.<p>
-     * 
+     *
      * @return  the flag value
      */
     public int getFlags() {
@@ -150,7 +150,7 @@ public class CmsOrgUnitBean {
      *
      * @return the resources
      */
-    public List getResources() {
+    public List<String> getResources() {
 
         return m_resources;
     }
@@ -246,7 +246,7 @@ public class CmsOrgUnitBean {
      *
      * @param resources the resources to set
      */
-    public void setResources(List resources) {
+    public void setResources(List<String> resources) {
 
         m_resources = resources;
     }

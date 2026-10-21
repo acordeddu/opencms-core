@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -14,12 +14,12 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * Lesser General Public License for more details.
  *
- * For further information about Alkacon Software GmbH, please see the
- * company website: http://www.alkacon.com
+ * For further information about Alkacon Software GmbH & Co. KG, please see the
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -56,8 +56,8 @@ import org.apache.commons.logging.Log;
 
 /**
  * Provides methods for the change property values dialog.<p>
- * 
- * @since 6.0.0 
+ *
+ * @since 6.0.0
  */
 public class CmsPropertyChange extends CmsDialog {
 
@@ -95,7 +95,7 @@ public class CmsPropertyChange extends CmsDialog {
 
     /**
      * Public constructor with JSP action element.<p>
-     * 
+     *
      * @param jsp an initialized JSP action element
      */
     public CmsPropertyChange(CmsJspActionElement jsp) {
@@ -105,7 +105,7 @@ public class CmsPropertyChange extends CmsDialog {
 
     /**
      * Public constructor with JSP variables.<p>
-     * 
+     *
      * @param context the JSP page context
      * @param req the JSP request
      * @param res the JSP response
@@ -117,14 +117,18 @@ public class CmsPropertyChange extends CmsDialog {
 
     /**
      * Builds the html for the property definition select box.<p>
-     * 
+     *
      * @param cms the CmsObject
      * @param selectValue the localized value for the "Please select" option
      * @param attributes optional attributes for the &lt;select&gt; tag
      * @param selectedValue the value that is currently selected
      * @return the html for the property definition select box
      */
-    public static String buildSelectProperty(CmsObject cms, String selectValue, String attributes, String selectedValue) {
+    public static String buildSelectProperty(
+        CmsObject cms,
+        String selectValue,
+        String attributes,
+        String selectedValue) {
 
         List propertyDef = new ArrayList();
         try {
@@ -133,7 +137,7 @@ public class CmsPropertyChange extends CmsDialog {
         } catch (CmsException e) {
             // should usually never happen
             if (LOG.isInfoEnabled()) {
-                LOG.info(e);
+                LOG.info(e.getLocalizedMessage(), e);
             }
         }
 
@@ -162,7 +166,7 @@ public class CmsPropertyChange extends CmsDialog {
 
     /**
      * Changes the property values on the specified resources.<p>
-     * 
+     *
      * @throws JspException if problems including sub-elements occur
      */
     public void actionChange() throws JspException {
@@ -187,7 +191,7 @@ public class CmsPropertyChange extends CmsDialog {
 
     /**
      * Builds the html for the result list of resources where the property was changed.<p>
-     * 
+     *
      * @return the html for the result list
      */
     public String buildResultList() {
@@ -210,7 +214,7 @@ public class CmsPropertyChange extends CmsDialog {
 
     /**
      * Builds the html for the property definition select box.<p>
-     * 
+     *
      * @param attributes optional attributes for the &lt;select&gt; tag
      * @return the html for the property definition select box
      */
@@ -283,7 +287,7 @@ public class CmsPropertyChange extends CmsDialog {
 
     /**
      * Returns the height for the result list of changed resources.<p>
-     * 
+     *
      * @return the height for the result list of changed resources
      */
     public String getResultListHeight() {
@@ -301,7 +305,7 @@ public class CmsPropertyChange extends CmsDialog {
 
     /**
      * Returns if validation errors were found.<p>
-     * 
+     *
      * @return true if validation errors were found, otherwise false
      */
     public boolean hasValidationErrors() {
@@ -352,13 +356,14 @@ public class CmsPropertyChange extends CmsDialog {
     /**
      * @see org.opencms.workplace.CmsWorkplace#initWorkplaceRequestValues(org.opencms.workplace.CmsWorkplaceSettings, javax.servlet.http.HttpServletRequest)
      */
+    @Override
     protected void initWorkplaceRequestValues(CmsWorkplaceSettings settings, HttpServletRequest request) {
 
         // fill the parameter values in the get/set methods
         fillParamValues(request);
         // set the dialog type
         setParamDialogtype(DIALOG_TYPE);
-        // set the action for the JSP switch 
+        // set the action for the JSP switch
         if (DIALOG_OK.equals(getParamAction())) {
             if (validateParameters()) {
                 // all parameters are valid, proceed
@@ -373,7 +378,7 @@ public class CmsPropertyChange extends CmsDialog {
             setAction(ACTION_CANCEL);
         } else {
             setAction(ACTION_DEFAULT);
-            // build title for change property value dialog     
+            // build title for change property value dialog
             setParamTitle(Messages.get().getBundle(getLocale()).key(Messages.GUI_TITLE_PROPERTYCHANGE_0));
         }
     }
@@ -390,7 +395,7 @@ public class CmsPropertyChange extends CmsDialog {
 
     /**
      * Sets the validation error flag.<p>
-     * 
+     *
      * @param validationErrors the validation error flag, true if validation errors were found
      */
     protected void setValidationErrors(boolean validationErrors) {
@@ -410,7 +415,7 @@ public class CmsPropertyChange extends CmsDialog {
 
     /**
      * Performs the main property change value operation on the resource property.<p>
-     * 
+     *
      * @param recursive true, if the property value has to be changed recursively, otherwise false
      * @return true, if the property values are changed successfully, otherwise false
      * @throws CmsException if changing is not successful
@@ -425,7 +430,7 @@ public class CmsPropertyChange extends CmsDialog {
 
         // lock the selected resource
         checkLock(getParamResource());
-        // change the property values    
+        // change the property values
         List changedResources = null;
         if (CmsStringUtil.isNotEmptyOrWhitespaceOnly(getParamOldValue())) {
             changedResources = getCms().changeResourcesInFolderWithProperty(
@@ -446,28 +451,39 @@ public class CmsPropertyChange extends CmsDialog {
     }
 
     /**
-     * Sets the given property with the given value to the given resource 
+     * Sets the changed resources that were affected by the property change action.<p>
+     *
+     * @param changedResources the changed resources that were affected by the property change action
+     */
+    private void setChangedResources(List changedResources) {
+
+        m_changedResources = changedResources;
+    }
+
+    /**
+     * Sets the given property with the given value to the given resource
      * (potentially recursiv) if it has not been set before.<p>
-     * 
+     *
      * Returns a list with all sub resources that have been modified this way.<p>
      *
      * @param resourceRootPath the resource on which property definition values are changed
      * @param propertyDefinition the name of the propertydefinition to change the value
      * @param newValue the new value of the propertydefinition
      * @param recursive if true, change recursively all property values on sub-resources (only for folders)
-     * 
+     *
      * @return a list with the <code>{@link CmsResource}</code>'s where the property value has been changed
      *
-     * @throws CmsVfsException for now only when the search for the oldvalue failed. 
+     * @throws CmsVfsException for now only when the search for the oldvalue failed.
      * @throws CmsException if operation was not successful
      */
     private List setPropertyInFolder(
         String resourceRootPath,
         String propertyDefinition,
         String newValue,
-        boolean recursive) throws CmsException, CmsVfsException {
+        boolean recursive)
+    throws CmsException, CmsVfsException {
 
-        CmsObject cms = this.getCms();
+        CmsObject cms = getCms();
 
         // collect the resources to look up
         List resources = new ArrayList();
@@ -498,20 +514,10 @@ public class CmsPropertyChange extends CmsDialog {
     }
 
     /**
-     * Sets the changed resources that were affected by the property change action.<p>
-     *
-     * @param changedResources the changed resources that were affected by the property change action
-     */
-    private void setChangedResources(List changedResources) {
-
-        m_changedResources = changedResources;
-    }
-
-    /**
      * Validates the submitted form parameters.<p>
-     * 
+     *
      * If parameters are missing, a localized error message String is created.<p>
-     * 
+     *
      * @return true if all parameters are correct, otherwise false
      *
      */

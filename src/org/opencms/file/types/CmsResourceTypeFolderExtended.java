@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -14,12 +14,12 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * Lesser General Public License for more details.
  *
- * For further information about Alkacon Software GmbH, please see the
- * company website: http://www.alkacon.com
+ * For further information about Alkacon Software GmbH & Co. KG, please see the
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -35,8 +35,8 @@ import org.opencms.util.CmsStringUtil;
  *
  * This type extends a folder but has a configurable type id and type name.
  * Optionally, a workplace class name for the type and a parameter String can be provided.<p>
- * 
- * @since 6.0.0 
+ *
+ * @since 6.0.0
  */
 public class CmsResourceTypeFolderExtended extends A_CmsResourceTypeFolderBase {
 
@@ -46,8 +46,8 @@ public class CmsResourceTypeFolderExtended extends A_CmsResourceTypeFolderBase {
     /** Configuration key for the optional folder class parameters. */
     public static final String CONFIGURATION_FOLDER_CLASS_PARAMS = "folder.class.params";
 
-    /** The type name for entry points. */
-    public static final String TYPE_ENTRY_POINT = "subsitemap";
+    /** The serial version id. */
+    private static final long serialVersionUID = -3354434293847996599L;
 
     /** The configured folder class name for this folder type. */
     private String m_folderClassName;
@@ -94,7 +94,7 @@ public class CmsResourceTypeFolderExtended extends A_CmsResourceTypeFolderBase {
 
     /**
      * Returns the (optional) configured folder class name for this folder.<p>
-     * 
+     *
      * @return the (optional) configured folder class name for this folder
      */
     public String getFolderClassName() {
@@ -104,7 +104,7 @@ public class CmsResourceTypeFolderExtended extends A_CmsResourceTypeFolderBase {
 
     /**
      * Returns the (optional) configured folder class parameters name for this folder.<p>
-     * 
+     *
      * @return the (optional) configured folder class parameters for this folder
      */
     public String getFolderClassParams() {

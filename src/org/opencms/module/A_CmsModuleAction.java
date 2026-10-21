@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -14,12 +14,12 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * Lesser General Public License for more details.
  *
- * For further information about Alkacon Software GmbH, please see the
- * company website: http://www.alkacon.com
+ * For further information about Alkacon Software GmbH & Co. KG, please see the
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -39,8 +39,8 @@ import org.apache.commons.logging.Log;
 /**
  * Simple base implementation of the {@link I_CmsModuleAction} interface,
  * extend this class for more sophisticated module action implementations.<p>
- * 
- * @since 6.0.0 
+ *
+ * @since 6.0.0
  */
 public abstract class A_CmsModuleAction implements I_CmsModuleAction {
 
@@ -53,10 +53,11 @@ public abstract class A_CmsModuleAction implements I_CmsModuleAction {
     public void cmsEvent(CmsEvent event) {
 
         if (LOG.isDebugEnabled()) {
-            LOG.debug(Messages.get().getBundle().key(
-                Messages.LOG_EVENT_CAUGHT_2,
-                this.getClass().getName(),
-                new Integer(event.getType())));
+            LOG.debug(
+                Messages.get().getBundle().key(
+                    Messages.LOG_EVENT_CAUGHT_2,
+                    this.getClass().getName(),
+                    Integer.valueOf(event.getType())));
         }
     }
 
@@ -66,10 +67,11 @@ public abstract class A_CmsModuleAction implements I_CmsModuleAction {
     public void initialize(CmsObject adminCms, CmsConfigurationManager configurationManager, CmsModule module) {
 
         if (LOG.isDebugEnabled()) {
-            LOG.debug(Messages.get().getBundle().key(
-                Messages.LOG_MODULE_INITIALIZED_2,
-                module.getName(),
-                this.getClass().getName()));
+            LOG.debug(
+                Messages.get().getBundle().key(
+                    Messages.LOG_MODULE_INITIALIZED_2,
+                    module.getName(),
+                    this.getClass().getName()));
         }
     }
 
@@ -79,10 +81,11 @@ public abstract class A_CmsModuleAction implements I_CmsModuleAction {
     public void moduleUninstall(CmsModule module) {
 
         if (LOG.isDebugEnabled()) {
-            LOG.debug(Messages.get().getBundle().key(
-                Messages.LOG_MODULE_UNINSTALLED_2,
-                module.getName(),
-                this.getClass().getName()));
+            LOG.debug(
+                Messages.get().getBundle().key(
+                    Messages.LOG_MODULE_UNINSTALLED_2,
+                    module.getName(),
+                    this.getClass().getName()));
         }
     }
 
@@ -92,10 +95,11 @@ public abstract class A_CmsModuleAction implements I_CmsModuleAction {
     public void moduleUpdate(CmsModule module) {
 
         if (LOG.isDebugEnabled()) {
-            LOG.debug(Messages.get().getBundle().key(
-                Messages.LOG_MODULE_UPDATED_2,
-                module.getName(),
-                this.getClass().getName()));
+            LOG.debug(
+                Messages.get().getBundle().key(
+                    Messages.LOG_MODULE_UPDATED_2,
+                    module.getName(),
+                    this.getClass().getName()));
         }
     }
 
@@ -115,10 +119,11 @@ public abstract class A_CmsModuleAction implements I_CmsModuleAction {
     public void shutDown(CmsModule module) {
 
         if (LOG.isDebugEnabled()) {
-            LOG.debug(Messages.get().getBundle().key(
-                Messages.LOG_MODULE_SHUTDOWN_2,
-                module.getName(),
-                this.getClass().getName()));
+            LOG.debug(
+                Messages.get().getBundle().key(
+                    Messages.LOG_MODULE_SHUTDOWN_2,
+                    module.getName(),
+                    this.getClass().getName()));
         }
     }
 }

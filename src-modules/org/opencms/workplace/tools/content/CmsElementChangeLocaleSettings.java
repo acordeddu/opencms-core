@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -14,12 +14,12 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * Lesser General Public License for more details.
  *
- * For further information about Alkacon Software GmbH, please see the
- * company website: http://www.alkacon.com
+ * For further information about Alkacon Software GmbH & Co. KG, please see the
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -29,26 +29,26 @@ package org.opencms.workplace.tools.content;
 
 /**
  * Settings object that provides the settings to convert page locales from one locale to another.<p>
- * 
- * @since 6.0.1 
+ *
+ * @since 6.0.1
  */
 public class CmsElementChangeLocaleSettings {
-    
+
     /** Flag indicating if resources in sub folders should be changed, too. */
     private boolean m_includeSubFolders;
-    
+
     /** The new Locale to use for the page elements. */
     private String m_newLocale;
-    
+
     /** The old Locale of the page elements. */
     private String m_oldLocale;
-    
+
     /** The template for the pages that should be converted. */
     private String m_template;
-    
+
     /** The VFS folder in OpenCms to start the conversion from. */
     private String m_vfsFolder;
-    
+
     /**
      * Default constructor.<p>
      */
@@ -56,7 +56,7 @@ public class CmsElementChangeLocaleSettings {
 
         super();
     }
-    
+
     /**
      * Returns the new Locale to use for the page elements.<p>
      *
@@ -66,7 +66,7 @@ public class CmsElementChangeLocaleSettings {
 
         return m_newLocale;
     }
-    
+
     /**
      * Returns the old Locale of the page elements.<p>
      *
@@ -76,7 +76,7 @@ public class CmsElementChangeLocaleSettings {
 
         return m_oldLocale;
     }
-    
+
     /**
      * Returns the template for the pages that should be converted.<p>
      *
@@ -86,7 +86,7 @@ public class CmsElementChangeLocaleSettings {
 
         return m_template;
     }
-    
+
     /**
      * Returns the VFS folder in OpenCms to start the conversion from.<p>
      *
@@ -106,7 +106,7 @@ public class CmsElementChangeLocaleSettings {
 
         return m_includeSubFolders;
     }
-    
+
     /**
      * Sets the flag indicating if resources in sub folders should be changed, too.<p>
      *
@@ -116,7 +116,7 @@ public class CmsElementChangeLocaleSettings {
 
         m_includeSubFolders = includeSubFolders;
     }
-    
+
     /**
      * Sets the new Locale to use for the page elements.<p>
      *
@@ -126,7 +126,7 @@ public class CmsElementChangeLocaleSettings {
 
         m_newLocale = newLocale;
     }
-    
+
     /**
      * Sets the old Locale of the page elements.<p>
      *
@@ -136,7 +136,7 @@ public class CmsElementChangeLocaleSettings {
 
         m_oldLocale = oldLocale;
     }
-    
+
     /**
      * Sets the template for the pages that should be converted.<p>
      *
@@ -146,7 +146,7 @@ public class CmsElementChangeLocaleSettings {
 
         m_template = template;
     }
-    
+
     /**
      * Sets the VFS folder in OpenCms to start the conversion from.<p>
      *
@@ -154,7 +154,7 @@ public class CmsElementChangeLocaleSettings {
      */
     public void setVfsFolder(String vfsFolder) {
 
-       m_vfsFolder = vfsFolder;
+        m_vfsFolder = vfsFolder;
     }
 
 }

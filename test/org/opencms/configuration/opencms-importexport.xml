@@ -18,6 +18,7 @@
 				<importversion class="org.opencms.importexport.CmsImportVersion5"/>
 				<importversion class="org.opencms.importexport.CmsImportVersion6"/>
 				<importversion class="org.opencms.importexport.CmsImportVersion7"/>
+				<importversion class="org.opencms.importexport.CmsImportVersion10"/>
 			</importversions>          	   	
 			<immutables>
 				<resource uri="/system/"/>
@@ -45,8 +46,9 @@
 			</principaltranslations>
         	<ignoredproperties>
         		<property name="module"/>
-        	</ignoredproperties>     			
+        	</ignoredproperties>			
 		</import>
+		<export/>
 	</importexport>      
 	<staticexport enabled="true">
 		<staticexporthandler>org.opencms.staticexport.CmsOnDemandStaticExportHandler</staticexporthandler>
@@ -155,6 +157,12 @@
             </rfs-rules>
 		</rendersettings>
 	</staticexport>
+	<protectedexport>
+		<exportpath>protected</exportpath>
+		<exportpoints>
+			<exportpoint uri="/sites/default/documents/" destination="documents/"/>
+		</exportpoints>
+	</protectedexport>
 	<usercsvexport>
         <separator>;</separator>
         <columns>
@@ -190,6 +198,10 @@
 				<regex>/system/modules/.*</regex>
 				<regex>/system/workplace/.*</regex>
 			</filter>
+            <filetranslations enabled="true">
+                <translation>s/foo/bar/g</translation>
+                <translation>s/baz/qux/g</translation>
+            </filetranslations>
 		</repository>
 		<repository name="extended" class="org.opencms.repository.CmsRepository">
 			<params>

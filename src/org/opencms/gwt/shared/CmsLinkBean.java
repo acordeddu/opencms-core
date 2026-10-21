@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -15,11 +15,11 @@
  * Lesser General Public License for more details.
  *
  * For further information about Alkacon Software, please see the
- * company website: http://www.alkacon.com
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -29,7 +29,7 @@ package org.opencms.gwt.shared;
 
 /**
  * A bean for representing a link, which can be external or internal.<p>
- * 
+ *
  * @since 8.0.0
  */
 public class CmsLinkBean {
@@ -42,7 +42,7 @@ public class CmsLinkBean {
 
     /**
      * Creates a new link bean.<p>
-     * 
+     *
      * @param link the link target
      * @param internal true if this is an internal link
      */
@@ -54,7 +54,7 @@ public class CmsLinkBean {
 
     /**
      * Returns the link target.<p>
-     * 
+     *
      * @return the link target
      */
     public String getLink() {
@@ -64,7 +64,7 @@ public class CmsLinkBean {
 
     /**
      * Returns true if this is an internal link.<p>
-     *  
+     *
      * @return true if this is an internal link
      */
     public boolean isInternal() {

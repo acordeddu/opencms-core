@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -14,12 +14,12 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * Lesser General Public License for more details.
  *
- * For further information about Alkacon Software GmbH, please see the
- * company website: http://www.alkacon.com
+ * For further information about Alkacon Software GmbH & Co. KG, please see the
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -54,8 +54,8 @@ import org.apache.commons.logging.Log;
 
 /**
  * Dialog to send a new email to the selected groups.<p>
- * 
- * @since 6.5.6 
+ *
+ * @since 6.5.6
  */
 public class CmsSendEmailGroupsDialog extends CmsWidgetDialog {
 
@@ -82,7 +82,7 @@ public class CmsSendEmailGroupsDialog extends CmsWidgetDialog {
 
     /**
      * Public constructor with JSP action element.<p>
-     * 
+     *
      * @param jsp an initialized JSP action element
      */
     public CmsSendEmailGroupsDialog(CmsJspActionElement jsp) {
@@ -92,7 +92,7 @@ public class CmsSendEmailGroupsDialog extends CmsWidgetDialog {
 
     /**
      * Public constructor with JSP variables.<p>
-     * 
+     *
      * @param context the JSP page context
      * @param req the JSP request
      * @param res the JSP response
@@ -105,13 +105,16 @@ public class CmsSendEmailGroupsDialog extends CmsWidgetDialog {
     /**
      * Commits the edited project to the db.<p>
      */
+    @Override
     public void actionCommit() {
 
-        List errors = new ArrayList();
+        List<Throwable> errors = new ArrayList<Throwable>();
 
         if (CmsStringUtil.isEmptyOrWhitespaceOnly(m_msgInfo.getTo())) {
-            setCommitErrors(Collections.singletonList((Throwable)new CmsIllegalStateException(Messages.get().container(
-                Messages.ERR_NO_SELECTED_USER_WITH_EMAIL_0))));
+            setCommitErrors(
+                Collections.singletonList(
+                    (Throwable)new CmsIllegalStateException(
+                        Messages.get().container(Messages.ERR_NO_SELECTED_USER_WITH_EMAIL_0))));
             return;
         }
         try {
@@ -128,7 +131,7 @@ public class CmsSendEmailGroupsDialog extends CmsWidgetDialog {
 
     /**
      * Returns a warning if users have been excluded.<p>
-     * 
+     *
      * @return a warning
      */
     public String getExcludedUsers() {
@@ -147,7 +150,7 @@ public class CmsSendEmailGroupsDialog extends CmsWidgetDialog {
      *
      * @return the selected groups
      */
-    public List getGroups() {
+    public List<String> getGroups() {
 
         return CmsStringUtil.splitAsList(getParamGroups(), CmsHtmlList.ITEM_SEPARATOR);
     }
@@ -164,7 +167,7 @@ public class CmsSendEmailGroupsDialog extends CmsWidgetDialog {
 
     /**
      * Sets the warning message if users have been excluded.<p>
-     * 
+     *
      * @param excludedUsers the warning message
      */
     public void setExcludedUsers(String excludedUsers) {
@@ -185,6 +188,7 @@ public class CmsSendEmailGroupsDialog extends CmsWidgetDialog {
     /**
      * @see org.opencms.workplace.CmsWidgetDialog#createDialogHtml(java.lang.String)
      */
+    @Override
     protected String createDialogHtml(String dialog) {
 
         StringBuffer result = new StringBuffer(1024);
@@ -218,6 +222,7 @@ public class CmsSendEmailGroupsDialog extends CmsWidgetDialog {
     /**
      * Creates the list of widgets for this dialog.<p>
      */
+    @Override
     protected void defineWidgets() {
 
         // initialize the project object to use for the dialog
@@ -238,6 +243,7 @@ public class CmsSendEmailGroupsDialog extends CmsWidgetDialog {
     /**
      * @see org.opencms.workplace.CmsWidgetDialog#getPageArray()
      */
+    @Override
     protected String[] getPageArray() {
 
         return PAGES;
@@ -245,20 +251,20 @@ public class CmsSendEmailGroupsDialog extends CmsWidgetDialog {
 
     /**
      * Returns a semicolon separated list of user names.<p>
-     * 
+     *
      * @return a semicolon separated list of user names
      */
     protected String getToNames() {
 
-        List excluded = new ArrayList();
-        List users = new ArrayList();
-        Iterator itGroups = getGroups().iterator();
+        List<String> excluded = new ArrayList<String>();
+        List<String> users = new ArrayList<String>();
+        Iterator<String> itGroups = getGroups().iterator();
         while (itGroups.hasNext()) {
-            String groupName = (String)itGroups.next();
+            String groupName = itGroups.next();
             try {
-                Iterator itUsers = getCms().getUsersOfGroup(groupName, true).iterator();
+                Iterator<CmsUser> itUsers = getCms().getUsersOfGroup(groupName, true).iterator();
                 while (itUsers.hasNext()) {
-                    CmsUser user = (CmsUser)itUsers.next();
+                    CmsUser user = itUsers.next();
                     String userName = user.getFullName();
                     if (!users.contains(userName)) {
                         String emailAddress = user.getEmail();
@@ -277,7 +283,7 @@ public class CmsSendEmailGroupsDialog extends CmsWidgetDialog {
             StringBuffer text = new StringBuffer(500);
             text.append(Messages.get().container(Messages.GUI_EXCLUDED_USERS_WARNING_0).key(getLocale()));
             text.append("<br>");
-            Iterator it = excluded.iterator();
+            Iterator<String> it = excluded.iterator();
             while (it.hasNext()) {
                 text.append("- ");
                 text.append(it.next());
@@ -286,12 +292,14 @@ public class CmsSendEmailGroupsDialog extends CmsWidgetDialog {
             setExcludedUsers(text.toString());
         }
         if (users.isEmpty()) {
-            setCommitErrors(Collections.singletonList((Throwable)new CmsIllegalStateException(Messages.get().container(
-                Messages.ERR_NO_SELECTED_USER_WITH_EMAIL_0))));
+            setCommitErrors(
+                Collections.singletonList(
+                    (Throwable)new CmsIllegalStateException(
+                        Messages.get().container(Messages.ERR_NO_SELECTED_USER_WITH_EMAIL_0))));
             return "";
         }
         StringBuffer result = new StringBuffer(256);
-        Iterator itUsers = users.iterator();
+        Iterator<String> itUsers = users.iterator();
         while (itUsers.hasNext()) {
             result.append(itUsers.next().toString());
             if (itUsers.hasNext()) {
@@ -311,7 +319,7 @@ public class CmsSendEmailGroupsDialog extends CmsWidgetDialog {
                 // create a new message info object
                 m_msgInfo = new CmsMessageInfo();
             } else {
-                // this is not the initial call, get the message info object from session  
+                // this is not the initial call, get the message info object from session
                 m_msgInfo = (CmsMessageInfo)getDialogObject();
             }
         } catch (Exception e) {
@@ -325,6 +333,7 @@ public class CmsSendEmailGroupsDialog extends CmsWidgetDialog {
     /**
      * @see org.opencms.workplace.CmsWorkplace#initMessages()
      */
+    @Override
     protected void initMessages() {
 
         // add specific dialog resource bundle
@@ -337,6 +346,7 @@ public class CmsSendEmailGroupsDialog extends CmsWidgetDialog {
     /**
      * @see org.opencms.workplace.CmsWorkplace#initWorkplaceRequestValues(org.opencms.workplace.CmsWorkplaceSettings, javax.servlet.http.HttpServletRequest)
      */
+    @Override
     protected void initWorkplaceRequestValues(CmsWorkplaceSettings settings, HttpServletRequest request) {
 
         // initialize parameters and dialog actions in super implementation
@@ -349,6 +359,7 @@ public class CmsSendEmailGroupsDialog extends CmsWidgetDialog {
     /**
      * @see org.opencms.workplace.CmsWidgetDialog#validateParamaters()
      */
+    @Override
     protected void validateParamaters() throws Exception {
 
         if ((getGroups() == null) || getGroups().isEmpty()) {
@@ -358,19 +369,19 @@ public class CmsSendEmailGroupsDialog extends CmsWidgetDialog {
 
     /**
      * Returns a semicolon separated list of email addresses.<p>
-     * 
+     *
      * @return a semicolon separated list of email addresses
      */
     private String getEmailAddresses() {
 
-        List emails = new ArrayList();
-        Iterator itGroups = getGroups().iterator();
+        List<String> emails = new ArrayList<String>();
+        Iterator<String> itGroups = getGroups().iterator();
         while (itGroups.hasNext()) {
-            String groupName = (String)itGroups.next();
+            String groupName = itGroups.next();
             try {
-                Iterator itUsers = getCms().getUsersOfGroup(groupName, true).iterator();
+                Iterator<CmsUser> itUsers = getCms().getUsersOfGroup(groupName, true).iterator();
                 while (itUsers.hasNext()) {
-                    CmsUser user = (CmsUser)itUsers.next();
+                    CmsUser user = itUsers.next();
                     String emailAddress = user.getEmail();
                     if (CmsStringUtil.isNotEmptyOrWhitespaceOnly(emailAddress) && !emails.contains(emailAddress)) {
                         emails.add(emailAddress);
@@ -381,9 +392,9 @@ public class CmsSendEmailGroupsDialog extends CmsWidgetDialog {
             }
         }
         StringBuffer result = new StringBuffer(256);
-        Iterator itEmails = emails.iterator();
+        Iterator<String> itEmails = emails.iterator();
         while (itEmails.hasNext()) {
-            result.append(itEmails.next().toString());
+            result.append(itEmails.next());
             if (itEmails.hasNext()) {
                 result.append("; ");
             }

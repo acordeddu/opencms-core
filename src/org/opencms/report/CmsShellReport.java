@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -14,12 +14,12 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * Lesser General Public License for more details.
  *
- * For further information about Alkacon Software GmbH, please see the
- * company website: http://www.alkacon.com
+ * For further information about Alkacon Software GmbH & Co. KG, please see the
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -28,15 +28,17 @@
 package org.opencms.report;
 
 import org.opencms.i18n.CmsMessageContainer;
+import org.opencms.main.CmsShell;
 
+import java.io.PrintStream;
 import java.util.Locale;
 
 /**
  * Report class used for the shell.<p>
- * 
+ *
  * It stores nothing. It just prints everything to <code>{@link System#out}</code><p>.
- * 
- * @since 6.0.0 
+ *
+ * @since 6.0.0
  */
 public class CmsShellReport extends CmsPrintStreamReport {
 
@@ -45,12 +47,40 @@ public class CmsShellReport extends CmsPrintStreamReport {
 
     /**
      * Constructs a new report using the provided locale for the output language.<p>
-     *  
+     *
      * @param locale the locale to use for the output language
      */
     public CmsShellReport(Locale locale) {
 
-        super(System.out, locale, false);
+        super(getOutputStream(), locale, false);
+    }
+
+    /**
+     * Retrieves the appropriate output stream to write the report to.<p>
+     *
+     * If we are running in a shell context, this will return the shell's assigned output stream, otherwise System.out is returned.<p>
+     *
+     * @return the output stream to write the report to
+     */
+    public static PrintStream getOutputStream() {
+
+        CmsShell shell = CmsShell.getTopShell();
+        if (shell != null) {
+            return shell.getOut();
+        } else {
+            return System.out;
+        }
+
+    }
+
+    /**
+     * @see org.opencms.report.A_CmsReport#addError(java.lang.Object)
+     */
+    @Override
+    public void addError(Object obj) {
+
+        super.addError(obj);
+        CmsShell.setReportError();
     }
 
     /**

@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -14,12 +14,12 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * Lesser General Public License for more details.
  *
- * For further information about Alkacon Software GmbH, please see the
- * company website: http://www.alkacon.com
+ * For further information about Alkacon Software GmbH & Co. KG, please see the
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -28,75 +28,42 @@
 package org.opencms.file;
 
 import org.opencms.file.types.CmsResourceTypeFolder;
-import org.opencms.test.OpenCmsTestCase;
-import org.opencms.test.OpenCmsTestProperties;
 import org.opencms.test.OpenCmsTestResourceFilter;
+import org.opencms.test.OpenCmsTestRunner;
 
 import java.util.List;
 
-import junit.extensions.TestSetup;
-import junit.framework.Test;
-import junit.framework.TestSuite;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.MethodOrderer;
+import org.junit.jupiter.api.Order;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInfo;
+import org.junit.jupiter.api.TestMethodOrder;
 
 /**
  * Unit test for the "readResources" method of the CmsObject to test reading resource lists within a subtree.<p>
- * 
+ *
  */
-public class TestReadResourceTree extends OpenCmsTestCase {
+@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
+public class TestReadResourceTree extends OpenCmsTestRunner {
 
     /**
-     * Default JUnit constructor.<p>
-     * 
-     * @param arg0 JUnit parameters
+     * @see org.opencms.test.OpenCmsTestRunner#$openCmsSetUp(org.junit.jupiter.api.TestInfo)
      */
-    public TestReadResourceTree(String arg0) {
+    @Override
+    @BeforeAll
+    public void $openCmsSetUp(TestInfo testInfo) {
 
-        super(arg0);
-    }
-
-    /**
-     * Test suite for this test class.<p>
-     * 
-     * @return the test suite
-     */
-    public static Test suite() {
-
-        OpenCmsTestProperties.initialize(org.opencms.test.AllTests.TEST_PROPERTIES_PATH);
-
-        TestSuite suite = new TestSuite();
-        suite.setName(TestReadResourceTree.class.getName());
-
-        suite.addTest(new TestReadResourceTree("testReadSubtree"));
-        suite.addTest(new TestReadResourceTree("testReadChildren"));
-        suite.addTest(new TestReadResourceTree("testReadFolders"));
-        suite.addTest(new TestReadResourceTree("testReadFiles"));
-        suite.addTest(new TestReadResourceTree("testReadResources"));
-        suite.addTest(new TestReadResourceTree("testReadModifiedResources"));
-        suite.addTest(new TestReadResourceTree("testReadResourcesInTimerange"));
-
-        TestSetup wrapper = new TestSetup(suite) {
-
-            @Override
-            protected void setUp() {
-
-                setupOpenCms("simpletest", "/");
-            }
-
-            @Override
-            protected void tearDown() {
-
-                removeOpenCms();
-            }
-        };
-
-        return wrapper;
+        setupOpenCms(testInfo, "simpletest", "/");
     }
 
     /**
      * Test readResources for reading immediate child resources below a given path.<p>
-     * 
+     *
      * @throws Throwable if something goes wrong
      */
+    @Test
+    @Order(2)
     public void testReadChildren() throws Throwable {
 
         CmsObject cms = getCmsObject();
@@ -123,14 +90,16 @@ public class TestReadResourceTree extends OpenCmsTestCase {
         }
 
         // check the number of resources
-        assertEquals(this.m_currentResourceStrorage.size(), i);
+        assertEquals(getCurrentResourceStorageSize(), i);
     }
 
     /**
      * Test readResources for reading file resources.<p>
-     * 
+     *
      * @throws Throwable if something goes wrong
      */
+    @Test
+    @Order(4)
     public void testReadFiles() throws Throwable {
 
         CmsObject cms = getCmsObject();
@@ -168,14 +137,16 @@ public class TestReadResourceTree extends OpenCmsTestCase {
         }
 
         // check the number of resources
-        assertEquals(this.m_currentResourceStrorage.size(), i);
+        assertEquals(getCurrentResourceStorageSize(), i);
     }
 
     /**
      * Test readResources for reading folder resources.<p>
-     * 
+     *
      * @throws Throwable if something goes wrong
      */
+    @Test
+    @Order(3)
     public void testReadFolders() throws Throwable {
 
         CmsObject cms = getCmsObject();
@@ -202,14 +173,16 @@ public class TestReadResourceTree extends OpenCmsTestCase {
         }
 
         // check the number of resources
-        assertEquals(this.m_currentResourceStrorage.size(), i);
+        assertEquals(getCurrentResourceStorageSize(), i);
     }
 
     /**
      * Test readResources for reading modified resources.<p>
-     * 
+     *
      * @throws Throwable if something goes wrong
      */
+    @Test
+    @Order(6)
     public void testReadModifiedResources() throws Throwable {
 
         CmsObject cms = getCmsObject();
@@ -245,7 +218,7 @@ public class TestReadResourceTree extends OpenCmsTestCase {
         }
 
         // check the number of resources
-        assertEquals(this.m_currentResourceStrorage.size(), i);
+        assertEquals(getCurrentResourceStorageSize(), i);
 
         // store all resources of the expected result
         storeResources(cms, path + "/subfolder21/subsubfolder211/jsp1.jsp", false);
@@ -261,14 +234,16 @@ public class TestReadResourceTree extends OpenCmsTestCase {
         }
 
         // check the number of resources
-        assertEquals(this.m_currentResourceStrorage.size(), i);
+        assertEquals(getCurrentResourceStorageSize(), i);
     }
 
     /**
      * Test the method that read the direct sub-resources of a folder.<p>
-     * 
+     *
      * @throws Throwable if something goes wrong
      */
+    @Test
+    @Order(5)
     public void testReadResources() throws Throwable {
 
         CmsObject cms = getCmsObject();
@@ -292,9 +267,11 @@ public class TestReadResourceTree extends OpenCmsTestCase {
 
     /**
      * Test readResources for reading resources modified within a timerange.<p>
-     * 
+     *
      * @throws Throwable if something goes wrong
      */
+    @Test
+    @Order(7)
     public void testReadResourcesInTimerange() throws Throwable {
 
         CmsObject cms = getCmsObject();
@@ -334,7 +311,7 @@ public class TestReadResourceTree extends OpenCmsTestCase {
         }
 
         // check the number of resources
-        assertEquals(this.m_currentResourceStrorage.size(), i);
+        assertEquals(getCurrentResourceStorageSize(), i);
 
         // ensure no resource was modified after timestamp2
         result = cms.readResources("/", CmsResourceFilter.ALL.addRequireLastModifiedAfter(timestamp2));
@@ -359,14 +336,16 @@ public class TestReadResourceTree extends OpenCmsTestCase {
         }
 
         // check the number of resources
-        assertEquals(this.m_currentResourceStrorage.size(), i);
+        assertEquals(getCurrentResourceStorageSize(), i);
     }
 
     /**
      * Test readResources for reading a subtree below a given path.<p>
-     * 
+     *
      * @throws Throwable if something goes wrong
      */
+    @Test
+    @Order(1)
     public void testReadSubtree() throws Throwable {
 
         CmsObject cms = getCmsObject();
@@ -396,6 +375,6 @@ public class TestReadResourceTree extends OpenCmsTestCase {
         }
 
         // check the number of resources
-        assertEquals(this.m_currentResourceStrorage.size(), i);
+        assertEquals(getCurrentResourceStorageSize(), i);
     }
 }

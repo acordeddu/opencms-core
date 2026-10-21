@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -15,11 +15,11 @@
  * Lesser General Public License for more details.
  *
  * For further information about Alkacon Software, please see the
- * company website: http://www.alkacon.com
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -36,10 +36,16 @@ import com.google.gwt.user.client.rpc.IsSerializable;
 
 /**
  * A specific bean holding all info to be displayed in the categories tab.<p>
- * 
+ *
  * @since 8.0.0
  */
-public class CmsCategoryBean implements I_CmsHasTitle, I_CmsHasPath, IsSerializable {
+public class CmsCategoryBean implements I_CmsHasTitle, I_CmsHasPath, IsSerializable, I_CmsHasIconClasses {
+
+    /** The big category type icon classes. */
+    public static final String BIG_ICON_CLASSES = CmsGwtConstants.TYPE_ICON_CLASS + "  oc-icon-24-category";
+
+    /** The small category type icon classes. */
+    public static final String SMALL_ICON_CLASSES = CmsGwtConstants.TYPE_ICON_CLASS + "  oc-icon-16-category";
 
     /** The category's base path. */
     private String m_basePath;
@@ -53,15 +59,18 @@ public class CmsCategoryBean implements I_CmsHasTitle, I_CmsHasPath, IsSerializa
     /** The category path. */
     private String m_path;
 
-    /** The category's base path. */
+    /** The category's root path. */
     private String m_rootPath;
+
+    /** The category's site path. */
+    private String m_sitePath;
 
     /** The category title. */
     private String m_title;
 
     /**
      * Constructor.<p>
-     * 
+     *
      * @param category the server-side category
      */
     public CmsCategoryBean(CmsCategory category) {
@@ -77,7 +86,7 @@ public class CmsCategoryBean implements I_CmsHasTitle, I_CmsHasPath, IsSerializa
 
     /**
      * Constructor.<p>
-     * 
+     *
      * @param categoryTreeEntry the category tree entry to copy
      */
     public CmsCategoryBean(CmsCategoryTreeEntry categoryTreeEntry) {
@@ -89,19 +98,26 @@ public class CmsCategoryBean implements I_CmsHasTitle, I_CmsHasPath, IsSerializa
             categoryTreeEntry.getPath(),
             categoryTreeEntry.getBasePath(),
             categoryTreeEntry.getRootPath());
+        m_sitePath = categoryTreeEntry.getSitePath();
     }
 
     /**
      * The constructor.<p>
-     * 
-     * @param id the category id 
-     * @param title the title to set 
+     *
+     * @param id the category id
+     * @param title the title to set
      * @param description the subtitle to set
      * @param path the category path
      * @param basePath the category base path
      * @param rootPath the category root path
      */
-    public CmsCategoryBean(CmsUUID id, String title, String description, String path, String basePath, String rootPath) {
+    public CmsCategoryBean(
+        CmsUUID id,
+        String title,
+        String description,
+        String path,
+        String basePath,
+        String rootPath) {
 
         m_id = id;
         m_title = title;
@@ -127,6 +143,14 @@ public class CmsCategoryBean implements I_CmsHasTitle, I_CmsHasPath, IsSerializa
     public String getBasePath() {
 
         return m_basePath;
+    }
+
+    /**
+     * @see org.opencms.gwt.shared.I_CmsHasIconClasses#getBigIconClasses()
+     */
+    public String getBigIconClasses() {
+
+        return BIG_ICON_CLASSES;
     }
 
     /**
@@ -170,6 +194,24 @@ public class CmsCategoryBean implements I_CmsHasTitle, I_CmsHasPath, IsSerializa
     }
 
     /**
+     * Returns the category site path.<p>
+     *
+     * @return the category site path
+     */
+    public String getSitePath() {
+
+        return m_sitePath;
+    }
+
+    /**
+     * @see org.opencms.gwt.shared.I_CmsHasIconClasses#getSmallIconClasses()
+     */
+    public String getSmallIconClasses() {
+
+        return SMALL_ICON_CLASSES;
+    }
+
+    /**
      * Returns the title.<p>
      *
      * @return the title
@@ -181,9 +223,9 @@ public class CmsCategoryBean implements I_CmsHasTitle, I_CmsHasPath, IsSerializa
 
     /**
      * Returns if the category matches the given filter.<p>
-     * 
+     *
      * @param filter the filter to match
-     * 
+     *
      * @return <code>true</code> if the gallery matches the given filter.<p>
      */
     public boolean matchesFilter(String filter) {
@@ -210,6 +252,16 @@ public class CmsCategoryBean implements I_CmsHasTitle, I_CmsHasPath, IsSerializa
     public void setPath(String path) {
 
         m_path = path;
+    }
+
+    /**
+     * Sets the category site path.<p>
+     *
+     * @param sitePath category site path
+     */
+    public void setSitePath(String sitePath) {
+
+        m_sitePath = sitePath;
     }
 
     /**

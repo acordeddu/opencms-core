@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -14,12 +14,12 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * Lesser General Public License for more details.
  *
- * For further information about Alkacon Software GmbH, please see the
- * company website: http://www.alkacon.com
+ * For further information about Alkacon Software GmbH & Co. KG, please see the
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -28,6 +28,7 @@
 package org.opencms.workplace.tools.accounts;
 
 import org.opencms.file.CmsObject;
+import org.opencms.file.CmsResource;
 import org.opencms.workplace.explorer.CmsResourceUtil;
 import org.opencms.workplace.list.A_CmsListExplorerDialog;
 import org.opencms.workplace.list.A_CmsListResourceCollector;
@@ -39,8 +40,8 @@ import java.util.Map;
 
 /**
  * Collector for organizational unit resources.<p>
- * 
- * @since 6.5.6 
+ *
+ * @since 6.5.6
  */
 public class CmsShowOrgUnitResourcesCollector extends A_CmsListResourceCollector {
 
@@ -48,26 +49,26 @@ public class CmsShowOrgUnitResourcesCollector extends A_CmsListResourceCollector
     public static final String COLLECTOR_NAME = "ouResources";
 
     /** The resources. */
-    private List m_resources;
+    private List<CmsResource> m_resourcesList;
 
     /**
      * Constructor, creates a new instance.<p>
-     * 
+     *
      * @param wp the workplace object
      * @param resources list of ou resources
      */
-    public CmsShowOrgUnitResourcesCollector(A_CmsListExplorerDialog wp, List resources) {
+    public CmsShowOrgUnitResourcesCollector(A_CmsListExplorerDialog wp, List<CmsResource> resources) {
 
         super(wp);
-        m_resources = resources;
+        m_resourcesList = resources;
     }
 
     /**
      * @see org.opencms.file.collectors.I_CmsResourceCollector#getCollectorNames()
      */
-    public List getCollectorNames() {
+    public List<String> getCollectorNames() {
 
-        List names = new ArrayList();
+        List<String> names = new ArrayList<String>();
         names.add(COLLECTOR_NAME);
         return names;
     }
@@ -75,14 +76,16 @@ public class CmsShowOrgUnitResourcesCollector extends A_CmsListResourceCollector
     /**
      * @see org.opencms.workplace.list.A_CmsListResourceCollector#getResources(org.opencms.file.CmsObject, java.util.Map)
      */
-    public List getResources(CmsObject cms, Map params) {
+    @Override
+    public List<CmsResource> getResources(CmsObject cms, Map<String, String> params) {
 
-        return m_resources;
+        return m_resourcesList;
     }
 
     /**
      * @see org.opencms.workplace.list.A_CmsListResourceCollector#setAdditionalColumns(org.opencms.workplace.list.CmsListItem, org.opencms.workplace.explorer.CmsResourceUtil)
      */
+    @Override
     protected void setAdditionalColumns(CmsListItem item, CmsResourceUtil resUtil) {
 
         // no-op

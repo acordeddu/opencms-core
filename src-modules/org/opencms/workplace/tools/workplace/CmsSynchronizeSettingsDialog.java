@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -14,12 +14,12 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * Lesser General Public License for more details.
  *
- * For further information about Alkacon Software GmbH, please see the
- * company website: http://www.alkacon.com
+ * For further information about Alkacon Software GmbH & Co. KG, please see the
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -46,8 +46,8 @@ import javax.servlet.jsp.PageContext;
 
 /**
  * Dialog to edit the synchronize settings of the OpenCms Workplace.<p>
- * 
- * @since 6.0.0 
+ *
+ * @since 6.0.0
  */
 public class CmsSynchronizeSettingsDialog extends CmsWidgetDialog {
 
@@ -56,13 +56,13 @@ public class CmsSynchronizeSettingsDialog extends CmsWidgetDialog {
 
     /** localized messages Keys prefix. */
     public static final String KEY_PREFIX = "sync";
-    
+
     /** The synchronize settings which are edited on this dialog. */
     private CmsSynchronizeSettings m_synchronizeSettings;
 
     /**
      * Public constructor with JSP action element.<p>
-     * 
+     *
      * @param jsp an initialized JSP action element
      */
     public CmsSynchronizeSettingsDialog(CmsJspActionElement jsp) {
@@ -72,7 +72,7 @@ public class CmsSynchronizeSettingsDialog extends CmsWidgetDialog {
 
     /**
      * Public constructor with JSP variables.<p>
-     * 
+     *
      * @param context the JSP page context
      * @param req the JSP request
      * @param res the JSP response
@@ -85,9 +85,10 @@ public class CmsSynchronizeSettingsDialog extends CmsWidgetDialog {
     /**
      * Commits the edited synchronize settings to the user settings.<p>
      */
+    @Override
     public void actionCommit() {
 
-        List errors = new ArrayList();
+        List<Throwable> errors = new ArrayList<Throwable>();
 
         try {
             // set the synchronize settings
@@ -106,12 +107,13 @@ public class CmsSynchronizeSettingsDialog extends CmsWidgetDialog {
 
     /**
      * Creates the dialog HTML for all defined widgets of the named dialog (page).<p>
-     * 
+     *
      * This overwrites the method from the super class to create a layout variation for the widgets.<p>
-     * 
+     *
      * @param dialog the dialog (page) to get the HTML for
      * @return the dialog HTML for all defined widgets of the named dialog (page)
      */
+    @Override
     protected String createDialogHtml(String dialog) {
 
         StringBuffer result = new StringBuffer(1024);
@@ -148,31 +150,35 @@ public class CmsSynchronizeSettingsDialog extends CmsWidgetDialog {
     /**
      * Creates the list of widgets for this dialog.<p>
      */
+    @Override
     protected void defineWidgets() {
 
         // initialize the object to use for the dialog
         initSynchronizeSettingsObject();
         setKeyPrefix(KEY_PREFIX);
         addWidget(new CmsWidgetDialogParameter(m_synchronizeSettings, "enabled", PAGES[0], new CmsCheckboxWidget()));
-        addWidget(new CmsWidgetDialogParameter(
-            m_synchronizeSettings,
-            "destinationPathInRfs",
-            PAGES[0],
-            new CmsInputWidget()));
-        addWidget(new CmsWidgetDialogParameter(
-            m_synchronizeSettings,
-            "sourceListInVfs",
-            "/",
-            PAGES[0],
-            new CmsVfsFileWidget(false, ""),
-            1,
-            CmsWidgetDialogParameter.MAX_OCCURENCES));
+        addWidget(
+            new CmsWidgetDialogParameter(
+                m_synchronizeSettings,
+                "destinationPathInRfs",
+                PAGES[0],
+                new CmsInputWidget()));
+        addWidget(
+            new CmsWidgetDialogParameter(
+                m_synchronizeSettings,
+                "sourceListInVfs",
+                "/",
+                PAGES[0],
+                new CmsVfsFileWidget(false, ""),
+                1,
+                CmsWidgetDialogParameter.MAX_OCCURENCES));
 
     }
 
     /**
      * @see org.opencms.workplace.CmsWidgetDialog#getPageArray()
      */
+    @Override
     protected String[] getPageArray() {
 
         return PAGES;
@@ -181,6 +187,7 @@ public class CmsSynchronizeSettingsDialog extends CmsWidgetDialog {
     /**
      * @see org.opencms.workplace.CmsWorkplace#initMessages()
      */
+    @Override
     protected void initMessages() {
 
         // add specific dialog resource bundle
@@ -211,6 +218,7 @@ public class CmsSynchronizeSettingsDialog extends CmsWidgetDialog {
     /**
      * @see org.opencms.workplace.CmsWorkplace#initWorkplaceRequestValues(org.opencms.workplace.CmsWorkplaceSettings, javax.servlet.http.HttpServletRequest)
      */
+    @Override
     protected void initWorkplaceRequestValues(CmsWorkplaceSettings settings, HttpServletRequest request) {
 
         // initialize parameters and dialog actions in super implementation

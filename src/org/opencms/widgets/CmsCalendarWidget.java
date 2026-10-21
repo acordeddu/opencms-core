@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -14,12 +14,12 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * Lesser General Public License for more details.
  *
- * For further information about Alkacon Software GmbH, please see the
- * company website: http://www.alkacon.com
+ * For further information about Alkacon Software GmbH & Co. KG, please see the
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -28,16 +28,22 @@
 package org.opencms.widgets;
 
 import org.opencms.file.CmsObject;
+import org.opencms.file.CmsResource;
 import org.opencms.i18n.CmsMessages;
+import org.opencms.json.JSONException;
+import org.opencms.json.JSONObject;
 import org.opencms.main.CmsLog;
 import org.opencms.util.CmsMacroResolver;
 import org.opencms.util.CmsStringUtil;
 import org.opencms.workplace.CmsWorkplace;
+import org.opencms.xml.content.I_CmsXmlContentHandler.DisplayType;
+import org.opencms.xml.types.A_CmsXmlContentValue;
 
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.GregorianCalendar;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.TimeZone;
@@ -46,10 +52,10 @@ import org.apache.commons.logging.Log;
 
 /**
  * Provides a DHTML calendar widget, for use on a widget dialog.<p>
- * 
- * @since 6.0.0 
+ *
+ * @since 6.0.0
  */
-public class CmsCalendarWidget extends A_CmsWidget {
+public class CmsCalendarWidget extends A_CmsWidget implements I_CmsADEWidget {
 
     /** The log object for this class. */
     private static final Log LOG = CmsLog.getLog(CmsCalendarWidget.class);
@@ -65,7 +71,7 @@ public class CmsCalendarWidget extends A_CmsWidget {
 
     /**
      * Creates a new calendar widget with the given configuration.<p>
-     * 
+     *
      * @param configuration the configuration to use
      */
     public CmsCalendarWidget(String configuration) {
@@ -75,13 +81,13 @@ public class CmsCalendarWidget extends A_CmsWidget {
 
     /**
      * Creates the HTML JavaScript and stylesheet includes required by the calendar for the head of the page.<p>
-     * 
+     *
      * The default <code>"opencms"</code> style is used.<p>
-     * 
+     *
      * @param locale the locale to use for the calendar
-     * 
+     *
      * @return the necessary HTML code for the js and stylesheet includes
-     * 
+     *
      * @see #calendarIncludes(Locale, String)
      */
     public static String calendarIncludes(Locale locale) {
@@ -91,10 +97,10 @@ public class CmsCalendarWidget extends A_CmsWidget {
 
     /**
      * Creates the HTML JavaScript and stylesheet includes required by the calendar for the head of the page.<p>
-     * 
+     *
      * @param locale the locale to use for the calendar
      * @param style the name of the used calendar style, e.g. "system", "blue"
-     * 
+     *
      * @return the necessary HTML code for the js and stylesheet includes
      */
     public static String calendarIncludes(Locale locale, String style) {
@@ -109,15 +115,15 @@ public class CmsCalendarWidget extends A_CmsWidget {
         result.append("calendar-");
         result.append(style);
         result.append(".css\">\n");
-        result.append("<script type=\"text/javascript\" src=\"");
+        result.append("<script  src=\"");
         result.append(calendarPath);
         result.append("calendar.js\"></script>\n");
-        result.append("<script type=\"text/javascript\" src=\"");
+        result.append("<script  src=\"");
         result.append(calendarPath);
         result.append("lang/calendar-");
-        result.append(locale.getLanguage());
+        result.append(getLanguageSuffix(locale.getLanguage()));
         result.append(".js\"></script>\n");
-        result.append("<script type=\"text/javascript\" src=\"");
+        result.append("<script  src=\"");
         result.append(calendarPath);
         result.append("calendar-setup.js\"></script>\n");
         return result.toString();
@@ -125,9 +131,9 @@ public class CmsCalendarWidget extends A_CmsWidget {
 
     /**
      * Generates the HTML to initialize the JavaScript calendar element on the end of a page.<p>
-     * 
+     *
      * This method must be called at the end of a HTML page, e.g. before the closing &lt;body&gt; tag.<p>
-     * 
+     *
      * @param messages the messages to use (for date and time formats)
      * @param inputFieldId the ID of the input field where the date is pasted to
      * @param triggerButtonId the ID of the button which triggers the calendar
@@ -154,7 +160,7 @@ public class CmsCalendarWidget extends A_CmsWidget {
         if (CmsStringUtil.isEmpty(align)) {
             align = "Bc";
         }
-        result.append("<script type=\"text/javascript\">\n");
+        result.append("<script >\n");
         result.append("<!--\n");
         result.append("\tCalendar.setup({\n");
         result.append("\t\tinputField     :    \"");
@@ -184,7 +190,8 @@ public class CmsCalendarWidget extends A_CmsWidget {
         result.append(",\n");
         result.append("\t\tshowsTime      :    " + showTime);
         if (showTime
-            && (messages.key(org.opencms.workplace.Messages.GUI_CALENDAR_TIMEFORMAT_0).toLowerCase().indexOf("p") != -1)) {
+            && (messages.key(org.opencms.workplace.Messages.GUI_CALENDAR_TIMEFORMAT_0).toLowerCase().indexOf(
+                "p") != -1)) {
             result.append(",\n\t\ttimeFormat     :    \"12\"");
         }
         if (CmsStringUtil.isNotEmpty(dateStatusFunc)) {
@@ -200,13 +207,13 @@ public class CmsCalendarWidget extends A_CmsWidget {
 
     /**
      * Creates the time in milliseconds from the given parameter.<p>
-     * 
+     *
      * @param messages the messages that contain the time format definitions
      * @param dateString the String representation of the date
      * @param useTime true if the time should be parsed, too, otherwise false
-     * 
+     *
      * @return the time in milliseconds
-     * 
+     *
      * @throws ParseException if something goes wrong
      */
     public static long getCalendarDate(CmsMessages messages, String dateString, boolean useTime) throws ParseException {
@@ -227,7 +234,7 @@ public class CmsCalendarWidget extends A_CmsWidget {
 
     /**
      * Parses the JavaScript calendar date format to the java patterns of SimpleDateFormat.<p>
-     * 
+     *
      * @param dateFormat the dateformat String of the JS calendar
      * @return the parsed SimpleDateFormat pattern String
      */
@@ -251,25 +258,83 @@ public class CmsCalendarWidget extends A_CmsWidget {
 
     /**
      * Returns the given timestamp as String formatted in a localized pattern.<p>
-     * 
+     *
      * @param locale the locale for the time format
      * @param messages the messages that contain the time format definitions
      * @param timestamp the time to format
-     * 
+     *
      * @return the given timestamp as String formatted in a localized pattern
      */
     public static String getCalendarLocalizedTime(Locale locale, CmsMessages messages, long timestamp) {
 
-        // get the current date & time 
+        // get the current date & time
         TimeZone zone = TimeZone.getDefault();
         GregorianCalendar cal = new GregorianCalendar(zone, locale);
         cal.setTimeInMillis(timestamp);
         // format it nicely according to the localized pattern
         DateFormat df = new SimpleDateFormat(
-            CmsCalendarWidget.getCalendarJavaDateFormat(messages.key(org.opencms.workplace.Messages.GUI_CALENDAR_DATE_FORMAT_0)
-                + " "
-                + messages.key(org.opencms.workplace.Messages.GUI_CALENDAR_TIME_FORMAT_0)));
+            CmsCalendarWidget.getCalendarJavaDateFormat(
+                messages.key(org.opencms.workplace.Messages.GUI_CALENDAR_DATE_FORMAT_0)
+                    + " "
+                    + messages.key(org.opencms.workplace.Messages.GUI_CALENDAR_TIME_FORMAT_0)));
         return df.format(cal.getTime());
+    }
+
+    /**
+     * Returns the language suffix for the calendar-*.js localizations.<p>
+     *
+     * @param language the language from the locale
+     *
+     * @return the suffix to use for the calendar-*js localication file
+     */
+    private static String getLanguageSuffix(String language) {
+
+        if (language.equals(Locale.JAPANESE.getLanguage())) {
+            return "jp";
+        } else {
+            return language;
+        }
+    }
+
+    /**
+     * @see org.opencms.widgets.I_CmsADEWidget#getConfiguration(org.opencms.file.CmsObject, org.opencms.xml.types.A_CmsXmlContentValue, org.opencms.i18n.CmsMessages, org.opencms.file.CmsResource, java.util.Locale)
+     */
+    public String getConfiguration(
+        CmsObject cms,
+        A_CmsXmlContentValue schemaType,
+        CmsMessages messages,
+        CmsResource resource,
+        Locale contentLocale) {
+
+        String configStr = getConfiguration();
+        JSONObject resultObj = null;
+        // ensure configuration is either empty or a valid JSON object - if empty, convert to empty JSON object,
+        // otherwise convert to standard JSON format (fully quoted keys etc.)
+        if (!CmsStringUtil.isEmptyOrWhitespaceOnly(configStr)) {
+            try {
+                resultObj = new JSONObject(configStr);
+                return resultObj.toString();
+            } catch (JSONException e) {
+                LOG.error(e.getLocalizedMessage(), e);
+            }
+        }
+        return "{}";
+    }
+
+    /**
+     * @see org.opencms.widgets.I_CmsADEWidget#getCssResourceLinks(org.opencms.file.CmsObject)
+     */
+    public List<String> getCssResourceLinks(CmsObject cms) {
+
+        return null;
+    }
+
+    /**
+     * @see org.opencms.widgets.I_CmsADEWidget#getDefaultDisplayType()
+     */
+    public DisplayType getDefaultDisplayType() {
+
+        return DisplayType.singleline;
     }
 
     /**
@@ -307,29 +372,46 @@ public class CmsCalendarWidget extends A_CmsWidget {
         result.append("<table class=\"editorbuttonbackground\" border=\"0\" cellpadding=\"0\" cellspacing=\"0\" id=\"");
         result.append(id);
         result.append(".calendar\"><tr>");
-        result.append(widgetDialog.button(
-            "#",
-            null,
-            "calendar",
-            org.opencms.workplace.Messages.GUI_CALENDAR_CHOOSE_DATE_0,
-            widgetDialog.getButtonStyle()));
+        result.append(
+            widgetDialog.button(
+                "#",
+                null,
+                "calendar",
+                org.opencms.workplace.Messages.GUI_CALENDAR_CHOOSE_DATE_0,
+                widgetDialog.getButtonStyle()));
         result.append("</tr></table>");
         result.append("</td></tr></table>");
 
-        result.append(calendarInit(
-            widgetDialog.getMessages(),
-            id,
-            id + ".calendar",
-            "cR",
-            false,
-            false,
-            true,
-            null,
-            true));
+        result.append(
+            calendarInit(widgetDialog.getMessages(), id, id + ".calendar", "cR", false, false, true, null, true));
 
         result.append("</td>");
 
         return result.toString();
+    }
+
+    /**
+     * @see org.opencms.widgets.I_CmsADEWidget#getInitCall()
+     */
+    public String getInitCall() {
+
+        return null;
+    }
+
+    /**
+     * @see org.opencms.widgets.I_CmsADEWidget#getJavaScriptResourceLinks(org.opencms.file.CmsObject)
+     */
+    public List<String> getJavaScriptResourceLinks(CmsObject cms) {
+
+        return null;
+    }
+
+    /**
+     * @see org.opencms.widgets.I_CmsADEWidget#getWidgetName()
+     */
+    public String getWidgetName() {
+
+        return CmsCalendarWidget.class.getName();
     }
 
     /**
@@ -355,6 +437,14 @@ public class CmsCalendarWidget extends A_CmsWidget {
             result = "";
         }
         return result;
+    }
+
+    /**
+     * @see org.opencms.widgets.I_CmsADEWidget#isInternal()
+     */
+    public boolean isInternal() {
+
+        return true;
     }
 
     /**

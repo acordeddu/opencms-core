@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -14,12 +14,12 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * Lesser General Public License for more details.
  *
- * For further information about Alkacon Software GmbH, please see the
- * company website: http://www.alkacon.com
+ * For further information about Alkacon Software GmbH & Co. KG, please see the
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -51,8 +51,8 @@ import javax.servlet.jsp.PageContext;
 
 /**
  * Admin organization unit management view.<p>
- * 
- * @since 6.5.6 
+ *
+ * @since 6.5.6
  */
 public class CmsOrgUnitsAdminList extends A_CmsOrgUnitsList {
 
@@ -67,7 +67,7 @@ public class CmsOrgUnitsAdminList extends A_CmsOrgUnitsList {
 
     /**
      * Public constructor.<p>
-     * 
+     *
      * @param jsp an initialized JSP action element
      */
     public CmsOrgUnitsAdminList(CmsJspActionElement jsp) {
@@ -77,7 +77,7 @@ public class CmsOrgUnitsAdminList extends A_CmsOrgUnitsList {
 
     /**
      * Public constructor with JSP variables.<p>
-     * 
+     *
      * @param context the JSP page context
      * @param req the JSP request
      * @param res the JSP response
@@ -88,9 +88,10 @@ public class CmsOrgUnitsAdminList extends A_CmsOrgUnitsList {
     }
 
     /**
-     * 
+     *
      * @see org.opencms.workplace.list.A_CmsListDialog#defaultActionHtml()
      */
+    @Override
     public String defaultActionHtml() {
 
         if ((getList() != null) && getList().getAllContent().isEmpty()) {
@@ -116,15 +117,16 @@ public class CmsOrgUnitsAdminList extends A_CmsOrgUnitsList {
     /**
      * @see org.opencms.workplace.list.A_CmsListDialog#executeListSingleActions()
      */
+    @Override
     public void executeListSingleActions() throws IOException, ServletException {
 
         String ouFqn = getSelectedItem().get(LIST_COLUMN_NAME).toString();
         if (ouFqn == null) {
             ouFqn = "";
         }
-        Map params = new HashMap();
-        params.put(A_CmsOrgUnitDialog.PARAM_OUFQN, ouFqn.substring(1));
-        params.put(CmsDialog.PARAM_ACTION, CmsDialog.DIALOG_INITIAL);
+        Map<String, String[]> params = new HashMap<String, String[]>();
+        params.put(A_CmsOrgUnitDialog.PARAM_OUFQN, new String[] {ouFqn.substring(1)});
+        params.put(CmsDialog.PARAM_ACTION, new String[] {CmsDialog.DIALOG_INITIAL});
         if (getParamListAction().equals(LIST_ACTION_OVERVIEW)) {
             // forward to the edit user screen
             getToolManager().jspForwardTool(this, getCurrentToolPath() + "/orgunit", params);
@@ -145,31 +147,31 @@ public class CmsOrgUnitsAdminList extends A_CmsOrgUnitsList {
 
     /**
      * Performs a forward to the overview of the single organizational unit the current user
-     * is allowed to administrate.<p> 
-     * 
+     * is allowed to administrate.<p>
+     *
      * @throws ServletException in case of errors during forwarding
      * @throws IOException in case of errors during forwarding
      * @throws CmsException in case of errors during getting orgunits
      */
     public void forwardToSingleAdminOU() throws ServletException, IOException, CmsException {
 
-        List orgUnits = getOrgUnits();
+        List<CmsOrganizationalUnit> orgUnits = getOrgUnits();
 
         if (orgUnits.isEmpty()) {
             OpenCms.getWorkplaceManager().getToolManager().jspForwardTool(this, "/", null);
             return;
         }
 
-        Map params = new HashMap();
-        params.put(A_CmsOrgUnitDialog.PARAM_OUFQN, ((CmsOrganizationalUnit)orgUnits.get(0)).getName());
-        params.put(CmsDialog.PARAM_ACTION, CmsDialog.DIALOG_INITIAL);
+        Map<String, String[]> params = new HashMap<String, String[]>();
+        params.put(A_CmsOrgUnitDialog.PARAM_OUFQN, new String[] {orgUnits.get(0).getName()});
+        params.put(CmsDialog.PARAM_ACTION, new String[] {CmsDialog.DIALOG_INITIAL});
 
         OpenCms.getWorkplaceManager().getToolManager().jspForwardTool(this, getForwardToolPath(), params);
     }
 
     /**
      * Returns the path of the overview icon.<p>
-     * 
+     *
      * @return the path of the overview icon
      */
     public String getOverviewIcon() {
@@ -179,14 +181,14 @@ public class CmsOrgUnitsAdminList extends A_CmsOrgUnitsList {
 
     /**
      * Checks if the user has more then one organizational unit to administrate.<p>
-     * 
+     *
      * @return true if the user has more then then one organizational unit to administrate
      *         otherwise false
      * @throws CmsException if the organizational units can not be read
      */
     public boolean hasMoreAdminOUs() throws CmsException {
 
-        List orgUnits = getOrgUnits();
+        List<CmsOrganizationalUnit> orgUnits = getOrgUnits();
 
         if (orgUnits == null) {
             return false;
@@ -199,7 +201,7 @@ public class CmsOrgUnitsAdminList extends A_CmsOrgUnitsList {
 
     /**
      * Returns the tool path to forward if there is only one single organizational unit.<p>
-     * 
+     *
      * @return the tool path to forward
      */
     protected String getForwardToolPath() {
@@ -209,7 +211,7 @@ public class CmsOrgUnitsAdminList extends A_CmsOrgUnitsList {
 
     /**
      * Returns the tool path of the groups management tool.<p>
-     * 
+     *
      * @return the tool path of the groups management tool
      */
     protected String getGroupsToolPath() {
@@ -219,7 +221,7 @@ public class CmsOrgUnitsAdminList extends A_CmsOrgUnitsList {
 
     /**
      * Returns the tool path of the users management tool.<p>
-     * 
+     *
      * @return the tool path of the users management tool
      */
     protected String getUsersToolPath() {
@@ -230,6 +232,7 @@ public class CmsOrgUnitsAdminList extends A_CmsOrgUnitsList {
     /**
      * @see org.opencms.workplace.list.A_CmsListDialog#setColumns(org.opencms.workplace.list.CmsListMetadata)
      */
+    @Override
     protected void setColumns(CmsListMetadata metadata) {
 
         // create column for overview
@@ -245,6 +248,7 @@ public class CmsOrgUnitsAdminList extends A_CmsOrgUnitsList {
             /**
              * @see org.opencms.workplace.tools.A_CmsHtmlIconButton#getIconPath()
              */
+            @Override
             public String getIconPath() {
 
                 if (getItem() != null) {
@@ -258,6 +262,7 @@ public class CmsOrgUnitsAdminList extends A_CmsOrgUnitsList {
             /**
              * @see org.opencms.workplace.tools.A_CmsHtmlIconButton#getName()
              */
+            @Override
             public CmsMessageContainer getName() {
 
                 if (getItem() != null) {

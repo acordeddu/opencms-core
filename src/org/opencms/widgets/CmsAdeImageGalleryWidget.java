@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -15,11 +15,11 @@
  * Lesser General Public License for more details.
  *
  * For further information about Alkacon Software, please see the
- * company website: http://www.alkacon.com
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -27,8 +27,10 @@
 
 package org.opencms.widgets;
 
+import org.opencms.ade.galleries.shared.I_CmsGalleryProviderConstants;
 import org.opencms.file.CmsObject;
 import org.opencms.file.types.CmsResourceTypeImage;
+import org.opencms.i18n.CmsMessages;
 import org.opencms.json.JSONArray;
 import org.opencms.json.JSONException;
 import org.opencms.json.JSONObject;
@@ -37,19 +39,16 @@ import org.opencms.util.CmsStringUtil;
 
 /**
  * ADE image gallery widget implementations.<p>
- * 
- * @since 8.0.0 
+ *
+ * @since 8.0.0
  */
 public class CmsAdeImageGalleryWidget extends A_CmsAdeGalleryWidget {
 
-    private CmsVfsImageWidgetConfiguration m_widgetConfiguration;
-
-    private enum ImageWidgetInfo {
-        imageFormatNames, imageFormats, useFormats
-    }
-
     /** The gallery name. */
     private static final String GALLERY_NAME = "image";
+
+    /** The widget configuration. */
+    private CmsVfsImageWidgetConfiguration m_widgetConfiguration;
 
     /**
      * Constructor.<p>
@@ -61,7 +60,7 @@ public class CmsAdeImageGalleryWidget extends A_CmsAdeGalleryWidget {
 
     /**
      * Creates a new gallery widget with the given configuration.<p>
-     * 
+     *
      * @param configuration the configuration to use
      */
     protected CmsAdeImageGalleryWidget(String configuration) {
@@ -79,6 +78,15 @@ public class CmsAdeImageGalleryWidget extends A_CmsAdeGalleryWidget {
     }
 
     /**
+     * @see org.opencms.widgets.I_CmsADEWidget#getWidgetName()
+     */
+    @Override
+    public String getWidgetName() {
+
+        return CmsAdeImageGalleryWidget.class.getName();
+    }
+
+    /**
      * @see org.opencms.widgets.I_CmsWidget#newInstance()
      */
     public I_CmsWidget newInstance() {
@@ -87,41 +95,44 @@ public class CmsAdeImageGalleryWidget extends A_CmsAdeGalleryWidget {
     }
 
     /**
-     * @throws JSONException 
-     * @see org.opencms.widgets.A_CmsAdeGalleryWidget#getAdditionalGalleryInfo(org.opencms.file.CmsObject, org.opencms.widgets.I_CmsWidgetDialog, org.opencms.widgets.I_CmsWidgetParameter)
+     * @see org.opencms.widgets.A_CmsAdeGalleryWidget#getAdditionalGalleryInfo(org.opencms.file.CmsObject, java.lang.String, org.opencms.i18n.CmsMessages, org.opencms.widgets.I_CmsWidgetParameter)
      */
     @Override
     protected JSONObject getAdditionalGalleryInfo(
         CmsObject cms,
-        I_CmsWidgetDialog widgetDialog,
-        I_CmsWidgetParameter param) throws JSONException {
+        String resource,
+        CmsMessages messages,
+        I_CmsWidgetParameter param)
+    throws JSONException {
 
-        CmsVfsImageWidgetConfiguration config = getWidgetConfiguration(cms, widgetDialog, param);
+        CmsVfsImageWidgetConfiguration config = getWidgetConfiguration(cms, messages, param);
         JSONObject result = new JSONObject();
-        result.put(ImageWidgetInfo.useFormats.name(), config.isShowFormat());
-        result.put(ImageWidgetInfo.imageFormats.name(), new JSONArray(config.getFormatValues()));
+        result.put(I_CmsGalleryProviderConstants.CONFIG_USE_FORMATS, config.isShowFormat());
+        result.put(I_CmsGalleryProviderConstants.CONFIG_IMAGE_FORMATS, new JSONArray(config.getFormatValues()));
         String temp = config.getSelectFormatString();
         String[] formatNames = new String[0];
         if (CmsStringUtil.isNotEmptyOrWhitespaceOnly(temp)) {
             formatNames = config.getSelectFormatString().split("\\|");
         }
-        result.put(ImageWidgetInfo.imageFormatNames.name(), new JSONArray(formatNames));
+        result.put(I_CmsGalleryProviderConstants.CONFIG_IMAGE_FORMAT_NAMES, new JSONArray(formatNames));
+        result.put(I_CmsGalleryProviderConstants.CONFIG_TAB_CONFIG, "selectDoc");
+        String uploadFolder = OpenCms.getWorkplaceManager().getRepositoryFolderHandler().getRepositoryFolder(
+            cms,
+            resource,
+            GALLERY_NAME + "gallery");
+        if (uploadFolder != null) {
+            result.put(I_CmsGalleryProviderConstants.CONFIG_UPLOAD_FOLDER, uploadFolder);
+        }
         return result;
     }
 
     /**
-     * @see org.opencms.widgets.A_CmsAdeGalleryWidget#getWidgetConfiguration(org.opencms.file.CmsObject, org.opencms.widgets.I_CmsWidgetDialog, org.opencms.widgets.I_CmsWidgetParameter)
+     * @see org.opencms.widgets.A_CmsAdeGalleryWidget#getGalleryStoragePrefix()
      */
     @Override
-    protected CmsVfsImageWidgetConfiguration getWidgetConfiguration(
-        CmsObject cms,
-        I_CmsWidgetDialog widgetDialog,
-        I_CmsWidgetParameter param) {
+    protected String getGalleryStoragePrefix() {
 
-        if (m_widgetConfiguration == null) {
-            m_widgetConfiguration = new CmsVfsImageWidgetConfiguration(cms, widgetDialog, param, getConfiguration());
-        }
-        return m_widgetConfiguration;
+        return "image";
     }
 
     /**
@@ -139,14 +150,29 @@ public class CmsAdeImageGalleryWidget extends A_CmsAdeGalleryWidget {
     @Override
     protected String getOpenPreviewCall(I_CmsWidgetDialog widgetDialog, String id) {
 
-        // using the 'cmsOptenImagePreview' function instead of 'cmsOpenPreview'
+        // using the 'cmsOpenImagePreview' function instead of 'cmsOpenPreview'
         StringBuffer sb = new StringBuffer(64);
-        // using the 'cmsOptenImagePreview' function instead of 'cmsOpenPreview'
+        // using the 'cmsOpenImagePreview' function instead of 'cmsOpenPreview'
         sb.append("javascript:cmsOpenImagePreview('").append(
             widgetDialog.getMessages().key(Messages.GUI_BUTTON_PREVIEW_0));
         sb.append("', '").append(OpenCms.getSystemInfo().getOpenCmsContext());
         sb.append("', '").append(id);
         sb.append("'); return false;");
         return sb.toString();
+    }
+
+    /**
+     * @see org.opencms.widgets.A_CmsAdeGalleryWidget#getWidgetConfiguration(org.opencms.file.CmsObject, org.opencms.i18n.CmsMessages, org.opencms.widgets.I_CmsWidgetParameter)
+     */
+    @Override
+    protected CmsVfsImageWidgetConfiguration getWidgetConfiguration(
+        CmsObject cms,
+        CmsMessages messages,
+        I_CmsWidgetParameter param) {
+
+        if (m_widgetConfiguration == null) {
+            m_widgetConfiguration = new CmsVfsImageWidgetConfiguration(cms, messages, param, getConfiguration());
+        }
+        return m_widgetConfiguration;
     }
 }

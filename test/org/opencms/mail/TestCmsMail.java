@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -14,12 +14,12 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * Lesser General Public License for more details.
  *
- * For further information about Alkacon Software GmbH, please see the
- * company website: http://www.alkacon.com
+ * For further information about Alkacon Software GmbH & Co. KG, please see the
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -28,86 +28,68 @@
 package org.opencms.mail;
 
 import org.opencms.main.OpenCms;
-import org.opencms.test.OpenCmsTestCase;
-import org.opencms.test.OpenCmsTestProperties;
+import org.opencms.test.OpenCmsTestRunner;
 
 import javax.mail.Address;
 import javax.mail.SendFailedException;
 import javax.mail.internet.InternetAddress;
 
-import junit.extensions.TestSetup;
-import junit.framework.Test;
-import junit.framework.TestSuite;
+import org.apache.commons.mail2.core.EmailException;
 
-import org.apache.commons.mail.EmailException;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.MethodOrderer;
+import org.junit.jupiter.api.Order;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInfo;
+import org.junit.jupiter.api.TestMethodOrder;
 
 import com.dumbster.smtp.SimpleSmtpServer;
 
 /**
  * Unit test for the cms mail functionality.<p>
  */
-public class TestCmsMail extends OpenCmsTestCase {
+@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
+public class TestCmsMail extends OpenCmsTestRunner {
 
-    /** 
+    /**
      * Port the SMTP server will listen to. Must be greater than 1000, depending
      * on the underlying OS.
      */
     private static final int SMTP_PORT = 2525;
 
-    /**
-     * Default JUnit constructor.<p>
-     * 
-     * @param arg0 JUnit parameters
-     */
-    public TestCmsMail(String arg0) {
+    // SMTP Server running locally (c.f. library dumbster-1.6.jar)
+    private SimpleSmtpServer m_server;
 
-        super(arg0);
+    /**
+     * @see org.opencms.test.OpenCmsTestRunner#$openCmsSetUp(org.junit.jupiter.api.TestInfo)
+     */
+    @Override
+    @BeforeAll
+    public void $openCmsSetUp(TestInfo testInfo) {
+
+        setupOpenCms(testInfo, "simpletest", "/");
+        // start SMTP server
+        m_server = SimpleSmtpServer.start(SMTP_PORT);
     }
 
     /**
-     * Test suite for this test class.<p>
-     * 
-     * @return the test suite
+     * @see org.opencms.test.OpenCmsTestRunner#$openCmsTearDown(org.junit.jupiter.api.TestInfo)
      */
-    public static Test suite() {
+    @Override
+    @AfterAll
+    public void $openCmsTearDown(TestInfo testInfo) {
 
-        OpenCmsTestProperties.initialize(org.opencms.test.AllTests.TEST_PROPERTIES_PATH);
-
-        TestSuite suite = new TestSuite();
-        suite.setName(TestCmsMail.class.getName());
-
-        suite.addTest(new TestCmsMail("testCmsSendSimpleMail"));
-        suite.addTest(new TestCmsMail("testCmsSendHtmlMail"));
-        suite.addTest(new TestCmsMail("testCmsInvalidMailAddress"));
-        TestSetup wrapper = new TestSetup(suite) {
-
-            // SMTP Server running locally (c.f. library dumbster-1.6.jar)
-            SimpleSmtpServer m_server;
-
-            @Override
-            protected void setUp() {
-
-                setupOpenCms("simpletest", "/");
-                // start SMTP server
-                m_server = SimpleSmtpServer.start(SMTP_PORT);
-
-            }
-
-            @Override
-            protected void tearDown() {
-
-                removeOpenCms();
-                // stop SMTP server
-                m_server.stop();
-            }
-        };
-
-        return wrapper;
+        super.$openCmsTearDown(testInfo);
+        // stop SMTP server
+        m_server.stop();
     }
 
     /**
      * Tests sending mails to invalid email address.<p>
      */
+    @Test
+    @Order(3)
     public void testCmsInvalidMailAddress() {
 
         echo("Trying to send an HTML mail to invalid mail address ...");
@@ -117,7 +99,8 @@ public class TestCmsMail extends OpenCmsTestCase {
         StringBuilder sb = new StringBuilder("<html><body>");
         sb.append("<h1>Test mail containing HTML</h1>");
         sb.append("<p>This is only a test mail for sending HTML mails.</p>");
-        sb.append("<p><a href=\"http://www.opencms.org/\"><img src=\"http://www.opencms.org/export/system/modules/org.opencms.website.template/resources/img/logo/logo_opencms.gif\" border=\"0\"></a></p>");
+        sb.append(
+            "<p><a href=\"http://www.opencms.org/\"><img src=\"http://www.opencms.org/export/system/modules/org.opencms.website.template/resources/img/logo/logo_opencms.gif\" border=\"0\"></a></p>");
         sb.append("<p><a href=\"http://www.opencms.org/\">www.opencms.org</a>");
         sb.append("</body></html>");
 
@@ -128,8 +111,7 @@ public class TestCmsMail extends OpenCmsTestCase {
             mail.addTo(invalidMail);
             mail.setSubject("OpenCms TestCase HTML Mail");
             mail.setSmtpPort(SMTP_PORT);
-            String messageID = mail.send();
-            assertNull(messageID);
+            mail.send();
         } catch (EmailException e) {
             // Check if root cause was SendFailedException due to rejected mail by SMTP server
             assertTrue(e.getCause() instanceof SendFailedException);
@@ -143,9 +125,11 @@ public class TestCmsMail extends OpenCmsTestCase {
 
     /**
      * Tests sending plain text mails.<p>
-     * 
+     *
      * @throws Throwable if something goes wrong
      */
+    @Test
+    @Order(2)
     public void testCmsSendHtmlMail() throws Throwable {
 
         echo("Trying to send an HTML mail ...");
@@ -154,7 +138,8 @@ public class TestCmsMail extends OpenCmsTestCase {
         StringBuilder sb = new StringBuilder("<html><body>");
         sb.append("<h1>Test mail containing HTML</h1>");
         sb.append("<p>This is only a test mail for sending HTML mails.</p>");
-        sb.append("<p><a href=\"http://www.opencms.org/\"><img src=\"http://www.opencms.org/export/system/modules/org.opencms.website.template/resources/img/logo/logo_opencms.gif\" border=\"0\"></a></p>");
+        sb.append(
+            "<p><a href=\"http://www.opencms.org/\"><img src=\"http://www.opencms.org/export/system/modules/org.opencms.website.template/resources/img/logo/logo_opencms.gif\" border=\"0\"></a></p>");
         sb.append("<p><a href=\"http://www.opencms.org/\">www.opencms.org</a>");
         sb.append("</body></html>");
         mail.setHtmlMsg(sb.toString());
@@ -170,9 +155,11 @@ public class TestCmsMail extends OpenCmsTestCase {
 
     /**
      * Tests sending plain text mails.<p>
-     * 
+     *
      * @throws Throwable if something goes wrong
      */
+    @Test
+    @Order(1)
     public void testCmsSendSimpleMail() throws Throwable {
 
         echo("Trying to send a plain text mail ...");

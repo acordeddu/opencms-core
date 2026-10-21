@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -14,12 +14,12 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * Lesser General Public License for more details.
  *
- * For further information about Alkacon Software GmbH, please see the
- * company website: http://www.alkacon.com
+ * For further information about Alkacon Software GmbH & Co. KG, please see the
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -40,10 +40,10 @@ import org.apache.commons.collections.FastHashMap;
 
 /**
  * The default session storage provider implementation.<p>
- * 
- * Implementation based on a {@link FastHashMap}.<p> 
- * 
- * @since 6.5.5 
+ *
+ * Implementation based on a {@link FastHashMap}.<p>
+ *
+ * @since 6.5.5
  */
 public class CmsDefaultSessionStorageProvider implements I_CmsSessionStorageProvider {
 
@@ -165,10 +165,10 @@ public class CmsDefaultSessionStorageProvider implements I_CmsSessionStorageProv
 
     /**
      * Returns all sessions or all sessions matching the user id from the provided Map.<p>
-     * 
-     * @param allSessions the Map of existing sessions 
+     *
+     * @param allSessions the Map of existing sessions
      * @param userId the id of the user, if null all sessions will be returned
-     * 
+     *
      * @return all sessions or all sessions matching the user id from the provided Map
      */
     private List<CmsSessionInfo> getAllSelected(Map<CmsUUID, CmsSessionInfo> allSessions, CmsUUID userId) {

@@ -1,0 +1,27 @@
+# Turn echo on
+echo on
+
+# Login the Admin user
+login "@ADMIN_USER@" "@ADMIN_PWD@"
+
+# Switch to the default context
+setSiteRoot "@UPDATE_SITE@"
+
+# purge the jsp repository
+purgeJspRepository
+
+# update content relation engine data
+updateRelations
+
+# Import the modules that have been selected in the update wizard
+updateModulesFromUpdateBean
+
+# Create the shared folder
+createSharedFolder
+
+# purge the jsp repository
+purgeJspRepository
+
+deleteSpellcheckIndex
+
+exit

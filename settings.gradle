@@ -1,0 +1,27 @@
+pluginManagement {
+    repositories {
+        maven {
+            url = uri('https://repository-cdn.liferay.com/nexus/content/groups/public')
+        }
+        mavenLocal()
+        mavenCentral()
+        gradlePluginPortal()
+    }
+    resolutionStrategy {
+        eachPlugin {
+            if (requested.id.id.startsWith('org.opencms.modules')) {
+                useModule('org.opencms:opencms-gradle-plugin:4.+')
+            }
+        }
+    }
+}
+
+def external_directories = startParameter.projectProperties['external_directories']
+if (null != external_directories) {
+    include external_directories
+    project(':' + external_directories).name = 'extmodules'
+    gradle.ext.withcore = 'true'
+}
+rootProject.name = "opencms-core"
+
+

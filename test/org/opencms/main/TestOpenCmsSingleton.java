@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -14,12 +14,12 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * Lesser General Public License for more details.
  *
- * For further information about Alkacon Software GmbH, please see the
- * company website: http://www.alkacon.com
+ * For further information about Alkacon Software GmbH & Co. KG, please see the
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -32,12 +32,12 @@ import org.opencms.file.CmsProperty;
 import org.opencms.file.CmsPropertyDefinition;
 import org.opencms.file.CmsResource;
 import org.opencms.file.types.CmsResourceTypeJsp;
-import org.opencms.test.OpenCmsTestCase;
-import org.opencms.test.OpenCmsTestProperties;
-import org.opencms.test.OpenCmsTestServletRequest;
-import org.opencms.test.OpenCmsTestServletResponse;
+import org.opencms.test.OpenCmsTestRunner;
 import org.opencms.util.CmsMacroResolver;
 
+import java.lang.reflect.InvocationHandler;
+import java.lang.reflect.Method;
+import java.lang.reflect.Proxy;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
@@ -45,66 +45,37 @@ import java.util.Locale;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import junit.extensions.TestSetup;
-import junit.framework.Test;
-import junit.framework.TestSuite;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.MethodOrderer;
+import org.junit.jupiter.api.Order;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInfo;
+import org.junit.jupiter.api.TestMethodOrder;
 
 /**
- * Unit test the static OpenCms singleton object.<p> 
- * 
+ * Unit test the static OpenCms singleton object.<p>
+ *
  */
-public class TestOpenCmsSingleton extends OpenCmsTestCase {
+@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
+public class TestOpenCmsSingleton extends OpenCmsTestRunner {
 
     /**
-     * Default JUnit constructor.<p>
-     * 
-     * @param arg0 JUnit parameters
+     * @see org.opencms.test.OpenCmsTestRunner#$openCmsSetUp(org.junit.jupiter.api.TestInfo)
      */
-    public TestOpenCmsSingleton(String arg0) {
+    @Override
+    @BeforeAll
+    public void $openCmsSetUp(TestInfo testInfo) {
 
-        super(arg0);
-    }
-
-    /**
-     * Test suite for this test class.<p>
-     * 
-     * @return the test suite
-     */
-    public static Test suite() {
-
-        OpenCmsTestProperties.initialize(org.opencms.test.AllTests.TEST_PROPERTIES_PATH);
-
-        TestSuite suite = new TestSuite();
-        suite.setName(TestOpenCmsSingleton.class.getName());
-
-        suite.addTest(new TestOpenCmsSingleton("testInitCmsObject"));
-        suite.addTest(new TestOpenCmsSingleton("testInitResource"));
-        suite.addTest(new TestOpenCmsSingleton("testLog"));
-        suite.addTest(new TestOpenCmsSingleton("testEncoding"));
-
-        TestSetup wrapper = new TestSetup(suite) {
-
-            @Override
-            protected void setUp() {
-
-                setupOpenCms("simpletest", "/");
-            }
-
-            @Override
-            protected void tearDown() {
-
-                removeOpenCms();
-            }
-        };
-
-        return wrapper;
+        setupOpenCms(testInfo, "simpletest", "/");
     }
 
     /**
      * Test case for the encoding.<p>
-     * 
+     *
      * @throws Exception if the test fails
      */
+    @Order(4)
+    @Test
     public void testEncoding() throws Exception {
 
         echo("Testing the encoding settings");
@@ -117,7 +88,7 @@ public class TestOpenCmsSingleton extends OpenCmsTestCase {
             CmsResourceTypeJsp.getJSPTypeId());
         // note: default test configuration is done in opencms-vfs.xml and may be different from standard installation
         List defaultProperties = jsp.getConfiguredDefaultProperties();
-        assertEquals("Test configuration has 2 default properties configured for JSP", 2, defaultProperties.size());
+        assertEquals(2, defaultProperties.size(), "Test configuration has 2 default properties configured for JSP");
         Iterator i = defaultProperties.iterator();
         String jspEncoding = null;
         while (i.hasNext()) {
@@ -125,9 +96,9 @@ public class TestOpenCmsSingleton extends OpenCmsTestCase {
             if (CmsPropertyDefinition.PROPERTY_CONTENT_ENCODING.equals(property.getName())) {
                 jspEncoding = property.getValue();
                 assertEquals(
-                    "Test configuration has property value '${opencms.default.encoding}' configured for JSP",
                     2,
-                    defaultProperties.size());
+                    defaultProperties.size(),
+                    "Test configuration has property value '${opencms.default.encoding}' configured for JSP");
                 // resolve the macro
                 CmsObject cms = OpenCms.initCmsObject(OpenCms.getDefaultUsers().getUserGuest());
                 jspEncoding = CmsMacroResolver.newInstance().setCmsObject(cms).resolveMacros(jspEncoding);
@@ -135,16 +106,18 @@ public class TestOpenCmsSingleton extends OpenCmsTestCase {
             }
         }
 
-        assertEquals("ISO-8859-1", systemEncoding);
+        assertEquals("UTF-8", systemEncoding);
         assertEquals(systemEncoding, workplaceEncoding);
         assertEquals(systemEncoding, jspEncoding);
     }
 
     /**
      * Test case for the initCmsObject methods.<p>
-     * 
+     *
      * @throws Exception if the test fails
      */
+    @Order(1)
+    @Test
     public void testInitCmsObject() throws Exception {
 
         CmsObject cms;
@@ -228,10 +201,68 @@ public class TestOpenCmsSingleton extends OpenCmsTestCase {
     }
 
     /**
-     * Test case for the logger.<p>
-     * 
+     * Test case for resource initialization.<p>
+     *
      * @throws Exception if the test fails
      */
+    @Order(2)
+    @Test
+    public void testInitResource() throws Exception {
+
+        echo("Testing access to initResource method");
+
+        CmsObject cms = OpenCms.initCmsObject(OpenCms.getDefaultUsers().getUserGuest());
+
+        cms.loginUser("Admin", "admin");
+        cms.getRequestContext().setCurrentProject(cms.readProject("Offline"));
+        cms.getRequestContext().setSiteRoot("/sites/default/");
+
+        HttpServletRequest req = (HttpServletRequest)Proxy.newProxyInstance(
+            getClass().getClassLoader(),
+            new Class[] {HttpServletRequest.class},
+            new InvocationHandler() {
+
+                @Override
+                public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
+
+                    if (method.getName().equals("getParameter")) {
+                        return null;
+                    } else {
+                        throw new RuntimeException("Not implemented");
+                    }
+
+                }
+            });
+        HttpServletResponse res = (HttpServletResponse)Proxy.newProxyInstance(
+            getClass().getClassLoader(),
+            new Class[] {HttpServletResponse.class},
+            new InvocationHandler() {
+
+                @Override
+                public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
+
+                    throw new RuntimeException("Not implemented");
+                }
+            });
+
+        CmsResource resource = OpenCms.initResource(cms, "/folder1/subfolder12/", req, res);
+        assertEquals("/sites/default/folder1/subfolder12/index.html", resource.getRootPath());
+
+        CmsProperty defaultFileProperty = new CmsProperty("default-file", "page1.html", null);
+        cms.lockResource("/folder1/subfolder12/");
+        cms.writePropertyObject("/folder1/subfolder12/", defaultFileProperty);
+
+        CmsResource resource2 = OpenCms.initResource(cms, "/folder1/subfolder12/", req, res);
+        assertEquals("/sites/default/folder1/subfolder12/page1.html", resource2.getRootPath());
+    }
+
+    /**
+     * Test case for the logger.<p>
+     *
+     * @throws Exception if the test fails
+     */
+    @Order(3)
+    @Test
     public void testLog() throws Exception {
 
         // first 4 log levels are uncritical
@@ -240,7 +271,7 @@ public class TestOpenCmsSingleton extends OpenCmsTestCase {
         CmsLog.getLog(this).info("This is a 'info' log message");
         CmsLog.getLog(this).warn("This is a 'warn' log message");
 
-        // is something is written to log level 'error' or 'fatal' 
+        // is something is written to log level 'error' or 'fatal'
         // a runtime exception must be thrown while unit tests are running
         boolean noException;
         noException = true;
@@ -261,34 +292,5 @@ public class TestOpenCmsSingleton extends OpenCmsTestCase {
         if (noException) {
             fail("Writing to 'fatal' log level did not cause test to fail.");
         }
-    }
-
-    /**
-     * Test case for resource initialization.<p>
-     * 
-     * @throws Exception if the test fails
-     */
-    public void testInitResource() throws Exception {
-
-        echo("Testing access to initResource method");
-
-        CmsObject cms = OpenCms.initCmsObject(OpenCms.getDefaultUsers().getUserGuest());
-
-        cms.loginUser("Admin", "admin");
-        cms.getRequestContext().setCurrentProject(cms.readProject("Offline"));
-        cms.getRequestContext().setSiteRoot("/sites/default/");
-
-        HttpServletRequest req = new OpenCmsTestServletRequest();
-        HttpServletResponse res = new OpenCmsTestServletResponse();
-
-        CmsResource resource = OpenCms.initResource(cms, "/folder1/subfolder12/", req, res);
-        assertEquals("/sites/default/folder1/subfolder12/index.html", resource.getRootPath());
-
-        CmsProperty defaultFileProperty = new CmsProperty("default-file", "page1.html", null);
-        cms.lockResource("/folder1/subfolder12/");
-        cms.writePropertyObject("/folder1/subfolder12/", defaultFileProperty);
-
-        CmsResource resource2 = OpenCms.initResource(cms, "/folder1/subfolder12/", req, res);
-        assertEquals("/sites/default/folder1/subfolder12/page1.html", resource2.getRootPath());
     }
 }

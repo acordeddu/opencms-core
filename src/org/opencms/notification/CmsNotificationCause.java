@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -15,11 +15,11 @@
  * Lesser General Public License for more details.
  *
  * For further information about Alkacon Software, please see the
- * company website: http://www.alkacon.com
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -35,10 +35,10 @@ import java.io.Serializable;
  * Objects of this class are serialized in the additional infos of a user to store, which resources were
  * already confirmed by the user.
  * This class is the counterpart to <code>{@link org.opencms.notification.CmsExtendedNotificationCause}</code>, to be used
- * for serialization in the AdditionalInfos of a <code>{@link org.opencms.file.CmsUser}</code>, and therefore only 
+ * for serialization in the AdditionalInfos of a <code>{@link org.opencms.file.CmsUser}</code>, and therefore only
  * contains the essential information
  * <p>
- * 
+ *
  */
 public class CmsNotificationCause implements Serializable {
 
@@ -53,7 +53,7 @@ public class CmsNotificationCause implements Serializable {
 
     /**
      * Creates a new CmsNotificationResourceInfo.<p>
-     * 
+     *
      * @param resource the specific resource
      * @param cause that the resource occures in the notification
      */
@@ -64,27 +64,19 @@ public class CmsNotificationCause implements Serializable {
     }
 
     /**
-     * 
-     * @see java.lang.Object#hashCode()
-     */
-    public int hashCode() {
-
-        return m_cause + m_resourceId.hashCode();
-    }
-
-    /**
      * Returns true if the Object equals to the corresponding CmsNotificationCause, that means a notification cause
      * with the same resource and cause.
-     * 
+     *
      * @return true if the resource info is equal to a notification cause or resource info with the same resource and cause
-     * 
+     *
      * @param o the object to check for equality
-     * 
+     *
      * @see org.opencms.notification.CmsExtendedNotificationCause#equals(java.lang.Object)
      */
+    @Override
     public boolean equals(Object o) {
 
-        if (!(o instanceof CmsExtendedNotificationCause) || !(o instanceof CmsNotificationCause)) {
+        if (!((o instanceof CmsExtendedNotificationCause) || (o instanceof CmsNotificationCause))) {
             return false;
         }
         return hashCode() == o.hashCode();
@@ -108,6 +100,16 @@ public class CmsNotificationCause implements Serializable {
     public CmsUUID getResourceId() {
 
         return m_resourceId;
+    }
+
+    /**
+     *
+     * @see java.lang.Object#hashCode()
+     */
+    @Override
+    public int hashCode() {
+
+        return m_cause + m_resourceId.hashCode();
     }
 
     /**

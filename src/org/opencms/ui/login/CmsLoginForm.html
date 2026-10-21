@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html>
+<head>
+  	<meta name="package-mapping" content="w:org.opencms.ui.login" />
+  	<meta name="package-mapping" content="o:org.opencms.ui.components" />
+  </head>
+  <body>
+  	<vaadin7-vertical-layout style-name="o-login-form" spacing>
+  		<vaadin7-label primary-style-name="o-login-logo" height="64px"><span></span></vaadin7-label>
+  		<o-cms-fake-window width="600px" _id="m_fakeWindow" window-title="%(key.GUI_LOGIN_HEADLINE_0)">
+	  		<o-cms-basic-dialog :location="content" >
+	  			<above>
+	  				<vaadin7-label _id="m_error" style-name="failure" visible="false"></vaadin7-label>
+	  			</above>
+		  		<content>
+		  			<vaadin7-vertical-layout margin spacing>
+		  				<vaadin7-label _id="m_additionalMessage" style-name="o-login-additional" visible="false"></vaadin7-label> 
+		  				<vaadin7-option-group _id="m_securityField"  visible="%(showSecure)"></vaadin7-option-group>
+		  				<vaadin7-label _id="m_mainFormLabel">%(key.GUI_LOGIN_MESSAGE_0)</vaadin7-label> 
+		  				<v-form-layout _id="m_mainForm">
+                            <w-cms-login-user-field _id="m_userField" caption="%(key.GUI_LOGIN_USERNAME_0)" :expand></w-cms-login-user-field>
+                            <v-horizontal-layout style-name="o-login-passwordgroup" caption="%(key.GUI_LOGIN_PASSWORD_0)" width="100%">
+					    	  <w-cms-login-password-field _id="m_passwordField"  :expand></w-cms-login-password-field>
+                              <v-button _id="m_showPasswordButton" style-name="o-login-showpassword"></v-label>
+                            </v-horizontal-layout>
+					    	<w-cms-login-ou-selector _id="m_ouSelect" caption="%(key.GUI_LOGIN_ORGUNIT_0)"></w-cms-login-ou-selector>
+					    	<v-button _id="m_forgotPasswordButton">%(key.GUI_PWCHANGE_FORGOT_PASSWORD_0)</v-button>
+			  		  	</v-form-layout>
+			  		  	<v-css-layout _id="m_customControls" width="100%">
+			  		  	</v-css-layout>
+		  		  	</vaadin7-vertical-layout>
+				</content>
+				<buttons>
+					<v-button _id="m_optionsButton"></v-button>
+					<v-button _id="m_loginButton">%(key.GUI_LOGIN_BUTTON_0)</v-button>
+				</buttons>
+			</o-cms-basic-dialog>
+		 </o-cms-fake-window>
+	    <vaadin7-label _id="m_copyright" ></vaadin7-label>
+    </vaadin7-vertical-layout>
+  </body>
+</html>

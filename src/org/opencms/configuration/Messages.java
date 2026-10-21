@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -14,12 +14,12 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * Lesser General Public License for more details.
  *
- * For further information about Alkacon Software GmbH, please see the
- * company website: http://www.alkacon.com
+ * For further information about Alkacon Software GmbH & Co. KG, please see the
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -31,8 +31,8 @@ import org.opencms.i18n.A_CmsMessageBundle;
 import org.opencms.i18n.I_CmsMessageBundle;
 
 /**
- * Convenience class to access the localized messages of this OpenCms package.<p> 
- * 
+ * Convenience class to access the localized messages of this OpenCms package.<p>
+ *
  * @since 6.0.0
  */
 public final class Messages extends A_CmsMessageBundle {
@@ -45,6 +45,30 @@ public final class Messages extends A_CmsMessageBundle {
 
     /** Message constant for key in the resource bundle. */
     public static final String ERR_PARAMETER_CONFIG_FROZEN_0 = "ERR_PARAMETER_CONFIG_FROZEN_0";
+
+    /** Message constant for key in the resource bundle. */
+    public static final String ERR_SHAREDCACHE_CACHE_CONTROL_HEADER_0 = "ERR_SHAREDCACHE_CACHE_CONTROL_HEADER_0";
+
+    /** Message constant for key in the resource bundle. */
+    public static final String ERR_SHAREDCACHE_CONFLICT_STOREDCONTENT_0 = "ERR_SHAREDCACHE_CONFLICT_STOREDCONTENT_0";
+
+    /** Message constant for key in the resource bundle. */
+    public static final String ERR_SHAREDCACHE_DEFAULT_POLICY_1 = "ERR_SHAREDCACHE_DEFAULT_POLICY_1";
+
+    /** Message constant for key in the resource bundle. */
+    public static final String ERR_SHAREDCACHE_HANDLER_1 = "ERR_SHAREDCACHE_HANDLER_1";
+
+    /** Message constant for key in the resource bundle. */
+    public static final String ERR_SHAREDCACHE_POLICY_CONTENTTYPE_1 = "ERR_SHAREDCACHE_POLICY_CONTENTTYPE_1";
+
+    /** Message constant for key in the resource bundle. */
+    public static final String ERR_SHAREDCACHE_POLICY_DUPLICATE_1 = "ERR_SHAREDCACHE_POLICY_DUPLICATE_1";
+
+    /** Message constant for key in the resource bundle. */
+    public static final String ERR_SHAREDCACHE_POLICY_DURATION_2 = "ERR_SHAREDCACHE_POLICY_DURATION_2";
+
+    /** Message constant for key in the resource bundle. */
+    public static final String ERR_SHAREDCACHE_STATICEXPORT_DISABLED_0 = "ERR_SHAREDCACHE_STATICEXPORT_DISABLED_0";
 
     /** Message constant for key in the resource bundle. */
     public static final String ERR_UNKNOWN_RESTYPE_CLASS_2 = "ERR_UNKNOWN_RESTYPE_CLASS_2";
@@ -92,13 +116,23 @@ public final class Messages extends A_CmsMessageBundle {
     public static final String INIT_HISTORY_SETTINGS_3 = "INIT_HISTORY_SETTINGS_3";
 
     /** Message constant for key in the resource bundle. */
+    public static final String INIT_IMAGECACHE_CONFIG_2 = "INIT_IMAGECACHE_CONFIG_2";
+
+    /** Message constant for key in the resource bundle. */
     public static final String INIT_IMPORT_CONFIG_FINISHED_0 = "INIT_IMPORT_CONFIG_FINISHED_0";
 
     /** Message constant for key in the resource bundle. */
     public static final String INIT_IMPORT_CONFIG_INIT_0 = "INIT_IMPORT_CONFIG_INIT_0";
 
     /** Message constant for key in the resource bundle. */
+    /** Message constant for key in the resource bundle. */
     public static final String INIT_IMPORT_MANAGER_0 = "INIT_IMPORT_MANAGER_0";
+
+    /** Message constant for key in the resource bundle. */
+    public static final String INIT_STOREDCONTENTDELIVERY_CONFIG_0 = "INIT_STOREDCONTENTDELIVERY_CONFIG_0";
+
+    /** Message constant for key in the resource bundle. */
+    public static final String INIT_LOAD_CONFIG_XMLFILE_1 = "INIT_LOAD_CONFIG_XMLFILE_1";
 
     /** Message constant for key in the resource bundle. */
     public static final String INIT_LOGINMANAGER_3 = "INIT_LOGINMANAGER_3";
@@ -134,6 +168,9 @@ public final class Messages extends A_CmsMessageBundle {
     public static final String INIT_RELATION_DELETION_ENABLED_0 = "INIT_RELATION_DELETION_ENABLED_0";
 
     /** Message constant for key in the resource bundle. */
+    public static final String INIT_REPOSITORY_FOLDER_1 = "INIT_REPOSITORY_FOLDER_1";
+
+    /** Message constant for key in the resource bundle. */
     public static final String INIT_REQUEST_HANDLER_INVALID_1 = "INIT_REQUEST_HANDLER_INVALID_1";
 
     /** Message constant for key in the resource bundle. */
@@ -156,6 +193,9 @@ public final class Messages extends A_CmsMessageBundle {
 
     /** Message constant for key in the resource bundle. */
     public static final String INIT_SEARCH_CONFIG_FINISHED_0 = "INIT_SEARCH_CONFIG_FINISHED_0";
+
+    /** Message constant for key in the resource bundle. */
+    public static final String INIT_SHAREDCACHE_CONFIG_0 = "INIT_SHAREDCACHE_CONFIG_0";
 
     /** Message constant for key in the resource bundle. */
     public static final String INIT_SEARCH_CONFIG_INIT_0 = "INIT_SEARCH_CONFIG_INIT_0";
@@ -239,6 +279,12 @@ public final class Messages extends A_CmsMessageBundle {
     public static final String INIT_WORKPLACE_INIT_FINISHED_0 = "INIT_WORKPLACE_INIT_FINISHED_0";
 
     /** Message constant for key in the resource bundle. */
+    public static final String INIT_XSLT_CONFIG_DISABLED_0 = "INIT_XSLT_CONFIG_DISABLED_0";
+
+    /** Message constant for key in the resource bundle. */
+    public static final String INIT_XSLT_CONFIG_ENABLED_1 = "INIT_XSLT_CONFIG_ENABLED_1";
+
+    /** Message constant for key in the resource bundle. */
     public static final String LOG_ADD_CONFIG_1 = "LOG_ADD_CONFIG_1";
 
     /** Message constant for key in the resource bundle. */
@@ -290,9 +336,6 @@ public final class Messages extends A_CmsMessageBundle {
     public static final String LOG_INVALID_CONFIG_BASE_FOLDER_1 = "LOG_INVALID_CONFIG_BASE_FOLDER_1";
 
     /** Message constant for key in the resource bundle. */
-    public static final String LOG_LOAD_CONFIG_XMLFILE_1 = "LOG_LOAD_CONFIG_XMLFILE_1";
-
-    /** Message constant for key in the resource bundle. */
     public static final String LOG_MAIL_SETTINGS_1 = "LOG_MAIL_SETTINGS_1";
 
     /** Message constant for key in the resource bundle. */
@@ -326,7 +369,7 @@ public final class Messages extends A_CmsMessageBundle {
 
     /**
      * Returns an instance of this localized message accessor.<p>
-     * 
+     *
      * @return an instance of this localized message accessor
      */
     public static I_CmsMessageBundle get() {
@@ -336,7 +379,7 @@ public final class Messages extends A_CmsMessageBundle {
 
     /**
      * Returns the bundle name for this OpenCms package.<p>
-     * 
+     *
      * @return the bundle name for this OpenCms package
      */
     public String getBundleName() {

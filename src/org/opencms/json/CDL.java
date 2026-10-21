@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -14,34 +14,34 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * Lesser General Public License for more details.
  *
- * For further information about Alkacon Software GmbH, please see the
- * company website: http://www.alkacon.com
+ * For further information about Alkacon Software GmbH & Co. KG, please see the
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
- * 
+ *
  * This file is based on:
  * org.json.CDL
  * from the JSON in Java implementation.
- * 
+ *
  * Copyright (c) 2002 JSON.org
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
  * in the Software without restriction, including without limitation the rights
  * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
  * copies of the Software, and to permit persons to whom the Software is
  * furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included in all
  * copies or substantial portions of the Software.
- * 
+ *
  * The Software shall be used for Good, not Evil.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -69,10 +69,13 @@ package org.opencms.json;
  * A comma delimited list can be converted into a JSONArray of JSONObjects.
  * The names for the elements in the JSONObjects can be taken from the names
  * in the first row.<p>
- * 
+ *
  */
 public final class CDL {
 
+    /**
+     * Hidden constructor.<p>
+     */
     private CDL() {
 
         // hidden constructor
@@ -80,7 +83,7 @@ public final class CDL {
 
     /**
      * Produce a JSONArray of strings from a row of comma delimited values.<p>
-     * 
+     *
      * @param x A JSONTokener of the source text
      * @return A JSONArray of strings
      * @throws JSONException if something goes wrong
@@ -90,7 +93,7 @@ public final class CDL {
         JSONArray ja = new JSONArray();
         for (;;) {
             String value = getValue(x);
-            if (value == null || (ja.length() == 0 && value.length() == 0)) {
+            if ((value == null) || ((ja.length() == 0) && (value.length() == 0))) {
                 return null;
             }
             ja.put(value);
@@ -100,7 +103,7 @@ public final class CDL {
                     break;
                 }
                 if (c != ' ') {
-                    if (c == '\n' || c == '\r' || c == 0) {
+                    if ((c == '\n') || (c == '\r') || (c == 0)) {
                         return ja;
                     }
                     throw x.syntaxError("Bad character '" + c + "' (" + (int)c + ").");
@@ -112,7 +115,7 @@ public final class CDL {
     /**
      * Produce a JSONObject from a row of comma delimited text, using a
      * parallel JSONArray of strings to provides the names of the elements.<p>
-     * 
+     *
      * @param names A JSONArray of names. This is commonly obtained from the
      *  first row of a comma delimited text file using the rowToJSONArray
      *  method
@@ -129,7 +132,7 @@ public final class CDL {
     /**
      * Produce a comma delimited text row from a JSONArray. Values containing
      * the comma character will be quoted.<p>
-     * 
+     *
      * @param ja A JSONArray of strings
      * @return A string ending in NEWLINE
      */
@@ -166,7 +169,7 @@ public final class CDL {
     /**
      * Produce a JSONArray of JSONObjects from a comma delimited text string
      * using a supplied JSONArray as the source of element names.<p>
-     * 
+     *
      * @param names A JSONArray of strings
      * @param x A JSONTokener of the source text
      * @return A JSONArray of JSONObjects
@@ -174,7 +177,7 @@ public final class CDL {
      */
     public static JSONArray toJSONArray(JSONArray names, JSONTokener x) throws JSONException {
 
-        if (names == null || names.length() == 0) {
+        if ((names == null) || (names.length() == 0)) {
             return null;
         }
         JSONArray ja = new JSONArray();
@@ -194,7 +197,7 @@ public final class CDL {
     /**
      * Produce a JSONArray of JSONObjects from a comma delimited text string
      * using a supplied JSONArray as the source of element names.<p>
-     * 
+     *
      * @param names A JSONArray of strings.
      * @param string The comma delimited text
      * @return A JSONArray of JSONObjects
@@ -208,7 +211,7 @@ public final class CDL {
     /**
      * Produce a JSONArray of JSONObjects from a comma delimited text string,
      * using the first row as a source of names.<p>
-     * 
+     *
      * @param x The JSONTokener containing the comma delimited text
      * @return A JSONArray of JSONObjects
      * @throws JSONException if something goes wrong
@@ -221,7 +224,7 @@ public final class CDL {
     /**
      * Produce a JSONArray of JSONObjects from a comma delimited text string,
      * using the first row as a source of names.<p>
-     * 
+     *
      * @param string The comma delimited text
      * @return A JSONArray of JSONObjects
      * @throws JSONException if something goes wrong
@@ -235,7 +238,7 @@ public final class CDL {
      * Produce a comma delimited text from a JSONArray of JSONObjects. The
      * first row will be a list of names obtained by inspecting the first
      * JSONObject.<p>
-     * 
+     *
      * @param ja A JSONArray of JSONObjects
      * @return A comma delimited text
      * @throws JSONException if something goes wrong
@@ -256,7 +259,7 @@ public final class CDL {
      * Produce a comma delimited text from a JSONArray of JSONObjects using
      * a provided list of names. The list of names is not included in the
      * output.<p>
-     * 
+     *
      * @param names A JSONArray of strings
      * @param ja A JSONArray of JSONObjects
      * @return A comma delimited text
@@ -264,7 +267,7 @@ public final class CDL {
      */
     public static String toString(JSONArray names, JSONArray ja) throws JSONException {
 
-        if (names == null || names.length() == 0) {
+        if ((names == null) || (names.length() == 0)) {
             return null;
         }
         StringBuffer sb = new StringBuffer();
@@ -280,7 +283,7 @@ public final class CDL {
     /**
      * Get the next value. The value can be wrapped in quotes. The value can
      * be empty.<p>
-     * 
+     *
      * @param x A JSONTokener of the source text
      * @return The value string, or null if empty
      * @throws JSONException if the quoted string is badly formed
@@ -290,7 +293,7 @@ public final class CDL {
         char c;
         do {
             c = x.next();
-        } while (c == ' ' || c == '\t');
+        } while ((c == ' ') || (c == '\t'));
         switch (c) {
             case 0:
                 return null;

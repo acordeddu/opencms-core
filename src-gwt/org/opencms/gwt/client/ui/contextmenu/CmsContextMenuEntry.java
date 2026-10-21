@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -15,11 +15,11 @@
  * Lesser General Public License for more details.
  *
  * For further information about Alkacon Software, please see the
- * company website: http://www.alkacon.com
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -27,7 +27,7 @@
 
 package org.opencms.gwt.client.ui.contextmenu;
 
-import org.opencms.gwt.client.util.CmsCollectionUtil;
+import org.opencms.gwt.client.util.CmsClientCollectionUtil;
 import org.opencms.gwt.shared.CmsContextMenuEntryBean;
 import org.opencms.util.CmsUUID;
 
@@ -35,7 +35,7 @@ import java.util.List;
 
 /**
  * Implementation for a context menu entry.<p>
- * 
+ *
  * @since version 8.0.0
  */
 public class CmsContextMenuEntry implements I_CmsContextMenuEntry {
@@ -45,9 +45,6 @@ public class CmsContextMenuEntry implements I_CmsContextMenuEntry {
 
     /** The context menu handler. */
     private I_CmsContextMenuHandler m_handler;
-
-    /** The CSS image class for the icon in front of the label of this entry. */
-    private String m_imageClass;
 
     /** The command for this entry. */
     private I_CmsContextMenuCommand m_menuCommand;
@@ -60,17 +57,17 @@ public class CmsContextMenuEntry implements I_CmsContextMenuEntry {
 
     /**
      * Constructor.<p>
-     * 
+     *
      * @param handler the context menu handler
      * @param structureId the structure id
      * @param menuCommand the menu command
      */
-    public CmsContextMenuEntry(I_CmsContextMenuHandler handler, CmsUUID structureId, I_CmsContextMenuCommand menuCommand) {
+    public CmsContextMenuEntry(
+        I_CmsContextMenuHandler handler,
+        CmsUUID structureId,
+        I_CmsContextMenuCommand menuCommand) {
 
         m_menuCommand = menuCommand;
-        if (m_menuCommand != null) {
-            setImageClass(m_menuCommand.getCommandIconClass());
-        }
         m_handler = handler;
         m_structureId = structureId;
     }
@@ -86,6 +83,18 @@ public class CmsContextMenuEntry implements I_CmsContextMenuEntry {
     }
 
     /**
+     * @see org.opencms.gwt.client.ui.contextmenu.I_CmsContextMenuEntry#generateMenuItem()
+     */
+    public A_CmsContextMenuItem generateMenuItem() {
+
+        if ((m_menuCommand != null) && m_menuCommand.hasItemWidget() && m_bean.isActive()) {
+            return m_menuCommand.getItemWidget(m_structureId, m_handler, m_bean);
+        } else {
+            return new CmsContextMenuItem(this);
+        }
+    }
+
+    /**
      * Returns the bean.<p>
      *
      * @return the bean
@@ -96,21 +105,12 @@ public class CmsContextMenuEntry implements I_CmsContextMenuEntry {
     }
 
     /**
-     * Returns the imageClass.<p>
-     *
-     * @return the imageClass
+     * @see org.opencms.gwt.client.ui.contextmenu.I_CmsContextMenuEntry#getIconClass()
      */
-    public String getImageClass() {
+    public String getIconClass() {
 
-        return m_imageClass;
-    }
+        return m_bean.getIconClass();
 
-    /**
-     * @see org.opencms.gwt.client.ui.contextmenu.I_CmsContextMenuEntry#getImagePath()
-     */
-    public String getImagePath() {
-
-        return m_bean.getImagePath();
     }
 
     /**
@@ -158,7 +158,7 @@ public class CmsContextMenuEntry implements I_CmsContextMenuEntry {
      */
     public boolean hasSubMenu() {
 
-        if (!CmsCollectionUtil.isEmptyOrNull(getSubMenu())) {
+        if (!CmsClientCollectionUtil.isEmptyOrNull(getSubMenu())) {
             return true;
         }
         return false;
@@ -199,18 +199,8 @@ public class CmsContextMenuEntry implements I_CmsContextMenuEntry {
     }
 
     /**
-     * Sets the imageClass.<p>
-     *
-     * @param imageClass the imageClass to set
-     */
-    public void setImageClass(String imageClass) {
-
-        m_imageClass = imageClass;
-    }
-
-    /**
      * Sets the command.<p>
-     * 
+     *
      * @param command the command to set
      */
     public void setMenuCommand(I_CmsContextMenuCommand command) {

@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -14,12 +14,12 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * Lesser General Public License for more details.
  *
- * For further information about Alkacon Software GmbH, please see the
- * company website: http://www.alkacon.com
+ * For further information about Alkacon Software GmbH & Co. KG, please see the
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -48,8 +48,8 @@ import org.apache.commons.logging.Log;
 
 /**
  * Base dialog to edit a message info object.<p>
- * 
- * @since 6.0.0 
+ *
+ * @since 6.0.0
  */
 public abstract class A_CmsMessageDialog extends CmsWidgetDialog {
 
@@ -70,7 +70,7 @@ public abstract class A_CmsMessageDialog extends CmsWidgetDialog {
 
     /**
      * Public constructor with JSP action element.<p>
-     * 
+     *
      * @param jsp an initialized JSP action element
      */
     public A_CmsMessageDialog(CmsJspActionElement jsp) {
@@ -80,7 +80,7 @@ public abstract class A_CmsMessageDialog extends CmsWidgetDialog {
 
     /**
      * Returns the list of session ids parameter value.<p>
-     * 
+     *
      * @return the list of session ids parameter value
      */
     public String getParamSessionids() {
@@ -90,7 +90,7 @@ public abstract class A_CmsMessageDialog extends CmsWidgetDialog {
 
     /**
      * Sets the list of session ids parameter value.<p>
-     * 
+     *
      * @param sessionIds the list of session ids parameter value
      */
     public void setParamSessionids(String sessionIds) {
@@ -101,6 +101,7 @@ public abstract class A_CmsMessageDialog extends CmsWidgetDialog {
     /**
      * @see org.opencms.workplace.CmsWidgetDialog#getPageArray()
      */
+    @Override
     protected String[] getPageArray() {
 
         return PAGES;
@@ -108,15 +109,15 @@ public abstract class A_CmsMessageDialog extends CmsWidgetDialog {
 
     /**
      * Returns a semicolon separated list of user names.<p>
-     * 
+     *
      * @return a semicolon separated list of user names
      */
     protected String getToNames() {
 
-        List users = new ArrayList();
-        Iterator itIds = idsList().iterator();
+        List<String> users = new ArrayList<String>();
+        Iterator<String> itIds = idsList().iterator();
         while (itIds.hasNext()) {
-            String id = itIds.next().toString();
+            String id = itIds.next();
             CmsSessionInfo session = OpenCms.getSessionManager().getSessionInfo(id);
             if (session != null) {
                 try {
@@ -130,9 +131,9 @@ public abstract class A_CmsMessageDialog extends CmsWidgetDialog {
             }
         }
         StringBuffer result = new StringBuffer(256);
-        Iterator itUsers = users.iterator();
+        Iterator<String> itUsers = users.iterator();
         while (itUsers.hasNext()) {
-            result.append(itUsers.next().toString());
+            result.append(itUsers.next());
             if (itUsers.hasNext()) {
                 result.append("; ");
             }
@@ -142,15 +143,15 @@ public abstract class A_CmsMessageDialog extends CmsWidgetDialog {
 
     /**
      * Returns the list of session ids.<p>
-     * 
+     *
      * @return the list of session ids
      */
-    protected List idsList() {
+    protected List<String> idsList() {
 
         if (!isForAll()) {
             return CmsStringUtil.splitAsList(getParamSessionids(), CmsHtmlList.ITEM_SEPARATOR);
         }
-        List manageableUsers = new ArrayList();
+        List<CmsUser> manageableUsers = new ArrayList<CmsUser>();
         try {
             manageableUsers = OpenCms.getRoleManager().getManageableUsers(getCms(), "", true);
         } catch (CmsException e) {
@@ -158,10 +159,10 @@ public abstract class A_CmsMessageDialog extends CmsWidgetDialog {
                 LOG.error(e.getLocalizedMessage(), e);
             }
         }
-        List ids = new ArrayList();
-        Iterator itSessions = OpenCms.getSessionManager().getSessionInfos().iterator();
+        List<String> ids = new ArrayList<String>();
+        Iterator<CmsSessionInfo> itSessions = OpenCms.getSessionManager().getSessionInfos().iterator();
         while (itSessions.hasNext()) {
-            CmsSessionInfo sessionInfo = (CmsSessionInfo)itSessions.next();
+            CmsSessionInfo sessionInfo = itSessions.next();
             CmsUser user;
             try {
                 user = getCms().readUser(sessionInfo.getUserId());
@@ -174,7 +175,7 @@ public abstract class A_CmsMessageDialog extends CmsWidgetDialog {
             if (!manageableUsers.contains(user)) {
                 continue;
             }
-            ids.add(sessionInfo.getSessionId());
+            ids.add(sessionInfo.getSessionId().toString());
         }
         return ids;
     }
@@ -187,7 +188,7 @@ public abstract class A_CmsMessageDialog extends CmsWidgetDialog {
         Object o = null;
 
         try {
-            // this is not the initial call, get the message info object from session            
+            // this is not the initial call, get the message info object from session
             o = getDialogObject();
             m_msgInfo = (CmsMessageInfo)o;
             // test
@@ -203,6 +204,7 @@ public abstract class A_CmsMessageDialog extends CmsWidgetDialog {
     /**
      * @see org.opencms.workplace.CmsWorkplace#initMessages()
      */
+    @Override
     protected void initMessages() {
 
         // add specific dialog resource bundle
@@ -215,6 +217,7 @@ public abstract class A_CmsMessageDialog extends CmsWidgetDialog {
     /**
      * @see org.opencms.workplace.CmsWorkplace#initWorkplaceRequestValues(org.opencms.workplace.CmsWorkplaceSettings, javax.servlet.http.HttpServletRequest)
      */
+    @Override
     protected void initWorkplaceRequestValues(CmsWorkplaceSettings settings, HttpServletRequest request) {
 
         // initialize parameters and dialog actions in super implementation
@@ -226,7 +229,7 @@ public abstract class A_CmsMessageDialog extends CmsWidgetDialog {
 
     /**
      * Checks if the edited message has to be sent to all sessions.<p>
-     * 
+     *
      * @return <code>true</code> if the edited message has to be sent to all sessions
      */
     protected boolean isForAll() {

@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -14,12 +14,12 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * Lesser General Public License for more details.
  *
- * For further information about Alkacon Software GmbH, please see the
- * company website: http://www.alkacon.com
+ * For further information about Alkacon Software GmbH & Co. KG, please see the
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -30,6 +30,7 @@ package org.opencms.importexport;
 import org.opencms.configuration.CmsParameterConfiguration;
 import org.opencms.file.CmsFile;
 import org.opencms.file.CmsObject;
+import org.opencms.file.CmsProperty;
 import org.opencms.file.CmsResource;
 import org.opencms.file.CmsResourceFilter;
 import org.opencms.file.types.CmsResourceTypePlain;
@@ -49,6 +50,7 @@ import org.opencms.security.I_CmsPasswordHandler;
 import org.opencms.security.I_CmsPrincipal;
 import org.opencms.util.CmsDateUtil;
 import org.opencms.util.CmsUUID;
+import org.opencms.xml.CmsXmlEntityResolver;
 import org.opencms.xml.CmsXmlException;
 import org.opencms.xml.CmsXmlUtils;
 
@@ -68,19 +70,21 @@ import org.apache.commons.logging.Log;
 
 import org.dom4j.Document;
 import org.dom4j.Element;
+import org.dom4j.Node;
 
 /**
- * Implementation of the OpenCms Import Interface ({@link org.opencms.importexport.I_CmsImport}) for 
+ * Implementation of the OpenCms Import Interface ({@link org.opencms.importexport.I_CmsImport}) for
  * the import version 5.<p>
- * 
+ *
  * This import format is used in OpenCms since 6.3.0.<p>
- * 
- * @since 6.3.0 
- * 
+ *
+ * @since 6.3.0
+ *
  * @see org.opencms.importexport.A_CmsImport
- * 
+ *
  * @deprecated this import class is no longer in use and should only be used to import old export files
  */
+@Deprecated
 public class CmsImportVersion5 extends A_CmsImport {
 
     /** The version number of this import implementation.<p> */
@@ -90,10 +94,10 @@ public class CmsImportVersion5 extends A_CmsImport {
     private static final Log LOG = CmsLog.getLog(CmsImportVersion5.class);
 
     /** Stores all relations defined in the import file to be created after all resources has been imported. */
-    protected Map m_importedRelations;
+    protected Map<String, List<CmsRelation>> m_importedRelations;
 
     /** Stores all resources of any type that implements the {@link I_CmsLinkParseable} interface. */
-    protected List m_parseables;
+    protected List<CmsResource> m_parseables;
 
     /** The keep permissions flag. */
     protected boolean m_keepPermissions;
@@ -115,30 +119,6 @@ public class CmsImportVersion5 extends A_CmsImport {
     }
 
     /**
-     * @see org.opencms.importexport.I_CmsImport#importResources(org.opencms.file.CmsObject, java.lang.String, org.opencms.report.I_CmsReport, java.io.File, java.util.zip.ZipFile, org.dom4j.Document)
-     * 
-     * @deprecated use {@link #importData(CmsObject, I_CmsReport, CmsImportParameters)} instead
-     */
-    public void importResources(
-        CmsObject cms,
-        String importPath,
-        I_CmsReport report,
-        File importResource,
-        ZipFile importZip,
-        Document docXml) throws CmsImportExportException {
-
-        CmsImportParameters params = new CmsImportParameters(importResource != null
-        ? importResource.getAbsolutePath()
-        : importZip.getName(), importPath, false);
-
-        try {
-            importData(cms, report, params);
-        } catch (CmsXmlException e) {
-            throw new CmsImportExportException(e.getMessageContainer(), e);
-        }
-    }
-
-    /**
      * @see org.opencms.importexport.I_CmsImport#importData(CmsObject, I_CmsReport, CmsImportParameters)
      */
     public void importData(CmsObject cms, I_CmsReport report, CmsImportParameters params)
@@ -151,17 +131,19 @@ public class CmsImportVersion5 extends A_CmsImport {
         m_report = report;
         m_keepPermissions = params.isKeepPermissions();
 
-        m_linkStorage = new HashMap();
-        m_linkPropertyStorage = new HashMap();
-        m_parseables = new ArrayList();
-        m_importedRelations = new HashMap();
+        m_linkStorage = new HashMap<String, String>();
+        m_linkPropertyStorage = new HashMap<String, List<CmsProperty>>();
+        m_parseables = new ArrayList<CmsResource>();
+        m_importedRelations = new HashMap<String, List<CmsRelation>>();
 
         CmsImportHelper helper = new CmsImportHelper(params);
         try {
             helper.openFile();
             m_importResource = helper.getFolder();
             m_importZip = helper.getZipFile();
-            m_docXml = CmsXmlUtils.unmarshalHelper(helper.getFileBytes(CmsImportExportManager.EXPORT_MANIFEST), null);
+            m_docXml = CmsXmlUtils.unmarshalHelper(
+                helper.getFileBytes(CmsImportExportManager.EXPORT_MANIFEST),
+                new CmsXmlEntityResolver(null));
             // first import the user information
             if (OpenCms.getRoleManager().hasRole(m_cms, CmsRole.ACCOUNT_MANAGER)) {
                 importGroups();
@@ -187,13 +169,40 @@ public class CmsImportVersion5 extends A_CmsImport {
     }
 
     /**
+     * @see org.opencms.importexport.I_CmsImport#importResources(org.opencms.file.CmsObject, java.lang.String, org.opencms.report.I_CmsReport, java.io.File, java.util.zip.ZipFile, org.dom4j.Document)
+     *
+     * @deprecated use {@link #importData(CmsObject, I_CmsReport, CmsImportParameters)} instead
+     */
+    @Deprecated
+    public void importResources(
+        CmsObject cms,
+        String importPath,
+        I_CmsReport report,
+        File importResource,
+        ZipFile importZip,
+        Document docXml)
+    throws CmsImportExportException {
+
+        CmsImportParameters params = new CmsImportParameters(
+            importResource != null ? importResource.getAbsolutePath() : importZip.getName(),
+            importPath,
+            false);
+
+        try {
+            importData(cms, report, params);
+        } catch (CmsXmlException e) {
+            throw new CmsImportExportException(e.getMessageContainer(), e);
+        }
+    }
+
+    /**
      * Convert a given time stamp from a String format to a long value.<p>
-     * 
+     *
      * The time stamp is either the string representation of a long value (old export format)
      * or a user-readable string format.
-     * 
+     *
      * @param timestamp time stamp to convert
-     * 
+     *
      * @return long value of the time stamp
      */
     protected long convertTimestamp(String timestamp) {
@@ -227,11 +236,11 @@ public class CmsImportVersion5 extends A_CmsImport {
         m_report.println(Messages.get().container(Messages.RPT_START_IMPORT_RELATIONS_0), I_CmsReport.FORMAT_HEADLINE);
 
         int i = 0;
-        Iterator it = m_importedRelations.entrySet().iterator();
+        Iterator<Entry<String, List<CmsRelation>>> it = m_importedRelations.entrySet().iterator();
         while (it.hasNext()) {
-            Map.Entry entry = (Entry)it.next();
-            String resourcePath = (String)entry.getKey();
-            List relations = (List)entry.getValue();
+            Entry<String, List<CmsRelation>> entry = it.next();
+            String resourcePath = entry.getKey();
+            List<CmsRelation> relations = entry.getValue();
 
             m_report.print(
                 org.opencms.report.Messages.get().container(
@@ -244,14 +253,14 @@ public class CmsImportVersion5 extends A_CmsImport {
                 Messages.get().container(
                     Messages.RPT_IMPORTING_RELATIONS_FOR_2,
                     resourcePath,
-                    new Integer(relations.size())),
+                    Integer.valueOf(relations.size())),
                 I_CmsReport.FORMAT_NOTE);
             m_report.print(org.opencms.report.Messages.get().container(org.opencms.report.Messages.RPT_DOTS_0));
 
             boolean withErrors = false;
-            Iterator itRelations = relations.iterator();
+            Iterator<CmsRelation> itRelations = relations.iterator();
             while (itRelations.hasNext()) {
-                CmsRelation relation = (CmsRelation)itRelations.next();
+                CmsRelation relation = itRelations.next();
                 try {
                     // Add the relation to the resource
                     m_cms.importRelation(
@@ -287,18 +296,20 @@ public class CmsImportVersion5 extends A_CmsImport {
     /**
      * Reads all the relations of the resource from the <code>manifest.xml</code> file
      * and adds them to the according resource.<p>
-     * 
-     * @param resource the resource to import the relations for 
+     *
+     * @param resource the resource to import the relations for
      * @param parentElement the current element
      */
     protected void importRelations(CmsResource resource, Element parentElement) {
 
-        // Get the nodes for the relations        
-        List relationElements = parentElement.selectNodes("./" + A_CmsImport.N_RELATIONS + "/" + A_CmsImport.N_RELATION);
+        // Get the nodes for the relations
+        @SuppressWarnings("unchecked")
+        List<Node> relationElements = parentElement.selectNodes(
+            "./" + A_CmsImport.N_RELATIONS + "/" + A_CmsImport.N_RELATION);
 
-        List relations = new ArrayList();
+        List<CmsRelation> relations = new ArrayList<CmsRelation>();
         // iterate over the nodes
-        Iterator itRelations = relationElements.iterator();
+        Iterator<Node> itRelations = relationElements.iterator();
         while (itRelations.hasNext()) {
             Element relationElement = (Element)itRelations.next();
             String structureID = getChildElementTextValue(relationElement, A_CmsImport.N_RELATION_ATTRIBUTE_ID);
@@ -324,7 +335,7 @@ public class CmsImportVersion5 extends A_CmsImport {
 
     /**
      * Imports a resource (file or folder) into the cms.<p>
-     * 
+     *
      * @param source the path to the source-file
      * @param destination the path to the destination-file in the cms
      * @param type the resource type name of the file
@@ -333,12 +344,12 @@ public class CmsImportVersion5 extends A_CmsImport {
      * @param datelastmodified the last modification date of the resource
      * @param userlastmodified the user who made the last modifications to the resource
      * @param datecreated the creation date of the resource
-     * @param usercreated the user who created 
+     * @param usercreated the user who created
      * @param datereleased the release date of the resource
      * @param dateexpired the expire date of the resource
-     * @param flags the flags of the resource     
+     * @param flags the flags of the resource
      * @param properties a list with properties for this resource
-     * 
+     *
      * @return imported resource
      */
     protected CmsResource importResource(
@@ -354,7 +365,7 @@ public class CmsImportVersion5 extends A_CmsImport {
         long datereleased,
         long dateexpired,
         String flags,
-        List properties) {
+        List<CmsProperty> properties) {
 
         byte[] content = null;
         CmsResource result = null;
@@ -370,7 +381,7 @@ public class CmsImportVersion5 extends A_CmsImport {
                 size = content.length;
             }
 
-            // get UUIDs for the user   
+            // get UUIDs for the user
             CmsUUID newUserlastmodified;
             CmsUUID newUsercreated;
             // check if user created and user last modified are valid users in this system.
@@ -399,7 +410,7 @@ public class CmsImportVersion5 extends A_CmsImport {
                 newUuidstructure = new CmsUUID();
             }
 
-            // get UUIDs for the resource and content        
+            // get UUIDs for the resource and content
             CmsUUID newUuidresource = null;
             if ((uuidresource != null) && (!type.isFolder())) {
                 // create a UUID from the provided string
@@ -409,14 +420,14 @@ public class CmsImportVersion5 extends A_CmsImport {
                 newUuidresource = new CmsUUID();
             }
 
-            // create a new CmsResource                         
+            // create a new CmsResource
             CmsResource resource = new CmsResource(
                 newUuidstructure,
                 newUuidresource,
                 destination,
                 type.getTypeId(),
                 type.isFolder(),
-                new Integer(flags).intValue(),
+                Integer.valueOf(flags).intValue(),
                 m_cms.getRequestContext().getCurrentProject().getUuid(),
                 CmsResource.STATE_NEW,
                 datecreated,
@@ -445,7 +456,7 @@ public class CmsImportVersion5 extends A_CmsImport {
                 // Sleep some time after an error so that the report output has a chance to keep up
                 Thread.sleep(1000);
             } catch (Exception e) {
-                // 
+                //
             }
         }
         return result;
@@ -463,8 +474,9 @@ public class CmsImportVersion5 extends A_CmsImport {
         String lastname,
         String email,
         long dateCreated,
-        Map userInfo,
-        List userGroups) throws CmsImportExportException {
+        Map<String, Object> userInfo,
+        List<String> userGroups)
+    throws CmsImportExportException {
 
         boolean convert = false;
 
@@ -481,34 +493,37 @@ public class CmsImportVersion5 extends A_CmsImport {
     }
 
     /**
-     * Reads all file nodes plus their meta-information (properties, ACL) 
+     * Reads all file nodes plus their meta-information (properties, ACL)
      * from the <code>manifest.xml</code> and imports them as Cms resources to the VFS.<p>
-     * 
+     *
      * @throws CmsImportExportException if something goes wrong
      */
+    @SuppressWarnings("unchecked")
     protected void readResourcesFromManifest() throws CmsImportExportException {
 
-        String source = null, destination = null, uuidstructure = null, uuidresource = null, userlastmodified = null, usercreated = null, flags = null, timestamp = null;
+        String source = null, destination = null, uuidstructure = null, uuidresource = null, userlastmodified = null,
+        usercreated = null, flags = null, timestamp = null;
         long datelastmodified = 0, datecreated = 0, datereleased = 0, dateexpired = 0;
 
-        List fileNodes = null, acentryNodes = null;
+        List<Node> fileNodes = null, acentryNodes = null;
         Element currentElement = null, currentEntry = null;
-        List properties = null;
+        List<CmsProperty> properties = null;
 
         // get list of immutable resources
-        List immutableResources = OpenCms.getImportExportManager().getImmutableResources();
+        List<String> immutableResources = OpenCms.getImportExportManager().getImmutableResources();
         if (immutableResources == null) {
-            immutableResources = Collections.EMPTY_LIST;
+            immutableResources = Collections.emptyList();
         }
         if (LOG.isDebugEnabled()) {
-            LOG.debug(Messages.get().getBundle().key(
-                Messages.LOG_IMPORTEXPORT_IMMUTABLE_RESOURCES_SIZE_1,
-                Integer.toString(immutableResources.size())));
+            LOG.debug(
+                Messages.get().getBundle().key(
+                    Messages.LOG_IMPORTEXPORT_IMMUTABLE_RESOURCES_SIZE_1,
+                    Integer.toString(immutableResources.size())));
         }
         // get list of ignored properties
-        List ignoredProperties = OpenCms.getImportExportManager().getIgnoredProperties();
+        List<String> ignoredProperties = OpenCms.getImportExportManager().getIgnoredProperties();
         if (ignoredProperties == null) {
-            ignoredProperties = Collections.EMPTY_LIST;
+            ignoredProperties = Collections.emptyList();
         }
 
         // get the desired page type for imported pages
@@ -542,7 +557,8 @@ public class CmsImportVersion5 extends A_CmsImport {
                 } catch (CmsLoaderException e) {
                     int plainId;
                     try {
-                        plainId = OpenCms.getResourceManager().getResourceType(CmsResourceTypePlain.getStaticTypeName()).getTypeId();
+                        plainId = OpenCms.getResourceManager().getResourceType(
+                            CmsResourceTypePlain.getStaticTypeName()).getTypeId();
                     } catch (CmsLoaderException e1) {
                         // this should really never happen
                         plainId = CmsResourceTypePlain.getStaticTypeId();
@@ -600,10 +616,10 @@ public class CmsImportVersion5 extends A_CmsImport {
                     dateexpired = CmsResource.DATE_EXPIRED_DEFAULT;
                 }
 
-                // <flags>              
+                // <flags>
                 flags = getChildElementTextValue(currentElement, A_CmsImport.N_FLAGS);
 
-                // apply name translation and import path         
+                // apply name translation and import path
                 String translatedName = m_cms.getRequestContext().addSiteRoot(m_importPath + destination);
                 if (type.isFolder()) {
                     // ensure folders end with a "/"
@@ -619,16 +635,17 @@ public class CmsImportVersion5 extends A_CmsImport {
                 if (resourceNotImmutable) {
                     // print out the information to the report
                     m_report.print(Messages.get().container(Messages.RPT_IMPORTING_0), I_CmsReport.FORMAT_NOTE);
-                    m_report.print(org.opencms.report.Messages.get().container(
-                        org.opencms.report.Messages.RPT_ARGUMENT_1,
-                        translatedName));
+                    m_report.print(
+                        org.opencms.report.Messages.get().container(
+                            org.opencms.report.Messages.RPT_ARGUMENT_1,
+                            translatedName));
                     m_report.print(org.opencms.report.Messages.get().container(org.opencms.report.Messages.RPT_DOTS_0));
                     // get all properties
                     properties = readPropertiesFromManifest(currentElement, ignoredProperties);
 
                     boolean exists = m_cms.existsResource(translatedName, CmsResourceFilter.ALL);
 
-                    // import the resource               
+                    // import the resource
                     CmsResource res = importResource(
                         source,
                         translatedName,
@@ -648,7 +665,7 @@ public class CmsImportVersion5 extends A_CmsImport {
                         // only set permissions if the resource did not exists or if the keep permissions flag is not set
                         if (!exists || !m_keepPermissions) {
                             // if the resource was imported add the access control entries if available
-                            List aceList = new ArrayList();
+                            List<CmsAccessControlEntry> aceList = new ArrayList<CmsAccessControlEntry>();
 
                             // write all imported access control entries for this file
                             acentryNodes = currentElement.selectNodes("*/" + A_CmsImport.N_ACCESSCONTROL_ENTRY);
@@ -675,13 +692,15 @@ public class CmsImportVersion5 extends A_CmsImport {
                                         principalId = CmsRole.valueOfRoleName(principal).getId().toString();
                                     } else if (id.equalsIgnoreCase(CmsAccessControlEntry.PRINCIPAL_ALL_OTHERS_NAME)) {
                                         principalId = CmsAccessControlEntry.PRINCIPAL_ALL_OTHERS_ID.toString();
-                                    } else if (id.equalsIgnoreCase(CmsAccessControlEntry.PRINCIPAL_OVERWRITE_ALL_NAME)) {
+                                    } else if (id.equalsIgnoreCase(
+                                        CmsAccessControlEntry.PRINCIPAL_OVERWRITE_ALL_NAME)) {
                                         principalId = CmsAccessControlEntry.PRINCIPAL_OVERWRITE_ALL_ID.toString();
                                     } else {
                                         if (LOG.isWarnEnabled()) {
-                                            LOG.warn(Messages.get().getBundle().key(
-                                                Messages.LOG_IMPORTEXPORT_ERROR_IMPORTING_ACE_1,
-                                                id));
+                                            LOG.warn(
+                                                Messages.get().getBundle().key(
+                                                    Messages.LOG_IMPORTEXPORT_ERROR_IMPORTING_ACE_1,
+                                                    id));
                                         }
                                     }
 
@@ -700,7 +719,8 @@ public class CmsImportVersion5 extends A_CmsImport {
                                             + A_CmsImport.N_ACCESSCONTROL_DENIEDPERMISSIONS).get(0)).getTextTrim();
 
                                     // add the entry to the list
-                                    aceList.add(getImportAccessControlEntry(res, principalId, allowed, denied, acflags));
+                                    aceList.add(
+                                        getImportAccessControlEntry(res, principalId, allowed, denied, acflags));
                                 } catch (CmsException e) {
                                     // user or group of ACE might not exist in target system, ignore ACE
                                     if (LOG.isWarnEnabled()) {
@@ -720,33 +740,37 @@ public class CmsImportVersion5 extends A_CmsImport {
                         // Add the relations for the resource
                         importRelations(res, currentElement);
 
-                        if (OpenCms.getResourceManager().getResourceType(res.getTypeId()) instanceof I_CmsLinkParseable) {
+                        if (OpenCms.getResourceManager().getResourceType(
+                            res.getTypeId()) instanceof I_CmsLinkParseable) {
                             // store for later use
                             m_parseables.add(res);
                         }
 
                         if (LOG.isInfoEnabled()) {
-                            LOG.info(Messages.get().getBundle().key(
-                                Messages.LOG_IMPORTING_4,
-                                new Object[] {
-                                    String.valueOf(i + 1),
-                                    String.valueOf(importSize),
-                                    translatedName,
-                                    destination}));
+                            LOG.info(
+                                Messages.get().getBundle().key(
+                                    Messages.LOG_IMPORTING_4,
+                                    new Object[] {
+                                        String.valueOf(i + 1),
+                                        String.valueOf(importSize),
+                                        translatedName,
+                                        destination}));
                         }
                     } else {
                         // resource import failed, since no CmsResource was created
                         m_report.print(Messages.get().container(Messages.RPT_SKIPPING_0), I_CmsReport.FORMAT_NOTE);
-                        m_report.println(org.opencms.report.Messages.get().container(
-                            org.opencms.report.Messages.RPT_ARGUMENT_1,
-                            translatedName));
+                        m_report.println(
+                            org.opencms.report.Messages.get().container(
+                                org.opencms.report.Messages.RPT_ARGUMENT_1,
+                                translatedName));
 
                         if (LOG.isInfoEnabled()) {
-                            LOG.info(Messages.get().getBundle().key(
-                                Messages.LOG_SKIPPING_3,
-                                String.valueOf(i + 1),
-                                String.valueOf(importSize),
-                                translatedName));
+                            LOG.info(
+                                Messages.get().getBundle().key(
+                                    Messages.LOG_SKIPPING_3,
+                                    String.valueOf(i + 1),
+                                    String.valueOf(importSize),
+                                    translatedName));
                         }
                     }
 
@@ -754,16 +778,18 @@ public class CmsImportVersion5 extends A_CmsImport {
                     // skip the file import, just print out the information to the report
 
                     m_report.print(Messages.get().container(Messages.RPT_SKIPPING_0), I_CmsReport.FORMAT_NOTE);
-                    m_report.println(org.opencms.report.Messages.get().container(
-                        org.opencms.report.Messages.RPT_ARGUMENT_1,
-                        translatedName));
+                    m_report.println(
+                        org.opencms.report.Messages.get().container(
+                            org.opencms.report.Messages.RPT_ARGUMENT_1,
+                            translatedName));
 
                     if (LOG.isInfoEnabled()) {
-                        LOG.info(Messages.get().getBundle().key(
-                            Messages.LOG_SKIPPING_3,
-                            String.valueOf(i + 1),
-                            String.valueOf(importSize),
-                            translatedName));
+                        LOG.info(
+                            Messages.get().getBundle().key(
+                                Messages.LOG_SKIPPING_3,
+                                String.valueOf(i + 1),
+                                String.valueOf(importSize),
+                                translatedName));
                     }
                 }
             }
@@ -793,9 +819,9 @@ public class CmsImportVersion5 extends A_CmsImport {
         m_report.println(Messages.get().container(Messages.RPT_START_PARSE_LINKS_0), I_CmsReport.FORMAT_HEADLINE);
 
         int i = 0;
-        Iterator it = m_parseables.iterator();
+        Iterator<CmsResource> it = m_parseables.iterator();
         while (it.hasNext()) {
-            CmsResource res = (CmsResource)it.next();
+            CmsResource res = it.next();
 
             m_report.print(
                 org.opencms.report.Messages.get().container(

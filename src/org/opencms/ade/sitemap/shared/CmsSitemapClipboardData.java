@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -15,11 +15,11 @@
  * Lesser General Public License for more details.
  *
  * For further information about Alkacon Software, please see the
- * company website: http://www.alkacon.com
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -27,6 +27,7 @@
 
 package org.opencms.ade.sitemap.shared;
 
+import org.opencms.ade.configuration.CmsADEManager;
 import org.opencms.util.CmsUUID;
 
 import java.util.LinkedHashMap;
@@ -35,7 +36,7 @@ import com.google.gwt.user.client.rpc.IsSerializable;
 
 /**
  * Sitemap clipboard data bean.<p>
- * 
+ *
  * @since 8.0
  */
 public class CmsSitemapClipboardData implements IsSerializable {
@@ -57,7 +58,7 @@ public class CmsSitemapClipboardData implements IsSerializable {
 
     /**
      * Constructor.<p>
-     * 
+     *
      * @param deletions the session stored list of deleted sitemap entries
      * @param modifications the session stored list of modified sitemap entry paths
      */
@@ -71,7 +72,7 @@ public class CmsSitemapClipboardData implements IsSerializable {
 
     /**
      * Adds an entry to the deleted list.<p>
-     * 
+     *
      * @param entry the entry to add
      */
     public void addDeleted(CmsClientSitemapEntry entry) {
@@ -80,11 +81,12 @@ public class CmsSitemapClipboardData implements IsSerializable {
             m_deletions.remove(entry.getId());
         }
         m_deletions.put(entry.getId(), entry);
+        checkMapSize(m_deletions);
     }
 
     /**
      * Adds an entry to the modified list.<p>
-     * 
+     *
      * @param entry the entry to add
      */
     public void addModified(CmsClientSitemapEntry entry) {
@@ -93,12 +95,13 @@ public class CmsSitemapClipboardData implements IsSerializable {
             m_modifications.remove(entry.getId());
         }
         m_modifications.put(entry.getId(), entry);
+        checkMapSize(m_modifications);
     }
 
     /**
      * Provides a copy of the clip-board data.<p>
-     * 
-     * @return the copied data 
+     *
+     * @return the copied data
      */
     public CmsSitemapClipboardData copy() {
 
@@ -131,7 +134,7 @@ public class CmsSitemapClipboardData implements IsSerializable {
 
     /**
      * Removes an entry from the deleted list.<p>
-     * 
+     *
      * @param entry the entry to remove
      */
     public void removeDeleted(CmsClientSitemapEntry entry) {
@@ -141,7 +144,7 @@ public class CmsSitemapClipboardData implements IsSerializable {
 
     /**
      * Removes an entry from the modified list.<p>
-     * 
+     *
      * @param entry the entry to remove
      */
     public void removeModified(CmsClientSitemapEntry entry) {
@@ -157,6 +160,7 @@ public class CmsSitemapClipboardData implements IsSerializable {
     public void setDeletions(LinkedHashMap<CmsUUID, CmsClientSitemapEntry> deletions) {
 
         m_deletions = deletions;
+        checkMapSize(m_deletions);
     }
 
     /**
@@ -167,5 +171,18 @@ public class CmsSitemapClipboardData implements IsSerializable {
     public void setModifications(LinkedHashMap<CmsUUID, CmsClientSitemapEntry> modifications) {
 
         m_modifications = modifications;
+        checkMapSize(m_modifications);
+    }
+
+    /**
+     * Checks map size to remove entries in case it exceeds the default list size.<p>
+     *
+     * @param map the map to check
+     */
+    private void checkMapSize(LinkedHashMap<?, ?> map) {
+
+        while (map.size() > CmsADEManager.DEFAULT_ELEMENT_LIST_SIZE) {
+            map.remove(map.keySet().iterator().next());
+        }
     }
 }

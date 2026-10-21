@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -14,12 +14,12 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * Lesser General Public License for more details.
  *
- * For further information about Alkacon Software GmbH, please see the
- * company website: http://www.alkacon.com
+ * For further information about Alkacon Software GmbH & Co. KG, please see the
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -34,15 +34,15 @@ import java.io.Serializable;
 
 /**
  * Represents the state of a published resource *before* it got published.<p>
- * 
+ *
  * This allows various subsequent tasks in the Cms app. (e.g. exporting files and folders)
  * to identify published resources after a resource or project was published.<p>
- * 
- * The values to fill this container are read from the Cms publish history database table 
+ *
+ * The values to fill this container are read from the Cms publish history database table
  * that is written during each publishing process.<p>
- * 
+ *
  * @since 6.0.0
- * 
+ *
  * @see org.opencms.db.I_CmsProjectDriver#readPublishedResources(CmsDbContext, CmsUUID)
  */
 public class CmsPublishedResource implements Serializable, Comparable<CmsPublishedResource> {
@@ -52,12 +52,13 @@ public class CmsPublishedResource implements Serializable, Comparable<CmsPublish
      */
     public static class CmsPublishedResourceState extends CmsResourceState {
 
+        /** The serial version id. */
         private static final long serialVersionUID = -2901049208546972463L;
 
         /**
          * protected constructor.<p>
-         * 
-         * @param state an integer representing the state 
+         *
+         * @param state an integer representing the state
          * @param abbrev an abbreviation character
          */
         protected CmsPublishedResourceState(int state, char abbrev) {
@@ -67,7 +68,7 @@ public class CmsPublishedResource implements Serializable, Comparable<CmsPublish
 
         /**
          * Returns the corresponding resource state for this publish resource state.<p>
-         * 
+         *
          * @return the corresponding resource state
          */
         public CmsResourceState getResourceState() {
@@ -120,9 +121,9 @@ public class CmsPublishedResource implements Serializable, Comparable<CmsPublish
 
     /**
      * Creates an object for published VFS resources.<p>
-     * 
+     *
      * Do not write objects created with this constructor to db, since the publish tag is not set.<p>
-     * 
+     *
      * @param resource an CmsResource object to create a CmsPublishedResource from
      */
     public CmsPublishedResource(CmsResource resource) {
@@ -132,7 +133,7 @@ public class CmsPublishedResource implements Serializable, Comparable<CmsPublish
 
     /**
      * Creates an object for published VFS resources.<p>
-     * 
+     *
      * @param resource an CmsResource object to create a CmsPublishedResource from
      * @param publishTag the publish Tag
      */
@@ -143,7 +144,7 @@ public class CmsPublishedResource implements Serializable, Comparable<CmsPublish
 
     /**
      * Creates an object for published VFS resources.<p>
-     * 
+     *
      * @param resource an CmsResource object to create a CmsPublishedResource from
      * @param state the resource state
      * @param publishTag the publish tag
@@ -163,7 +164,7 @@ public class CmsPublishedResource implements Serializable, Comparable<CmsPublish
 
     /**
      * Creates an object for published VFS resources.<p>
-     * 
+     *
      * @param structureId the structure ID of the published resource
      * @param resourceId the resource ID of the published resource
      * @param publishTag the publish tag
@@ -233,7 +234,7 @@ public class CmsPublishedResource implements Serializable, Comparable<CmsPublish
 
     /**
      * Returns the resource state including move operation information.<p>
-     * 
+     *
      * @return the resource state including move operation information
      */
     public CmsResourceState getMovedState() {
@@ -252,7 +253,7 @@ public class CmsPublishedResource implements Serializable, Comparable<CmsPublish
 
     /**
      * Returns the publish tag of the published resource.<p>
-     * 
+     *
      * @return the publish tag of the published resource
      */
     public int getPublishTag() {
@@ -262,7 +263,7 @@ public class CmsPublishedResource implements Serializable, Comparable<CmsPublish
 
     /**
      * Returns the resource ID of the published resource.<p>
-     * 
+     *
      * @return the resource ID of the published resource
      */
     public CmsUUID getResourceId() {
@@ -272,7 +273,7 @@ public class CmsPublishedResource implements Serializable, Comparable<CmsPublish
 
     /**
      * Returns the root path of the published resource.<p>
-     * 
+     *
      * @return the root path of the published resource
      */
     public String getRootPath() {
@@ -282,10 +283,10 @@ public class CmsPublishedResource implements Serializable, Comparable<CmsPublish
 
     /**
      * Returns the count of siblings of the published resource.<p>
-     * 
-     * If a resource has no sibling, the total sibling count for this resource is <code>1</code>, 
-     * if a resource has <code>n</code> siblings, the sibling count is <code>n + 1</code>.<p> 
-     * 
+     *
+     * If a resource has no sibling, the total sibling count for this resource is <code>1</code>,
+     * if a resource has <code>n</code> siblings, the sibling count is <code>n + 1</code>.<p>
+     *
      * @return the count of siblings of the published resource
      */
     public int getSiblingCount() {
@@ -295,7 +296,7 @@ public class CmsPublishedResource implements Serializable, Comparable<CmsPublish
 
     /**
      * Returns the resource state of the published resource.<p>
-     * 
+     *
      * @return the resource state of the published resource
      */
     public CmsResourceState getState() {
@@ -305,7 +306,7 @@ public class CmsPublishedResource implements Serializable, Comparable<CmsPublish
 
     /**
      * Returns the structure ID of the published resource.<p>
-     * 
+     *
      * @return the structure ID of the published resource
      */
     public CmsUUID getStructureId() {
@@ -315,7 +316,7 @@ public class CmsPublishedResource implements Serializable, Comparable<CmsPublish
 
     /**
      * Returns the resource type of the published resource.<p>
-     * 
+     *
      * @return the resource type of the published resource
      */
     public int getType() {
@@ -334,7 +335,7 @@ public class CmsPublishedResource implements Serializable, Comparable<CmsPublish
 
     /**
      * Determines if this resource is a file.<p>
-     * 
+     *
      * @return true if this resource is a file, false otherwise
      */
     public boolean isFile() {
@@ -344,7 +345,7 @@ public class CmsPublishedResource implements Serializable, Comparable<CmsPublish
 
     /**
      * Checks if this resource is a folder.<p>
-     * 
+     *
      * @return true if this is is a folder
      */
     public boolean isFolder() {
@@ -364,9 +365,9 @@ public class CmsPublishedResource implements Serializable, Comparable<CmsPublish
 
     /**
      * Sets the resource state of the published resource.<p>
-     * 
+     *
      * This is sometimes required for offline search index generation.<p>
-     * 
+     *
      * @param state the new state to set
      */
     public void setState(CmsResourceState state) {

@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -14,12 +14,12 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * Lesser General Public License for more details.
  *
- * For further information about Alkacon Software GmbH, please see the
- * company website: http://www.alkacon.com
+ * For further information about Alkacon Software GmbH & Co. KG, please see the
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -31,14 +31,11 @@ import org.opencms.i18n.A_CmsMessageBundle;
 import org.opencms.i18n.I_CmsMessageBundle;
 
 /**
- * Convenience class to access the localized messages of this OpenCms package.<p> 
- * 
- * @since 6.0.0 
+ * Convenience class to access the localized messages of this OpenCms package.<p>
+ *
+ * @since 6.0.0
  */
 public final class Messages extends A_CmsMessageBundle {
-
-    /** Name of the used resource bundle. */
-    private static final String BUNDLE_NAME = "org.opencms.flex.messages";
 
     /** Message constant for key in the resource bundle. */
     public static final String ERR_ADD_COOKIE_0 = "ERR_ADD_COOKIE_0";
@@ -62,13 +59,22 @@ public final class Messages extends A_CmsMessageBundle {
     public static final String ERR_FLEXREQUESTDISPATCHER_VFS_ACCESS_EXCEPTION_0 = "ERR_FLEXREQUESTDISPATCHER_VFS_ACCESS_EXCEPTION_0";
 
     /** Message constant for key in the resource bundle. */
+    public static final String ERR_FLEXRESPONSE_URI_SYNTAX_EXCEPTION_0 = "ERR_FLEXRESPONSE_URI_SYNTAX_EXCEPTION_0";
+
+    /** Message constant for key in the resource bundle. */
     public static final String ERR_HEADER_IFMODIFIEDSINCE_FORMAT_3 = "ERR_HEADER_IFMODIFIEDSINCE_FORMAT_3";
 
     /** Message constant for key in the resource bundle. */
     public static final String INIT_FLEXCACHE_CREATED_2 = "INIT_FLEXCACHE_CREATED_2";
 
-    /** Static instance member. */
-    private static final I_CmsMessageBundle INSTANCE = new Messages();
+    /** Message constant for key in the resource bundle. */
+    public static final String INIT_FLEXCACHE_DEVICE_SELECTOR_FAILURE_1 = "INIT_FLEXCACHE_DEVICE_SELECTOR_FAILURE_1";
+
+    /** Message constant for key in the resource bundle. */
+    public static final String INIT_FLEXCACHE_DEVICE_SELECTOR_SUCCESS_1 = "INIT_FLEXCACHE_DEVICE_SELECTOR_SUCCESS_1";
+
+    /** Message constant for key in the resource bundle. */
+    public static final String LOG_CLASS_INIT_FAILURE_1 = "LOG_CLASS_INIT_FAILURE_1";
 
     /** Message constant for key in the resource bundle. */
     public static final String LOG_FLEXCACHE_ADD_ENTRY_1 = "LOG_FLEXCACHE_ADD_ENTRY_1";
@@ -253,14 +259,11 @@ public final class Messages extends A_CmsMessageBundle {
     /** Message constant for key in the resource bundle. */
     public static final String LOG_FLEXRESPONSE_TOPRESPONSE_SENDREDIRECT_1 = "LOG_FLEXRESPONSE_TOPRESPONSE_SENDREDIRECT_1";
 
-    /** Message constant for key in the resource bundle. */
-    public static final String LOG_CLASS_INIT_FAILURE_1 = "LOG_CLASS_INIT_FAILURE_1";
+    /** Name of the used resource bundle. */
+    private static final String BUNDLE_NAME = "org.opencms.flex.messages";
 
-    /** Message constant for key in the resource bundle. */
-    public static final String INIT_FLEXCACHE_DEVICE_SELECTOR_FAILURE_1 = "INIT_FLEXCACHE_DEVICE_SELECTOR_FAILURE_1";
-
-    /** Message constant for key in the resource bundle. */
-    public static final String INIT_FLEXCACHE_DEVICE_SELECTOR_SUCCESS_1 = "INIT_FLEXCACHE_DEVICE_SELECTOR_SUCCESS_1";
+    /** Static instance member. */
+    private static final I_CmsMessageBundle INSTANCE = new Messages();
 
     /**
      * Hides the public constructor for this utility class.<p>
@@ -272,7 +275,7 @@ public final class Messages extends A_CmsMessageBundle {
 
     /**
      * Returns an instance of this localized message accessor.<p>
-     * 
+     *
      * @return an instance of this localized message accessor
      */
     public static I_CmsMessageBundle get() {
@@ -282,7 +285,7 @@ public final class Messages extends A_CmsMessageBundle {
 
     /**
      * Returns the bundle name for this OpenCms package.<p>
-     * 
+     *
      * @return the bundle name for this OpenCms package
      */
     public String getBundleName() {

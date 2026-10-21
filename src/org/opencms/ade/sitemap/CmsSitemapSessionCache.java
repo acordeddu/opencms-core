@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -15,11 +15,11 @@
  * Lesser General Public License for more details.
  *
  * For further information about Alkacon Software, please see the
- * company website: http://www.alkacon.com
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -35,20 +35,20 @@ import java.util.List;
 
 /**
  * Sitemap session cache.<p>
- * 
+ *
  * @since 8.0.0
  */
 public final class CmsSitemapSessionCache {
 
-    /** The sitemap recent list. */
-    private List<CmsClientSitemapEntry> m_recentList;
-
     /** Session attribute name constant. */
     public static final String SESSION_ATTR_SITEMAP_CACHE = "__OCMS_SITEMAP_CACHE__";
 
+    /** The sitemap recent list. */
+    private List<CmsClientSitemapEntry> m_recentList;
+
     /**
      * Initializes the session cache.<p>
-     * 
+     *
      * @param cms the cms context
      */
     public CmsSitemapSessionCache(CmsObject cms) {
@@ -59,7 +59,7 @@ public final class CmsSitemapSessionCache {
 
     /**
      * Returns the cached recent list.<p>
-     * 
+     *
      * @return the cached recent list
      */
     public List<CmsClientSitemapEntry> getRecentList() {
@@ -69,7 +69,7 @@ public final class CmsSitemapSessionCache {
 
     /**
      * Caches the given recent list.<p>
-     * 
+     *
      * @param list the recent list to cache
      */
     public void setRecentList(List<CmsClientSitemapEntry> list) {

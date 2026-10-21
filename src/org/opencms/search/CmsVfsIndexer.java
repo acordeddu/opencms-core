@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -14,12 +14,12 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * Lesser General Public License for more details.
  *
- * For further information about Alkacon Software GmbH, please see the
- * company website: http://www.alkacon.com
+ * For further information about Alkacon Software GmbH & Co. KG, please see the
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -28,7 +28,6 @@
 package org.opencms.search;
 
 import org.opencms.db.CmsPublishedResource;
-import org.opencms.db.CmsResourceState;
 import org.opencms.file.CmsObject;
 import org.opencms.file.CmsProject;
 import org.opencms.file.CmsResource;
@@ -36,6 +35,8 @@ import org.opencms.file.CmsResourceFilter;
 import org.opencms.main.CmsException;
 import org.opencms.main.CmsLog;
 import org.opencms.report.I_CmsReport;
+import org.opencms.security.CmsSecurityException;
+import org.opencms.util.CmsUUID;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -43,12 +44,11 @@ import java.util.Iterator;
 import java.util.List;
 
 import org.apache.commons.logging.Log;
-import org.apache.lucene.document.Document;
 
 /**
  * An indexer indexing {@link CmsResource} based content from the OpenCms VFS.<p>
- * 
- * @since 6.0.0 
+ *
+ * @since 6.0.0
  */
 public class CmsVfsIndexer implements I_CmsIndexer {
 
@@ -56,13 +56,13 @@ public class CmsVfsIndexer implements I_CmsIndexer {
     private static final Log LOG = CmsLog.getLog(CmsVfsIndexer.class);
 
     // Note: The following member variables must all be "protected" (not "private") since
-    // in case the indexer is extended, the factory method "newInstance()" needs to set them. 
+    // in case the indexer is extended, the factory method "newInstance()" needs to set them.
 
     /** The OpenCms user context to use when reading resources from the VFS during indexing. */
     protected CmsObject m_cms;
 
     /** The index. */
-    protected CmsSearchIndex m_index;
+    protected I_CmsSearchIndex m_index;
 
     /** The report. */
     protected I_CmsReport m_report;
@@ -78,19 +78,18 @@ public class CmsVfsIndexer implements I_CmsIndexer {
         }
 
         // contains all resources already deleted to avoid multiple deleting in case of siblings
-        List<String> resourcesAlreadyDeleted = new ArrayList<String>(resourcesToDelete.size());
+        List<CmsUUID> resourcesAlreadyDeleted = new ArrayList<CmsUUID>(resourcesToDelete.size());
 
         Iterator<CmsPublishedResource> i = resourcesToDelete.iterator();
         while (i.hasNext()) {
             // iterate all resources in the given list of resources to delete
             CmsPublishedResource res = i.next();
-            String rootPath = res.getRootPath();
-            if (!resourcesAlreadyDeleted.contains(rootPath)) {
+            if (!resourcesAlreadyDeleted.contains(res.getStructureId())) {
                 // ensure siblings are only deleted once per update
-                resourcesAlreadyDeleted.add(rootPath);
-                if (!res.isFolder()) {
+                resourcesAlreadyDeleted.add(res.getStructureId());
+                if (!res.isFolder() && !CmsResource.isTemporaryFileName(res.getRootPath())) {
                     // now delete the resource from the index
-                    deleteResource(indexWriter, rootPath);
+                    deleteResource(indexWriter, res);
                 }
             }
         }
@@ -98,7 +97,7 @@ public class CmsVfsIndexer implements I_CmsIndexer {
 
     /**
      * Returns the OpenCms user context used by this indexer.<p>
-     *     
+     *
      * @return the OpenCms user context used by this indexer
      */
     public CmsObject getCms() {
@@ -108,17 +107,17 @@ public class CmsVfsIndexer implements I_CmsIndexer {
 
     /**
      * Returns the OpenCms search index updated by this indexer.<p>
-     *     
-     * @return the OpenCms search index updated by this indexer 
+     *
+     * @return the OpenCms search index updated by this indexer
      */
-    public CmsSearchIndex getIndex() {
+    public I_CmsSearchIndex getIndex() {
 
         return m_index;
     }
 
     /**
      * Returns the report used by this indexer.<p>
-     *     
+     *
      * @return the report used by this indexer
      */
     public I_CmsReport getReport() {
@@ -153,16 +152,34 @@ public class CmsVfsIndexer implements I_CmsIndexer {
     }
 
     /**
-     * @see org.opencms.search.I_CmsIndexer#newInstance(org.opencms.file.CmsObject, org.opencms.report.I_CmsReport, org.opencms.search.CmsSearchIndex)
+     * The default indexer is not able to resolve locale dependencies between documents.<p>
+     *
+     * @see org.opencms.search.I_CmsIndexer#isLocaleDependenciesEnable()
      */
-    public I_CmsIndexer newInstance(CmsObject cms, I_CmsReport report, CmsSearchIndex index) {
+    public boolean isLocaleDependenciesEnable() {
 
-        CmsVfsIndexer indexer = new CmsVfsIndexer();
+        return false;
+    }
 
-        indexer.m_cms = cms;
-        indexer.m_report = report;
-        indexer.m_index = index;
+    /**
+     * @see org.opencms.search.I_CmsIndexer#newInstance(org.opencms.file.CmsObject, org.opencms.report.I_CmsReport, org.opencms.search.I_CmsSearchIndex)
+     */
+    public I_CmsIndexer newInstance(CmsObject cms, I_CmsReport report, I_CmsSearchIndex index) {
 
+        CmsVfsIndexer indexer = null;
+        try {
+            indexer = getClass().newInstance();
+            indexer.m_cms = cms;
+            indexer.m_report = report;
+            indexer.m_index = index;
+        } catch (Exception e) {
+            LOG.error(
+                Messages.get().getBundle().key(
+                    Messages.ERR_INDEXSOURCE_INDEXER_CLASS_NAME_2,
+                    getClass().getName(),
+                    CmsVfsIndexer.class),
+                e);
+        }
         return indexer;
     }
 
@@ -172,7 +189,7 @@ public class CmsVfsIndexer implements I_CmsIndexer {
     public void rebuildIndex(
         I_CmsIndexWriter writer,
         CmsIndexingThreadManager threadManager,
-        CmsSearchIndexSource source) throws CmsIndexException {
+        CmsSearchIndexSource source) {
 
         List<String> resourceNames = source.getResourcesNames();
         Iterator<String> i = resourceNames.iterator();
@@ -219,7 +236,7 @@ public class CmsVfsIndexer implements I_CmsIndexer {
     public void updateResources(
         I_CmsIndexWriter writer,
         CmsIndexingThreadManager threadManager,
-        List<CmsPublishedResource> resourcesToUpdate) throws CmsIndexException {
+        List<CmsPublishedResource> resourcesToUpdate) {
 
         if ((resourcesToUpdate == null) || resourcesToUpdate.isEmpty()) {
             // nothing to update
@@ -234,23 +251,53 @@ public class CmsVfsIndexer implements I_CmsIndexer {
         while (i.hasNext()) {
             CmsPublishedResource res = i.next();
             CmsResource resource = null;
-            try {
-                resource = m_cms.readResource(res.getRootPath(), CmsResourceFilter.IGNORE_EXPIRATION);
-            } catch (CmsException e) {
-                if (LOG.isWarnEnabled()) {
-                    LOG.warn(
-                        Messages.get().getBundle().key(
-                            Messages.LOG_UNABLE_TO_READ_RESOURCE_2,
-                            res.getRootPath(),
-                            m_index.getName()),
-                        e);
+            if (!CmsResource.isTemporaryFileName(res.getRootPath())) {
+                try {
+                    resource = m_cms.readResource(res.getRootPath(), CmsResourceFilter.IGNORE_EXPIRATION);
+                } catch (CmsException e) {
+                    if (LOG.isWarnEnabled()) {
+                        LOG.warn(
+                            Messages.get().getBundle().key(
+                                Messages.LOG_UNABLE_TO_READ_RESOURCE_2,
+                                res.getRootPath(),
+                                m_index.getName()),
+                            e);
+                    }
                 }
-            }
-            if (resource != null) {
-                if (!resourcesAlreadyUpdated.contains(resource.getRootPath())) {
-                    // ensure resources are only indexed once per update
-                    resourcesAlreadyUpdated.add(resource.getRootPath());
-                    updateResource(writer, threadManager, resource);
+                if (resource != null) {
+                    if (!resourcesAlreadyUpdated.contains(resource.getRootPath())) {
+                        // ensure resources are only indexed once per update
+                        resourcesAlreadyUpdated.add(resource.getRootPath());
+                        updateResource(writer, threadManager, resource);
+                    }
+                    if (resource.isFolder()) {
+                        try {
+                            CmsResource defaultFile = m_cms.readDefaultFile(
+                                resource,
+                                CmsResourceFilter.ONLY_VISIBLE_NO_DELETED);
+                            if ((defaultFile != null) && !resourcesAlreadyUpdated.contains(defaultFile.getRootPath())) {
+                                if (LOG.isDebugEnabled()) {
+                                    LOG.warn(
+                                        Messages.get().getBundle().key(
+                                            Messages.LOG_INDEXING_DEFAULT_FILE_FOR_FOLDER_3,
+                                            defaultFile.getRootPath(),
+                                            res.getRootPath(),
+                                            m_index.getName()));
+                                }
+                                updateResource(writer, threadManager, defaultFile);
+                            }
+                        } catch (CmsSecurityException e) {
+                            if (LOG.isWarnEnabled()) {
+                                LOG.warn(
+                                    Messages.get().getBundle().key(
+                                        Messages.LOG_UNABLE_TO_READ_DEFAULT_FILE_FOR_FOLDER_2,
+                                        res.getRootPath(),
+                                        m_index.getName()),
+                                    e);
+                            }
+                        }
+
+                    }
                 }
             }
         }
@@ -258,71 +305,43 @@ public class CmsVfsIndexer implements I_CmsIndexer {
 
     /**
      * Adds a given published resource to the provided search index update data.<p>
-     * 
+     *
      * This method decides if the resource has to be included in the "update" or "delete" list.<p>
-     * 
+     *
      * @param pubRes the published resource to add
      * @param updateData the search index update data to add the resource to
      */
     protected void addResourceToUpdateData(CmsPublishedResource pubRes, CmsSearchIndexUpdateData updateData) {
 
-        if (pubRes.getState().isNew()) {
-            // new resource just needs to be updated
-            if (pubRes.getPublishTag() < 0) {
-                // this is for an offline index
-                if (isResourceInTimeWindow(pubRes)) {
-                    // update only if resource is in time window
-                    updateData.addResourceToUpdate(pubRes);
-                } else {
-                    // for offline index state may be wrong, correct this
-                    pubRes.setState(CmsResourceState.STATE_DELETED);
-                    // in the offline indexes we must delete new resources outside of the time window
-                    updateData.addResourceToDelete(pubRes);
-                }
-            } else {
-                // for a standard index, just index the resource
-                updateData.addResourceToUpdate(pubRes);
-            }
-        } else if (pubRes.getState().isDeleted()) {
+        if (pubRes.getState().isDeleted()) {
             // deleted resource just needs to be removed
             updateData.addResourceToDelete(pubRes);
-        } else if (pubRes.getState().isChanged() || pubRes.getState().isUnchanged()) {
-            if (pubRes.getPublishTag() < 0) {
-                // this is for an offline index
-                if (isResourceInTimeWindow(pubRes)) {
-                    // update only if resource is in time window
-                    updateData.addResourceToUpdate(pubRes);
-                } else {
-                    // for offline index state may be wrong, correct this
-                    pubRes.setState(CmsResourceState.STATE_DELETED);
-                    // in the offline indexes we must delete new resources outside of the time window
-                    updateData.addResourceToDelete(pubRes);
-                }
-            } else {
-                // for a standard index, just update the resource
-                updateData.addResourceToUpdate(pubRes);
-            }
+        } else if (pubRes.getState().isNew() || pubRes.getState().isChanged() || pubRes.getState().isUnchanged()) {
+            updateData.addResourceToUpdate(pubRes);
         }
     }
 
     /**
      * Deletes a resource with the given index writer.<p>
-     * 
+     *
      * @param indexWriter the index writer to resource the resource with
-     * @param rootPath the root path of the resource to delete
+     * @param resource the root path of the resource to delete
      */
-    protected void deleteResource(I_CmsIndexWriter indexWriter, String rootPath) {
+    protected void deleteResource(I_CmsIndexWriter indexWriter, CmsPublishedResource resource) {
 
         try {
             if (LOG.isInfoEnabled()) {
-                LOG.info(Messages.get().getBundle().key(Messages.LOG_DELETING_FROM_INDEX_1, rootPath));
+                LOG.info(Messages.get().getBundle().key(Messages.LOG_DELETING_FROM_INDEX_1, resource.getRootPath()));
             }
             // delete all documents with this term from the index
-            indexWriter.deleteDocuments(rootPath);
+            indexWriter.deleteDocument(resource);
         } catch (IOException e) {
             if (LOG.isWarnEnabled()) {
                 LOG.warn(
-                    Messages.get().getBundle().key(Messages.LOG_IO_INDEX_DOCUMENT_DELETE_2, rootPath, m_index.getName()),
+                    Messages.get().getBundle().key(
+                        Messages.LOG_IO_INDEX_DOCUMENT_DELETE_2,
+                        resource.getRootPath(),
+                        m_index.getName()),
                     e);
             }
         }
@@ -330,7 +349,7 @@ public class CmsVfsIndexer implements I_CmsIndexer {
 
     /**
      * Checks if the published resource is inside the time window set with release and expiration date.<p>
-     * 
+     *
      * @param resource the published resource to check
      * @return true if the published resource is inside the time window, otherwise false
      */
@@ -343,15 +362,15 @@ public class CmsVfsIndexer implements I_CmsIndexer {
 
     /**
      * Updates (writes) a single resource in the index.<p>
-     * 
+     *
      * @param writer the index writer to use
      * @param threadManager the thread manager to use when extracting the document text
      * @param resource the resource to update
-     * 
-     * @throws CmsIndexException if something goes wrong
      */
-    protected void updateResource(I_CmsIndexWriter writer, CmsIndexingThreadManager threadManager, CmsResource resource)
-    throws CmsIndexException {
+    protected void updateResource(
+        I_CmsIndexWriter writer,
+        CmsIndexingThreadManager threadManager,
+        CmsResource resource) {
 
         if (resource.isFolder() || resource.isTemporaryFile()) {
             // don't ever index folders or temporary files
@@ -360,8 +379,8 @@ public class CmsVfsIndexer implements I_CmsIndexer {
         try {
             // create the index thread for the resource
             threadManager.createIndexingThread(this, writer, resource);
-        } catch (Exception e) {
-
+        } catch (Throwable e) {
+            // Only runtime exceptions can appear here.
             if (m_report != null) {
                 m_report.println(
                     Messages.get().container(Messages.RPT_SEARCH_INDEXING_FAILED_0),
@@ -375,28 +394,27 @@ public class CmsVfsIndexer implements I_CmsIndexer {
                         m_index.getName()),
                     e);
             }
-            throw new CmsIndexException(Messages.get().container(
-                Messages.ERR_INDEX_RESOURCE_FAILED_2,
-                resource.getRootPath(),
-                m_index.getName()));
         }
     }
 
     /**
      * Updates a resource with the given index writer and the new document provided.<p>
-     * 
+     *
      * @param indexWriter the index writer to update the resource with
      * @param rootPath the root path of the resource to update
      * @param doc the new document for the resource
      */
-    protected void updateResource(I_CmsIndexWriter indexWriter, String rootPath, Document doc) {
+    protected void updateResource(I_CmsIndexWriter indexWriter, String rootPath, I_CmsSearchDocument doc) {
 
         try {
             indexWriter.updateDocument(rootPath, doc);
         } catch (Exception e) {
             if (LOG.isWarnEnabled()) {
                 LOG.warn(
-                    Messages.get().getBundle().key(Messages.LOG_IO_INDEX_DOCUMENT_UPDATE_2, rootPath, m_index.getName()),
+                    Messages.get().getBundle().key(
+                        Messages.LOG_IO_INDEX_DOCUMENT_UPDATE_2,
+                        rootPath,
+                        m_index.getName()),
                     e);
             }
         }

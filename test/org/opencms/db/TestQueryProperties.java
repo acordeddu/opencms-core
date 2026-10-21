@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -14,12 +14,12 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * Lesser General Public License for more details.
  *
- * For further information about Alkacon Software GmbH, please see the
- * company website: http://www.alkacon.com
+ * For further information about Alkacon Software GmbH & Co. KG, please see the
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -27,29 +27,29 @@
 
 package org.opencms.db;
 
-import org.opencms.test.OpenCmsTestCase;
+import org.opencms.test.OpenCmsTestRunner;
 
-import java.io.File;
-import java.io.FileInputStream;
 import java.io.InputStreamReader;
 import java.io.LineNumberReader;
 import java.nio.charset.Charset;
 import java.text.ParseException;
 import java.util.StringTokenizer;
 
-import junit.framework.Test;
-import junit.framework.TestSuite;
+import org.junit.jupiter.api.MethodOrderer;
+import org.junit.jupiter.api.Order;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestMethodOrder;
 
 /**
  * Unit tests that checks the "query.properties" files used by the various drivers for correct
  * format.
  * <p>
- * 
+ *
  * This is no code functionality test but a configuration validation that was inspired by a 1 hour
  * debug session caused by a query.properties file with a trailing tab after the "escape linebreak"
  * backslash.
  * <p>
- * 
+ *
  * Currently the following checks are made:
  * <ul>
  * <li> <b>Invalid linebreak escape</b><br>
@@ -65,100 +65,82 @@ import junit.framework.TestSuite;
  * </ul>
  * <p>
  */
-public class TestQueryProperties extends OpenCmsTestCase {
-
-    /**
-     * Default JUnit constructor.
-     * <p>
-     * 
-     * @param arg0 JUnit parameters
-     */
-    public TestQueryProperties(String arg0) {
-
-        super(arg0);
-    }
-
-    /**
-     * Test suite for this test class.
-     * <p>
-     * 
-     * @return the test suite
-     */
-    public static Test suite() {
-
-        TestSuite suite = new TestSuite();
-        suite.setName(TestQueryProperties.class.getName());
-
-        suite.addTest(new TestQueryProperties("testQueryPropertiesGeneric"));
-        suite.addTest(new TestQueryProperties("testQueryPropertiesMssql"));
-        suite.addTest(new TestQueryProperties("testQueryPropertiesMysql"));
-        suite.addTest(new TestQueryProperties("testQueryPropertiesOracle"));
-        suite.addTest(new TestQueryProperties("testQueryPropertiesPostgresql"));
-
-        return suite;
-    }
+@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
+public class TestQueryProperties extends OpenCmsTestRunner {
 
     /**
      * Test the generic query.properties file within the workspace for format errors.<p>
-     * 
+     *
      * @throws Exception if something goes wrong
      */
+    @Test
+    @Order(1)
     public void testQueryPropertiesGeneric() throws Exception {
 
         // generic
-        File queries = new File(ClassLoader.getSystemResource("./org/opencms/db/generic/query.properties").getPath());
-        parseQueryProperties(queries);
+        parseQueryProperties("org/opencms/db/generic/query.properties");
 
     }
 
     /**
      * Test the mssql query.properties file within the workspace for format errors.<p>
-     * 
+     *
      * @throws Exception if something goes wrong
      */
+    @Test
+    @Order(2)
     public void testQueryPropertiesMssql() throws Exception {
 
         // mssql
-        File queries = new File(ClassLoader.getSystemResource("./org/opencms/db/mssql/query.properties").getPath());
-        parseQueryProperties(queries);
+        parseQueryProperties("org/opencms/db/mssql/query.properties");
     }
 
     /**
      * Test the mysql query.properties file within the workspace for format errors.<p>
-     * 
+     *
      * @throws Exception if something goes wrong
      */
+    @Test
+    @Order(3)
     public void testQueryPropertiesMysql() throws Exception {
 
         // mysql
-        File queries = new File(ClassLoader.getSystemResource("./org/opencms/db/mysql/query.properties").getPath());
-        parseQueryProperties(queries);
+        parseQueryProperties("org/opencms/db/mysql/query.properties");
     }
 
     /**
      * Test the oracle query.properties file within the workspace for format errors.<p>
-     * 
+     *
      * @throws Exception if something goes wrong
      */
+    @Test
+    @Order(4)
     public void testQueryPropertiesOracle() throws Exception {
 
         // oracle8
-        File queries = new File(ClassLoader.getSystemResource("./org/opencms/db/oracle/query.properties").getPath());
-        parseQueryProperties(queries);
+        parseQueryProperties("org/opencms/db/oracle/query.properties");
     }
 
     /**
      * Test the postgresql query.properties file within the workspace for format errors.<p>
-     * 
+     *
      * @throws Exception if something goes wrong
      */
+    @Test
+    @Order(5)
     public void testQueryPropertiesPostgresql() throws Exception {
 
         // postgresql
-        File queries = new File(ClassLoader.getSystemResource("./org/opencms/db/postgresql/query.properties").getPath());
-        parseQueryProperties(queries);
+        parseQueryProperties("org/opencms/db/postgresql/query.properties");
     }
 
+    /**
+     * Parses the key value pair string.<p>
+     *
+     * @param keyValue the key value pair string
+     *
+     * @throws ParseException if the key value pair string doesn't match the pattern 'key =value'
+     */
     private void parseKeyValue(String keyValue) throws ParseException {
 
         StringTokenizer tokenizer = new StringTokenizer(keyValue, "=:     ", false);
@@ -169,16 +151,17 @@ public class TestQueryProperties extends OpenCmsTestCase {
 
     /**
      * Implementation of the checks to perform.<p>
-     * 
-     * @param f the query.properties file to parse
-     * 
+     *
+     * @param fileName the property file name
+     *
      * @throws Exception if something goes wrong
      */
-    private void parseQueryProperties(File f) throws Exception {
+    private void parseQueryProperties(String fileName) throws Exception {
 
-        LineNumberReader reader = new LineNumberReader(new InputStreamReader(
-            new FileInputStream(f),
-            Charset.forName("ISO-8859-1")));
+        LineNumberReader reader = new LineNumberReader(
+            new InputStreamReader(
+                TestQueryProperties.class.getClassLoader().getResourceAsStream(fileName),
+                Charset.forName("ISO-8859-1")));
         String read;
         int len;
         int count = 0;
@@ -198,12 +181,9 @@ public class TestQueryProperties extends OpenCmsTestCase {
                         try {
                             parseKeyValue(prefix);
                         } catch (ParseException pe) {
-                            throw new ParseException("Bad format in file "
-                                + f.getAbsolutePath()
-                                + ", line "
-                                + count
-                                + ": "
-                                + pe.getMessage(), count);
+                            throw new ParseException(
+                                "Bad format in file " + fileName + ", line " + count + ": " + pe.getMessage(),
+                                count);
                         }
                     } else {
                         // valid comment - only line
@@ -216,12 +196,14 @@ public class TestQueryProperties extends OpenCmsTestCase {
 
             // check 2: invalid attempt to escape a line break, something follows
             if (lastEscape != -1) {
-                if (lastEscape != len - 1) {
-                    throw new ParseException("Bad format in file "
-                        + f.getAbsolutePath()
-                        + ", line "
-                        + count
-                        + ": Line termination escape '\\' is followed by further characters.", count);
+                if (lastEscape != (len - 1)) {
+                    throw new ParseException(
+                        "Bad format in file "
+                            + fileName
+                            + ", line "
+                            + count
+                            + ": Line termination escape '\\' is followed by further characters.",
+                        count);
                 }
             }
             // further checks if desired

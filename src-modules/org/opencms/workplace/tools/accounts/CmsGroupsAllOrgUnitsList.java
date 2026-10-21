@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -14,12 +14,12 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * Lesser General Public License for more details.
  *
- * For further information about Alkacon Software GmbH, please see the
- * company website: http://www.alkacon.com
+ * For further information about Alkacon Software GmbH & Co. KG, please see the
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -56,8 +56,8 @@ import javax.servlet.jsp.PageContext;
 
 /**
  * Group account view over all manageable organizational units.<p>
- * 
- * @since 6.5.6 
+ *
+ * @since 6.5.6
  */
 public class CmsGroupsAllOrgUnitsList extends A_CmsGroupsList {
 
@@ -75,7 +75,7 @@ public class CmsGroupsAllOrgUnitsList extends A_CmsGroupsList {
 
     /**
      * Public constructor.<p>
-     * 
+     *
      * @param jsp an initialized JSP action element
      */
     public CmsGroupsAllOrgUnitsList(CmsJspActionElement jsp) {
@@ -85,7 +85,7 @@ public class CmsGroupsAllOrgUnitsList extends A_CmsGroupsList {
 
     /**
      * Public constructor with JSP variables.<p>
-     * 
+     *
      * @param context the JSP page context
      * @param req the JSP request
      * @param res the JSP response
@@ -98,17 +98,20 @@ public class CmsGroupsAllOrgUnitsList extends A_CmsGroupsList {
     /**
      * @see org.opencms.workplace.tools.accounts.A_CmsGroupsList#executeListSingleActions()
      */
+    @Override
     public void executeListSingleActions() throws IOException, ServletException, CmsRuntimeException {
 
         String groupId = getSelectedItem().getId();
         String groupName = getSelectedItem().get(LIST_COLUMN_NAME).toString();
 
-        Map params = new HashMap();
-        params.put(A_CmsEditGroupDialog.PARAM_GROUPID, groupId);
-        params.put(A_CmsEditGroupDialog.PARAM_GROUPNAME, groupName);
-        params.put(A_CmsOrgUnitDialog.PARAM_OUFQN, getSelectedItem().get(LIST_COLUMN_ORGUNIT).toString().substring(1));
+        Map<String, String[]> params = new HashMap<String, String[]>();
+        params.put(A_CmsEditGroupDialog.PARAM_GROUPID, new String[] {groupId});
+        params.put(A_CmsEditGroupDialog.PARAM_GROUPNAME, new String[] {groupName});
+        params.put(
+            A_CmsOrgUnitDialog.PARAM_OUFQN,
+            new String[] {getSelectedItem().get(LIST_COLUMN_ORGUNIT).toString().substring(1)});
         // set action parameter to initial dialog call
-        params.put(CmsDialog.PARAM_ACTION, CmsDialog.DIALOG_INITIAL);
+        params.put(CmsDialog.PARAM_ACTION, new String[] {CmsDialog.DIALOG_INITIAL});
 
         if (getParamListAction().equals(LIST_ACTION_OVERVIEW)) {
             // forward
@@ -125,22 +128,24 @@ public class CmsGroupsAllOrgUnitsList extends A_CmsGroupsList {
     /**
      * @see org.opencms.workplace.tools.accounts.A_CmsGroupsList#fillDetails(java.lang.String)
      */
+    @Override
     protected void fillDetails(String detailId) {
 
         super.fillDetails(detailId);
 
         // get content
-        List groups = getList().getAllContent();
-        Iterator itGroups = groups.iterator();
+        List<CmsListItem> groups = getList().getAllContent();
+        Iterator<CmsListItem> itGroups = groups.iterator();
         while (itGroups.hasNext()) {
-            CmsListItem item = (CmsListItem)itGroups.next();
+            CmsListItem item = itGroups.next();
             String groupName = item.get(LIST_COLUMN_NAME).toString();
             StringBuffer html = new StringBuffer(512);
             try {
                 if (detailId.equals(LIST_DETAIL_ORGUNIT_DESC)) {
                     CmsGroup group = getCms().readGroup(groupName);
-                    html.append(OpenCms.getOrgUnitManager().readOrganizationalUnit(getCms(), group.getOuFqn()).getDescription(
-                        getLocale()));
+                    html.append(
+                        OpenCms.getOrgUnitManager().readOrganizationalUnit(getCms(), group.getOuFqn()).getDescription(
+                            getLocale()));
                 } else {
                     continue;
                 }
@@ -163,12 +168,13 @@ public class CmsGroupsAllOrgUnitsList extends A_CmsGroupsList {
     /**
      * @see org.opencms.workplace.tools.accounts.A_CmsGroupsList#getListItems()
      */
-    protected List getListItems() throws CmsException {
+    @Override
+    protected List<CmsListItem> getListItems() throws CmsException {
 
-        List listItems = super.getListItems();
-        Iterator itListItems = listItems.iterator();
+        List<CmsListItem> listItems = super.getListItems();
+        Iterator<CmsListItem> itListItems = listItems.iterator();
         while (itListItems.hasNext()) {
-            CmsListItem item = (CmsListItem)itListItems.next();
+            CmsListItem item = itListItems.next();
             CmsGroup group = getCms().readGroup(new CmsUUID(item.getId()));
             item.set(LIST_COLUMN_ORGUNIT, CmsOrganizationalUnit.SEPARATOR + group.getOuFqn());
         }
@@ -179,6 +185,7 @@ public class CmsGroupsAllOrgUnitsList extends A_CmsGroupsList {
     /**
      * @see org.opencms.workplace.tools.accounts.A_CmsGroupsList#setColumns(org.opencms.workplace.list.CmsListMetadata)
      */
+    @Override
     protected void setColumns(CmsListMetadata metadata) {
 
         super.setColumns(metadata);
@@ -194,14 +201,16 @@ public class CmsGroupsAllOrgUnitsList extends A_CmsGroupsList {
         CmsListColumnDefinition orgUnitCol = new CmsListColumnDefinition(LIST_COLUMN_ORGUNIT);
         orgUnitCol.setName(Messages.get().container(Messages.GUI_GROUPS_LIST_COLS_ORGUNIT_0));
         orgUnitCol.setWidth("25%");
-        metadata.addColumn(orgUnitCol, metadata.getColumnDefinitions().indexOf(
-            metadata.getColumnDefinition(LIST_COLUMN_DESCRIPTION)));
+        metadata.addColumn(
+            orgUnitCol,
+            metadata.getColumnDefinitions().indexOf(metadata.getColumnDefinition(LIST_COLUMN_DESCRIPTION)));
 
     }
 
     /**
      * @see org.opencms.workplace.tools.accounts.A_CmsGroupsList#setDeleteAction(org.opencms.workplace.list.CmsListColumnDefinition)
      */
+    @Override
     protected void setDeleteAction(CmsListColumnDefinition deleteCol) {
 
         // noop
@@ -210,6 +219,7 @@ public class CmsGroupsAllOrgUnitsList extends A_CmsGroupsList {
     /**
      * @see org.opencms.workplace.tools.accounts.A_CmsGroupsList#setEditAction(org.opencms.workplace.list.CmsListColumnDefinition)
      */
+    @Override
     protected void setEditAction(CmsListColumnDefinition editCol) {
 
         CmsListDirectAction editAction = new CmsListDirectAction(LIST_ACTION_OVERVIEW);
@@ -222,6 +232,7 @@ public class CmsGroupsAllOrgUnitsList extends A_CmsGroupsList {
     /**
      * @see org.opencms.workplace.tools.accounts.A_CmsGroupsList#setIndependentActions(org.opencms.workplace.list.CmsListMetadata)
      */
+    @Override
     protected void setIndependentActions(CmsListMetadata metadata) {
 
         super.setIndependentActions(metadata);
@@ -230,17 +241,17 @@ public class CmsGroupsAllOrgUnitsList extends A_CmsGroupsList {
         CmsListItemDetails orgUnitDescDetails = new CmsListItemDetails(LIST_DETAIL_ORGUNIT_DESC);
         orgUnitDescDetails.setAtColumn(LIST_COLUMN_DISPLAY);
         orgUnitDescDetails.setVisible(false);
-        orgUnitDescDetails.setShowActionName(Messages.get().container(
-            Messages.GUI_USERS_DETAIL_SHOW_ORGUNIT_DESC_NAME_0));
-        orgUnitDescDetails.setShowActionHelpText(Messages.get().container(
-            Messages.GUI_USERS_DETAIL_SHOW_ORGUNIT_DESC_HELP_0));
-        orgUnitDescDetails.setHideActionName(Messages.get().container(
-            Messages.GUI_USERS_DETAIL_HIDE_ORGUNIT_DESC_NAME_0));
-        orgUnitDescDetails.setHideActionHelpText(Messages.get().container(
-            Messages.GUI_USERS_DETAIL_HIDE_ORGUNIT_DESC_HELP_0));
+        orgUnitDescDetails.setShowActionName(
+            Messages.get().container(Messages.GUI_USERS_DETAIL_SHOW_ORGUNIT_DESC_NAME_0));
+        orgUnitDescDetails.setShowActionHelpText(
+            Messages.get().container(Messages.GUI_USERS_DETAIL_SHOW_ORGUNIT_DESC_HELP_0));
+        orgUnitDescDetails.setHideActionName(
+            Messages.get().container(Messages.GUI_USERS_DETAIL_HIDE_ORGUNIT_DESC_NAME_0));
+        orgUnitDescDetails.setHideActionHelpText(
+            Messages.get().container(Messages.GUI_USERS_DETAIL_HIDE_ORGUNIT_DESC_HELP_0));
         orgUnitDescDetails.setName(Messages.get().container(Messages.GUI_USERS_DETAIL_ORGUNIT_DESC_NAME_0));
-        orgUnitDescDetails.setFormatter(new CmsListItemDetailsFormatter(Messages.get().container(
-            Messages.GUI_USERS_DETAIL_ORGUNIT_DESC_NAME_0)));
+        orgUnitDescDetails.setFormatter(
+            new CmsListItemDetailsFormatter(Messages.get().container(Messages.GUI_USERS_DETAIL_ORGUNIT_DESC_NAME_0)));
         metadata.addItemDetails(orgUnitDescDetails);
 
         metadata.getSearchAction().addColumn(metadata.getColumnDefinition(LIST_COLUMN_DESCRIPTION));
@@ -250,6 +261,7 @@ public class CmsGroupsAllOrgUnitsList extends A_CmsGroupsList {
     /**
      * @see org.opencms.workplace.tools.accounts.A_CmsGroupsList#setMultiActions(org.opencms.workplace.list.CmsListMetadata)
      */
+    @Override
     protected void setMultiActions(CmsListMetadata metadata) {
 
         // noop
@@ -258,6 +270,7 @@ public class CmsGroupsAllOrgUnitsList extends A_CmsGroupsList {
     /**
      * @see org.opencms.workplace.list.A_CmsListDialog#validateParamaters()
      */
+    @Override
     protected void validateParamaters() throws Exception {
 
         // no param check needed

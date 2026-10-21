@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html>
+<head>
+ 	<meta name="package-mapping" content="u:org.opencms.ui" />
+  	<meta name="package-mapping" content="o:org.opencms.ui.components" />
+  	<meta name="package-mapping" content="f:org.opencms.ui.components.fileselect" />
+  	<meta name="package-mapping" content="p:org.opencms.ui.dialogs.permissions" />
+</head>
+<body>
+	<vaadin7-vertical-layout :center margin spacing style-name="o-workplace-maxwidth">
+		<v-panel caption="%(key.GUI_DATABASEAPP_STATS_TITLE_0)" width="100%">
+			<v-form-layout margin spacing style-name="o-formlayout-workplace-main">
+				<vaadin7-combo-box _id="m_siteSelect" caption="%(key.GUI_DATABASEAPP_IMPORT_TARGET_SITE_0)" description="%(key.GUI_DATABASEAPP_IMPORT_TARGET_SITE_HELP_0)" width="100%"></vaadin7-combo-box> 	
+				<vaadin7-combo-box _id="m_resType" caption="%(key.GUI_DATABASEAPP_STATS_SELECT_TYPE_0)" description="%(key.GUI_DATABASEAPP_STATS_SELECT_TYPE_HELP_0)" width="100%"></vaadin7-combo-box>
+			</v-form-layout>
+		</v-panel>
+		<v-panel>
+			<vaadin7-horizontal-layout width="100%">
+				<vaadin7-horizontal-layout :center margin spacing style-name="o-dialog-button-bar">
+					<v-button _id="m_ok">%(key.GUI_DATABASEAPP_SHOW_STATISTICS_0)</v-button>
+				</vaadin7-horizontal-layout>
+			</vaadin7-horizontal-layout>
+		</v-panel>
+		<v-panel _id="m_results" caption="%(key.GUI_DATABASEAPP_STATS_RESULTS_CAPTION_0)">
+			<vaadin7-vertical-layout _id="m_resLayout">
+			</vaadin7-vertical-layout>
+		</v-panel>
+	</vaadin7-vertical-layout>
+</body>
+</html>

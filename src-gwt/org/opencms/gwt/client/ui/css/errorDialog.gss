@@ -1,0 +1,24 @@
+@external gwt-HTML;
+
+.details {
+	clear: both;
+	margin: 15px 0px 5px 0px;
+}
+
+.details  div.gwt-HTML{
+	padding: 4px 2px;
+	overflow: hidden;
+}	
+.details div.gwt-HTML > pre{
+	white-space: pre-wrap;
+}
+span.errorIcon{
+	display: inline-block;
+	width:32px;
+	height: 32px;
+	font-size:32px;
+	color: value("constants.css.textColorImportant");
+}
+.message{
+	margin: 5px 0px 5px 45px;
+}

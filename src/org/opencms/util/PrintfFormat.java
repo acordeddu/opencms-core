@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -14,12 +14,12 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * Lesser General Public License for more details.
  *
- * For further information about Alkacon Software GmbH, please see the
- * company website: http://www.alkacon.com
+ * For further information about Alkacon Software GmbH & Co. KG, please see the
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -28,27 +28,27 @@
 //
 // (c) 2000 Sun Microsystems, Inc.
 // ALL RIGHTS RESERVED
-// 
-// License Grant-
-// 
-// 
-// Permission to use, copy, modify, and distribute this Software and its 
-// documentation for NON-COMMERCIAL or COMMERCIAL purposes and without fee is 
-// hereby granted.  
-// 
-// This Software is provided "AS IS".  All express warranties, including any 
-// implied warranty of merchantability, satisfactory quality, fitness for a 
-// particular purpose, or non-infringement, are disclaimed, except to the extent 
-// that such disclaimers are held to be legally invalid.
-// 
-// You acknowledge that Software is not designed, licensed or intended for use in 
-// the design, construction, operation or maintenance of any nuclear facility 
-// ("High Risk Activities").  Sun disclaims any express or implied warranty of 
-// fitness for such uses.  
 //
-// Please refer to the file http://www.sun.com/policies/trademarks/ for further 
-// important trademark information and to 
-// http://java.sun.com/nav/business/index.html for further important licensing 
+// License Grant-
+//
+//
+// Permission to use, copy, modify, and distribute this Software and its
+// documentation for NON-COMMERCIAL or COMMERCIAL purposes and without fee is
+// hereby granted.
+//
+// This Software is provided "AS IS".  All express warranties, including any
+// implied warranty of merchantability, satisfactory quality, fitness for a
+// particular purpose, or non-infringement, are disclaimed, except to the extent
+// that such disclaimers are held to be legally invalid.
+//
+// You acknowledge that Software is not designed, licensed or intended for use in
+// the design, construction, operation or maintenance of any nuclear facility
+// ("High Risk Activities").  Sun disclaims any express or implied warranty of
+// fitness for such uses.
+//
+// Please refer to the file http://www.sun.com/policies/trademarks/ for further
+// important trademark information and to
+// http://java.sun.com/nav/business/index.html for further important licensing
 // information for the Java Technology.
 //
 
@@ -139,7 +139,7 @@ import java.util.Vector;
  *          current position is the start of a line.
  *</td></tr>
  *<tr><td>\f</td><td>form-feed</td><td>Moves the
- *          printing position to the initial 
+ *          printing position to the initial
  *          printing position of the next logical
  *          page.
  *</td></tr>
@@ -196,7 +196,7 @@ import java.util.Vector;
  * </p>
  *<p>
  * An optional h specifies that a following d, i, o,
- * x, or X conversion character applies to a type 
+ * x, or X conversion character applies to a type
  * short argument (the argument will be promoted
  * according to the integral promotions and its value
  * converted to type short before printing).</p>
@@ -379,7 +379,7 @@ import java.util.Vector;
  *
  * <dt>s,S<dd>The argument is taken to be a string and
  *        bytes from the string are written until the
- *        end of the string or the number of bytes 
+ *        end of the string or the number of bytes
  *        indicated by the precision specification of
  *        the argument is reached.  If the precision
  *        is omitted from the argument, it is taken to
@@ -433,7 +433,7 @@ import java.util.Vector;
  *<ul>
  * <li>%c is the same as %C.
  * <li>%s is the same as %S.
- * <li>u, p, and n conversion characters. 
+ * <li>u, p, and n conversion characters.
  * <li>%ws format.
  * <li>h modifier applied to an n conversion character.
  * <li>l (ell) modifier applied to the c, n, or s
@@ -455,8 +455,8 @@ import java.util.Vector;
  * <p>
  * Most of this specification is quoted from the Unix
  * man page for the sprintf utility.</p>
- * 
- * @since 6.0.0 
+ *
+ * @since 6.0.0
  */
 public class PrintfFormat {
 
@@ -489,7 +489,7 @@ public class PrintfFormat {
      * only) exception is that the minimum number of
      * exponent digits is 3 instead of 2 for e and E
      * formats when the optional L is used before the
-     * e, E, g, or G conversion character.  The 
+     * e, E, g, or G conversion character.  The
      * optional L does not imply conversion to a long
      * long double.
      */
@@ -604,7 +604,7 @@ public class PrintfFormat {
          * d, i, o, u, x, or X conversions.  The number of
          * digits to appear after the radix character for
          * the e, E, and f conversions.  The maximum number
-         *  of significant digits for the g and G 
+         *  of significant digits for the g and G
          * conversions.  The maximum number of bytes to be
          * printed from a string in s and S conversions.
          */
@@ -685,14 +685,12 @@ public class PrintfFormat {
                             }
                         }
                     } else {
-                        throw new CmsIllegalArgumentException(Messages.get().container(
-                            Messages.ERR_INVALID_CONVERSION_SPEC_1,
-                            fmtArg));
+                        throw new CmsIllegalArgumentException(
+                            Messages.get().container(Messages.ERR_INVALID_CONVERSION_SPEC_1, fmtArg));
                     }
                 } else {
-                    throw new CmsIllegalArgumentException(Messages.get().container(
-                        Messages.ERR_INVALID_CONVERSION_SPEC_1,
-                        fmtArg));
+                    throw new CmsIllegalArgumentException(
+                        Messages.get().container(Messages.ERR_INVALID_CONVERSION_SPEC_1, fmtArg));
                 }
             } else {
                 throw new CmsIllegalArgumentException(Messages.get().container(Messages.ERR_CONTROL_STRING_START_0));
@@ -701,7 +699,7 @@ public class PrintfFormat {
 
         /**
          * Internal helper.<p>
-         * 
+         *
          * @return the result
          */
         int getArgumentPosition() {
@@ -710,8 +708,8 @@ public class PrintfFormat {
         }
 
         /**
-         * Internal helper.<p> 
-         * 
+         * Internal helper.<p>
+         *
          * @return the result
          */
         int getArgumentPositionForFieldWidth() {
@@ -721,7 +719,7 @@ public class PrintfFormat {
 
         /**
          * Internal helper.<p>
-         * 
+         *
          * @return the result
          */
         int getArgumentPositionForPrecision() {
@@ -819,10 +817,11 @@ public class PrintfFormat {
                     s2 = printGFormat(s);
                     break;
                 default:
-                    throw new CmsIllegalArgumentException(Messages.get().container(
-                        Messages.ERR_INVALID_DOUBLE_FMT_CHAR_2,
-                        "double",
-                        new Character(m_conversionCharacter)));
+                    throw new CmsIllegalArgumentException(
+                        Messages.get().container(
+                            Messages.ERR_INVALID_DOUBLE_FMT_CHAR_2,
+                            "double",
+                            Character.valueOf(m_conversionCharacter)));
             }
             return s2;
         }
@@ -873,10 +872,11 @@ public class PrintfFormat {
                     s2 = printCFormat((char)s);
                     break;
                 default:
-                    throw new CmsIllegalArgumentException(Messages.get().container(
-                        Messages.ERR_INVALID_DOUBLE_FMT_CHAR_2,
-                        "int",
-                        new Character(m_conversionCharacter)));
+                    throw new CmsIllegalArgumentException(
+                        Messages.get().container(
+                            Messages.ERR_INVALID_DOUBLE_FMT_CHAR_2,
+                            "int",
+                            Character.valueOf(m_conversionCharacter)));
             }
             return s2;
         }
@@ -927,10 +927,11 @@ public class PrintfFormat {
                     s2 = printCFormat((char)s);
                     break;
                 default:
-                    throw new CmsIllegalArgumentException(Messages.get().container(
-                        Messages.ERR_INVALID_DOUBLE_FMT_CHAR_2,
-                        "long",
-                        new Character(m_conversionCharacter)));
+                    throw new CmsIllegalArgumentException(
+                        Messages.get().container(
+                            Messages.ERR_INVALID_DOUBLE_FMT_CHAR_2,
+                            "long",
+                            Character.valueOf(m_conversionCharacter)));
             }
             return s2;
         }
@@ -949,10 +950,11 @@ public class PrintfFormat {
             if ((m_conversionCharacter == 's') || (m_conversionCharacter == 'S')) {
                 s2 = printSFormat(s.toString());
             } else {
-                throw new CmsIllegalArgumentException(Messages.get().container(
-                    Messages.ERR_INVALID_DOUBLE_FMT_CHAR_2,
-                    "String",
-                    new Character(m_conversionCharacter)));
+                throw new CmsIllegalArgumentException(
+                    Messages.get().container(
+                        Messages.ERR_INVALID_DOUBLE_FMT_CHAR_2,
+                        "String",
+                        Character.valueOf(m_conversionCharacter)));
             }
             return s2;
         }
@@ -971,17 +973,18 @@ public class PrintfFormat {
             if ((m_conversionCharacter == 's') || (m_conversionCharacter == 'S')) {
                 s2 = printSFormat(s);
             } else {
-                throw new CmsIllegalArgumentException(Messages.get().container(
-                    Messages.ERR_INVALID_DOUBLE_FMT_CHAR_2,
-                    "String",
-                    new Character(m_conversionCharacter)));
+                throw new CmsIllegalArgumentException(
+                    Messages.get().container(
+                        Messages.ERR_INVALID_DOUBLE_FMT_CHAR_2,
+                        "String",
+                        Character.valueOf(m_conversionCharacter)));
             }
             return s2;
         }
 
         /**
          * Internal helper.<p>
-         * 
+         *
          * @return the result
          */
         boolean isPositionalFieldWidth() {
@@ -991,7 +994,7 @@ public class PrintfFormat {
 
         /**
          * Internal helper.<p>
-         * 
+         *
          * @return the result
          */
         boolean isPositionalPrecision() {
@@ -1000,8 +1003,8 @@ public class PrintfFormat {
         }
 
         /**
-         * Internal helper.<p> 
-         * 
+         * Internal helper.<p>
+         *
          * @return the result
          */
         boolean isPositionalSpecification() {
@@ -1155,7 +1158,8 @@ public class PrintfFormat {
                         carry = ((ca1[icarry - 1] == '1')
                             || (ca1[icarry - 1] == '3')
                             || (ca1[icarry - 1] == '5')
-                            || (ca1[icarry - 1] == '7') || (ca1[icarry - 1] == '9'));
+                            || (ca1[icarry - 1] == '7')
+                            || (ca1[icarry - 1] == '9'));
                     }
                 }
             }
@@ -1191,7 +1195,7 @@ public class PrintfFormat {
          * e, E, g, or G conversion character. The optional
          * L does not imply conversion to a long long
          * double.
-         * 
+         *
          * @param x the x parameter
          * @param eChar the eChar parameter
          * @return the result
@@ -1276,7 +1280,7 @@ public class PrintfFormat {
                     }
                 }
             }
-            if (i0 + p < ca1.length - 1) {
+            if ((i0 + p) < (ca1.length - 1)) {
                 carry = checkForCarry(ca1, i0 + p + 1);
                 if (carry) {
                     carry = startSymbolicCarry(ca1, i0 + p, i0);
@@ -1287,7 +1291,7 @@ public class PrintfFormat {
                     for (j = 0; j < i0; j++) {
                         ca2[j] = '0';
                     }
-                    for (i = i0, j = i0 + 1; j < p + 1; i++, j++) {
+                    for (i = i0, j = i0 + 1; j < (p + 1); i++, j++) {
                         ca2[j] = ca1[i];
                     }
                     expon++;
@@ -1331,7 +1335,7 @@ public class PrintfFormat {
             for (k = 0; (k < p) && (j < ca1.length); j++, i++, k++) {
                 ca2[i] = ca1[j];
             }
-            for (; i < ca2.length - eSize; i++) {
+            for (; i < (ca2.length - eSize); i++) {
                 ca2[i] = '0';
             }
             ca2[i++] = eChar;
@@ -1515,7 +1519,7 @@ public class PrintfFormat {
                 ca4 = new char[ca3.length + nThousands + lead];
                 ca4[0] = ca3[0];
                 for (i = lead, k = lead; i < dp; i++) {
-                    if ((i > 0) && ((dp - i) % 3 == 0)) {
+                    if ((i > 0) && (((dp - i) % 3) == 0)) {
                         // ca4[k]=',';
                         ca4[k] = m_dfs.getGroupingSeparator();
                         ca4[k + 1] = ca3[i];
@@ -1594,7 +1598,7 @@ public class PrintfFormat {
          * The precision, if set, is the number of digits
          * to appear after the radix character.  Padding is
          * with trailing 0s.
-         * 
+         *
          * @param x the paramater
          * @return the result
          */
@@ -1678,7 +1682,7 @@ public class PrintfFormat {
             for (k = 0; k < n2In; j++, i++, k++) {
                 ca2[j] = ca1[i];
             }
-            if (n1In + expon <= 0) {
+            if ((n1In + expon) <= 0) {
                 ca3 = new char[-expon + n2In];
                 for (j = 0, k = 0; k < (-n1In - expon); k++, j++) {
                     ca3[j] = '0';
@@ -1690,7 +1694,7 @@ public class PrintfFormat {
                 ca3 = ca2;
             }
             boolean carry = false;
-            if (p < -expon + n2In) {
+            if (p < (-expon + n2In)) {
                 if (expon < 0) {
                     i = p;
                 } else {
@@ -1701,7 +1705,7 @@ public class PrintfFormat {
                     carry = startSymbolicCarry(ca3, i - 1, 0);
                 }
             }
-            if (n1In + expon <= 0) {
+            if ((n1In + expon) <= 0) {
                 ca4 = new char[2 + p];
                 if (!carry) {
                     ca4[0] = '0';
@@ -1737,7 +1741,7 @@ public class PrintfFormat {
                 for (i = 0; i < Math.min(n1In + expon, ca3.length); i++, j++) {
                     ca4[j] = ca3[i];
                 }
-                for (; i < n1In + expon; i++, j++) {
+                for (; i < (n1In + expon); i++, j++) {
                     ca4[j] = '0';
                 }
                 if (m_alternateForm || !m_precisionSet || (m_precision != 0)) {
@@ -1821,7 +1825,7 @@ public class PrintfFormat {
                 ca6 = new char[ca5.length + nThousands + lead];
                 ca6[0] = ca5[0];
                 for (i = lead, k = lead; i < dp; i++) {
-                    if ((i > 0) && ((dp - i) % 3 == 0)) {
+                    if ((i > 0) && (((dp - i) % 3) == 0)) {
                         // ca6[k]=',';
                         ca6[k] = m_dfs.getGroupingSeparator();
                         ca6[k + 1] = ca5[i];
@@ -1905,11 +1909,11 @@ public class PrintfFormat {
             int i = 0;
             if (m_leftJustify) {
                 ca[0] = x;
-                for (i = 1; i <= width - nPrint; i++) {
+                for (i = 1; i <= (width - nPrint); i++) {
                     ca[i] = ' ';
                 }
             } else {
-                for (i = 0; i < width - nPrint; i++) {
+                for (i = 0; i < (width - nPrint); i++) {
                     ca[i] = ' ';
                 }
                 ca[i] = x;
@@ -2033,7 +2037,7 @@ public class PrintfFormat {
                 }
             } else {
                 if (m_precisionSet && ((sx.length() - 1) < m_precision)) {
-                    nLeadingZeros = m_precision - sx.length() + 1;
+                    nLeadingZeros = (m_precision - sx.length()) + 1;
                 }
             }
             if (nLeadingZeros < 0) {
@@ -2357,7 +2361,7 @@ public class PrintfFormat {
          *
          * For o format, the flag character '-', means that
          * the output should be left justified within the
-         * field.  The default is to pad with blanks on the 
+         * field.  The default is to pad with blanks on the
          * left.  The '#' flag character means that the
          * output begins with a leading 0 and the precision
          * is increased by 1.
@@ -2458,7 +2462,7 @@ public class PrintfFormat {
          *
          * For o format, the flag character '-', means that
          * the output should be left justified within the
-         * field.  The default is to pad with blanks on the 
+         * field.  The default is to pad with blanks on the
          * left.  The '#' flag character means that the
          * output begins with a leading 0 and the precision
          * is increased by 1.
@@ -2626,11 +2630,11 @@ public class PrintfFormat {
                         ca[i] = csx[i];
                     }
                 }
-                for (int j = 0; j < width - nPrint; j++, i++) {
+                for (int j = 0; j < (width - nPrint); j++, i++) {
                     ca[i] = ' ';
                 }
             } else {
-                for (i = 0; i < width - nPrint; i++) {
+                for (i = 0; i < (width - nPrint); i++) {
                     ca[i] = ' ';
                 }
                 if (nPrint >= x.length()) {
@@ -3095,7 +3099,7 @@ public class PrintfFormat {
 
         /**
          * Store the digits <code>n</code> in *n$ forms.
-         * 
+         *
          * @return the result
          */
         private boolean setFieldWidthArgPosition() {
@@ -3210,7 +3214,7 @@ public class PrintfFormat {
                             break;
                         }
                     }
-                    if (m_pos > firstPos + 1) {
+                    if (m_pos > (firstPos + 1)) {
                         String sz = m_fmt.substring(firstPos + 1, m_pos);
                         m_precision = Integer.parseInt(sz);
                         m_precisionSet = true;
@@ -3221,7 +3225,7 @@ public class PrintfFormat {
 
         /**
          * Store the digits <code>n</code> in *n$ forms.
-         * 
+         *
          * @return the result
          */
         private boolean setPrecisionArgPosition() {
@@ -3310,7 +3314,7 @@ public class PrintfFormat {
     private int m_cPos;
 
     /** Vector of control strings and format literals. */
-    private Vector m_vFmt = new Vector();
+    private Vector<ConversionSpecification> m_vFmt = new Vector<ConversionSpecification>();
 
     /**
      * Constructs an array of control specifications
@@ -3331,7 +3335,7 @@ public class PrintfFormat {
         m_dfs = new DecimalFormatSymbols(locale);
         int ePos = 0;
         ConversionSpecification sFmt = null;
-        String unCS = this.nonControl(fmtArg, 0);
+        String unCS = nonControl(fmtArg, 0);
         if (unCS != null) {
             sFmt = new ConversionSpecification();
             sFmt.setLiteral(unCS);
@@ -3384,7 +3388,7 @@ public class PrintfFormat {
             ePos = Math.min(ePos + 1, fmtArg.length());
             sFmt = new ConversionSpecification(fmtArg.substring(m_cPos, ePos));
             m_vFmt.addElement(sFmt);
-            unCS = this.nonControl(fmtArg, ePos);
+            unCS = nonControl(fmtArg, ePos);
             if (unCS != null) {
                 sFmt = new ConversionSpecification();
                 sFmt.setLiteral(unCS);
@@ -3417,12 +3421,12 @@ public class PrintfFormat {
      */
     public String sprintf() {
 
-        Enumeration e = m_vFmt.elements();
+        Enumeration<ConversionSpecification> e = m_vFmt.elements();
         ConversionSpecification cs = null;
         char c = 0;
         StringBuffer sb = new StringBuffer();
         while (e.hasMoreElements()) {
-            cs = (ConversionSpecification)e.nextElement();
+            cs = e.nextElement();
             c = cs.getConversionCharacter();
             if (c == '\0') {
                 sb.append(cs.getLiteral());
@@ -3443,12 +3447,12 @@ public class PrintfFormat {
      */
     public String sprintf(double x) throws CmsIllegalArgumentException {
 
-        Enumeration e = m_vFmt.elements();
+        Enumeration<ConversionSpecification> e = m_vFmt.elements();
         ConversionSpecification cs = null;
         char c = 0;
         StringBuffer sb = new StringBuffer();
         while (e.hasMoreElements()) {
-            cs = (ConversionSpecification)e.nextElement();
+            cs = e.nextElement();
             c = cs.getConversionCharacter();
             if (c == '\0') {
                 sb.append(cs.getLiteral());
@@ -3471,12 +3475,12 @@ public class PrintfFormat {
      */
     public String sprintf(int x) throws CmsIllegalArgumentException {
 
-        Enumeration e = m_vFmt.elements();
+        Enumeration<ConversionSpecification> e = m_vFmt.elements();
         ConversionSpecification cs = null;
         char c = 0;
         StringBuffer sb = new StringBuffer();
         while (e.hasMoreElements()) {
-            cs = (ConversionSpecification)e.nextElement();
+            cs = e.nextElement();
             c = cs.getConversionCharacter();
             if (c == '\0') {
                 sb.append(cs.getLiteral());
@@ -3499,12 +3503,12 @@ public class PrintfFormat {
      */
     public String sprintf(long x) throws CmsIllegalArgumentException {
 
-        Enumeration e = m_vFmt.elements();
+        Enumeration<ConversionSpecification> e = m_vFmt.elements();
         ConversionSpecification cs = null;
         char c = 0;
         StringBuffer sb = new StringBuffer();
         while (e.hasMoreElements()) {
-            cs = (ConversionSpecification)e.nextElement();
+            cs = e.nextElement();
             c = cs.getConversionCharacter();
             if (c == '\0') {
                 sb.append(cs.getLiteral());
@@ -3532,12 +3536,12 @@ public class PrintfFormat {
      */
     public String sprintf(Object x) throws CmsIllegalArgumentException {
 
-        Enumeration e = m_vFmt.elements();
+        Enumeration<ConversionSpecification> e = m_vFmt.elements();
         ConversionSpecification cs = null;
         char c = 0;
         StringBuffer sb = new StringBuffer();
         while (e.hasMoreElements()) {
-            cs = (ConversionSpecification)e.nextElement();
+            cs = e.nextElement();
             c = cs.getConversionCharacter();
             if (c == '\0') {
                 sb.append(cs.getLiteral());
@@ -3578,13 +3582,13 @@ public class PrintfFormat {
      */
     public String sprintf(Object[] o) {
 
-        Enumeration e = m_vFmt.elements();
+        Enumeration<ConversionSpecification> e = m_vFmt.elements();
         ConversionSpecification cs = null;
         char c = 0;
         int i = 0;
         StringBuffer sb = new StringBuffer();
         while (e.hasMoreElements()) {
-            cs = (ConversionSpecification)e.nextElement();
+            cs = e.nextElement();
             c = cs.getConversionCharacter();
             if (c == '\0') {
                 sb.append(cs.getLiteral());
@@ -3647,12 +3651,12 @@ public class PrintfFormat {
      */
     public String sprintf(String x) throws CmsIllegalArgumentException {
 
-        Enumeration e = m_vFmt.elements();
+        Enumeration<ConversionSpecification> e = m_vFmt.elements();
         ConversionSpecification cs = null;
         char c = 0;
         StringBuffer sb = new StringBuffer();
         while (e.hasMoreElements()) {
-            cs = (ConversionSpecification)e.nextElement();
+            cs = e.nextElement();
             c = cs.getConversionCharacter();
             if (c == '\0') {
                 sb.append(cs.getLiteral());

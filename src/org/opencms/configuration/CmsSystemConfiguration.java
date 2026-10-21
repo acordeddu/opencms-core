@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -14,12 +14,12 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * Lesser General Public License for more details.
  *
- * For further information about Alkacon Software GmbH, please see the
- * company website: http://www.alkacon.com
+ * For further information about Alkacon Software GmbH & Co. KG, please see the
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -27,17 +27,23 @@
 
 package org.opencms.configuration;
 
+import org.opencms.ade.detailpage.CmsDefaultDetailPageHandler;
+import org.opencms.ade.detailpage.I_CmsDetailPageHandler;
+import org.opencms.crypto.CmsAESTextEncryption;
+import org.opencms.crypto.I_CmsTextEncryption;
 import org.opencms.db.CmsCacheSettings;
 import org.opencms.db.CmsDefaultUsers;
 import org.opencms.db.CmsLoginManager;
-import org.opencms.db.CmsLoginMessage;
 import org.opencms.db.CmsSubscriptionManager;
 import org.opencms.db.I_CmsDbContextFactory;
 import org.opencms.flex.CmsFlexCacheConfiguration;
 import org.opencms.i18n.CmsLocaleManager;
+import org.opencms.jsp.CmsDefaultElementMarker;
+import org.opencms.jsp.I_CmsElementMarker;
+import org.opencms.jsp.userdata.CmsUserDataRequestManager;
+import org.opencms.letsencrypt.CmsLetsEncryptConfiguration;
 import org.opencms.mail.CmsMailHost;
 import org.opencms.mail.CmsMailSettings;
-import org.opencms.main.CmsContextInfo;
 import org.opencms.main.CmsDefaultSessionStorageProvider;
 import org.opencms.main.CmsEventManager;
 import org.opencms.main.CmsHttpAuthenticationSettings;
@@ -49,61 +55,203 @@ import org.opencms.main.I_CmsSessionStorageProvider;
 import org.opencms.main.OpenCms;
 import org.opencms.monitor.CmsMemoryMonitorConfiguration;
 import org.opencms.publish.CmsPublishManager;
-import org.opencms.scheduler.CmsScheduleManager;
-import org.opencms.scheduler.CmsScheduledJobInfo;
+import org.opencms.rmi.CmsRemoteShellConstants;
 import org.opencms.security.CmsDefaultAuthorizationHandler;
+import org.opencms.security.CmsDefaultCredentialsResolver;
 import org.opencms.security.CmsDefaultValidationHandler;
-import org.opencms.security.CmsRoleViolationException;
+import org.opencms.security.CmsNullSecretStore;
 import org.opencms.security.I_CmsAuthorizationHandler;
+import org.opencms.security.I_CmsCredentialsResolver;
+import org.opencms.security.I_CmsCustomLogin;
 import org.opencms.security.I_CmsPasswordHandler;
+import org.opencms.security.I_CmsSecretStore;
 import org.opencms.security.I_CmsValidationHandler;
-import org.opencms.site.CmsSite;
-import org.opencms.site.CmsSiteManagerImpl;
-import org.opencms.site.CmsSiteMatcher;
+import org.opencms.security.twofactor.CmsTwoFactorAuthenticationConfig;
 import org.opencms.util.CmsStringUtil;
+import org.opencms.workflow.CmsDefaultWorkflowManager;
+import org.opencms.workflow.I_CmsWorkflowManager;
+import org.opencms.xml.CmsXmlUtils;
 import org.opencms.xml.containerpage.CmsADECacheSettings;
+import org.opencms.xml.xml2json.I_CmsApiAuthorizationHandler;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
-import org.apache.commons.digester.Digester;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
+
+import org.apache.commons.digester3.Digester;
+import org.apache.commons.digester3.NodeCreateRule;
+import org.apache.commons.digester3.Rule;
+import org.apache.commons.lang3.RandomStringUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 
 import org.dom4j.Element;
+import org.w3c.dom.Document;
+import org.xml.sax.Attributes;
 
 /**
  * System master configuration class.<p>
- * 
+ *
  * @since 6.0.0
  */
 public class CmsSystemConfiguration extends A_CmsXmlConfiguration {
 
+    /**
+     * Data for creating API authorization handlers.
+     */
+    public static class ApiAuthorizationConfig {
+
+        /** The class name. */
+        private String m_class;
+
+        /** The name. */
+        private String m_name;
+
+        /** The parameters. */
+        private CmsParameterConfiguration m_params = new CmsParameterConfiguration();
+
+        /**
+         * Writes the data back to the given XML element.
+         *
+         * @param element an XML element
+         */
+        public void fillXml(Element element) {
+
+            element.addElement("name").addText(getName());
+            element.addElement("class").addText(getClassName());
+            for (Map.Entry<String, String> entry : m_params.entrySet()) {
+                Element paramElem = element.addElement("param");
+                paramElem.addAttribute("name", entry.getKey());
+                paramElem.addText(entry.getValue());
+            }
+        }
+
+        /**
+         * Gets the API authorization class name.
+         *
+         * @return the class name
+         */
+        public String getClassName() {
+
+            return m_class;
+        }
+
+        /**
+         * Gets the identifier for the authorization handler.
+         *
+         * @return the identifier for the handler
+         */
+        public String getName() {
+
+            return m_name;
+        }
+
+        /**
+         * Gets the parameters for the handler.
+         *
+         * @return the parameters for the handler
+         */
+        public CmsParameterConfiguration getParams() {
+
+            return m_params;
+        }
+
+        /**
+         * Sets the class name.
+         *
+         * @param class1 the class name
+         */
+        public void setClassName(String class1) {
+
+            m_class = class1;
+        }
+
+        /**
+         * Sets the name of the handler.
+         *
+         * @param name the handler name
+         */
+        public void setName(String name) {
+
+            m_name = name;
+        }
+
+        /**
+        * Sets one parameter.
+        *
+        * @param key the parameter name
+        * @param value the parameter value
+        */
+        public void setParam(String key, String value) {
+
+            m_params.put(key, value);
+        }
+
+    }
+
+    /** Enum for the user session mode. */
+    public enum UserSessionMode {
+        /** Only a single session per user is allowed. */
+        single,
+        /** Any number of sessions for a user are allowed. */
+        standard
+    }
+
     /** The attribute name for the deleted node. */
     public static final String A_DELETED = "deleted";
+
+    /** The copy concurrency attribute. */
+    public static final String A_COPY_CONCURRENCY = "copy-concurrency";
+
+    /** The delete batch size attribute. */
+    public static final String A_DELETE_BATCH_SIZE = "delete-batch-size";
+
+    /** The delete concurrency attribute. */
+    public static final String A_DELETE_CONCURRENCY = "delete-concurrency";
 
     /** The "error" attribute. */
     public static final String A_ERROR = "error";
 
+    /** The "errorPage" attribute. */
+    public static final String A_ERROR_PAGE = "errorPage";
+
     /** The "exclusive" attribute. */
     public static final String A_EXCLUSIVE = "exclusive";
+
+    /** The "id" attribute. */
+    public static final String A_ID = "id";
+
+    /** The attribute name for the localization mode. */
+    public static final String A_LOCALIZATION_MODE = "localizationMode";
+
+    /** The "mailfrom" attribute. */
+    public static final String A_MAILFROM = "mailfrom";
+
+    /** The maximum cache entry age attribute. */
+    public static final String A_MAX_AGE = "max-age";
+
+    /** The maximum number of copies per second attribute. */
+    public static final String A_MAX_COPIES_PER_SECOND = "max-copies-per-second";
+
+    /** The maximum number of deletes per run attribute. */
+    public static final String A_MAX_DELETES_PER_RUN = "max-deletes-per-run";
+
+    /** The maximum runtime attribute. */
+    public static final String A_MAX_RUNTIME = "max-runtime";
 
     /** The "maxvisited" attribute. */
     public static final String A_MAXVISITED = "maxvisited";
 
-    /** The "mode" attribute. */
-    public static final String A_MODE = "mode";
-
     /** The "offline" attribute. */
     public static final String A_OFFLINE = "offline";
-
-    /** The attribute name for the alias offset. */
-    public static final String A_OFFSET = "offset";
 
     /** The "online" attribute. */
     public static final String A_ONLINE = "online";
@@ -111,17 +259,30 @@ public class CmsSystemConfiguration extends A_CmsXmlConfiguration {
     /** The "poolname" attribute. */
     public static final String A_POOLNAME = "poolname";
 
-    /** The "server" attribute. */
-    public static final String A_SERVER = "server";
+    /** The renewal jitter attribute. */
+    public static final String A_RENEWAL_JITTER = "renewal-jitter";
+
+    /** The renewal queue capacity attribute. */
+    public static final String A_RENEWAL_QUEUE_CAPACITY = "renewal-queue-capacity";
+
+    /** The renewal window attribute. */
+    public static final String A_RENEWAL_WINDOW = "renewal-window";
+
+    /** The "security" attribute. */
+    public static final String A_SECURITY = "security";
+
+    /** The touch concurrency attribute. */
+    public static final String A_TOUCH_CONCURRENCY = "touch-concurrency";
+
+    /** The minimum touch interval attribute. */
+    public static final String A_TOUCH_MINIMUM_INTERVAL = "touch-minimum-interval";
 
     /** The name of the DTD for this configuration. */
     public static final String CONFIGURATION_DTD_NAME = "opencms-system.dtd";
-
+    /** The default user session mode. */
+    public static final UserSessionMode DEFAULT_USER_SESSION_MODE = UserSessionMode.standard;
     /** The name of the default XML file for this configuration. */
     public static final String DEFAULT_XML_FILE_NAME = "opencms-system.xml";
-
-    /** The node name for the job "active" value. */
-    public static final String N_ACTIVE = "active";
 
     /** The ade node name. */
     public static final String N_ADE = "ade";
@@ -129,11 +290,17 @@ public class CmsSystemConfiguration extends A_CmsXmlConfiguration {
     /** The ade-cache node name. */
     public static final String N_ADE_CACHE = "ade-cache";
 
-    /** The node name for the alias node. */
-    public static final String N_ALIAS = "alias";
+    /** Node name for a single API authorization handler. */
+    public static final String N_API_AUTHORIZATION = "api-authorization";
+
+    /** Node name for the group of API authorization handlers. */
+    public static final String N_API_AUTHORIZATIONS = "api-authorizations";
 
     /** The node name for the authorization handler. */
     public static final String N_AUTHORIZATIONHANDLER = "authorizationhandler";
+
+    /** Node name for auto history cleanup setting. */
+    public static final String N_AUTO_CLEANUP_HISTORY_ENTRIES = "auto-cleanup-history-entries";
 
     /** The node name for the avgcachebytes node. */
     public static final String N_AVGCACHEBYTES = "avgcachebytes";
@@ -153,26 +320,32 @@ public class CmsSystemConfiguration extends A_CmsXmlConfiguration {
     /** The configuration node name. */
     public static final String N_CONFIGURATION = "configuration";
 
+    /** The image cache cleanup node name. */
+    public static final String N_CLEANUP = "cleanup";
+
     /** The containerpages node name. */
     public static final String N_CONTAINERPAGES = "containerpages";
 
     /** The duration after which responsible resource owners will be notified about out-dated content. */
     public static final String N_CONTENT_NOTIFICATION = "content-notification";
 
-    /** The node name for the job context. */
-    public static final String N_CONTEXT = "context";
+    /** Node name for the credentials resolver setting. */
+    public static final String N_CREDENTIALS_RESOLVER = "credentials-resolver";
 
-    /** The node name for the job cron expression. */
-    public static final String N_CRONEXPRESSION = "cronexpression";
+    /** The node name for the custom login configuration. */
+    public static final String N_CUSTOM_LOGIN = "custom-login";
 
     /** The node name for the defaultcontentencoding node. */
     public static final String N_DEFAULT_CONTENT_ENCODING = "defaultcontentencoding";
 
-    /** The node name for the default-uri node. */
-    public static final String N_DEFAULT_URI = "default-uri";
-
     /** The node name for the defaultusers expression. */
     public static final String N_DEFAULTUSERS = "defaultusers";
+
+    /** The node name for the detail page handler. */
+    public static final String N_DETAIL_PAGE_HANDLER = "detail-page-handler";
+
+    /** The node name for the edit marker handler. */
+    public static final String N_EDIT_MARKER_HANDLER = "edit-marker-handler";
 
     /** The node name for the device selector node. */
     public static final String N_DEVICESELECTOR = "device-selector";
@@ -195,14 +368,11 @@ public class CmsSystemConfiguration extends A_CmsXmlConfiguration {
     /** The node name for the email-sender node. */
     public static final String N_EMAIL_SENDER = "email-sender";
 
-    /** The node name for the login message enabled flag. */
-    public static final String N_ENABLED = "enabled";
-
     /** The node name for the login security option enabled flag. */
     public static final String N_ENABLESCURITY = "enableSecurity";
 
-    /** The node name for the context encoding. */
-    public static final String N_ENCODING = "encoding";
+    /** Node name for the encryption section. */
+    public static final String N_ENCRYPTION = "encryption";
 
     /** The node name for the request handler classes. */
     public static final String N_EVENTMANAGER = "eventmanager";
@@ -215,6 +385,9 @@ public class CmsSystemConfiguration extends A_CmsXmlConfiguration {
 
     /** The node name for the form-based node. */
     public static final String N_FORM_BASED = "form-based";
+
+    /** The file system image cache node name. */
+    public static final String N_FS = "fs";
 
     /** The node name for the group-administrators node. */
     public static final String N_GROUP_ADMINISTRATORS = "group-administrators";
@@ -237,11 +410,14 @@ public class CmsSystemConfiguration extends A_CmsXmlConfiguration {
     /** The node name for the http-authentication node. */
     public static final String N_HTTP_AUTHENTICATION = "http-authentication";
 
+    /** The node name for the forceLogoutForUnprivilegedUsers node. */
+    public static final String N_FORCE_LOGOUT_FOR_UNPRIVILEGED_USERS = "forceLogoutForUnprivilegedUsers";
+
     /** The node name for the internationalization node. */
     public static final String N_I18N = "internationalization";
 
-    /** The node name for a job. */
-    public static final String N_JOB = "job";
+    /** The image cache node name. */
+    public static final String N_IMAGECACHE = "imagecache";
 
     /** The name of the class to generate cache keys. */
     public static final String N_KEYGENERATOR = "keygenerator";
@@ -261,14 +437,11 @@ public class CmsSystemConfiguration extends A_CmsXmlConfiguration {
     /** The node name for the log-interval node. */
     public static final String N_LOG_INTERVAL = "log-interval";
 
-    /** The node name for the login message login forbidden flag. */
-    public static final String N_LOGINFORBIDDEN = "loginForbidden";
-
     /** The node name for the login manager. */
     public static final String N_LOGINMANAGER = "loginmanager";
 
-    /** The node name for the login message. */
-    public static final String N_LOGINMESSAGE = "loginmessage";
+    /** Node name for the logout URI.*/
+    public static final String N_LOGOUT_URI = "logoutUri";
 
     /** The node name for the mail configuration. */
     public static final String N_MAIL = "mail";
@@ -278,6 +451,9 @@ public class CmsSystemConfiguration extends A_CmsXmlConfiguration {
 
     /** The node name for the "mail host" node. */
     public static final String N_MAILHOST = "mailhost";
+
+    /** Node name for the user max inactive time. */
+    public static final String N_MAX_INACTIVE_TIME = "maxInactiveTime";
 
     /** The node name for the login manager bad attempt count. */
     public static final String N_MAXBADATTEMPTS = "maxBadAttempts";
@@ -297,17 +473,17 @@ public class CmsSystemConfiguration extends A_CmsXmlConfiguration {
     /** The node name for the memorymonitor node. */
     public static final String N_MEMORYMONITOR = "memorymonitor";
 
-    /** The node name for the login message text. */
-    public static final String N_MESSAGE = "message";
-
     /** The duration after which responsibles will be notified about out-dated content. */
     public static final String N_NOTIFICATION_PROJECT = "notification-project";
 
     /** The duration after which responsibles will be notified about out-dated content. */
     public static final String N_NOTIFICATION_TIME = "notification-time";
 
-    /** The node name for the job parameters. */
+    /** The node name for the parameters. */
     public static final String N_PARAMETERS = "parameters";
+
+    /** Node name for the password change interval. */
+    public static final String N_PASSWORD_CHANGE_INTERVAL = "passwordChangeInterval";
 
     /** The node name for the password encoding. */
     public static final String N_PASSWORDENCODING = "encoding";
@@ -321,8 +497,8 @@ public class CmsSystemConfiguration extends A_CmsXmlConfiguration {
     /** The node name for the prevent-response-flush node. */
     public static final String N_PREVENTRESPONSEFLUSH = "prevent-response-flush";
 
-    /** The node name for the context project name. */
-    public static final String N_PROJECT = "project";
+    /** The node name for the publish list remove mode. */
+    public static final String N_PUBLISH_LIST_REMOVE_MODE = "publish-list-remove-mode";
 
     /** The node name for the "publishhistory" section. */
     public static final String N_PUBLISHMANAGER = "publishmanager";
@@ -339,12 +515,6 @@ public class CmsSystemConfiguration extends A_CmsXmlConfiguration {
     /** The node name for the release-tags-after-end node. */
     public static final String N_RELEASETAGSAFTEREND = "release-tags-after-end";
 
-    /** The node name for the context remote addr. */
-    public static final String N_REMOTEADDR = "remoteaddr";
-
-    /** The node name for the context requested uri. */
-    public static final String N_REQUESTEDURI = "requesteduri";
-
     /** The node name for the request-error-page-attribute node. */
     public static final String N_REQUESTERRORPAGEATTRIBUTE = "request-error-page-attribute";
 
@@ -354,17 +524,47 @@ public class CmsSystemConfiguration extends A_CmsXmlConfiguration {
     /** The node name for the request handlers. */
     public static final String N_REQUESTHANDLERS = "requesthandlers";
 
+    /** Node name for the 'require org unit' option. */
+    public static final String N_REQUIRE_ORGUNIT = "requireOrgUnit";
+
     /** The node name for the resource init classes. */
     public static final String N_RESOURCEINIT = "resourceinit";
 
     /** The node name for the resource init classes. */
     public static final String N_RESOURCEINITHANDLER = "resourceinithandler";
 
+    /** Node name for the restrict-detail-contents option. */
+    public static final String N_RESTRICT_DETAIL_CONTENTS = "restrict-detail-contents";
+
     /** the result cache node. */
     public static final String N_RESULTCACHE = "resultcache";
 
-    /** The node name for the job "reuseinstance" value. */
-    public static final String N_REUSEINSTANCE = "reuseinstance";
+    /** The image cache retention node name. */
+    public static final String N_RETENTION = "retention";
+
+    /** The RFS image cache node name. */
+    public static final String N_RFS = "rfs";
+
+    /** The S3 image cache node name. */
+    public static final String N_S3 = "s3";
+
+    /** The stored content info cache node. */
+    public static final String N_STOREDCONTENTINFOCACHE = "storedcontentinfocache";
+
+    /** The stored content info cache enabled node. */
+    public static final String N_STOREDCONTENTINFOCACHE_ENABLED = "storedcontentinfocache-enabled";
+
+    /** The stored content info cache factory node. */
+    public static final String N_STOREDCONTENTINFOCACHE_FACTORY = "storedcontentinfocache-factory";
+
+    /** The stored content info cache size node. */
+    public static final String N_STOREDCONTENTINFOCACHE_SIZE = "storedcontentinfocache-size";
+
+    /** The stored content info cache TTL node. */
+    public static final String N_STOREDCONTENTINFOCACHE_TTL = "storedcontentinfocache-ttl";
+
+    /** Node name for the element reuse mode. */
+    public static final String N_REUSE_ELEMENTS = "reuse-elements";
 
     /** The node name for the runtime info. */
     public static final String N_RUNTIMECLASSES = "runtimeclasses";
@@ -375,11 +575,11 @@ public class CmsSystemConfiguration extends A_CmsXmlConfiguration {
     /** The node name for the runtime properties node. */
     public static final String N_RUNTIMEPROPERTIES = "runtimeproperties";
 
-    /** The node name for the scheduler. */
-    public static final String N_SCHEDULER = "scheduler";
+    /** The node name for the sax-impl-system-properties node. */
+    public static final String N_SAX_IMPL_SYSTEM_PROPERTIES = "sax-impl-system-properties";
 
-    /** The node name for the secure site. */
-    public static final String N_SECURE = "secure";
+    /** Node name for the user secret store. */
+    public static final String N_SECRET_STORE = "secret-store";
 
     /** The node name for the servlet container settings. */
     public static final String N_SERVLETCONTAINERSETTINGS = "servletcontainer-settings";
@@ -387,20 +587,14 @@ public class CmsSystemConfiguration extends A_CmsXmlConfiguration {
     /** The node name for the session-storageprovider node. */
     public static final String N_SESSION_STORAGEPROVIDER = "session-storageprovider";
 
-    /** Shared folder node name. */
-    public static final String N_SHARED_FOLDER = "shared-folder";
+    /** Node name for the shell server options. */
+    public static final String N_SHELL_SERVER = "shell-server";
 
     /** The sitemap node name. */
     public static final String N_SITEMAP = "sitemap";
 
     /** The sitemap-cache node name. */
     public static final String N_SITEMAP_CACHE = "sitemap-cache";
-
-    /** The node name for the context site root. */
-    public static final String N_SITEROOT = "siteroot";
-
-    /** The node name for the sites node. */
-    public static final String N_SITES = "sites";
 
     /** The size of the memory monitor's cache for ACLS. */
     public static final String N_SIZE_ACLS = "size-accesscontrollists";
@@ -453,17 +647,23 @@ public class CmsSystemConfiguration extends A_CmsXmlConfiguration {
     /** The main system configuration node name. */
     public static final String N_SYSTEM = "system";
 
-    /** The node name for the login message end time. */
-    public static final String N_TIMEEND = "timeEnd";
-
-    /** The node name for the login message start time. */
-    public static final String N_TIMESTART = "timeStart";
+    /** Node name for declaring a single text encryption. */
+    public static final String N_TEXT_ENCRYPTION = "text-encryption";
 
     /** The node name for the time zone configuration. */
     public static final String N_TIMEZONE = "timezone";
 
+    /** Node name for the authorization token lifetime. */
+    public static final String N_TOKEN_LIFETIME = "tokenLifetime";
+
+    /** Node name for two-factor auth configuration. */
+    public static final String N_TWO_FACTOR_AUTHENTICATION = "two-factor-authentication";
+
     /** The node name for the user-admin node. */
     public static final String N_USER_ADMIN = "user-admin";
+
+    /** Node name for the user data check interval. */
+    public static final String N_USER_DATA_CHECK_INTERVAL = "userDataCheckInterval";
 
     /** The node name for the user-deletedresource node. */
     public static final String N_USER_DELETEDRESOURCE = "user-deletedresource";
@@ -474,8 +674,8 @@ public class CmsSystemConfiguration extends A_CmsXmlConfiguration {
     /** The node name for the user-guest node. */
     public static final String N_USER_GUEST = "user-guest";
 
-    /** The node name for the context user name. */
-    public static final String N_USERNAME = "user";
+    /** Node name for the user session mode. */
+    public static final String N_USER_SESSION_MODE = "user-session-mode";
 
     /** The node name for the validation handler. */
     public static final String N_VALIDATIONHANDLER = "validationhandler";
@@ -486,8 +686,23 @@ public class CmsSystemConfiguration extends A_CmsXmlConfiguration {
     /** The node name for the warning-interval node. */
     public static final String N_WARNING_INTERVAL = "warning-interval";
 
-    /** The node name for the workplace-server node. */
-    public static final String N_WORKPLACE_SERVER = "workplace-server";
+    /** The node name which indicates if apache should be configurable in sitemanager. */
+    public static final String N_WEBSERVERSCRIPTING = "webserver-scripting";
+
+    public static final String N_WEBSERVERSCRIPTING_CONFIGTEMPLATE = "configtemplate";
+
+    public static final String N_WEBSERVERSCRIPTING_FILENAMEPREFIX = "filenameprefix";
+
+    public static final String N_WEBSERVERSCRIPTING_LOGGINGDIR = "loggingdir";
+
+    public static final String N_WEBSERVERSCRIPTING_SECURETEMPLATE = "securetemplate";
+
+    public static final String N_WEBSERVERSCRIPTING_TARGETPATH = "targetpath";
+
+    public static final String N_WEBSERVERSCRIPTING_WEBSERVERSCRIPT = "webserverscript";
+
+    /** The node name for the workflow configuration. */
+    public static final String N_WORKFLOW = "workflow";
 
     /** The log object for this class. */
     private static final Log LOG = CmsLog.getLog(CmsSystemConfiguration.class);
@@ -498,11 +713,27 @@ public class CmsSystemConfiguration extends A_CmsXmlConfiguration {
     /** The ADE configuration. */
     private String m_adeConfiguration;
 
+    /** The ADE configuration parameters. */
+    private Map<String, String> m_adeParameters = new LinkedHashMap<String, String>();
+
+    private Map<String, I_CmsApiAuthorizationHandler> m_apiAuthorizationMap = new HashMap<>();
+
+    private List<ApiAuthorizationConfig> m_apiAuthorizations = new ArrayList<>();
+
+    /** Parameters for the authorization handler. */
+    private Map<String, String> m_authHandlerParams = new HashMap<>();
+
     /** The authorization handler. */
     private String m_authorizationHandler;
 
     /** The settings of the memory monitor. */
     private CmsCacheSettings m_cacheSettings;
+
+    /** The image cache retention and maintenance configuration. */
+    private CmsImageCacheConfiguration m_imageCacheConfiguration = CmsImageCacheConfiguration.createLegacyConfiguration();
+
+    /** The stored content info cache configuration. */
+    private CmsStoredContentInfoCacheConfiguration m_storedContentInfoCacheConfiguration = new CmsStoredContentInfoCacheConfiguration();
 
     /** The configured OpenCms default users and groups. */
     private CmsDefaultUsers m_cmsDefaultUsers;
@@ -513,11 +744,20 @@ public class CmsSystemConfiguration extends A_CmsXmlConfiguration {
     /** The memory monitor configuration. */
     private CmsMemoryMonitorConfiguration m_cmsMemoryMonitorConfiguration;
 
-    /** The list of jobs for the scheduler. */
-    private List<CmsScheduledJobInfo> m_configuredJobs;
+    /** The credentials resolver instance. */
+    private I_CmsCredentialsResolver m_credentialsResolver;
+
+    /** The configured credentials resolver class name. */
+    private String m_credentialsResolverClass;
 
     /** The default content encoding. */
     private String m_defaultContentEncoding;
+
+    /** The detail page handler. */
+    private I_CmsDetailPageHandler m_detailPageHandler = new CmsDefaultDetailPageHandler();
+
+    /** The element marker handler (no-op default until configured). */
+    private I_CmsElementMarker m_elementMarker = new CmsDefaultElementMarker();
 
     /** The configured OpenCms event manager. */
     private CmsEventManager m_eventManager;
@@ -534,14 +774,14 @@ public class CmsSystemConfiguration extends A_CmsXmlConfiguration {
     /** The HTTP basic authentication settings. */
     private CmsHttpAuthenticationSettings m_httpAuthenticationSettings;
 
+    /** The LetsEncrypt configuration. */
+    private CmsLetsEncryptConfiguration m_letsEncryptConfig;
+
     /** The configured locale manager for multi language support. */
     private CmsLocaleManager m_localeManager;
 
     /** The configured login manager. */
     private CmsLoginManager m_loginManager;
-
-    /** The configured login message. */
-    private CmsLoginMessage m_loginMessage;
 
     /** The mail settings. */
     private CmsMailSettings m_mailSettings;
@@ -559,6 +799,9 @@ public class CmsSystemConfiguration extends A_CmsXmlConfiguration {
     /** The permission handler. */
     private String m_permissionHandler;
 
+    /** The configured publish list remove mode. */
+    private String m_publishListRemoveMode;
+
     /** The configured publish manager. */
     private CmsPublishManager m_publishManager;
 
@@ -568,20 +811,27 @@ public class CmsSystemConfiguration extends A_CmsXmlConfiguration {
     /** A list of instantiated resource init handler classes. */
     private List<I_CmsResourceInit> m_resourceInitHandlers;
 
+    /** Value of the restrict-detail-contents option. */
+    private String m_restrictDetailContents;
+
     /** The runtime info factory. */
     private I_CmsDbContextFactory m_runtimeInfoFactory;
 
     /** The runtime properties. */
     private Map<String, String> m_runtimeProperties;
 
-    /** The configured schedule manager. */
-    private CmsScheduleManager m_scheduleManager;
+    /** Flag indicating if the SAX parser implementation classes should be stored in system properties
+     *  to improve the unmarshalling performance. */
+    private boolean m_saxImplProperties;
+
+    /** The secret store. */
+    private I_CmsSecretStore m_secretStore = new CmsNullSecretStore();
 
     /** The configured session storage provider class name. */
     private String m_sessionStorageProvider;
 
-    /** The configured site manager. */
-    private CmsSiteManagerImpl m_siteManager;
+    /** The shell server options. */
+    private CmsRemoteShellConfiguration m_shellServerOptions;
 
     /** The subscription manager. */
     private CmsSubscriptionManager m_subscriptionManager;
@@ -589,8 +839,43 @@ public class CmsSystemConfiguration extends A_CmsXmlConfiguration {
     /** The temporary file project id. */
     private int m_tempFileProjectId;
 
+    private Map<String, I_CmsTextEncryption> m_textEncryptions = new LinkedHashMap<>();
+
+    /** Two-factor authentication configuration. */
+    private CmsTwoFactorAuthenticationConfig m_twoFactorConfig;
+
+    private CmsUserDataRequestManager m_userDataRequestManager;
+
+    /** The user session mode. */
+    private UserSessionMode m_userSessionMode;
+
     /** The configured validation handler. */
     private String m_validationHandler;
+
+    /** The configured workflow manager. */
+    private I_CmsWorkflowManager m_workflowManager;
+
+    /**
+     * Adds an ADE configuration parameter.<p>
+     *
+     * @param name the parameter name
+     * @param value the parameter value
+     */
+    public void addAdeParameter(String name, String value) {
+
+        m_adeParameters.put(name, value);
+    }
+
+    /**
+     * Adds a parameter for the authorization handler.
+     *
+     * @param name the parameter name
+     * @param value the parameter value
+     */
+    public void addAuthorizationHandlerParam(String name, String value) {
+
+        m_authHandlerParams.put(name, value);
+    }
 
     /**
      * @see org.opencms.configuration.I_CmsConfigurationParameterHandler#addConfigurationParameter(java.lang.String, java.lang.String)
@@ -603,7 +888,7 @@ public class CmsSystemConfiguration extends A_CmsXmlConfiguration {
 
     /**
      * Adds the event manager class.<p>
-     * 
+     *
      * @param clazz the class name of event manager class  to instantiate and add
      */
     public void addEventManager(String clazz) {
@@ -611,9 +896,8 @@ public class CmsSystemConfiguration extends A_CmsXmlConfiguration {
         try {
             m_eventManager = (CmsEventManager)Class.forName(clazz).newInstance();
             if (CmsLog.INIT.isInfoEnabled()) {
-                CmsLog.INIT.info(Messages.get().getBundle().key(
-                    Messages.INIT_EVENTMANAGER_CLASS_SUCCESS_1,
-                    m_eventManager));
+                CmsLog.INIT.info(
+                    Messages.get().getBundle().key(Messages.INIT_EVENTMANAGER_CLASS_SUCCESS_1, m_eventManager));
             }
         } catch (Throwable t) {
             LOG.error(Messages.get().getBundle().key(Messages.INIT_EVENTMANAGER_CLASS_INVALID_1, clazz), t);
@@ -622,39 +906,22 @@ public class CmsSystemConfiguration extends A_CmsXmlConfiguration {
     }
 
     /**
-     * Adds a new job description for the scheduler.<p>
-     * 
-     * @param jobInfo the job description to add
-     */
-    public void addJobFromConfiguration(CmsScheduledJobInfo jobInfo) {
-
-        m_configuredJobs.add(jobInfo);
-
-        if (CmsLog.INIT.isInfoEnabled()) {
-            CmsLog.INIT.info(Messages.get().getBundle().key(
-                Messages.INIT_SCHEDULER_CONFIG_JOB_3,
-                jobInfo.getJobName(),
-                jobInfo.getClassName(),
-                jobInfo.getContextInfo().getUserName()));
-        }
-    }
-
-    /**
      * Adds a new instance of a request handler class.<p>
-     * 
+     *
      * @param clazz the class name of the request handler to instantiate and add
      */
-    public void addRequestHandler(String clazz) {
+    public void addRequestHandler(String clazz, CmsParameterConfiguration params) {
 
-        Object initClass;
+        Object handler;
         try {
-            initClass = Class.forName(clazz).newInstance();
+            handler = Class.forName(clazz).newInstance();
         } catch (Throwable t) {
             LOG.error(Messages.get().getBundle().key(Messages.LOG_INIT_REQUEST_HANDLER_FAILURE_1, clazz), t);
             return;
         }
-        if (initClass instanceof I_CmsRequestHandler) {
-            m_requestHandlers.add((I_CmsRequestHandler)initClass);
+        if (handler instanceof I_CmsRequestHandler) {
+            ((I_CmsRequestHandler)handler).initParameters(params);
+            m_requestHandlers.add((I_CmsRequestHandler)handler);
             if (CmsLog.INIT.isInfoEnabled()) {
                 CmsLog.INIT.info(Messages.get().getBundle().key(Messages.INIT_REQUEST_HANDLER_SUCCESS_1, clazz));
             }
@@ -667,10 +934,12 @@ public class CmsSystemConfiguration extends A_CmsXmlConfiguration {
 
     /**
      * Adds a new instance of a resource init handler class.<p>
-     * 
+     *
      * @param clazz the class name of the resource init handler to instantiate and add
+     * @param params the parameters set for the resource init handler (parameters need to be copied out, the object will be modified after use)
      */
-    public void addResourceInitHandler(String clazz) {
+    public void addResourceInitHandler(String clazz, CmsParameterConfiguration params)
+    throws CmsConfigurationException {
 
         Object initClass;
         try {
@@ -680,6 +949,7 @@ public class CmsSystemConfiguration extends A_CmsXmlConfiguration {
             return;
         }
         if (initClass instanceof I_CmsResourceInit) {
+            ((I_CmsResourceInit)initClass).initParameters(params);
             m_resourceInitHandlers.add((I_CmsResourceInit)initClass);
             if (CmsLog.INIT.isInfoEnabled()) {
                 CmsLog.INIT.info(Messages.get().getBundle().key(Messages.INIT_RESOURCE_INIT_SUCCESS_1, clazz));
@@ -692,15 +962,7 @@ public class CmsSystemConfiguration extends A_CmsXmlConfiguration {
     }
 
     /**
-     * Generates the schedule manager.<p>
-     */
-    public void addScheduleManager() {
-
-        m_scheduleManager = new CmsScheduleManager(m_configuredJobs);
-    }
-
-    /**
-     * @see org.opencms.configuration.I_CmsXmlConfiguration#addXmlDigesterRules(org.apache.commons.digester.Digester)
+     * @see org.opencms.configuration.I_CmsXmlConfiguration#addXmlDigesterRules(org.apache.commons.digester3.Digester)
      */
     public void addXmlDigesterRules(Digester digester) {
 
@@ -714,8 +976,8 @@ public class CmsSystemConfiguration extends A_CmsXmlConfiguration {
         // add locale handler creation rule
         digester.addObjectCreate(
             "*/" + N_SYSTEM + "/" + N_I18N + "/" + N_LOCALEHANDLER,
-            A_CLASS,
-            CmsConfigurationException.class);
+            CmsConfigurationException.class.getName(),
+            A_CLASS);
         digester.addSetNext("*/" + N_SYSTEM + "/" + N_I18N + "/" + N_LOCALEHANDLER, "setLocaleHandler");
 
         // add locale rules
@@ -729,6 +991,7 @@ public class CmsSystemConfiguration extends A_CmsXmlConfiguration {
             0);
         // add time zone rule
         digester.addCallMethod("*/" + N_SYSTEM + "/" + N_I18N + "/" + N_TIMEZONE, "setTimeZone", 0);
+        digester.addCallMethod("*/" + N_SYSTEM + "/" + N_I18N + "/" + N_REUSE_ELEMENTS, "setReuseElements", 0);
 
         // add version history rules
         digester.addCallMethod("*/" + N_SYSTEM + "/" + N_VERSIONHISTORY, "setHistorySettings", 3);
@@ -742,134 +1005,121 @@ public class CmsSystemConfiguration extends A_CmsXmlConfiguration {
         digester.addSetNext("*/" + N_SYSTEM + "/" + N_MAIL, "setMailSettings");
 
         // add mail host configuration rule
-        digester.addCallMethod("*/" + N_SYSTEM + "/" + N_MAIL + "/" + N_MAILHOST, "addMailHost", 6);
+        digester.addCallMethod("*/" + N_SYSTEM + "/" + N_MAIL + "/" + N_MAILHOST, "addMailHost", 9);
         digester.addCallParam("*/" + N_SYSTEM + "/" + N_MAIL + "/" + N_MAILHOST, 0, A_NAME);
         digester.addCallParam("*/" + N_SYSTEM + "/" + N_MAIL + "/" + N_MAILHOST, 1, A_PORT);
         digester.addCallParam("*/" + N_SYSTEM + "/" + N_MAIL + "/" + N_MAILHOST, 2, A_ORDER);
         digester.addCallParam("*/" + N_SYSTEM + "/" + N_MAIL + "/" + N_MAILHOST, 3, A_PROTOCOL);
-        digester.addCallParam("*/" + N_SYSTEM + "/" + N_MAIL + "/" + N_MAILHOST, 4, A_USER);
-        digester.addCallParam("*/" + N_SYSTEM + "/" + N_MAIL + "/" + N_MAILHOST, 5, A_PASSWORD);
-
-        // add scheduler creation rule
-        digester.addCallMethod("*/" + N_SYSTEM + "/" + N_SCHEDULER, "addScheduleManager");
-
-        // add scheduler job creation rule
-        digester.addObjectCreate("*/" + N_SYSTEM + "/" + N_SCHEDULER + "/" + N_JOB, CmsScheduledJobInfo.class);
-        digester.addBeanPropertySetter("*/" + N_SYSTEM + "/" + N_SCHEDULER + "/" + N_JOB + "/" + N_NAME, "jobName");
-        digester.addBeanPropertySetter("*/" + N_SYSTEM + "/" + N_SCHEDULER + "/" + N_JOB + "/" + N_CLASS, "className");
-        digester.addBeanPropertySetter(
-            "*/" + N_SYSTEM + "/" + N_SCHEDULER + "/" + N_JOB + "/" + N_CRONEXPRESSION,
-            "cronExpression");
-        digester.addBeanPropertySetter(
-            "*/" + N_SYSTEM + "/" + N_SCHEDULER + "/" + N_JOB + "/" + N_REUSEINSTANCE,
-            "reuseInstance");
-        digester.addBeanPropertySetter("*/" + N_SYSTEM + "/" + N_SCHEDULER + "/" + N_JOB + "/" + N_ACTIVE, "active");
-        digester.addSetNext("*/" + N_SYSTEM + "/" + N_SCHEDULER + "/" + N_JOB, "addJobFromConfiguration");
-
-        // add job context creation rule
-        digester.addObjectCreate(
-            "*/" + N_SYSTEM + "/" + N_SCHEDULER + "/" + N_JOB + "/" + N_CONTEXT,
-            CmsContextInfo.class);
-        digester.addBeanPropertySetter("*/"
-            + N_SYSTEM
-            + "/"
-            + N_SCHEDULER
-            + "/"
-            + N_JOB
-            + "/"
-            + N_CONTEXT
-            + "/"
-            + N_USERNAME, "userName");
-        digester.addBeanPropertySetter("*/"
-            + N_SYSTEM
-            + "/"
-            + N_SCHEDULER
-            + "/"
-            + N_JOB
-            + "/"
-            + N_CONTEXT
-            + "/"
-            + N_PROJECT, "projectName");
-        digester.addBeanPropertySetter("*/"
-            + N_SYSTEM
-            + "/"
-            + N_SCHEDULER
-            + "/"
-            + N_JOB
-            + "/"
-            + N_CONTEXT
-            + "/"
-            + N_SITEROOT, "siteRoot");
-        digester.addBeanPropertySetter("*/"
-            + N_SYSTEM
-            + "/"
-            + N_SCHEDULER
-            + "/"
-            + N_JOB
-            + "/"
-            + N_CONTEXT
-            + "/"
-            + N_REQUESTEDURI, "requestedUri");
-        digester.addBeanPropertySetter("*/"
-            + N_SYSTEM
-            + "/"
-            + N_SCHEDULER
-            + "/"
-            + N_JOB
-            + "/"
-            + N_CONTEXT
-            + "/"
-            + N_LOCALE, "localeName");
-        digester.addBeanPropertySetter("*/"
-            + N_SYSTEM
-            + "/"
-            + N_SCHEDULER
-            + "/"
-            + N_JOB
-            + "/"
-            + N_CONTEXT
-            + "/"
-            + N_ENCODING);
-        digester.addBeanPropertySetter("*/"
-            + N_SYSTEM
-            + "/"
-            + N_SCHEDULER
-            + "/"
-            + N_JOB
-            + "/"
-            + N_CONTEXT
-            + "/"
-            + N_REMOTEADDR, "remoteAddr");
-        digester.addSetNext("*/" + N_SYSTEM + "/" + N_SCHEDULER + "/" + N_JOB + "/" + N_CONTEXT, "setContextInfo");
-
-        // add generic parameter rules (used for jobs, password handler)
-        digester.addCallMethod(
-            "*/" + I_CmsXmlConfiguration.N_PARAM,
-            I_CmsConfigurationParameterHandler.ADD_PARAMETER_METHOD,
-            2);
-        digester.addCallParam("*/" + I_CmsXmlConfiguration.N_PARAM, 0, I_CmsXmlConfiguration.A_NAME);
-        digester.addCallParam("*/" + I_CmsXmlConfiguration.N_PARAM, 1);
+        digester.addCallParam("*/" + N_SYSTEM + "/" + N_MAIL + "/" + N_MAILHOST, 4, A_SECURITY);
+        digester.addCallParam("*/" + N_SYSTEM + "/" + N_MAIL + "/" + N_MAILHOST, 5, A_USER);
+        digester.addCallParam("*/" + N_SYSTEM + "/" + N_MAIL + "/" + N_MAILHOST, 6, A_PASSWORD);
+        digester.addCallParam("*/" + N_SYSTEM + "/" + N_MAIL + "/" + N_MAILHOST, 7, A_ID);
+        digester.addCallParam("*/" + N_SYSTEM + "/" + N_MAIL + "/" + N_MAILHOST, 8, A_MAILFROM);
 
         // add event classes
         digester.addCallMethod("*/" + N_SYSTEM + "/" + N_EVENTS + "/" + N_EVENTMANAGER, "addEventManager", 1);
         digester.addCallParam("*/" + N_SYSTEM + "/" + N_EVENTS + "/" + N_EVENTMANAGER, 0, A_CLASS);
 
-        // add resource init classes
-        digester.addCallMethod(
-            "*/" + N_SYSTEM + "/" + N_RESOURCEINIT + "/" + N_RESOURCEINITHANDLER,
-            "addResourceInitHandler",
-            1);
-        digester.addCallParam("*/" + N_SYSTEM + "/" + N_RESOURCEINIT + "/" + N_RESOURCEINITHANDLER, 0, A_CLASS);
+        // use array so we can modify it in the inner class and give each resource init handler a fresh CmsParameterConfiguration instance
+        CmsParameterConfiguration resourceHandlerParams[] = new CmsParameterConfiguration[] {null};
 
-        // add request handler classes
-        digester.addCallMethod(
-            "*/" + N_SYSTEM + "/" + N_REQUESTHANDLERS + "/" + N_REQUESTHANDLER,
-            "addRequestHandler",
-            1);
-        digester.addCallParam("*/" + N_SYSTEM + "/" + N_REQUESTHANDLERS + "/" + N_REQUESTHANDLER, 0, A_CLASS);
+        digester.addRule("*/" + N_SYSTEM + "/" + N_RESOURCEINIT + "/" + N_RESOURCEINITHANDLER, new Rule() {
+
+            private String m_class;
+
+            @Override
+            public void begin(String namespace, String name, Attributes attributes) throws Exception {
+
+                m_class = attributes.getValue(A_CLASS);
+                resourceHandlerParams[0] = new CmsParameterConfiguration();
+            }
+
+            @Override
+            public void end(String namespace, String name) throws Exception {
+
+                addResourceInitHandler(m_class, resourceHandlerParams[0]);
+
+            }
+        });
+
+        digester.addRule(
+            "*/" + N_SYSTEM + "/" + N_RESOURCEINIT + "/" + N_RESOURCEINITHANDLER + "/" + N_PARAM,
+            new Rule() {
+
+                private String m_name;
+                private String m_value;
+
+                @Override
+                public void begin(String namespace, String name, Attributes attributes) throws Exception {
+
+                    m_name = attributes.getValue(A_NAME);
+                    m_value = null;
+                }
+
+                @Override
+                public void body(String namespace, String name, String text) throws Exception {
+
+                    m_value = text;
+                }
+
+                @Override
+                public void end(String namespace, String name) throws Exception {
+
+                    resourceHandlerParams[0].add(m_name, m_value);
+                }
+            });
+
+        CmsParameterConfiguration[] requestHandlerParams = new CmsParameterConfiguration[] {null};
+        digester.addRule(
+            "*/" + N_SYSTEM + "/" + N_REQUESTHANDLERS + "/" + N_REQUESTHANDLER + "/" + N_PARAM,
+            new Rule() {
+
+                private String m_name;
+                private String m_value;
+
+                @Override
+                public void begin(String namespace, String name, Attributes attributes) throws Exception {
+
+                    m_name = attributes.getValue(A_NAME);
+                    m_value = null;
+                }
+
+                @Override
+                public void body(String namespace, String name, String text) throws Exception {
+
+                    m_value = text;
+                }
+
+                @Override
+                public void end(String namespace, String name) throws Exception {
+
+                    requestHandlerParams[0].add(m_name, m_value);
+                }
+            });
+        digester.addRule("*/" + N_SYSTEM + "/" + N_REQUESTHANDLERS + "/" + N_REQUESTHANDLER, new Rule() {
+
+            private String m_class;
+
+            @Override
+            public void begin(String namespace, String name, Attributes attributes) throws Exception {
+
+                m_class = attributes.getValue(A_CLASS);
+                requestHandlerParams[0] = new CmsParameterConfiguration();
+            }
+
+            @Override
+            public void end(String namespace, String name) throws Exception {
+
+                addRequestHandler(m_class, requestHandlerParams[0]);
+            }
+
+        });
 
         // add password handler creation rule
-        digester.addObjectCreate("*/" + N_SYSTEM + "/" + N_PASSWORDHANDLER, A_CLASS, CmsConfigurationException.class);
+        digester.addObjectCreate(
+            "*/" + N_SYSTEM + "/" + N_PASSWORDHANDLER,
+            CmsConfigurationException.class.getName(),
+            A_CLASS);
         digester.addCallMethod(
             "*/" + N_SYSTEM + "/" + N_PASSWORDHANDLER,
             I_CmsConfigurationParameterHandler.INIT_CONFIGURATION_METHOD);
@@ -879,50 +1129,60 @@ public class CmsSystemConfiguration extends A_CmsXmlConfiguration {
         digester.addBeanPropertySetter("*/" + N_SYSTEM + "/" + N_PASSWORDHANDLER + "/" + N_DIGESTTYPE, "digestType");
         digester.addSetNext("*/" + N_SYSTEM + "/" + N_PASSWORDHANDLER, "setPasswordHandler");
 
+        // add generic parameter rules for password handler
+        digester.addCallMethod(
+            "*/" + I_CmsXmlConfiguration.N_PARAM,
+            I_CmsConfigurationParameterHandler.ADD_PARAMETER_METHOD,
+            2);
+        digester.addCallParam("*/" + I_CmsXmlConfiguration.N_PARAM, 0, I_CmsXmlConfiguration.A_NAME);
+        digester.addCallParam("*/" + I_CmsXmlConfiguration.N_PARAM, 1);
+
         // add validation handler creation rules
         digester.addCallMethod("*/" + N_SYSTEM + "/" + N_VALIDATIONHANDLER, "setValidationHandler", 1);
         digester.addCallParam("*/" + N_SYSTEM + "/" + N_VALIDATIONHANDLER, 0, A_CLASS);
 
         // add login manager creation rules
-        digester.addCallMethod("*/" + N_LOGINMANAGER, "setLoginManager", 3);
+        digester.addCallMethod("*/" + N_LOGINMANAGER, "setLoginManager", 10);
         digester.addCallParam("*/" + N_LOGINMANAGER + "/" + N_DISABLEMINUTES, 0);
         digester.addCallParam("*/" + N_LOGINMANAGER + "/" + N_MAXBADATTEMPTS, 1);
         digester.addCallParam("*/" + N_LOGINMANAGER + "/" + N_ENABLESCURITY, 2);
+        digester.addCallParam("*/" + N_LOGINMANAGER + "/" + N_TOKEN_LIFETIME, 3);
+        digester.addCallParam("*/" + N_LOGINMANAGER + "/" + N_MAX_INACTIVE_TIME, 4);
+        digester.addCallParam("*/" + N_LOGINMANAGER + "/" + N_PASSWORD_CHANGE_INTERVAL, 5);
+        digester.addCallParam("*/" + N_LOGINMANAGER + "/" + N_USER_DATA_CHECK_INTERVAL, 6);
+        digester.addCallParam("*/" + N_LOGINMANAGER + "/" + N_REQUIRE_ORGUNIT, 7);
+        digester.addCallParam("*/" + N_LOGINMANAGER + "/" + N_LOGOUT_URI, 8);
+        digester.addCallParam("*/" + N_LOGINMANAGER + "/" + N_FORCE_LOGOUT_FOR_UNPRIVILEGED_USERS, 9);
 
-        // add login message creation rules
-        digester.addObjectCreate("*/" + N_LOGINMESSAGE, CmsLoginMessage.class);
-        digester.addBeanPropertySetter("*/" + N_LOGINMESSAGE + "/" + N_ENABLED);
-        digester.addBeanPropertySetter("*/" + N_LOGINMESSAGE + "/" + N_MESSAGE);
-        digester.addBeanPropertySetter("*/" + N_LOGINMESSAGE + "/" + N_LOGINFORBIDDEN);
-        digester.addBeanPropertySetter("*/" + N_LOGINMESSAGE + "/" + N_TIMESTART);
-        digester.addBeanPropertySetter("*/" + N_LOGINMESSAGE + "/" + N_TIMEEND);
-        digester.addSetNext("*/" + N_LOGINMESSAGE, "setLoginMessage");
+        digester.addObjectCreate("*/" + N_SYSTEM + "/" + N_CUSTOM_LOGIN, null, A_CLASS);
+        digester.addSetNext("*/" + N_SYSTEM + "/" + N_CUSTOM_LOGIN, "setCustomLogin");
 
-        // add site configuration rule        
-        digester.addObjectCreate("*/" + N_SYSTEM + "/" + N_SITES, CmsSiteManagerImpl.class);
-        digester.addCallMethod("*/" + N_SYSTEM + "/" + N_SITES + "/" + N_WORKPLACE_SERVER, "setWorkplaceServer", 0);
-        digester.addCallMethod("*/" + N_SYSTEM + "/" + N_SITES + "/" + N_DEFAULT_URI, "setDefaultUri", 0);
-        digester.addSetNext("*/" + N_SYSTEM + "/" + N_SITES, "setSiteManager");
+        try {
+            digester.addRule("*/" + N_TWO_FACTOR_AUTHENTICATION, new NodeCreateRule() {
 
-        // add site configuration rule
-        digester.addCallMethod("*/" + N_SYSTEM + "/" + N_SITES + "/" + N_SITE, "addSite", 5);
-        digester.addCallParam("*/" + N_SYSTEM + "/" + N_SITES + "/" + N_SITE, 0, A_SERVER);
-        digester.addCallParam("*/" + N_SYSTEM + "/" + N_SITES + "/" + N_SITE, 1, A_URI);
-        digester.addCallParam("*/" + N_SYSTEM + "/" + N_SITES + "/" + N_SITE + "/" + N_SECURE, 2, A_SERVER);
-        digester.addCallParam("*/" + N_SYSTEM + "/" + N_SITES + "/" + N_SITE + "/" + N_SECURE, 3, A_EXCLUSIVE);
-        digester.addCallParam("*/" + N_SYSTEM + "/" + N_SITES + "/" + N_SITE + "/" + N_SECURE, 4, A_ERROR);
+                @Override
+                public void end(String namespace, String name) throws Exception {
 
-        // add an alias to the currently configured site
+                    org.w3c.dom.Element elem = (org.w3c.dom.Element)digester.pop();
+                    DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
+                    Document doc = dbf.newDocumentBuilder().newDocument();
+                    doc.appendChild(doc.importNode(elem, true));
+                    org.dom4j.Document dom4jDoc = CmsXmlUtils.convertDocumentFromW3CToDom4j(doc);
+                    m_twoFactorConfig = new CmsTwoFactorAuthenticationConfig(dom4jDoc.getRootElement());
+                }
+
+            });
+        } catch (ParserConfigurationException e) {
+            LOG.error(e.getLocalizedMessage(), e);
+        }
+
         digester.addCallMethod(
-            "*/" + N_SYSTEM + "/" + N_SITES + "/" + N_SITE + "/" + N_ALIAS,
-            "addAliasToConfigSite",
-            2);
-        digester.addCallParam("*/" + N_SYSTEM + "/" + N_SITES + "/" + N_SITE + "/" + N_ALIAS, 0, A_SERVER);
-        digester.addCallParam("*/" + N_SYSTEM + "/" + N_SITES + "/" + N_SITE + "/" + N_ALIAS, 1, A_OFFSET);
+            "*/" + N_SYSTEM + "/" + N_SAX_IMPL_SYSTEM_PROPERTIES,
+            "setUseSaxImplSystemProperties",
+            1);
+        digester.addCallParam("*/" + N_SYSTEM + "/" + N_SAX_IMPL_SYSTEM_PROPERTIES, 0);
 
-        digester.addCallMethod("*/" + N_SYSTEM + "/" + N_SITES + "/" + N_SHARED_FOLDER, "setSharedFolder", 0);
-
-        // add compatibility parameter rules 
+        // add compatibility parameter rules
         digester.addCallMethod(
             "*/" + N_SYSTEM + "/" + N_RUNTIMEPROPERTIES + "/" + N_PARAM,
             I_CmsConfigurationParameterHandler.ADD_PARAMETER_METHOD,
@@ -941,21 +1201,20 @@ public class CmsSystemConfiguration extends A_CmsXmlConfiguration {
         digester.addCallParam("*/" + N_SYSTEM + "/" + N_RUNTIMECLASSES + "/" + N_RUNTIMEINFO, 0, A_CLASS);
 
         // add default users rule
-        digester.addCallMethod("*/" + N_SYSTEM + "/" + N_DEFAULTUSERS, "setCmsDefaultUsers", 8);
+        digester.addCallMethod("*/" + N_SYSTEM + "/" + N_DEFAULTUSERS, "setCmsDefaultUsers", 7);
         digester.addCallParam("*/" + N_SYSTEM + "/" + N_DEFAULTUSERS + "/" + N_USER_ADMIN, 0);
         digester.addCallParam("*/" + N_SYSTEM + "/" + N_DEFAULTUSERS + "/" + N_USER_GUEST, 1);
         digester.addCallParam("*/" + N_SYSTEM + "/" + N_DEFAULTUSERS + "/" + N_USER_EXPORT, 2);
         digester.addCallParam("*/" + N_SYSTEM + "/" + N_DEFAULTUSERS + "/" + N_USER_DELETEDRESOURCE, 3);
         digester.addCallParam("*/" + N_SYSTEM + "/" + N_DEFAULTUSERS + "/" + N_GROUP_ADMINISTRATORS, 4);
-        digester.addCallParam("*/" + N_SYSTEM + "/" + N_DEFAULTUSERS + "/" + N_GROUP_PROJECTMANAGERS, 5);
-        digester.addCallParam("*/" + N_SYSTEM + "/" + N_DEFAULTUSERS + "/" + N_GROUP_USERS, 6);
-        digester.addCallParam("*/" + N_SYSTEM + "/" + N_DEFAULTUSERS + "/" + N_GROUP_GUESTS, 7);
+        digester.addCallParam("*/" + N_SYSTEM + "/" + N_DEFAULTUSERS + "/" + N_GROUP_USERS, 5);
+        digester.addCallParam("*/" + N_SYSTEM + "/" + N_DEFAULTUSERS + "/" + N_GROUP_GUESTS, 6);
 
         // add defaultContentEncoding rule
         digester.addCallMethod("*/" + N_SYSTEM + "/" + N_DEFAULT_CONTENT_ENCODING, "setDefaultContentEncoding", 1);
         digester.addCallParam("*/" + N_SYSTEM + "/" + N_DEFAULT_CONTENT_ENCODING, 0);
 
-        // add memorymonitor configuration rule        
+        // add memorymonitor configuration rule
         digester.addObjectCreate("*/" + N_SYSTEM + "/" + N_MEMORYMONITOR, CmsMemoryMonitorConfiguration.class);
         digester.addCallMethod("*/" + N_SYSTEM + "/" + N_MEMORYMONITOR, "initialize", 5);
         digester.addCallParam("*/" + N_SYSTEM + "/" + N_MEMORYMONITOR, 0, A_CLASS);
@@ -972,7 +1231,7 @@ public class CmsSystemConfiguration extends A_CmsXmlConfiguration {
         // set the MemoryMonitorConfiguration initialized once before
         digester.addSetNext("*/" + N_SYSTEM + "/" + N_MEMORYMONITOR, "setCmsMemoryMonitorConfiguration");
 
-        // add flexcache configuration rule        
+        // add flexcache configuration rule
         digester.addObjectCreate("*/" + N_SYSTEM + "/" + N_FLEXCACHE, CmsFlexCacheConfiguration.class);
         digester.addCallMethod("*/" + N_SYSTEM + "/" + N_FLEXCACHE, "initialize", 6);
         digester.addCallParam("*/" + N_SYSTEM + "/" + N_FLEXCACHE + "/" + N_CACHE_ENABLED, 0);
@@ -990,6 +1249,29 @@ public class CmsSystemConfiguration extends A_CmsXmlConfiguration {
 
         // set the FlexCacheConfiguration initialized once before
         digester.addSetNext("*/" + N_SYSTEM + "/" + N_FLEXCACHE, "setCmsFlexCacheConfiguration");
+
+        // add image cache retention and maintenance configuration rules
+        String imageCachePath = "*/" + N_SYSTEM + "/" + N_IMAGECACHE;
+        digester.addObjectCreate(imageCachePath, CmsImageCacheConfiguration.class);
+        digester.addCallMethod(imageCachePath + "/" + N_RETENTION, "setRetention", 4);
+        digester.addCallParam(imageCachePath + "/" + N_RETENTION, 0, A_MODE);
+        digester.addCallParam(imageCachePath + "/" + N_RETENTION, 1, A_MAX_AGE);
+        digester.addCallParam(imageCachePath + "/" + N_RETENTION, 2, A_RENEWAL_WINDOW);
+        digester.addCallParam(imageCachePath + "/" + N_RETENTION, 3, A_RENEWAL_JITTER);
+        digester.addCallMethod(imageCachePath + "/" + N_CLEANUP, "setCleanup", 2);
+        digester.addCallParam(imageCachePath + "/" + N_CLEANUP, 0, A_MAX_DELETES_PER_RUN);
+        digester.addCallParam(imageCachePath + "/" + N_CLEANUP, 1, A_MAX_RUNTIME);
+        digester.addCallMethod(imageCachePath + "/" + N_RFS, "setRfs", 1);
+        digester.addCallParam(imageCachePath + "/" + N_RFS, 0, A_TOUCH_MINIMUM_INTERVAL);
+        digester.addCallMethod(imageCachePath + "/" + N_FS, "setFs", 1);
+        digester.addCallParam(imageCachePath + "/" + N_FS, 0, A_TOUCH_CONCURRENCY);
+        digester.addCallMethod(imageCachePath + "/" + N_S3, "setS3", 5);
+        digester.addCallParam(imageCachePath + "/" + N_S3, 0, A_DELETE_BATCH_SIZE);
+        digester.addCallParam(imageCachePath + "/" + N_S3, 1, A_DELETE_CONCURRENCY);
+        digester.addCallParam(imageCachePath + "/" + N_S3, 2, A_COPY_CONCURRENCY);
+        digester.addCallParam(imageCachePath + "/" + N_S3, 3, A_MAX_COPIES_PER_SECOND);
+        digester.addCallParam(imageCachePath + "/" + N_S3, 4, A_RENEWAL_QUEUE_CAPACITY);
+        digester.addSetNext(imageCachePath, "setImageCacheConfiguration");
 
         // add http basic authentication rules
         digester.addObjectCreate("*/" + N_SYSTEM + "/" + N_HTTP_AUTHENTICATION, CmsHttpAuthenticationSettings.class);
@@ -1050,6 +1332,23 @@ public class CmsSystemConfiguration extends A_CmsXmlConfiguration {
             0);
         digester.addSetNext("*/" + N_SYSTEM + "/" + N_RESULTCACHE, "setCacheSettings");
 
+        // stored content info cache rules
+        digester.addObjectCreate(
+            "*/" + N_SYSTEM + "/" + N_STOREDCONTENTINFOCACHE,
+            CmsStoredContentInfoCacheConfiguration.class);
+        digester.addCallMethod("*/" + N_SYSTEM + "/" + N_STOREDCONTENTINFOCACHE, "initialize", 4);
+        digester.addCallParam(
+            "*/" + N_SYSTEM + "/" + N_STOREDCONTENTINFOCACHE + "/" + N_STOREDCONTENTINFOCACHE_FACTORY,
+            0);
+        digester.addCallParam(
+            "*/" + N_SYSTEM + "/" + N_STOREDCONTENTINFOCACHE + "/" + N_STOREDCONTENTINFOCACHE_ENABLED,
+            1);
+        digester.addCallParam(
+            "*/" + N_SYSTEM + "/" + N_STOREDCONTENTINFOCACHE + "/" + N_STOREDCONTENTINFOCACHE_SIZE,
+            2);
+        digester.addCallParam("*/" + N_SYSTEM + "/" + N_STOREDCONTENTINFOCACHE + "/" + N_STOREDCONTENTINFOCACHE_TTL, 3);
+        digester.addSetNext("*/" + N_SYSTEM + "/" + N_STOREDCONTENTINFOCACHE, "setStoredContentInfoCacheConfiguration");
+
         // set the notification time
         digester.addCallMethod(
             "*/" + N_SYSTEM + "/" + N_CONTENT_NOTIFICATION + "/" + N_NOTIFICATION_TIME,
@@ -1068,7 +1367,44 @@ public class CmsSystemConfiguration extends A_CmsXmlConfiguration {
         digester.addCallMethod("*/" + N_SYSTEM + "/" + N_AUTHORIZATIONHANDLER, "setAuthorizationHandler", 1);
         digester.addCallParam("*/" + N_SYSTEM + "/" + N_AUTHORIZATIONHANDLER, 0, A_CLASS);
 
-        // add publish manager configuration rule        
+        digester.addCallMethod(
+            "*/" + N_SYSTEM + "/" + N_AUTHORIZATIONHANDLER + "/parameters/param",
+            "addAuthorizationHandlerParam",
+            2);
+        digester.addCallParam("*/" + N_SYSTEM + "/" + N_AUTHORIZATIONHANDLER + "/parameters/param", 0, "name");
+        digester.addCallParam("*/" + N_SYSTEM + "/" + N_AUTHORIZATIONHANDLER + "/parameters/param", 1);
+
+        String apiAuthPath = "*/system/" + N_API_AUTHORIZATIONS + "/" + N_API_AUTHORIZATION;
+        digester.addRule(apiAuthPath, new Rule() {
+
+            @Override
+            public void begin(String namespace, String name, Attributes attributes) throws Exception {
+
+                digester.push(new ApiAuthorizationConfig());
+            }
+
+            @Override
+            public void end(String namespace, String name) throws Exception {
+
+                ApiAuthorizationConfig config = (ApiAuthorizationConfig)digester.pop();
+                addApiAuthorization(config);
+            }
+        });
+
+        String namePath = apiAuthPath + "/name";
+        digester.addCallMethod(namePath, "setName", 1);
+        digester.addCallParam(namePath, 0);
+
+        String classNamePath = apiAuthPath + "/class";
+        digester.addCallMethod(classNamePath, "setClassName", 1);
+        digester.addCallParam(classNamePath, 0);
+
+        String paramPath = apiAuthPath + "/param";
+        digester.addCallMethod(paramPath, "setParam", 2);
+        digester.addCallParam(paramPath, 0, "name");
+        digester.addCallParam(paramPath, 1);
+
+        // add publish manager configuration rule
         digester.addObjectCreate("*/" + N_SYSTEM + "/" + N_PUBLISHMANAGER, CmsPublishManager.class);
         digester.addCallMethod(
             "*/" + N_SYSTEM + "/" + N_PUBLISHMANAGER + "/" + N_HISTORYSIZE,
@@ -1081,6 +1417,10 @@ public class CmsSystemConfiguration extends A_CmsXmlConfiguration {
         digester.addCallMethod(
             "*/" + N_SYSTEM + "/" + N_PUBLISHMANAGER + "/" + N_QUEUESHUTDOWNTIME,
             "setPublishQueueShutdowntime",
+            0);
+        digester.addCallMethod(
+            "*/" + N_SYSTEM + "/" + N_PUBLISHMANAGER + "/" + N_AUTO_CLEANUP_HISTORY_ENTRIES,
+            "setAutoCleanupHistoryEntries",
             0);
         digester.addSetNext("*/" + N_SYSTEM + "/" + N_PUBLISHMANAGER, "setPublishManager");
 
@@ -1105,7 +1445,10 @@ public class CmsSystemConfiguration extends A_CmsXmlConfiguration {
             "*/" + N_SYSTEM + "/" + N_SERVLETCONTAINERSETTINGS + "/" + N_REQUESTERRORPAGEATTRIBUTE,
             "setRequestErrorPageAttribute",
             0);
-        digester.addCallMethod("*/" + N_SYSTEM + "/" + N_SERVLETCONTAINERSETTINGS, "setServletContainerSettingsMode", 1);
+        digester.addCallMethod(
+            "*/" + N_SYSTEM + "/" + N_SERVLETCONTAINERSETTINGS,
+            "setServletContainerSettingsMode",
+            1);
         digester.addCallParam("*/" + N_SYSTEM + "/" + N_SERVLETCONTAINERSETTINGS, 0, A_MODE);
 
         // add rule for ADE cache settings
@@ -1124,6 +1467,11 @@ public class CmsSystemConfiguration extends A_CmsXmlConfiguration {
         // set the settings
         digester.addSetNext(adeCachePath, "setAdeCacheSettings");
 
+        String adeParamPath = "*/" + N_SYSTEM + "/" + N_ADE + "/" + N_PARAMETERS + "/" + N_PARAM;
+        digester.addCallMethod(adeParamPath, "addAdeParameter", 2);
+        digester.addCallParam(adeParamPath, 0, I_CmsXmlConfiguration.A_NAME);
+        digester.addCallParam(adeParamPath, 1);
+
         // add rule for subscription manager settings
         digester.addObjectCreate("*/" + N_SYSTEM + "/" + N_SUBSCRIPTIONMANAGER, CmsSubscriptionManager.class);
         digester.addCallMethod("*/" + N_SYSTEM + "/" + N_SUBSCRIPTIONMANAGER, "setEnabled", 1);
@@ -1133,6 +1481,90 @@ public class CmsSystemConfiguration extends A_CmsXmlConfiguration {
         digester.addCallMethod("*/" + N_SYSTEM + "/" + N_SUBSCRIPTIONMANAGER, "setMaxVisitedCount", 1);
         digester.addCallParam("*/" + N_SYSTEM + "/" + N_SUBSCRIPTIONMANAGER, 0, A_MAXVISITED);
         digester.addSetNext("*/" + N_SYSTEM + "/" + N_SUBSCRIPTIONMANAGER, "setSubscriptionManager");
+
+        digester.addCallMethod("*/" + N_SYSTEM + "/" + N_PUBLISH_LIST_REMOVE_MODE, "setPublishListRemoveMode", 1);
+        digester.addCallParam("*/" + N_SYSTEM + "/" + N_PUBLISH_LIST_REMOVE_MODE, 0, A_MODE);
+
+        String workflowXpath = "*/" + N_SYSTEM + "/" + N_WORKFLOW;
+        digester.addObjectCreate(workflowXpath, CmsDefaultWorkflowManager.class.getName(), A_CLASS);
+        digester.addObjectCreate(workflowXpath + "/" + N_PARAMETERS, LinkedHashMap.class);
+        digester.addCallMethod(workflowXpath + "/" + N_PARAMETERS + "/" + N_PARAM, "put", 2);
+        digester.addCallParam(workflowXpath + "/" + N_PARAMETERS + "/" + N_PARAM, 0, A_NAME);
+        digester.addCallParam(workflowXpath + "/" + N_PARAMETERS + "/" + N_PARAM, 1);
+        digester.addSetNext(workflowXpath + "/" + N_PARAMETERS, "setParameters");
+        digester.addSetNext(workflowXpath, "setWorkflowManager");
+
+        CmsLetsEncryptConfiguration.CONFIG_HELPER.addRules(digester);
+        digester.addSetNext(CmsLetsEncryptConfiguration.CONFIG_HELPER.getBasePath(), "setLetsEncryptConfig");
+
+        digester.addRule("*/" + N_SYSTEM + "/" + N_ENCRYPTION + "/" + N_TEXT_ENCRYPTION, new Rule() {
+
+            @Override
+            public void begin(String namespace, String name, Attributes attributes) throws Exception {
+
+                String className = attributes.getValue(A_CLASS);
+                String instanceName = attributes.getValue(A_NAME);
+                I_CmsTextEncryption encrypter = (I_CmsTextEncryption)Class.forName(className).newInstance();
+                encrypter.setName(instanceName);
+                digester.push(encrypter);
+            }
+
+            @Override
+            public void end(String namespace, String name) throws Exception {
+
+                I_CmsTextEncryption encrypter = (I_CmsTextEncryption)digester.pop();
+                m_textEncryptions.put(encrypter.getName(), encrypter);
+            }
+        });
+
+        // make sure that a 'default' text encryption exists, but attach the rule to the system element
+        // because the <encryption> element doesn't necessarily exist,
+        digester.addRule("*/" + N_SYSTEM, new Rule() {
+
+            public void end(String namespace, String name) throws Exception {
+
+                if (m_textEncryptions.get("default") == null) {
+                    CmsAESTextEncryption defaultEncryption = new CmsAESTextEncryption();
+                    defaultEncryption.setName("default");
+                    defaultEncryption.addConfigurationParameter(
+                        CmsAESTextEncryption.PARAM_SECRET,
+                        RandomStringUtils.randomAlphanumeric(24));
+                    m_textEncryptions.put("default", defaultEncryption);
+                }
+            };
+        });
+
+        String userSessionPath = "*/" + N_SYSTEM + "/" + N_USER_SESSION_MODE;
+        digester.addCallMethod(userSessionPath, "setUserSessionMode", 0);
+
+        String credentialsResolverPath = "*/" + N_SYSTEM + "/" + N_CREDENTIALS_RESOLVER;
+        digester.addCallMethod(credentialsResolverPath, "setCredentialsResolver", 0);
+
+        digester.addObjectCreate("*/" + N_SYSTEM + "/" + N_SECRET_STORE, CmsNullSecretStore.class.getName(), A_CLASS);
+        digester.addCallMethod(
+            "*/" + N_SYSTEM + "/" + N_SECRET_STORE,
+            I_CmsConfigurationParameterHandler.INIT_CONFIGURATION_METHOD);
+        digester.addSetNext("*/" + N_SYSTEM + "/" + N_SECRET_STORE, "setSecretStore");
+
+        digester.addCallMethod("*/" + N_SYSTEM + "/" + N_RESTRICT_DETAIL_CONTENTS, "setRestrictDetailContents", 1);
+        digester.addCallParam("*/" + N_SYSTEM + "/" + N_RESTRICT_DETAIL_CONTENTS, 0);
+
+        String shellServerPath = "*/" + N_SYSTEM + "/" + N_SHELL_SERVER;
+        digester.addCallMethod(shellServerPath, "setShellServerOptions", 2);
+        digester.addCallParam(shellServerPath, 0, A_ENABLED);
+        digester.addCallParam(shellServerPath, 1, A_PORT);
+
+        String detailPageHandlerPath = "*/" + N_SYSTEM + "/" + N_DETAIL_PAGE_HANDLER;
+        digester.addObjectCreate(detailPageHandlerPath, CmsDefaultDetailPageHandler.class.getName(), A_CLASS);
+        digester.addSetNext(detailPageHandlerPath, "setDetailPageHandler");
+
+        String editMarkerHandlerPath = "*/" + N_SYSTEM + "/" + N_EDIT_MARKER_HANDLER;
+        digester.addObjectCreate(editMarkerHandlerPath, CmsDefaultElementMarker.class.getName(), A_CLASS);
+        digester.addSetNext(editMarkerHandlerPath, "setElementMarker");
+
+        String userdataPath = "*/" + N_SYSTEM + "/" + CmsUserDataRequestManager.N_USERDATA;
+        CmsUserDataRequestManager.addDigesterRules(digester, userdataPath);
+        digester.addSetNext(userdataPath, "setUserDataRequestManager");
     }
 
     /**
@@ -1140,22 +1572,19 @@ public class CmsSystemConfiguration extends A_CmsXmlConfiguration {
      */
     public Element generateXml(Element parent) {
 
-        // generate vfs node and subnodes
+        // generate system node and sub notes
         Element systemElement = parent.addElement(N_SYSTEM);
 
         if (OpenCms.getRunLevel() >= OpenCms.RUNLEVEL_3_SHELL_ACCESS) {
             // initialized OpenCms instance is available, use latest values
             m_localeManager = OpenCms.getLocaleManager();
             m_mailSettings = OpenCms.getSystemInfo().getMailSettings();
-            m_configuredJobs = OpenCms.getScheduleManager().getJobs();
             m_historyEnabled = OpenCms.getSystemInfo().isHistoryEnabled();
             m_historyVersions = OpenCms.getSystemInfo().getHistoryVersions();
             m_historyVersionsAfterDeletion = OpenCms.getSystemInfo().getHistoryVersionsAfterDeletion();
             // m_resourceInitHandlers instance must be the one from configuration
             // m_requestHandlers instance must be the one from configuration
-            m_siteManager = OpenCms.getSiteManager();
             m_loginManager = OpenCms.getLoginManager();
-            m_loginMessage = OpenCms.getLoginManager().getLoginMessage();
         }
 
         // i18n nodes
@@ -1176,6 +1605,9 @@ public class CmsSystemConfiguration extends A_CmsXmlConfiguration {
             localesElement.addElement(N_LOCALE).setText(loc.next().toString());
         }
         i18nElement.addElement(N_TIMEZONE).setText(m_localeManager.getTimeZone().getID());
+        if (null != m_localeManager.getReuseElementsStr()) {
+            i18nElement.addElement(N_REUSE_ELEMENTS).setText(m_localeManager.getReuseElementsStr());
+        }
 
         // mail nodes
         Element mailElement = systemElement.addElement(N_MAIL);
@@ -1183,41 +1615,19 @@ public class CmsSystemConfiguration extends A_CmsXmlConfiguration {
         Iterator<CmsMailHost> hosts = m_mailSettings.getMailHosts().iterator();
         while (hosts.hasNext()) {
             CmsMailHost host = hosts.next();
-            Element hostElement = mailElement.addElement(N_MAILHOST).addAttribute(A_NAME, host.getHostname()).addAttribute(
-                A_PORT,
-                Integer.toString(host.getPort())).addAttribute(A_ORDER, host.getOrder().toString()).addAttribute(
-                A_PROTOCOL,
-                host.getProtocol());
+            Element hostElement = mailElement.addElement(N_MAILHOST).addAttribute(A_ID, host.getId()).addAttribute(
+                A_NAME,
+                host.getHostname()).addAttribute(A_PORT, Integer.toString(host.getPort())).addAttribute(
+                    A_ORDER,
+                    host.getOrder().toString()).addAttribute(A_PROTOCOL, host.getProtocol()).addAttribute(
+                        A_SECURITY,
+                        host.getSecurity()).addAttribute(A_MAILFROM, host.getMailfrom());
             if (host.isAuthenticating()) {
                 hostElement.addAttribute(A_USER, host.getUsername()).addAttribute(A_PASSWORD, host.getPassword());
             }
         }
 
         // scheduler node
-        Element schedulerElement = systemElement.addElement(N_SCHEDULER);
-        Iterator<CmsScheduledJobInfo> jobs = m_configuredJobs.iterator();
-        while (jobs.hasNext()) {
-            CmsScheduledJobInfo jobInfo = jobs.next();
-            Element jobElement = schedulerElement.addElement(N_JOB);
-            jobElement.addElement(N_NAME).addText(jobInfo.getJobName());
-            jobElement.addElement(N_CLASS).addText(jobInfo.getClassName());
-            jobElement.addElement(N_REUSEINSTANCE).addText(String.valueOf(jobInfo.isReuseInstance()));
-            jobElement.addElement(N_ACTIVE).addText(String.valueOf(jobInfo.isActive()));
-            jobElement.addElement(N_CRONEXPRESSION).addCDATA(jobInfo.getCronExpression());
-            Element contextElement = jobElement.addElement(N_CONTEXT);
-            contextElement.addElement(N_USERNAME).setText(jobInfo.getContextInfo().getUserName());
-            contextElement.addElement(N_PROJECT).setText(jobInfo.getContextInfo().getProjectName());
-            contextElement.addElement(N_SITEROOT).setText(jobInfo.getContextInfo().getSiteRoot());
-            contextElement.addElement(N_REQUESTEDURI).setText(jobInfo.getContextInfo().getRequestedUri());
-            contextElement.addElement(N_LOCALE).setText(jobInfo.getContextInfo().getLocaleName());
-            contextElement.addElement(N_ENCODING).setText(jobInfo.getContextInfo().getEncoding());
-            contextElement.addElement(N_REMOTEADDR).setText(jobInfo.getContextInfo().getRemoteAddr());
-            CmsParameterConfiguration jobParameters = jobInfo.getConfiguration();
-            if ((jobParameters != null) && (jobParameters.size() > 0)) {
-                Element parameterElement = jobElement.addElement(N_PARAMETERS);
-                jobParameters.appendToXml(parameterElement);
-            }
-        }
 
         // <events> node
         Element eventsElement = systemElement.addElement(N_EVENTS);
@@ -1227,25 +1637,37 @@ public class CmsSystemConfiguration extends A_CmsXmlConfiguration {
         // version history
         Element historyElement = systemElement.addElement(N_VERSIONHISTORY);
         historyElement.addAttribute(A_ENABLED, String.valueOf(m_historyEnabled));
-        historyElement.addAttribute(A_COUNT, new Integer(m_historyVersions).toString());
-        historyElement.addAttribute(A_DELETED, new Integer(m_historyVersionsAfterDeletion).toString());
+        historyElement.addAttribute(A_COUNT, Integer.valueOf(m_historyVersions).toString());
+        historyElement.addAttribute(A_DELETED, Integer.valueOf(m_historyVersionsAfterDeletion).toString());
 
         // resourceinit
         Element resourceinitElement = systemElement.addElement(N_RESOURCEINIT);
         Iterator<I_CmsResourceInit> resHandlers = m_resourceInitHandlers.iterator();
         while (resHandlers.hasNext()) {
-            I_CmsResourceInit clazz = resHandlers.next();
+            I_CmsResourceInit handler = resHandlers.next();
             Element handlerElement = resourceinitElement.addElement(N_RESOURCEINITHANDLER);
-            handlerElement.addAttribute(A_CLASS, clazz.getClass().getName());
+            handlerElement.addAttribute(A_CLASS, handler.getClass().getName());
+            CmsParameterConfiguration config = handler.getConfiguration();
+            if (config != null) {
+                for (String key : config.keySet()) {
+                    handlerElement.addElement(N_PARAM).addAttribute(A_NAME, key).addText(config.get(key));
+                }
+            }
         }
 
         // request handlers
         Element requesthandlersElement = systemElement.addElement(N_REQUESTHANDLERS);
         Iterator<I_CmsRequestHandler> reqHandlers = m_requestHandlers.iterator();
         while (reqHandlers.hasNext()) {
-            I_CmsRequestHandler clazz = reqHandlers.next();
+            I_CmsRequestHandler handler = reqHandlers.next();
             Element handlerElement = requesthandlersElement.addElement(N_REQUESTHANDLER);
-            handlerElement.addAttribute(A_CLASS, clazz.getClass().getName());
+            handlerElement.addAttribute(A_CLASS, handler.getClass().getName());
+            CmsParameterConfiguration config = handler.getConfiguration();
+            if (config != null) {
+                for (String key : config.keySet()) {
+                    handlerElement.addElement(N_PARAM).addAttribute(A_NAME, key).addText(config.get(key));
+                }
+            }
         }
 
         // password handler
@@ -1271,56 +1693,53 @@ public class CmsSystemConfiguration extends A_CmsXmlConfiguration {
             managerElement.addElement(N_DISABLEMINUTES).addText(String.valueOf(m_loginManager.getDisableMinutes()));
             managerElement.addElement(N_MAXBADATTEMPTS).addText(String.valueOf(m_loginManager.getMaxBadAttempts()));
             managerElement.addElement(N_ENABLESCURITY).addText(String.valueOf(m_loginManager.isEnableSecurity()));
-        }
-
-        // login message
-        if (m_loginMessage != null) {
-            Element messageElement = systemElement.addElement(N_LOGINMESSAGE);
-            messageElement.addElement(N_ENABLED).addText(String.valueOf(m_loginMessage.isEnabled()));
-            messageElement.addElement(N_MESSAGE).addCDATA(m_loginMessage.getMessage());
-            messageElement.addElement(N_LOGINFORBIDDEN).addText(String.valueOf(m_loginMessage.isLoginForbidden()));
-            if (m_loginMessage.getTimeStart() != CmsLoginMessage.DEFAULT_TIME_START) {
-                messageElement.addElement(N_TIMESTART).addText(String.valueOf(m_loginMessage.getTimeStart()));
+            String tokenLifetimeStr = m_loginManager.getTokenLifetimeStr();
+            if (tokenLifetimeStr != null) {
+                managerElement.addElement(N_TOKEN_LIFETIME).addText(tokenLifetimeStr);
             }
-            if (m_loginMessage.getTimeEnd() != CmsLoginMessage.DEFAULT_TIME_END) {
-                messageElement.addElement(N_TIMEEND).addText(String.valueOf(m_loginMessage.getTimeEnd()));
+            if (m_loginManager.getMaxInactive() != null) {
+                managerElement.addElement(N_MAX_INACTIVE_TIME).addText(m_loginManager.getMaxInactive());
             }
-        }
 
-        // create <sites> node 
-        Element sitesElement = systemElement.addElement(N_SITES);
-        sitesElement.addElement(N_WORKPLACE_SERVER).addText(m_siteManager.getWorkplaceServer());
-        sitesElement.addElement(N_DEFAULT_URI).addText(m_siteManager.getDefaultUri());
-        String sharedFolder = m_siteManager.getSharedFolder();
-        if (sharedFolder != null) {
-            sitesElement.addElement(N_SHARED_FOLDER).addText(sharedFolder);
-        }
-        Iterator<CmsSite> siteIterator = new HashSet<CmsSite>(m_siteManager.getSites().values()).iterator();
-        while (siteIterator.hasNext()) {
-            CmsSite site = siteIterator.next();
-            // create <site server="" uri=""/> subnode(s)
-            Element siteElement = sitesElement.addElement(N_SITE);
-
-            siteElement.addAttribute(A_SERVER, site.getSiteMatcher().toString());
-            siteElement.addAttribute(A_URI, site.getSiteRoot().concat("/"));
-            // create <secure server=""/> subnode            
-            if (site.hasSecureServer()) {
-                Element secureElem = siteElement.addElement(N_SECURE);
-                secureElem.addAttribute(A_SERVER, site.getSecureUrl());
-                secureElem.addAttribute(A_EXCLUSIVE, "" + site.isExclusiveUrl());
-                secureElem.addAttribute(A_ERROR, "" + site.isExclusiveError());
+            if (m_loginManager.getPasswordChangeIntervalStr() != null) {
+                managerElement.addElement(N_PASSWORD_CHANGE_INTERVAL).addText(
+                    m_loginManager.getPasswordChangeIntervalStr());
             }
-            // create <alias server=""/> subnode(s)            
-            Iterator<CmsSiteMatcher> aliasIterator = site.getAliases().iterator();
-            while (aliasIterator.hasNext()) {
-                CmsSiteMatcher matcher = aliasIterator.next();
-                Element aliasElement = siteElement.addElement(N_ALIAS);
-                aliasElement.addAttribute(A_SERVER, matcher.getUrl());
-                if (matcher.getTimeOffset() != 0) {
-                    aliasElement.addAttribute(A_OFFSET, "" + matcher.getTimeOffset());
+
+            if (m_loginManager.getUserDataCheckIntervalStr() != null) {
+                managerElement.addElement(N_USER_DATA_CHECK_INTERVAL).addText(
+                    m_loginManager.getUserDataCheckIntervalStr());
+            }
+            if (m_loginManager.isOrgUnitRequired()) {
+                managerElement.addElement(N_REQUIRE_ORGUNIT).addText("true");
+            }
+
+            if (m_loginManager.getLogoutUri() != null) {
+                managerElement.addElement(N_LOGOUT_URI).addText(m_loginManager.getLogoutUri());
+            }
+
+            if (m_loginManager.isForceLogoutForUnprivilegedUsers()) {
+                managerElement.addElement(N_FORCE_LOGOUT_FOR_UNPRIVILEGED_USERS).addText("" + true);
+            }
+
+            if (m_loginManager.getCustomLogin() != null) {
+                Element customLoginElement = systemElement.addElement(N_CUSTOM_LOGIN);
+                customLoginElement.addAttribute(A_CLASS, m_loginManager.getCustomLogin().getClass().getName());
+                for (Map.Entry<String, String> entry : m_loginManager.getCustomLogin().getConfiguration().entrySet()) {
+                    Element paramElement = customLoginElement.addElement(N_PARAM);
+                    paramElement.addAttribute(A_NAME, entry.getKey());
+                    paramElement.setText(entry.getValue());
                 }
             }
         }
+
+        if (m_twoFactorConfig != null) {
+            // the 2FA configuration is immutable, so we can just reuse the original element here
+            systemElement.add(m_twoFactorConfig.getConfigElement());
+        }
+
+        Element saxImpl = systemElement.addElement(N_SAX_IMPL_SYSTEM_PROPERTIES);
+        saxImpl.setText(String.valueOf(m_saxImplProperties));
 
         // create <runtimeproperties> node
         Element runtimepropertiesElement = systemElement.addElement(N_RUNTIMEPROPERTIES);
@@ -1355,8 +1774,6 @@ public class CmsSystemConfiguration extends A_CmsXmlConfiguration {
         }
         // create <group-administrators> subnode
         defaultusersElement.addElement(N_GROUP_ADMINISTRATORS).addText(m_cmsDefaultUsers.getGroupAdministrators());
-        // create <group-projectmanagers> subnode
-        defaultusersElement.addElement(N_GROUP_PROJECTMANAGERS).addText(m_cmsDefaultUsers.getGroupProjectmanagers());
         // create <group-users> subnode
         defaultusersElement.addElement(N_GROUP_USERS).addText(m_cmsDefaultUsers.getGroupUsers());
         // create <group-guests> subnode
@@ -1420,6 +1837,9 @@ public class CmsSystemConfiguration extends A_CmsXmlConfiguration {
                 m_cmsFlexCacheConfiguration.getDeviceSelectorConfiguration());
         }
 
+        // create optional <imagecache> node
+        m_imageCacheConfiguration.appendToXml(systemElement);
+
         // create <http-authentication> node
         Element httpAuthenticationElement = systemElement.addElement(N_HTTP_AUTHENTICATION);
         httpAuthenticationElement.addElement(N_BROWSER_BASED).setText(
@@ -1459,6 +1879,17 @@ public class CmsSystemConfiguration extends A_CmsXmlConfiguration {
         cacheElement.addElement(N_SIZE_ACLS).setText(Integer.toString(m_cacheSettings.getAclCacheSize()));
         cacheElement.addElement(N_SIZE_PERMISSIONS).setText(Integer.toString(m_cacheSettings.getPermissionCacheSize()));
 
+        // stored content info cache settings
+        Element storedContentInfoCacheElement = systemElement.addElement(N_STOREDCONTENTINFOCACHE);
+        storedContentInfoCacheElement.addElement(N_STOREDCONTENTINFOCACHE_FACTORY).setText(
+            m_storedContentInfoCacheConfiguration.getFactoryClass());
+        storedContentInfoCacheElement.addElement(N_STOREDCONTENTINFOCACHE_ENABLED).setText(
+            Boolean.toString(m_storedContentInfoCacheConfiguration.isEnabled()));
+        storedContentInfoCacheElement.addElement(N_STOREDCONTENTINFOCACHE_SIZE).setText(
+            Integer.toString(m_storedContentInfoCacheConfiguration.getSize()));
+        storedContentInfoCacheElement.addElement(N_STOREDCONTENTINFOCACHE_TTL).setText(
+            Long.toString(m_storedContentInfoCacheConfiguration.getTtl()));
+
         // content notification settings
         if ((m_notificationTime != null) || (m_notificationProject != null)) {
             Element notificationElement = systemElement.addElement(N_CONTENT_NOTIFICATION);
@@ -1476,6 +1907,24 @@ public class CmsSystemConfiguration extends A_CmsXmlConfiguration {
             authorizationHandlerElem.addAttribute(A_CLASS, m_authorizationHandler);
         }
 
+        if (m_apiAuthorizations.size() > 0) {
+            Element authsElement = systemElement.addElement(N_API_AUTHORIZATIONS);
+            for (ApiAuthorizationConfig apiAuth : m_apiAuthorizations) {
+                apiAuth.fillXml(authsElement.addElement(N_API_AUTHORIZATION));
+            }
+        }
+
+        Element encryptionElement = systemElement.addElement(N_ENCRYPTION);
+        for (I_CmsTextEncryption encrypter : m_textEncryptions.values()) {
+            Element textEncryption = encryptionElement.addElement(N_TEXT_ENCRYPTION);
+            textEncryption.addAttribute(A_CLASS, encrypter.getClass().getName());
+            textEncryption.addAttribute(A_NAME, encrypter.getName());
+            CmsParameterConfiguration config = encrypter.getConfiguration();
+            for (Map.Entry<String, String> entry : config.entrySet()) {
+                textEncryption.addElement(N_PARAM).addAttribute(A_NAME, entry.getKey()).addText(entry.getValue());
+            }
+        }
+
         // optional publish manager nodes
         if (m_publishManager != null) {
             Element pubHistElement = systemElement.addElement(N_PUBLISHMANAGER);
@@ -1485,6 +1934,8 @@ public class CmsSystemConfiguration extends A_CmsXmlConfiguration {
                 String.valueOf(m_publishManager.isPublishQueuePersistanceEnabled()));
             pubHistElement.addElement(N_QUEUESHUTDOWNTIME).setText(
                 String.valueOf(m_publishManager.getPublishQueueShutdowntime()));
+            pubHistElement.addElement(N_AUTO_CLEANUP_HISTORY_ENTRIES).setText(
+                String.valueOf(m_publishManager.isAutoCleanupHistoryEntries()));
         }
 
         // session storage provider
@@ -1518,10 +1969,20 @@ public class CmsSystemConfiguration extends A_CmsXmlConfiguration {
         }
 
         // ADE settings
-        if ((getAdeConfiguration() != null) || (getAdeCacheSettings() != null)) {
+        if ((getAdeConfiguration() != null) || (getAdeCacheSettings() != null) || !m_adeParameters.isEmpty()) {
             Element adeElem = systemElement.addElement(N_ADE);
             if (getAdeConfiguration() != null) {
                 adeElem.addElement(N_CONFIGURATION).addAttribute(A_CLASS, getAdeConfiguration());
+            }
+            if (!m_adeParameters.isEmpty()) {
+                Element paramsElement = adeElem.addElement(N_PARAMETERS);
+                for (Map.Entry<String, String> entry : m_adeParameters.entrySet()) {
+                    String name = entry.getKey();
+                    String value = entry.getValue();
+                    Element paramElement = paramsElement.addElement(N_PARAM);
+                    paramElement.addAttribute(N_NAME, name);
+                    paramElement.setText(value);
+                }
             }
             if (getAdeCacheSettings() != null) {
                 Element cacheElem = adeElem.addElement(N_ADE_CACHE);
@@ -1531,9 +1992,12 @@ public class CmsSystemConfiguration extends A_CmsXmlConfiguration {
                 cntPageCacheElem.addAttribute(A_ONLINE, "" + getAdeCacheSettings().getContainerPageOnlineSize());
                 // group-container cache
                 Element groupContainerCacheElem = cacheElem.addElement(N_GROUPCONTAINERS);
-                groupContainerCacheElem.addAttribute(A_OFFLINE, ""
-                    + getAdeCacheSettings().getGroupContainerOfflineSize());
-                groupContainerCacheElem.addAttribute(A_ONLINE, "" + getAdeCacheSettings().getGroupContainerOnlineSize());
+                groupContainerCacheElem.addAttribute(
+                    A_OFFLINE,
+                    "" + getAdeCacheSettings().getGroupContainerOfflineSize());
+                groupContainerCacheElem.addAttribute(
+                    A_ONLINE,
+                    "" + getAdeCacheSettings().getGroupContainerOnlineSize());
             }
         }
 
@@ -1543,6 +2007,85 @@ public class CmsSystemConfiguration extends A_CmsXmlConfiguration {
             subscrManElem.addAttribute(A_ENABLED, Boolean.toString(getSubscriptionManager().isEnabled()));
             subscrManElem.addAttribute(A_POOLNAME, getSubscriptionManager().getPoolName());
             subscrManElem.addAttribute(A_MAXVISITED, String.valueOf(getSubscriptionManager().getMaxVisitedCount()));
+        }
+
+        I_CmsWorkflowManager workflowMan = getWorkflowManager();
+        if (workflowMan != null) {
+            Element workflowElem = systemElement.addElement(N_WORKFLOW);
+            workflowElem.addAttribute(A_CLASS, workflowMan.getClass().getName());
+            Map<String, String> parameters = workflowMan.getParameters();
+            Element parametersElem = workflowElem.addElement(N_PARAMETERS);
+            for (Map.Entry<String, String> entry : parameters.entrySet()) {
+                Element paramElem = parametersElem.addElement(N_PARAM);
+                paramElem.addAttribute(A_NAME, entry.getKey());
+                paramElem.addText(entry.getValue());
+            }
+        }
+
+        if (m_userSessionMode != null) {
+            Element userSessionElem = systemElement.addElement(N_USER_SESSION_MODE);
+            userSessionElem.setText(m_userSessionMode.toString());
+        }
+
+        if (m_credentialsResolverClass != null) {
+            systemElement.addElement(N_CREDENTIALS_RESOLVER).setText(m_credentialsResolverClass);
+        }
+
+        if (m_secretStore != null) {
+            Element secretStoreElem = systemElement.addElement(N_SECRET_STORE);
+            if (!(m_secretStore instanceof CmsNullSecretStore)) {
+                secretStoreElem.addAttribute(A_CLASS, m_secretStore.getClass().getName());
+                CmsParameterConfiguration config = m_secretStore.getConfiguration();
+                if (config != null) {
+                    for (String key : config.keySet()) {
+                        secretStoreElem.addElement(N_PARAM).addAttribute(A_NAME, key).addText(config.get(key));
+                    }
+                }
+            }
+        }
+
+        if (m_publishListRemoveMode != null) {
+            systemElement.addElement(N_PUBLISH_LIST_REMOVE_MODE).addAttribute(A_MODE, m_publishListRemoveMode);
+        }
+
+        if ((m_elementMarker != null) && !(m_elementMarker instanceof CmsDefaultElementMarker)) {
+            Element markerElement = systemElement.addElement(N_EDIT_MARKER_HANDLER).addAttribute(
+                A_CLASS,
+                m_elementMarker.getClass().getName());
+            CmsParameterConfiguration config = m_elementMarker.getConfiguration();
+            if (config != null) {
+                for (String key : config.keySet()) {
+                    markerElement.addElement(N_PARAM).addAttribute(A_NAME, key).addText(config.get(key));
+                }
+            }
+        }
+
+        if (m_detailPageHandler != null) {
+            Element handlerElement = systemElement.addElement(N_DETAIL_PAGE_HANDLER).addAttribute(
+                A_CLASS,
+                m_detailPageHandler.getClass().getName());
+            CmsParameterConfiguration config = m_detailPageHandler.getConfiguration();
+            if (config != null) {
+                for (String key : config.keySet()) {
+                    handlerElement.addElement(N_PARAM).addAttribute(A_NAME, key).addText(config.get(key));
+                }
+            }
+        }
+
+        if (m_restrictDetailContents != null) {
+            Element restrictDetailContentsElem = systemElement.addElement(N_RESTRICT_DETAIL_CONTENTS);
+            restrictDetailContentsElem.addText(m_restrictDetailContents);
+        }
+
+        if (m_shellServerOptions != null) {
+            systemElement.addElement(N_SHELL_SERVER).addAttribute(
+                A_ENABLED,
+                "" + m_shellServerOptions.isEnabled()).addAttribute(A_PORT, "" + m_shellServerOptions.getPort());
+        }
+        CmsLetsEncryptConfiguration.CONFIG_HELPER.generateXml(systemElement, m_letsEncryptConfig);
+
+        if (m_userDataRequestManager != null) {
+            m_userDataRequestManager.appendToXml(systemElement);
         }
 
         // return the system node
@@ -1570,8 +2113,28 @@ public class CmsSystemConfiguration extends A_CmsXmlConfiguration {
     }
 
     /**
+     * Gets the ADE configuration parameters.<p>
+     *
+     * @return the ADE configuration parameters
+     */
+    public Map<String, String> getAdeParameters() {
+
+        return m_adeParameters;
+    }
+
+    /**
+     * Gets the map of API authorization handlers (with names as keys).
+     *
+     * @return the map of API authorization handlers
+     */
+    public Map<String, I_CmsApiAuthorizationHandler> getApiAuthorizations() {
+
+        return m_apiAuthorizationMap;
+    }
+
+    /**
      * Returns an instance of the configured authorization handler.<p>
-     * 
+     *
      * @return an instance of the configured authorization handler
      */
     public I_CmsAuthorizationHandler getAuthorizationHandler() {
@@ -1583,11 +2146,12 @@ public class CmsSystemConfiguration extends A_CmsXmlConfiguration {
             I_CmsAuthorizationHandler authorizationHandler = (I_CmsAuthorizationHandler)Class.forName(
                 m_authorizationHandler).newInstance();
             if (LOG.isInfoEnabled()) {
-                LOG.info(Messages.get().getBundle().key(
-                    Messages.INIT_AUTHORIZATION_HANDLER_CLASS_SUCCESS_1,
-                    m_authorizationHandler));
+                LOG.info(
+                    Messages.get().getBundle().key(
+                        Messages.INIT_AUTHORIZATION_HANDLER_CLASS_SUCCESS_1,
+                        m_authorizationHandler));
             }
-            authorizationHandler.setParameters(m_runtimeProperties);
+            authorizationHandler.setParameters(new HashMap<>(m_authHandlerParams));
             return authorizationHandler;
         } catch (Throwable t) {
             LOG.error(
@@ -1640,6 +2204,29 @@ public class CmsSystemConfiguration extends A_CmsXmlConfiguration {
     }
 
     /**
+     * Gets the credentials resolver.<p>
+     *
+     * @return the credentials resolver
+     */
+    public I_CmsCredentialsResolver getCredentialsResolver() {
+
+        if (m_credentialsResolver == null) {
+            m_credentialsResolver = new CmsDefaultCredentialsResolver();
+        }
+        return m_credentialsResolver;
+    }
+
+    /**
+     * Gets the configured credentials resolver class name (null if no class is explicity configured).<p>
+     *
+     * @return the name of the configured credentials resolver class
+     */
+    public String getCredentialsResolverClass() {
+
+        return m_credentialsResolverClass;
+    }
+
+    /**
      * Returns the defaultContentEncoding.<p>
      *
      * @return the defaultContentEncoding
@@ -1647,6 +2234,16 @@ public class CmsSystemConfiguration extends A_CmsXmlConfiguration {
     public String getDefaultContentEncoding() {
 
         return m_defaultContentEncoding;
+    }
+
+    /**
+     * Gets the detail page handler.
+     *
+     * @return the detail page handler
+     */
+    public I_CmsDetailPageHandler getDetailPageHandler() {
+
+        return m_detailPageHandler;
     }
 
     /**
@@ -1658,8 +2255,18 @@ public class CmsSystemConfiguration extends A_CmsXmlConfiguration {
     }
 
     /**
+     * Gets the configured element marker handler (a no-op default when none is configured).
+     *
+     * @return the element marker handler
+     */
+    public I_CmsElementMarker getElementMarker() {
+
+        return m_elementMarker;
+    }
+
+    /**
      * Returns the configured OpenCms event manager instance.<p>
-     * 
+     *
      * @return the configured OpenCms event manager instance
      */
     public CmsEventManager getEventManager() {
@@ -1669,11 +2276,11 @@ public class CmsSystemConfiguration extends A_CmsXmlConfiguration {
 
     /**
      * Returns the maximum number of versions that are kept per resource in the VFS version history.<p>
-     * 
+     *
      * If the version history is disabled, this setting has no effect.<p>
-     * 
+     *
      * @return the maximum number of versions that are kept per resource
-     * 
+     *
      * @see #isHistoryEnabled()
      */
     public int getHistoryVersions() {
@@ -1683,11 +2290,11 @@ public class CmsSystemConfiguration extends A_CmsXmlConfiguration {
 
     /**
      * Returns the maximum number of versions that are kept in the VFS version history for deleted resources.<p>
-     * 
+     *
      * If the version history is disabled, this setting has no effect.<p>
-     * 
+     *
      * @return the maximum number of versions that are kept for deleted resources
-     * 
+     *
      * @see #isHistoryEnabled()
      */
     public int getHistoryVersionsAfterDeletion() {
@@ -1706,8 +2313,28 @@ public class CmsSystemConfiguration extends A_CmsXmlConfiguration {
     }
 
     /**
+     * Returns the image cache retention and maintenance configuration.<p>
+     *
+     * @return the image cache configuration
+     */
+    public CmsImageCacheConfiguration getImageCacheConfiguration() {
+
+        return m_imageCacheConfiguration;
+    }
+
+    /**
+     * Gets the LetsEncrypt configuration.<p>
+     *
+     * @return the LetsEncrypt configuration
+     */
+    public CmsLetsEncryptConfiguration getLetsEncryptConfig() {
+
+        return m_letsEncryptConfig;
+    }
+
+    /**
      * Returns the configured locale manager for multi language support.<p>
-     * 
+     *
      * @return the configured locale manager for multi language support
      */
     public CmsLocaleManager getLocaleManager() {
@@ -1727,22 +2354,21 @@ public class CmsSystemConfiguration extends A_CmsXmlConfiguration {
             m_loginManager = new CmsLoginManager(
                 CmsLoginManager.DISABLE_MINUTES_DEFAULT,
                 CmsLoginManager.MAX_BAD_ATTEMPTS_DEFAULT,
-                CmsLoginManager.ENABLE_SECURITY_DEFAULT);
-        }
-        if (m_loginMessage != null) {
-            // null OpenCms object is ok during configuration
-            try {
-                m_loginManager.setLoginMessage(null, m_loginMessage);
-            } catch (CmsRoleViolationException e) {
-                // this should never happen
-            }
+                CmsLoginManager.ENABLE_SECURITY_DEFAULT,
+                null,
+                null,
+                null,
+                null,
+                false,
+                null,
+                false);
         }
         return m_loginManager;
     }
 
     /**
      * Returns the configured mail settings.<p>
-     * 
+     *
      * @return the configured mail settings
      */
     public CmsMailSettings getMailSettings() {
@@ -1752,7 +2378,7 @@ public class CmsSystemConfiguration extends A_CmsXmlConfiguration {
 
     /**
      * Returns the project in which timestamps for the content notification are read.<p>
-     * 
+     *
      * @return the project in which timestamps for the content notification are read
      */
     public String getNotificationProject() {
@@ -1762,7 +2388,7 @@ public class CmsSystemConfiguration extends A_CmsXmlConfiguration {
 
     /**
      * Returns the duration after which responsibles will be notified about out-dated content (in days).<p>
-     * 
+     *
      * @return the duration after which responsibles will be notified about out-dated content
      */
     public int getNotificationTime() {
@@ -1776,7 +2402,7 @@ public class CmsSystemConfiguration extends A_CmsXmlConfiguration {
 
     /**
      * Returns the configured password handler.<p>
-     * 
+     *
      * @return the configured password handler
      */
     public I_CmsPasswordHandler getPasswordHandler() {
@@ -1795,8 +2421,33 @@ public class CmsSystemConfiguration extends A_CmsXmlConfiguration {
     }
 
     /**
+     * Returns the configured publish list remove mode, or a default value if there is no configured value or an erroneous configured value.<p>
+     *
+     * @return the publish list remove mode
+     */
+    public CmsPublishManager.PublishListRemoveMode getPublishListRemoveMode() {
+
+        try {
+            // trim preserves null
+            return CmsPublishManager.PublishListRemoveMode.valueOf(StringUtils.trim(m_publishListRemoveMode));
+        } catch (Exception e) {
+            return CmsPublishManager.PublishListRemoveMode.allUsers;
+        }
+    }
+
+    /**
+     * Returns the configured publish list remove mode as a string, or null if no publish list remove mode has been configured.<p>
+     *
+     * @return the publish list remove mode string from the configuration
+     */
+    public String getPublishListRemoveModeStr() {
+
+        return m_publishListRemoveMode;
+    }
+
+    /**
      * Returns the configured publish manager.<p>
-     * 
+     *
      * @return the configured publish manager
      */
     public CmsPublishManager getPublishManager() {
@@ -1813,7 +2464,7 @@ public class CmsSystemConfiguration extends A_CmsXmlConfiguration {
 
     /**
      * Returns the list of instantiated request handler classes.<p>
-     * 
+     *
      * @return the list of instantiated request handler classes
      */
     public List<I_CmsRequestHandler> getRequestHandlers() {
@@ -1823,7 +2474,7 @@ public class CmsSystemConfiguration extends A_CmsXmlConfiguration {
 
     /**
      * Returns the list of instantiated resource init handler classes.<p>
-     * 
+     *
      * @return the list of instantiated resource init handler classes
      */
     public List<I_CmsResourceInit> getResourceInitHandlers() {
@@ -1833,7 +2484,7 @@ public class CmsSystemConfiguration extends A_CmsXmlConfiguration {
 
     /**
      * Returns the runtime info factory instance.<p>
-     * 
+     *
      * @return the runtime info factory instance
      */
     public I_CmsDbContextFactory getRuntimeInfoFactory() {
@@ -1852,18 +2503,18 @@ public class CmsSystemConfiguration extends A_CmsXmlConfiguration {
     }
 
     /**
-     * Returns the configured schedule manager.<p>
+     * Gets the secret store.
      *
-     * @return the configured schedule manager
+     * @return the configured secret store
      */
-    public CmsScheduleManager getScheduleManager() {
+    public I_CmsSecretStore getSecretStore() {
 
-        return m_scheduleManager;
+        return m_secretStore;
     }
 
     /**
      * Returns an instance of the configured session storage provider.<p>
-     * 
+     *
      * @return an instance of the configured session storage provider
      */
     public I_CmsSessionStorageProvider getSessionStorageProvider() {
@@ -1875,9 +2526,10 @@ public class CmsSystemConfiguration extends A_CmsXmlConfiguration {
             I_CmsSessionStorageProvider sessionCacheProvider = (I_CmsSessionStorageProvider)Class.forName(
                 m_sessionStorageProvider).newInstance();
             if (CmsLog.INIT.isInfoEnabled()) {
-                CmsLog.INIT.info(Messages.get().getBundle().key(
-                    Messages.INIT_SESSION_STORAGEPROVIDER_SUCCESS_1,
-                    m_sessionStorageProvider));
+                CmsLog.INIT.info(
+                    Messages.get().getBundle().key(
+                        Messages.INIT_SESSION_STORAGEPROVIDER_SUCCESS_1,
+                        m_sessionStorageProvider));
             }
             return sessionCacheProvider;
         } catch (Throwable t) {
@@ -1891,18 +2543,28 @@ public class CmsSystemConfiguration extends A_CmsXmlConfiguration {
     }
 
     /**
-     * Returns the site manager.<p>
+     * Returns the shell server options.<p>
      *
-     * @return the site manager
+     * @return the shell server options
      */
-    public CmsSiteManagerImpl getSiteManager() {
+    public CmsRemoteShellConfiguration getShellServerOptions() {
 
-        return m_siteManager;
+        return m_shellServerOptions;
+    }
+
+    /**
+     * Returns the stored content info cache configuration.<p>
+     *
+     * @return the stored content info cache configuration
+     */
+    public CmsStoredContentInfoCacheConfiguration getStoredContentInfoCacheConfiguration() {
+
+        return m_storedContentInfoCacheConfiguration;
     }
 
     /**
      * Returns the configured subscription manager.<p>
-     * 
+     *
      * @return the configured subscription manager
      */
     public CmsSubscriptionManager getSubscriptionManager() {
@@ -1916,7 +2578,7 @@ public class CmsSystemConfiguration extends A_CmsXmlConfiguration {
 
     /**
      * Returns temporary file project id.<p>
-     * 
+     *
      * @return temporary file project id
      */
     public int getTempFileProjectId() {
@@ -1925,8 +2587,56 @@ public class CmsSystemConfiguration extends A_CmsXmlConfiguration {
     }
 
     /**
+     * Gets the map of text encryptions.
+     *
+     * @return the map of text encryptions
+     */
+    public Map<String, I_CmsTextEncryption> getTextEncryptions() {
+
+        return Collections.unmodifiableMap(m_textEncryptions);
+    }
+
+    /**
+     * Gets the two-factor authentication configuration.
+     *
+     * @return the two-factor auth configuration
+     */
+    public CmsTwoFactorAuthenticationConfig getTwoFactorAuthenticationConfig() {
+
+        return m_twoFactorConfig;
+    }
+
+    /**
+     * Gets the user data request manager.
+     *
+     * @return the user data request manager
+     */
+    public CmsUserDataRequestManager getUserDataRequestManager() {
+
+        return m_userDataRequestManager;
+    }
+
+    /**
+     * Gets the user session mode.<p>
+     *
+     * @param useDefault if true, and no user session mode was configured, this will return the default value
+     *
+     * @return the user session mode
+     */
+    public UserSessionMode getUserSessionMode(boolean useDefault) {
+
+        if (m_userSessionMode != null) {
+            return m_userSessionMode;
+        } else if (useDefault) {
+            return DEFAULT_USER_SESSION_MODE;
+        } else {
+            return null;
+        }
+    }
+
+    /**
      * Returns an instance of the configured validation handler.<p>
-     * 
+     *
      * @return an instance of the configured validation handler
      */
     public I_CmsValidationHandler getValidationHandler() {
@@ -1935,11 +2645,13 @@ public class CmsSystemConfiguration extends A_CmsXmlConfiguration {
             return new CmsDefaultValidationHandler();
         }
         try {
-            I_CmsValidationHandler validationHandler = (I_CmsValidationHandler)Class.forName(m_validationHandler).newInstance();
+            I_CmsValidationHandler validationHandler = (I_CmsValidationHandler)Class.forName(
+                m_validationHandler).newInstance();
             if (LOG.isInfoEnabled()) {
-                LOG.info(Messages.get().getBundle().key(
-                    Messages.INIT_VALIDATION_HANDLER_CLASS_SUCCESS_1,
-                    m_validationHandler));
+                LOG.info(
+                    Messages.get().getBundle().key(
+                        Messages.INIT_VALIDATION_HANDLER_CLASS_SUCCESS_1,
+                        m_validationHandler));
             }
             return validationHandler;
         } catch (Throwable t) {
@@ -1951,7 +2663,17 @@ public class CmsSystemConfiguration extends A_CmsXmlConfiguration {
     }
 
     /**
-     * Will be called when configuration of this object is finished.<p> 
+     * Gets the configured workflow manager instance.<p>
+     *
+     * @return the configured workflow manager instance.
+     */
+    public I_CmsWorkflowManager getWorkflowManager() {
+
+        return m_workflowManager;
+    }
+
+    /**
+     * Will be called when configuration of this object is finished.<p>
      */
     public void initializeFinished() {
 
@@ -1961,13 +2683,24 @@ public class CmsSystemConfiguration extends A_CmsXmlConfiguration {
     }
 
     /**
-     * Returns if the VFS version history is enabled.<p> 
-     * 
+     * Returns if the VFS version history is enabled.<p>
+     *
      * @return if the VFS version history is enabled
      */
     public boolean isHistoryEnabled() {
 
         return m_historyEnabled;
+    }
+
+    /**
+     * Returns true if detail contents are restricted to detail pages from the same site.<p>
+     *
+     * @return true if detail contents are restricted to detail pages from the same site
+     */
+    public boolean isRestrictDetailContents() {
+
+        return (m_restrictDetailContents == null) || Boolean.parseBoolean(m_restrictDetailContents.trim());
+
     }
 
     /**
@@ -1992,7 +2725,7 @@ public class CmsSystemConfiguration extends A_CmsXmlConfiguration {
 
     /**
      * Sets the authorization handler.<p>
-     * 
+     *
      * @param authorizationHandlerClass the authorization handler class to set.
      */
     public void setAuthorizationHandler(String authorizationHandlerClass) {
@@ -2012,13 +2745,12 @@ public class CmsSystemConfiguration extends A_CmsXmlConfiguration {
 
     /**
      * Sets the CmsDefaultUsers.<p>
-     * 
+     *
      * @param userAdmin the name of the default admin user
      * @param userGuest the name of the guest user
      * @param userExport the name of the export user
      * @param userDeletedResource the name of the deleted resource user, can be <code>null</code>
      * @param groupAdministrators the name of the administrators group
-     * @param groupProjectmanagers the name of the project managers group
      * @param groupUsers the name of the users group
      * @param groupGuests the name of the guests group
      */
@@ -2029,7 +2761,6 @@ public class CmsSystemConfiguration extends A_CmsXmlConfiguration {
         String userExport,
         String userDeletedResource,
         String groupAdministrators,
-        String groupProjectmanagers,
         String groupUsers,
         String groupGuests) {
 
@@ -2042,35 +2773,28 @@ public class CmsSystemConfiguration extends A_CmsXmlConfiguration {
             userExport,
             userDeletedResource,
             groupAdministrators,
-            groupProjectmanagers,
             groupUsers,
             groupGuests);
 
         if (CmsLog.INIT.isInfoEnabled()) {
-            CmsLog.INIT.info(Messages.get().getBundle().key(
-                Messages.INIT_ADMIN_USER_1,
-                m_cmsDefaultUsers.getUserAdmin()));
-            CmsLog.INIT.info(Messages.get().getBundle().key(
-                Messages.INIT_GUEST_USER_1,
-                m_cmsDefaultUsers.getUserGuest()));
-            CmsLog.INIT.info(Messages.get().getBundle().key(
-                Messages.INIT_EXPORT_USER_1,
-                m_cmsDefaultUsers.getUserExport()));
-            CmsLog.INIT.info(Messages.get().getBundle().key(
-                Messages.INIT_DELETED_RESOURCE_USER_1,
-                m_cmsDefaultUsers.getUserDeletedResource()));
-            CmsLog.INIT.info(Messages.get().getBundle().key(
-                Messages.INIT_ADMIN_GROUP_1,
-                m_cmsDefaultUsers.getGroupAdministrators()));
-            CmsLog.INIT.info(Messages.get().getBundle().key(
-                Messages.INIT_PROJECT_MANAGERS_GROUP_1,
-                m_cmsDefaultUsers.getGroupProjectmanagers()));
-            CmsLog.INIT.info(Messages.get().getBundle().key(
-                Messages.INIT_USERS_GROUP_1,
-                m_cmsDefaultUsers.getGroupUsers()));
-            CmsLog.INIT.info(Messages.get().getBundle().key(
-                Messages.INIT_GUESTS_GROUP_1,
-                m_cmsDefaultUsers.getGroupGuests()));
+            CmsLog.INIT.info(
+                Messages.get().getBundle().key(Messages.INIT_ADMIN_USER_1, m_cmsDefaultUsers.getUserAdmin()));
+            CmsLog.INIT.info(
+                Messages.get().getBundle().key(Messages.INIT_GUEST_USER_1, m_cmsDefaultUsers.getUserGuest()));
+            CmsLog.INIT.info(
+                Messages.get().getBundle().key(Messages.INIT_EXPORT_USER_1, m_cmsDefaultUsers.getUserExport()));
+            CmsLog.INIT.info(
+                Messages.get().getBundle().key(
+                    Messages.INIT_DELETED_RESOURCE_USER_1,
+                    m_cmsDefaultUsers.getUserDeletedResource()));
+            CmsLog.INIT.info(
+                Messages.get().getBundle().key(
+                    Messages.INIT_ADMIN_GROUP_1,
+                    m_cmsDefaultUsers.getGroupAdministrators()));
+            CmsLog.INIT.info(
+                Messages.get().getBundle().key(Messages.INIT_USERS_GROUP_1, m_cmsDefaultUsers.getGroupUsers()));
+            CmsLog.INIT.info(
+                Messages.get().getBundle().key(Messages.INIT_GUESTS_GROUP_1, m_cmsDefaultUsers.getGroupGuests()));
             CmsLog.INIT.info(Messages.get().getBundle().key(Messages.INIT_DEFAULT_USER_NAMES_INITIALIZED_0));
         }
     }
@@ -2096,6 +2820,32 @@ public class CmsSystemConfiguration extends A_CmsXmlConfiguration {
     }
 
     /**
+     * Sets the credentials resolver class.<p>
+     *
+     * @param className the name of the credentials resolver class
+     *
+     * @throws Exception if something goes wrong
+     */
+    public void setCredentialsResolver(String className) throws Exception {
+
+        String originalClassName = className;
+        className = className.trim();
+        Class<?> resolverClass = Class.forName(className);
+        m_credentialsResolver = (I_CmsCredentialsResolver)(resolverClass.newInstance());
+        m_credentialsResolverClass = originalClassName;
+    }
+
+    /**
+     * Sets the custom login.
+     *
+     * @param customLogin the custom login
+     */
+    public void setCustomLogin(I_CmsCustomLogin customLogin) {
+
+        getLoginManager().setCustomLogin(customLogin);
+    }
+
+    /**
      * Sets the defaultContentEncoding.<p>
      *
      * @param defaultContentEncoding the defaultContentEncoding to set
@@ -2106,8 +2856,29 @@ public class CmsSystemConfiguration extends A_CmsXmlConfiguration {
     }
 
     /**
+     * Sets the detail page handler.
+     *
+     * @param handler the detail page handler
+     */
+    public void setDetailPageHandler(I_CmsDetailPageHandler handler) {
+
+        m_detailPageHandler = handler;
+
+    }
+
+    /**
+     * Sets the element marker handler (called from the digester when <code>edit-marker-handler</code> is configured).
+     *
+     * @param marker the element marker handler
+     */
+    public void setElementMarker(I_CmsElementMarker marker) {
+
+        m_elementMarker = marker;
+    }
+
+    /**
      * VFS version history settings are set here.<p>
-     * 
+     *
      * @param historyEnabled if true the history is enabled
      * @param historyVersions the maximum number of versions that are kept per VFS resource
      * @param historyVersionsAfterDeletion the maximum number of versions for deleted resources
@@ -2118,11 +2889,12 @@ public class CmsSystemConfiguration extends A_CmsXmlConfiguration {
         m_historyVersions = Integer.valueOf(historyVersions).intValue();
         m_historyVersionsAfterDeletion = Integer.valueOf(historyVersionsAfterDeletion).intValue();
         if (CmsLog.INIT.isInfoEnabled()) {
-            CmsLog.INIT.info(Messages.get().getBundle().key(
-                Messages.INIT_HISTORY_SETTINGS_3,
-                Boolean.valueOf(m_historyEnabled),
-                new Integer(m_historyVersions),
-                new Integer(m_historyVersionsAfterDeletion)));
+            CmsLog.INIT.info(
+                Messages.get().getBundle().key(
+                    Messages.INIT_HISTORY_SETTINGS_3,
+                    Boolean.valueOf(m_historyEnabled),
+                    Integer.valueOf(m_historyVersions),
+                    Integer.valueOf(m_historyVersionsAfterDeletion)));
         }
     }
 
@@ -2137,8 +2909,36 @@ public class CmsSystemConfiguration extends A_CmsXmlConfiguration {
     }
 
     /**
+     * Sets the image cache retention and maintenance configuration.<p>
+     *
+     * @param configuration the image cache configuration
+     */
+    public void setImageCacheConfiguration(CmsImageCacheConfiguration configuration) {
+
+        configuration.validate();
+        m_imageCacheConfiguration = configuration;
+        if (CmsLog.INIT.isInfoEnabled()) {
+            CmsLog.INIT.info(
+                Messages.get().getBundle().key(
+                    Messages.INIT_IMAGECACHE_CONFIG_2,
+                    configuration.getRetentionMode().getXmlValue(),
+                    configuration.getPolicyFingerprint()));
+        }
+    }
+
+    /**
+     * Sets the LetsEncrypt configuration.<p>
+     *
+     * @param letsEncryptConfig the LetsEncrypt configuration
+     */
+    public void setLetsEncryptConfig(CmsLetsEncryptConfiguration letsEncryptConfig) {
+
+        m_letsEncryptConfig = letsEncryptConfig;
+    }
+
+    /**
      * Sets the locale manager for multi language support.<p>
-     * 
+     *
      * @param localeManager the locale manager to set
      */
     public void setLocaleManager(CmsLocaleManager localeManager) {
@@ -2155,8 +2955,23 @@ public class CmsSystemConfiguration extends A_CmsXmlConfiguration {
      * @param maxBadAttemptsStr the number of allowed bad login attempts
      * @param disableMinutesStr the time an account gets locked if to many bad logins are attempted
      * @param enableSecurityStr flag to determine if the security option should be enabled on the login dialog
+     * @param tokenLifetime the token lifetime
+     * @param maxInactive maximum time since last login before CmsLockInactiveAccountsJob locks an account
+     * @param passwordChangeInterval the password change interval
+     * @param userDataCheckInterval the user data check interval
+     * @param logoutUri the alternative logout handler URI (may be null)
      */
-    public void setLoginManager(String disableMinutesStr, String maxBadAttemptsStr, String enableSecurityStr) {
+    public void setLoginManager(
+        String disableMinutesStr,
+        String maxBadAttemptsStr,
+        String enableSecurityStr,
+        String tokenLifetime,
+        String maxInactive,
+        String passwordChangeInterval,
+        String userDataCheckInterval,
+        String requireOrgUnitStr,
+        String logoutUri,
+        String forceLogoutForUnprivilegedUsersStr) {
 
         int disableMinutes;
         try {
@@ -2171,36 +2986,32 @@ public class CmsSystemConfiguration extends A_CmsXmlConfiguration {
             maxBadAttempts = CmsLoginManager.MAX_BAD_ATTEMPTS_DEFAULT;
         }
         boolean enableSecurity = Boolean.valueOf(enableSecurityStr).booleanValue();
-        m_loginManager = new CmsLoginManager(disableMinutes, maxBadAttempts, enableSecurity);
+        boolean requireOrgUnit = Boolean.valueOf(requireOrgUnitStr).booleanValue();
+        boolean forceLogoutForUnprivilegedUsers = Boolean.parseBoolean(forceLogoutForUnprivilegedUsersStr);
+        m_loginManager = new CmsLoginManager(
+            disableMinutes,
+            maxBadAttempts,
+            enableSecurity,
+            tokenLifetime,
+            maxInactive,
+            passwordChangeInterval,
+            userDataCheckInterval,
+            requireOrgUnit,
+            logoutUri,
+            forceLogoutForUnprivilegedUsers);
         if (CmsLog.INIT.isInfoEnabled()) {
-            CmsLog.INIT.info(Messages.get().getBundle().key(
-                Messages.INIT_LOGINMANAGER_3,
-                new Integer(disableMinutes),
-                new Integer(maxBadAttempts),
-                new Boolean(enableSecurity)));
-        }
-    }
-
-    /**
-     * Adds the login message from the configuration.<p>
-     * 
-     * @param message the login message to add
-     */
-    public void setLoginMessage(CmsLoginMessage message) {
-
-        m_loginMessage = message;
-        if (CmsLog.INIT.isInfoEnabled()) {
-            CmsLog.INIT.info(Messages.get().getBundle().key(
-                Messages.INIT_LOGINMESSAGE_3,
-                Boolean.valueOf(message.isEnabled()),
-                Boolean.valueOf(message.isLoginForbidden()),
-                message.getMessage()));
+            CmsLog.INIT.info(
+                Messages.get().getBundle().key(
+                    Messages.INIT_LOGINMANAGER_3,
+                    Integer.valueOf(disableMinutes),
+                    Integer.valueOf(maxBadAttempts),
+                    Boolean.valueOf(enableSecurity)));
         }
     }
 
     /**
      * Sets the mail settings.<p>
-     * 
+     *
      * @param mailSettings the mail settings to set.
      */
     public void setMailSettings(CmsMailSettings mailSettings) {
@@ -2213,28 +3024,29 @@ public class CmsSystemConfiguration extends A_CmsXmlConfiguration {
 
     /**
      * Sets the project in which timestamps for the content notification are read.<p>
-     * 
+     *
      * @param notificationProject the project in which timestamps for the content notification are read
      */
     public void setNotificationProject(String notificationProject) {
 
         m_notificationProject = notificationProject;
         if (CmsLog.INIT.isInfoEnabled()) {
-            CmsLog.INIT.info(Messages.get().getBundle().key(Messages.INIT_NOTIFICATION_PROJECT_1, m_notificationProject));
+            CmsLog.INIT.info(
+                Messages.get().getBundle().key(Messages.INIT_NOTIFICATION_PROJECT_1, m_notificationProject));
         }
     }
 
     /**
      * Sets the duration after which responsibles will be notified about out-dated content (in days).<p>
-     * 
+     *
      * @param notificationTime the duration after which responsibles will be notified about out-dated content
      */
     public void setNotificationTime(String notificationTime) {
 
         try {
-            m_notificationTime = new Integer(notificationTime);
+            m_notificationTime = Integer.valueOf(notificationTime);
         } catch (Throwable t) {
-            m_notificationTime = new Integer(-1);
+            m_notificationTime = Integer.valueOf(-1);
         }
         if (CmsLog.INIT.isInfoEnabled()) {
             CmsLog.INIT.info(Messages.get().getBundle().key(Messages.INIT_NOTIFICATION_TIME_1, m_notificationTime));
@@ -2243,16 +3055,17 @@ public class CmsSystemConfiguration extends A_CmsXmlConfiguration {
 
     /**
      * Sets the password handler class.<p>
-     * 
+     *
      * @param passwordHandler the password handler to set
      */
     public void setPasswordHandler(I_CmsPasswordHandler passwordHandler) {
 
         m_passwordHandler = passwordHandler;
         if (CmsLog.INIT.isInfoEnabled()) {
-            CmsLog.INIT.info(Messages.get().getBundle().key(
-                Messages.INIT_PWD_HANDLER_SUCCESS_1,
-                passwordHandler.getClass().getName()));
+            CmsLog.INIT.info(
+                Messages.get().getBundle().key(
+                    Messages.INIT_PWD_HANDLER_SUCCESS_1,
+                    passwordHandler.getClass().getName()));
         }
     }
 
@@ -2268,7 +3081,7 @@ public class CmsSystemConfiguration extends A_CmsXmlConfiguration {
 
     /**
      * Sets the servlet container specific setting.<p>
-     * 
+     *
      * @param configValue the configuration value
      */
     public void setPreventResponseFlush(String configValue) {
@@ -2278,8 +3091,18 @@ public class CmsSystemConfiguration extends A_CmsXmlConfiguration {
     }
 
     /**
+     * Sets the publish list remove mode.<p>
+     *
+     * @param removeMode the publish list remove mode
+     */
+    public void setPublishListRemoveMode(String removeMode) {
+
+        m_publishListRemoveMode = removeMode;
+    }
+
+    /**
      * Sets the publish manager.<p>
-     * 
+     *
      * @param publishManager the publish manager
      */
     public void setPublishManager(CmsPublishManager publishManager) {
@@ -2289,7 +3112,7 @@ public class CmsSystemConfiguration extends A_CmsXmlConfiguration {
 
     /**
      * Sets the servlet container specific setting.<p>
-     * 
+     *
      * @param configValue the configuration value
      */
     public void setReleaseTagsAfterEnd(String configValue) {
@@ -2300,7 +3123,7 @@ public class CmsSystemConfiguration extends A_CmsXmlConfiguration {
 
     /**
      * Sets the servlet container specific setting.<p>
-     * 
+     *
      * @param configValue the configuration value
      */
     public void setRequestErrorPageAttribute(String configValue) {
@@ -2309,8 +3132,18 @@ public class CmsSystemConfiguration extends A_CmsXmlConfiguration {
     }
 
     /**
+     * Sets the 'restrict detail contents' option.<p>
+     *
+     * @param restrictDetailContents the value of the option
+     */
+    public void setRestrictDetailContents(String restrictDetailContents) {
+
+        m_restrictDetailContents = restrictDetailContents;
+    }
+
+    /**
      * Sets the runtime info factory.<p>
-     * 
+     *
      * @param className the class name of the configured runtime info factory
      */
     public void setRuntimeInfoFactory(String className) {
@@ -2327,21 +3160,31 @@ public class CmsSystemConfiguration extends A_CmsXmlConfiguration {
         if (objectInstance instanceof I_CmsDbContextFactory) {
             m_runtimeInfoFactory = (I_CmsDbContextFactory)objectInstance;
             if (CmsLog.INIT.isInfoEnabled()) {
-                CmsLog.INIT.info(Messages.get().getBundle().key(Messages.INIT_RUNTIME_INFO_FACTORY_SUCCESS_1, className));
+                CmsLog.INIT.info(
+                    Messages.get().getBundle().key(Messages.INIT_RUNTIME_INFO_FACTORY_SUCCESS_1, className));
             }
         } else {
             if (CmsLog.INIT.isFatalEnabled()) {
-                CmsLog.INIT.fatal(Messages.get().getBundle().key(
-                    Messages.INIT_RUNTIME_INFO_FACTORY_FAILURE_1,
-                    className));
+                CmsLog.INIT.fatal(
+                    Messages.get().getBundle().key(Messages.INIT_RUNTIME_INFO_FACTORY_FAILURE_1, className));
             }
         }
 
     }
 
     /**
+     * Sets the secret store from the configuration.
+     *
+     * @param secretStore the secret store
+     */
+    public void setSecretStore(I_CmsSecretStore secretStore) {
+
+        m_secretStore = secretStore;
+    }
+
+    /**
      * Sets the servlet container settings configuration mode.<p>
-     * 
+     *
      * @param configValue the value to set
      */
     public void setServletContainerSettingsMode(String configValue) {
@@ -2351,7 +3194,7 @@ public class CmsSystemConfiguration extends A_CmsXmlConfiguration {
 
     /**
      * Sets the session storage provider.<p>
-     * 
+     *
      * @param sessionStorageProviderClass the session storage provider class to set.
      */
     public void setSessionStorageProvider(String sessionStorageProviderClass) {
@@ -2360,21 +3203,36 @@ public class CmsSystemConfiguration extends A_CmsXmlConfiguration {
     }
 
     /**
-     * Sets the site manager.<p>
+     * Sets the shell server options from the confriguration.<p>
      *
-     * @param siteManager the site manager to set
+     * @param enabled the value of the 'enabled' attribute
+     * @param portStr the value of the 'port' attribute
      */
-    public void setSiteManager(CmsSiteManagerImpl siteManager) {
+    public void setShellServerOptions(String enabled, String portStr) {
 
-        m_siteManager = siteManager;
-        if (CmsLog.INIT.isInfoEnabled()) {
-            CmsLog.INIT.info(Messages.get().getBundle().key(Messages.INIT_SITE_CONFIG_FINISHED_0));
+        int port;
+        try {
+            port = Integer.parseInt(portStr);
+        } catch (NumberFormatException e) {
+            port = CmsRemoteShellConstants.DEFAULT_PORT;
         }
+        m_shellServerOptions = new CmsRemoteShellConfiguration(Boolean.parseBoolean(enabled), port);
+
+    }
+
+    /**
+     * Sets the stored content info cache configuration.<p>
+     *
+     * @param configuration the stored content info cache configuration
+     */
+    public void setStoredContentInfoCacheConfiguration(CmsStoredContentInfoCacheConfiguration configuration) {
+
+        m_storedContentInfoCacheConfiguration = configuration;
     }
 
     /**
      * Sets the subscription manager.<p>
-     * 
+     *
      * @param subscriptionManager the subscription manager
      */
     public void setSubscriptionManager(CmsSubscriptionManager subscriptionManager) {
@@ -2384,7 +3242,7 @@ public class CmsSystemConfiguration extends A_CmsXmlConfiguration {
 
     /**
      * Sets the temporary file project id.<p>
-     * 
+     *
      * @param tempFileProjectId the temporary file project id to set
      */
     public void setTempFileProjectId(String tempFileProjectId) {
@@ -2395,20 +3253,95 @@ public class CmsSystemConfiguration extends A_CmsXmlConfiguration {
             m_tempFileProjectId = -1;
         }
         if (CmsLog.INIT.isInfoEnabled()) {
-            CmsLog.INIT.info(Messages.get().getBundle().key(
-                Messages.INIT_TEMPFILE_PROJECT_ID_1,
-                new Integer(m_tempFileProjectId)));
+            CmsLog.INIT.info(
+                Messages.get().getBundle().key(
+                    Messages.INIT_TEMPFILE_PROJECT_ID_1,
+                    Integer.valueOf(m_tempFileProjectId)));
         }
     }
 
     /**
+     * Sets the user data request manager.
+     *
+     * @param manager the user data request manager
+     */
+    public void setUserDataRequestManager(CmsUserDataRequestManager manager) {
+
+        m_userDataRequestManager = manager;
+
+    }
+
+    /**
+     * Sets the user session mode.<p>
+     *
+     * @param userSessionMode the user session mode
+     */
+    public void setUserSessionMode(String userSessionMode) {
+
+        if ((userSessionMode == null) || (m_userSessionMode != null)) {
+            throw new IllegalStateException("Can't set user session mode to " + userSessionMode);
+        }
+        m_userSessionMode = UserSessionMode.valueOf(userSessionMode);
+    }
+
+    /**
+     * Sets if the SAX parser implementation classes should be stored in system properties
+     * to improve the unmarshalling performance.<p>
+     *
+     * @param enabled <code>true</code> to store SAX parser implementation classes in system properties
+     */
+    public void setUseSaxImplSystemProperties(String enabled) {
+
+        m_saxImplProperties = Boolean.parseBoolean(enabled);
+    }
+
+    /**
      * Sets the validation handler.<p>
-     * 
+     *
      * @param validationHandlerClass the validation handler class to set.
      */
     public void setValidationHandler(String validationHandlerClass) {
 
         m_validationHandler = validationHandlerClass;
+    }
+
+    /**
+     * Sets the configured workflow manager instance.<p>
+     *
+     * @param workflowManager the configured workflow manager
+     */
+    public void setWorkflowManager(I_CmsWorkflowManager workflowManager) {
+
+        m_workflowManager = workflowManager;
+    }
+
+    /**
+     * Returns whether the SAX parser implementation classes should be stored in system properties
+     * to improve the unmarshalling performance.<p>
+     *
+     * @return <code>true</code> if the SAX parser implementation classes should be stored in system properties
+     */
+    public boolean useSaxImplSystemProperties() {
+
+        return m_saxImplProperties;
+    }
+
+    /**
+     * Adds a new authorization configuration.
+     *
+     * @param config the authorization configuration to add
+     */
+    protected void addApiAuthorization(ApiAuthorizationConfig config) {
+
+        m_apiAuthorizations.add(config);
+        try {
+            Class<?> cls = Class.forName(config.getClassName(), false, getClass().getClassLoader());
+            I_CmsApiAuthorizationHandler handler = (I_CmsApiAuthorizationHandler)(cls.getDeclaredConstructor().newInstance());
+            handler.setParameters(config.getParams());
+            m_apiAuthorizationMap.put(config.getName(), handler);
+        } catch (Exception e) {
+            LOG.error(e.getLocalizedMessage(), e);
+        }
     }
 
     /**
@@ -2423,11 +3356,11 @@ public class CmsSystemConfiguration extends A_CmsXmlConfiguration {
         m_historyVersionsAfterDeletion = -1; // use m_historyVersions instead
         m_resourceInitHandlers = new ArrayList<I_CmsResourceInit>();
         m_requestHandlers = new ArrayList<I_CmsRequestHandler>();
-        m_configuredJobs = new ArrayList<CmsScheduledJobInfo>();
         m_runtimeProperties = new HashMap<String, String>();
         m_eventManager = new CmsEventManager();
         if (CmsLog.INIT.isInfoEnabled()) {
             CmsLog.INIT.info(Messages.get().getBundle().key(Messages.INIT_SYSTEM_CONFIG_INIT_0));
         }
     }
+
 }

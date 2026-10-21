@@ -1,0 +1,26 @@
+@external cms_type_icon;
+
+.primary, .floatBox, .floatDecoratedPanel {}
+
+.decorationBoxSmall{}
+
+li.singleLineItem div.decorationBox {
+	margin-top: 0px;
+}
+
+li.singleLineItem{
+	line-height: 18px;
+}
+
+.itemFace{
+	white-space: nowrap;
+}
+
+.itemFace .cms_type_icon{
+	vertical-align: -3px;
+}
+
+.itemFace:hover{
+	background-color: #aaaaaa;
+	color: blue;
+}

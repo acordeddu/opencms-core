@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -15,11 +15,11 @@
  * Lesser General Public License for more details.
  *
  * For further information about Alkacon Software, please see the
- * company website: http://www.alkacon.com
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -27,27 +27,34 @@
 
 package org.opencms.gwt.client.rpc;
 
-import org.opencms.gwt.CmsRpcException;
 import org.opencms.gwt.client.Messages;
 import org.opencms.gwt.client.ui.CmsErrorDialog;
 import org.opencms.gwt.client.ui.CmsNotification;
-import org.opencms.gwt.client.util.CmsClientStringUtil;
+import org.opencms.gwt.client.ui.CmsNotificationMessage;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.shared.UmbrellaException;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.rpc.AsyncCallback;
+import com.google.gwt.user.client.rpc.StatusCodeException;
 
 /**
  * Consistently manages RPCs errors and 'loading' state.<p>
- * 
+ *
  * @param <T> The type of the expected return value
- * 
+ *
  * @since 8.0
  */
 public abstract class CmsRpcAction<T> implements AsyncCallback<T> {
 
+    /** The sync token value, used to allow synchronous RPC calls within vaadin, see also com.google.gwt.http.client.RequestBuilder within the super source */
+    public static final String SYNC_TOKEN = "this_is_a_synchronous_rpc_call";
+
     /** The message displayed when loading. */
-    private String m_loadingMessage = Messages.get().key(Messages.GUI_LOADING_0);
+    private String m_loadingMessage;
+
+    /** The current notification. */
+    private CmsNotificationMessage m_notification;
 
     /** The result, used only for synchronized request. */
     private T m_result;
@@ -57,7 +64,7 @@ public abstract class CmsRpcAction<T> implements AsyncCallback<T> {
 
     /**
      * Executes the current RPC call.<p>
-     * 
+     *
      * Initializes client-server communication and will
      */
     public abstract void execute();
@@ -66,7 +73,7 @@ public abstract class CmsRpcAction<T> implements AsyncCallback<T> {
      * Executes a synchronized request.<p>
      *
      * @return the RPC result
-     * 
+     *
      * @see #execute()
      */
     public T executeSync() {
@@ -77,27 +84,23 @@ public abstract class CmsRpcAction<T> implements AsyncCallback<T> {
 
     /**
      * Handle errors.<p>
-     * 
+     *
      * @see com.google.gwt.user.client.rpc.AsyncCallback#onFailure(java.lang.Throwable)
      */
     public void onFailure(Throwable t) {
 
-        String message;
-        StackTraceElement[] trace;
-        if (t instanceof CmsRpcException) {
-            CmsRpcException ex = (CmsRpcException)t;
-            message = ex.getOriginalMessage();
-            trace = ex.getOriginalStackTrace();
+        if ((t instanceof StatusCodeException) && (((StatusCodeException)t).getStatusCode() == 0)) {
+            // a status code 0 indicates the client aborted the request, most likely when leaving the page, this should be ignored
+            return;
+        } else if ((t instanceof StatusCodeException) && (((StatusCodeException)t).getStatusCode() == 401)) {
+            // a server error 500 most likely indicates an expired session and there for insufficient user rights to access any GWT service
+            CmsErrorDialog dialog = new CmsErrorDialog(Messages.get().key(Messages.GUI_SESSION_EXPIRED_0), null);
+            dialog.center();
         } else {
-            message = CmsClientStringUtil.getMessage(t);
-            trace = t.getStackTrace();
+            CmsErrorDialog.handleException(t);
         }
-        // send the ticket to the server
-        String ticket = CmsLog.log(message + "\n" + CmsClientStringUtil.getStackTraceAsString(trace, "\n"));
-
         // remove the overlay
         stop(false);
-        provideFeedback(ticket, t);
     }
 
     /**
@@ -111,8 +114,14 @@ public abstract class CmsRpcAction<T> implements AsyncCallback<T> {
         } catch (UmbrellaException exception) {
             Throwable wrappedException = exception.getCauses().iterator().next();
             onFailure(wrappedException);
+            if (!GWT.isProdMode()) {
+                throw exception;
+            }
         } catch (RuntimeException error) {
             onFailure(error);
+            if (!GWT.isProdMode()) {
+                throw error;
+            }
         }
     }
 
@@ -128,11 +137,11 @@ public abstract class CmsRpcAction<T> implements AsyncCallback<T> {
 
     /**
      * Starts the timer for showing the 'loading' state.<p>
-     * 
+     *
      * Note: Has to be called manually before calling the RPC service.<p>
-     * 
+     *
      * @param delay the delay in milliseconds
-     * @param blocking shows an blocking overlay if <code>true</code> 
+     * @param blocking shows an blocking overlay if <code>true</code>
      */
     public void start(int delay, final boolean blocking) {
 
@@ -156,9 +165,9 @@ public abstract class CmsRpcAction<T> implements AsyncCallback<T> {
 
     /**
      * Stops the timer.<p>
-     * 
+     *
      * Note: Has to be called manually on success.<p>
-     * 
+     *
      * @param displayDone <code>true</code> if you want to tell the user that the operation was successful
      */
     public void stop(boolean displayDone) {
@@ -167,7 +176,10 @@ public abstract class CmsRpcAction<T> implements AsyncCallback<T> {
             m_timer.cancel();
             m_timer = null;
         }
-        CmsNotification.get().hide();
+        if (m_notification != null) {
+            CmsNotification.get().removeMessage(m_notification);
+            m_notification = null;
+        }
         if (displayDone) {
             CmsNotification.get().send(CmsNotification.Type.NORMAL, Messages.get().key(Messages.GUI_DONE_0));
         }
@@ -175,66 +187,26 @@ public abstract class CmsRpcAction<T> implements AsyncCallback<T> {
 
     /**
      * Handles the result when received from server.<p>
-     * 
+     *
      * @param result the result from server
-     * 
+     *
      * @see AsyncCallback#onSuccess(Object)
      */
     protected abstract void onResponse(T result);
 
     /**
-     * Provides some feedback to the user in case of failure.<p>
-     * 
-     * @param ticket the generated ticket
-     * @param throwable the thrown error
-     */
-    protected void provideFeedback(String ticket, Throwable throwable) {
-
-        String message;
-        String cause = null;
-        String className;
-        StackTraceElement[] trace;
-        if (throwable instanceof CmsRpcException) {
-            CmsRpcException ex = (CmsRpcException)throwable;
-            message = ex.getOriginalMessage();
-            cause = ex.getOriginalCauseMessage();
-            className = ex.getOriginalClassName();
-            trace = ex.getOriginalStackTrace();
-        } else {
-            message = CmsClientStringUtil.getMessage(throwable);
-            if (throwable.getCause() != null) {
-                cause = CmsClientStringUtil.getMessage(throwable.getCause());
-            }
-            className = throwable.getClass().getName();
-            trace = throwable.getStackTrace();
-        }
-
-        String lineBreak = "<br />\n";
-        String errorMessage = message == null
-        ? className + ": " + Messages.get().key(Messages.GUI_NO_DESCIPTION_0)
-        : message;
-        if (cause != null) {
-            errorMessage += lineBreak + Messages.get().key(Messages.GUI_REASON_0) + ":" + cause;
-        }
-
-        String details = Messages.get().key(Messages.GUI_TICKET_MESSAGE_3, ticket, className, message)
-            + CmsClientStringUtil.getStackTraceAsString(trace, lineBreak);
-        new CmsErrorDialog(errorMessage, details).center();
-    }
-
-    /**
      * Shows the 'loading message'.<p>
-     * 
+     *
      * Overwrite to customize the message.<p>
-     * 
-     * @param blocking shows an blocking overlay if <code>true</code> 
+     *
+     * @param blocking shows an blocking overlay if <code>true</code>
      */
     protected void show(boolean blocking) {
 
         if (blocking) {
-            CmsNotification.get().sendBlocking(CmsNotification.Type.NORMAL, m_loadingMessage);
+            m_notification = CmsNotification.get().sendBusy(CmsNotification.Type.NORMAL, m_loadingMessage);
         } else {
-            CmsNotification.get().sendSticky(CmsNotification.Type.NORMAL, m_loadingMessage);
+            m_notification = CmsNotification.get().sendSticky(CmsNotification.Type.NORMAL, m_loadingMessage);
         }
     }
 }

@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -14,12 +14,12 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * Lesser General Public License for more details.
  *
- * For further information about Alkacon Software GmbH, please see the
- * company website: http://www.alkacon.com
+ * For further information about Alkacon Software GmbH & Co. KG, please see the
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -28,6 +28,8 @@
 package org.opencms.util;
 
 import org.opencms.main.CmsLog;
+
+import java.util.Random;
 
 import org.apache.commons.logging.Log;
 import org.apache.oro.text.PatternCache;
@@ -38,26 +40,26 @@ import org.apache.oro.text.regex.MalformedPatternException;
 
 /**
  * Provides a resource name / path translation facility.<p>
- * 
+ *
  * This facility is used for translating new file names that contain
  * illegal chars to legal names. This feature is most useful (and currently
  * only used) for uploaded files. It is also applied to uploded ZIP directories
- * that are extracted after upload. 
- * The rules that are used for resource name translation are available from 
- * {@link org.opencms.file.CmsRequestContext#getFileTranslator()}.<p> 
- * 
- * Optionally, resource name translation is also applied to all files read 
+ * that are extracted after upload.
+ * The rules that are used for resource name translation are available from
+ * {@link org.opencms.file.CmsRequestContext#getFileTranslator()}.<p>
+ *
+ * Optionally, resource name translation is also applied to all files read
  * from the VFS, so it can be used for accessing files out of teir usual context.
- * This feature is called directoy translation, and the configured directory 
- * translations are available from {@link org.opencms.file.CmsRequestContext#getDirectoryTranslator()}.<p> 
- * 
+ * This feature is called directoy translation, and the configured directory
+ * translations are available from {@link org.opencms.file.CmsRequestContext#getDirectoryTranslator()}.<p>
+ *
  * Directory translation was originally required for backward compatibility
  * to the directory layout before OpenCms 5.0 beta 2. In a modern installation,
  * directory translation is usually disabled.<p>
- *  
+ *
  * The translations can be configured in <code>opencms-vfs.xml</code>
  * in the <code>opencms\vfs\resources\translations</code> node.<p>
- * 
+ *
  * The default file name translation setting is:<br>
  * <pre>
  * &lt;filetranslations enabled="true"&gt;
@@ -74,7 +76,7 @@ import org.apache.oro.text.regex.MalformedPatternException;
  *    &lt;translation&gt;s#!+#x#g&lt;/translation&gt;
  * &lt;/filetranslations&gt;
  * </pre><p>
- * 
+ *
  * Directory translation is now usually not required and since disabled by default.
  * The directory translation setting to convert an OpenCms 5.0 to 6.0 VFS is:<br>
  * <pre>
@@ -88,30 +90,30 @@ import org.apache.oro.text.regex.MalformedPatternException;
  *    &lt;translation&gt;s#/content/(.*)#/system/$1#&lt;/translation&gt;
  * &lt;/foldertranslations&gt;
  * </pre><p>
- * 
- * @since 6.0.0 
+ *
+ * @since 6.0.0
  */
 public class CmsResourceTranslator {
 
     /** The log object for this class. */
     private static final Log LOG = CmsLog.getLog(CmsResourceTranslator.class);
 
+    /** Keep an array of Perl5Util to randomly select for use, because using just a single one causes contention problems under load (since they're synchronized). */
+    private Perl5Util[] m_perl5Utils = new Perl5Util[32];
+
     /** Flag to indicate if one or more matchings should be tried. */
     private boolean m_continueMatching;
-
-    /** Perl5 patter cache to avoid unecessary re-parsing of properties. */
-    private PatternCache m_perlPatternCache;
-
-    /** Perl5 utility class. */
-    private Perl5Util m_perlUtil;
 
     /** Internal array containing the translations from opencms.properties. */
     private String[] m_translations;
 
+    /** Random number generator for randomly choosing Perl5Utils. */
+    private Random m_random = new Random(42l);
+
     /**
      * Constructor for the CmsResourceTranslator.
-     * 
-     * @param translations The array of translations read from the 
+     *
+     * @param translations The array of translations read from the
      *      opencms,properties
      * @param continueMatching if <code>true</code>, matching will continue after
      *      the first match was found
@@ -121,29 +123,20 @@ public class CmsResourceTranslator {
         super();
         m_translations = translations;
         m_continueMatching = continueMatching;
-        // pre-cache the patterns 
-        m_perlPatternCache = new PatternCacheFIFO(m_translations.length + 1);
-        for (int i = 0; i < m_translations.length; i++) {
-            try {
-                m_perlPatternCache.addPattern(m_translations[i]);
-            } catch (MalformedPatternException e) {
-                LOG.error(
-                    Messages.get().getBundle().key(Messages.LOG_MALFORMED_TRANSLATION_RULE_1, m_translations[i]),
-                    e);
-            }
+        for (int i = 0; i < m_perl5Utils.length; i++) {
+            m_perl5Utils[i] = new Perl5Util(buildPatternCache());
         }
-        // initialize the Perl5Util
-        m_perlUtil = new Perl5Util(m_perlPatternCache);
         if (LOG.isInfoEnabled()) {
-            LOG.info(Messages.get().getBundle().key(
-                Messages.LOG_NUM_TRANSLATION_RULES_INITIALIZED_1,
-                new Integer(translations.length)));
+            LOG.info(
+                Messages.get().getBundle().key(
+                    Messages.LOG_NUM_TRANSLATION_RULES_INITIALIZED_1,
+                    Integer.valueOf(translations.length)));
         }
     }
 
     /**
      * Returns a copy of the initialized translation rules.<p>
-     * 
+     *
      * @return String[] a copy of the initialized translation rules
      */
     public String[] getTranslations() {
@@ -154,10 +147,10 @@ public class CmsResourceTranslator {
     }
 
     /**
-     * Translate a resource name according to the expressions set in 
-     * <code>opencms-vfs.xml</code>. If no match is found, 
+     * Translate a resource name according to the expressions set in
+     * <code>opencms-vfs.xml</code>. If no match is found,
      * the resource name is returned unchanged.<p>
-     * 
+     *
      * @param resourceName The resource name to translate
      * @return The translated name of the resource
      */
@@ -175,10 +168,11 @@ public class CmsResourceTranslator {
         String current = resourceName;
         int size = current.length() * 2;
 
+        Perl5Util perl5Util = getPerl5Util();
         for (int i = 0; i < m_translations.length; i++) {
             result = new StringBuffer(size);
             try {
-                if (m_perlUtil.substitute(result, m_translations[i], current) != 0) {
+                if (perl5Util.substitute(result, m_translations[i], current) != 0) {
 
                     if (m_continueMatching) {
                         // continue matching
@@ -186,11 +180,12 @@ public class CmsResourceTranslator {
                     } else {
                         // first pattern matched, return the result
                         if (LOG.isDebugEnabled()) {
-                            LOG.debug(Messages.get().getBundle().key(
-                                Messages.LOG_TRANSLATION_MATCH_3,
-                                new Integer(i),
-                                resourceName,
-                                result));
+                            LOG.debug(
+                                Messages.get().getBundle().key(
+                                    Messages.LOG_TRANSLATION_MATCH_3,
+                                    Integer.valueOf(i),
+                                    resourceName,
+                                    result));
                         }
                         // Return first match result
                         return result.toString();
@@ -209,5 +204,36 @@ public class CmsResourceTranslator {
         }
         // return last translation (or original if no matching translation found)
         return current;
+    }
+
+    /**
+     * Builds a pattern cache from the stored list of substitutions.
+     *
+     * @return the pattern cache
+     */
+    private PatternCache buildPatternCache() {
+
+        PatternCacheFIFO cache = new PatternCacheFIFO(m_translations.length + 1);
+        for (int i = 0; i < m_translations.length; i++) {
+            try {
+                cache.addPattern(m_translations[i]);
+            } catch (MalformedPatternException e) {
+                LOG.error(
+                    Messages.get().getBundle().key(Messages.LOG_MALFORMED_TRANSLATION_RULE_1, m_translations[i]),
+                    e);
+            }
+        }
+        return cache;
+    }
+
+    /**
+     * Gets the perl5util instance for the current thread.
+     *
+     * @return the perl5util instance for the current thread
+     */
+    private Perl5Util getPerl5Util() {
+
+        int index = m_random.nextInt(m_perl5Utils.length);
+        return m_perl5Utils[index];
     }
 }

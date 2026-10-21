@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -15,11 +15,11 @@
  * Lesser General Public License for more details.
  *
  * For further information about Alkacon Software, please see the
- * company website: http://www.alkacon.com
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -28,12 +28,13 @@
 package org.opencms.gwt.client.ui;
 
 import org.opencms.gwt.client.CmsCoreProvider;
+import org.opencms.gwt.client.Messages;
 import org.opencms.gwt.client.ui.contextmenu.CmsContextMenu;
-import org.opencms.gwt.client.ui.contextmenu.CmsContextMenuHandler;
+import org.opencms.gwt.client.ui.contextmenu.CmsContextMenuCloseHandler;
 import org.opencms.gwt.client.ui.contextmenu.I_CmsContextMenuEntry;
 import org.opencms.gwt.client.ui.css.I_CmsLayoutBundle;
 import org.opencms.gwt.client.ui.input.CmsLabel;
-import org.opencms.gwt.client.util.CmsCollectionUtil;
+import org.opencms.gwt.client.util.CmsClientCollectionUtil;
 import org.opencms.gwt.shared.CmsCoreData.AdeContext;
 
 import java.util.List;
@@ -47,7 +48,7 @@ import com.google.gwt.user.client.ui.PopupPanel;
 
 /**
  * The context tool-bar menu button.<p>
- * 
+ *
  * @since 8.0.0
  */
 public class CmsToolbarContextButton extends A_CmsToolbarMenu<I_CmsToolbarHandler> {
@@ -55,30 +56,39 @@ public class CmsToolbarContextButton extends A_CmsToolbarMenu<I_CmsToolbarHandle
     /** The menu data. */
     protected List<I_CmsContextMenuEntry> m_menuEntries;
 
+    /** The loading panel. */
+    private CmsLoadingAnimation m_loadingPanel;
+
     /** The context menu. */
     private CmsContextMenu m_menu;
-
-    /** The main content widget. */
-    private FlexTable m_menuPanel;
 
     /** The registration for the first close handler. */
     private HandlerRegistration m_menuCloseHandler;
 
+    /** Context used for loading the context menu entries. */
+    private AdeContext m_menuContext = AdeContext.pageeditor;
+
+    /** The main content widget. */
+    private FlexTable m_menuPanel;
+
+    /** The label which is displayed when no entries are found. */
+    private CmsLabel m_noEntriesLabel;
+
     /** The registration for the second close handler. */
     private HandlerRegistration m_popupCloseHandler;
 
-    /** The label which is displayed when no entries are found. */
-    private CmsLabel m_noEntriesLabel = new CmsLabel("No entries found!");
-
     /**
      * Constructor.<p>
-     * 
+     *
      * @param handler the container-page handler
      */
     public CmsToolbarContextButton(final I_CmsToolbarHandler handler) {
 
         super(I_CmsButton.ButtonData.CONTEXT, handler);
-
+        m_noEntriesLabel = new CmsLabel(Messages.get().key(Messages.GUI_TOOLBAR_CONTEXT_EMPTY_0));
+        m_noEntriesLabel.addStyleName(I_CmsLayoutBundle.INSTANCE.contextmenuCss().menuInfoLabel());
+        m_noEntriesLabel.addStyleName(I_CmsLayoutBundle.INSTANCE.generalCss().buttonCornerAll());
+        m_loadingPanel = new CmsLoadingAnimation();
         // create the menu panel (it's a table because of ie6)
         m_menuPanel = new FlexTable();
         // set a style name for the menu table
@@ -89,6 +99,7 @@ public class CmsToolbarContextButton extends A_CmsToolbarMenu<I_CmsToolbarHandle
 
         // clear the width of the popup content
         getPopup().setWidth(0);
+        getPopup().addStyleName(I_CmsLayoutBundle.INSTANCE.dialogCss().contextMenu());
     }
 
     /**
@@ -96,12 +107,12 @@ public class CmsToolbarContextButton extends A_CmsToolbarMenu<I_CmsToolbarHandle
      */
     public void onToolbarActivate() {
 
-        getHandler().loadContextMenu(CmsCoreProvider.get().getStructureId(), AdeContext.containerpage);
+        getHandler().loadContextMenu(CmsCoreProvider.get().getStructureId(), m_menuContext);
     }
 
     /**
      * Unregister the resize handler.<p>
-     * 
+     *
      * @see org.opencms.gwt.client.ui.I_CmsToolbarButton#onToolbarDeactivate()
      */
     public void onToolbarDeactivate() {
@@ -113,18 +124,41 @@ public class CmsToolbarContextButton extends A_CmsToolbarMenu<I_CmsToolbarHandle
     }
 
     /**
+     * @see org.opencms.gwt.client.ui.CmsMenuButton#openMenu()
+     */
+    @Override
+    public void openMenu() {
+
+        if (m_menu == null) {
+            m_menuPanel.setWidget(0, 0, m_loadingPanel);
+        }
+        super.openMenu();
+
+    }
+
+    /**
+     * Sets the menu context.<p>
+     *
+     * @param menuContext the new menu context
+     */
+    public void setMenuContext(AdeContext menuContext) {
+
+        m_menuContext = menuContext;
+    }
+
+    /**
      * Creates the menu and adds it to the panel.<p>
-     * 
-     * @param menuEntries the menu entries 
+     *
+     * @param menuEntries the menu entries
      */
     public void showMenu(List<I_CmsContextMenuEntry> menuEntries) {
 
-        if (!CmsCollectionUtil.isEmptyOrNull(menuEntries)) {
+        if (!CmsClientCollectionUtil.isEmptyOrNull(menuEntries)) {
             // if there were entries found for the menu, create the menu
             m_menu = new CmsContextMenu(menuEntries, true, getPopup());
             // add the resize handler for the menu
             m_resizeRegistration = Window.addResizeHandler(m_menu);
-            // set the menu as widget for the panel 
+            // set the menu as widget for the panel
             m_menuPanel.setWidget(0, 0, m_menu);
             if (m_menuCloseHandler != null) {
                 m_menuCloseHandler.removeHandler();
@@ -133,7 +167,7 @@ public class CmsToolbarContextButton extends A_CmsToolbarMenu<I_CmsToolbarHandle
                 m_popupCloseHandler.removeHandler();
             }
             // add the close handler for the menu
-            m_menuCloseHandler = getPopup().addCloseHandler(new CmsContextMenuHandler(m_menu));
+            m_menuCloseHandler = getPopup().addCloseHandler(new CmsContextMenuCloseHandler(m_menu));
             m_popupCloseHandler = getPopup().addCloseHandler(new CloseHandler<PopupPanel>() {
 
                 public void onClose(CloseEvent<PopupPanel> event) {
@@ -141,15 +175,10 @@ public class CmsToolbarContextButton extends A_CmsToolbarMenu<I_CmsToolbarHandle
                     setActive(false);
                 }
             });
-            positionPopup();
+            m_popup.positionDeferred();
         } else {
-            if (m_noEntriesLabel.getParent() != null) {
-                m_noEntriesLabel.removeFromParent();
-            }
-            m_noEntriesLabel.addStyleName(I_CmsLayoutBundle.INSTANCE.contextmenuCss().menuInfoLabel());
-            m_noEntriesLabel.addStyleName(I_CmsLayoutBundle.INSTANCE.generalCss().buttonCornerAll());
-            getPopup().add(m_noEntriesLabel);
-            positionPopup();
+            m_menuPanel.setWidget(0, 0, m_noEntriesLabel);
+            m_popup.positionDeferred();
         }
     }
 }

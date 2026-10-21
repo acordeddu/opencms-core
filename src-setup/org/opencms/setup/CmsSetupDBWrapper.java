@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -14,12 +14,12 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * Lesser General Public License for more details.
  *
- * For further information about Alkacon Software GmbH, please see the
- * company website: http://www.alkacon.com
+ * For further information about Alkacon Software GmbH & Co. KG, please see the
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -57,14 +57,14 @@ public class CmsSetupDBWrapper {
 
     /**
      * Constructor, creates a new CmsSetupDBWrapper.<p>
-     * @param con the connection to use in this db wrapper. 
+     * @param con the connection to use in this db wrapper.
      */
     public CmsSetupDBWrapper(Connection con) {
 
         m_connection = con;
     }
 
-    /** 
+    /**
      * Closes result set, and statement. <p>
      */
     public void close() {
@@ -99,21 +99,12 @@ public class CmsSetupDBWrapper {
 
     }
 
-    /** 
+    /**
      * Creates a new SQL Statement on the connection of this DB wrapper.<p>
-     * @throws SQLException if statement cannot be created
-     */
-    public void createStatement() throws SQLException {
-
-        m_statement = m_connection.createStatement();
-    }
-
-    /** 
-     * Creates a new SQL Statement on the connection of this DB wrapper.<p>
-     * 
+     *
      * @param query the DB query to use
      * @param params List of additional parameters
-     * 
+     *
      * @throws SQLException if statement cannot be created
      */
     public void createPreparedStatement(String query, List<Object> params) throws SQLException {
@@ -151,25 +142,34 @@ public class CmsSetupDBWrapper {
 
     }
 
-    /** 
-     * Executes a query on the connection and statement of this db wrapper.<p>
-     * 
-     * @param query the query to execute
-     * 
+    /**
+     * Creates a new SQL Statement on the connection of this DB wrapper.<p>
      * @throws SQLException if statement cannot be created
      */
-    public void excecuteQuery(String query) throws SQLException {
+    public void createStatement() throws SQLException {
 
-        m_resultset = m_statement.executeQuery(query);
+        m_statement = m_connection.createStatement();
     }
 
-    /** 
+    /**
      * Executes a query on the connection and prepared statement of this db wrapper.<p>
      * @throws SQLException if statement cannot be created
      */
     public void excecutePreparedQuery() throws SQLException {
 
         m_resultset = m_preparedStatement.executeQuery();
+    }
+
+    /**
+     * Executes a query on the connection and statement of this db wrapper.<p>
+     *
+     * @param query the query to execute
+     *
+     * @throws SQLException if statement cannot be created
+     */
+    public void excecuteQuery(String query) throws SQLException {
+
+        m_resultset = m_statement.executeQuery(query);
     }
 
     /**

@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html>
+<head>
+ 	<meta name="package-mapping" content="u:org.opencms.ui" />
+  	<meta name="package-mapping" content="o:org.opencms.ui.components" />
+  	<meta name="package-mapping" content="f:org.opencms.ui.components.fileselect" />
+  	<meta name="package-mapping" content="p:org.opencms.ui.dialogs.permissions" />
+</head>
+<body>
+		<o-cms-basic-dialog>
+			<content>
+				<vaadin7-vertical-layout :center margin _id="m_vlayout">
+					<vaadin7-horizontal-layout width="100%" spacing _id="m_hlayout">
+						<vaadin7-vertical-layout width="100%" _id="m_leftTableHolder"></vaadin7-vertical-layout>
+						<vaadin7-vertical-layout width="100%" _id="m_rightTableHolder"></vaadin7-vertical-layout>
+					</vaadin7-horizontal-layout>
+				</vaadin7-vertical-layout>
+			</content>
+			<buttons>	
+				<v-button _id="m_close">%(key.GUI_DIALOG_BUTTON_CLOSE_0)</v-button>
+			</buttons>
+		</o-cms-basic-dialog>
+</body>
+</html>

@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -14,12 +14,12 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * Lesser General Public License for more details.
  *
- * For further information about Alkacon Software GmbH, please see the
- * company website: http://www.alkacon.com
+ * For further information about Alkacon Software GmbH & Co. KG, please see the
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -32,9 +32,12 @@ import org.opencms.jsp.CmsJspActionElement;
 import org.opencms.main.CmsIllegalStateException;
 import org.opencms.main.OpenCms;
 import org.opencms.search.CmsSearchManager;
+import org.opencms.search.fields.CmsLuceneField;
+import org.opencms.search.fields.CmsLuceneFieldConfiguration;
 import org.opencms.search.fields.CmsSearchField;
-import org.opencms.search.fields.CmsSearchFieldConfiguration;
 import org.opencms.search.fields.CmsSearchFieldMapping;
+import org.opencms.search.fields.I_CmsSearchFieldConfiguration;
+import org.opencms.search.fields.I_CmsSearchFieldMapping;
 import org.opencms.workplace.CmsWidgetDialog;
 import org.opencms.workplace.CmsWorkplaceSettings;
 
@@ -49,9 +52,9 @@ import javax.servlet.http.HttpServletResponse;
 import javax.servlet.jsp.PageContext;
 
 /**
- * 
- * Abstract widget dialog for all dialogs working with <code>{@link CmsSearchFieldMapping}</code>.<p> 
- * 
+ *
+ * Abstract widget dialog for all dialogs working with <code>{@link CmsSearchFieldMapping}</code>.<p>
+ *
  * @since 6.5.5
  */
 public class A_CmsMappingDialog extends CmsWidgetDialog {
@@ -62,31 +65,31 @@ public class A_CmsMappingDialog extends CmsWidgetDialog {
     /** Defines which pages are valid for this dialog. */
     public static final String[] PAGES = {"page1"};
 
-    /** 
-     * The request parameter for the field to work with when contacting 
+    /**
+     * The request parameter for the field to work with when contacting
      * this dialog from another. <p>
-     *      
+     *
      */
     public static final String PARAM_FIELD = "field";
 
-    /** 
-     * The request parameter for the fieldconfiguration to work with when contacting 
+    /**
+     * The request parameter for the fieldconfiguration to work with when contacting
      * this dialog from another. <p>
-     *      
+     *
      */
     public static final String PARAM_FIELDCONFIGURATION = "fieldconfiguration";
 
-    /** 
-     * The request parameter for the mapping type to work with when contacting 
+    /**
+     * The request parameter for the mapping type to work with when contacting
      * this dialog from another. <p>
-     *      
+     *
      */
     public static final String PARAM_PARAM = "param";
 
-    /** 
-     * The request parameter for the mapping type to work with when contacting 
+    /**
+     * The request parameter for the mapping type to work with when contacting
      * this dialog from another. <p>
-     *      
+     *
      */
     public static final String PARAM_TYPE = "type";
 
@@ -94,10 +97,10 @@ public class A_CmsMappingDialog extends CmsWidgetDialog {
     protected CmsSearchField m_field;
 
     /** The user object that is edited on this dialog. */
-    protected CmsSearchFieldConfiguration m_fieldconfiguration;
+    protected I_CmsSearchFieldConfiguration m_fieldconfiguration;
 
     /** The user object that is edited on this dialog. */
-    protected CmsSearchFieldMapping m_mapping;
+    protected I_CmsSearchFieldMapping m_mapping;
 
     /** The search manager singleton for convenient access. **/
     protected CmsSearchManager m_searchManager;
@@ -116,7 +119,7 @@ public class A_CmsMappingDialog extends CmsWidgetDialog {
 
     /**
      * Public constructor with JSP action element.<p>
-     * 
+     *
      * @param jsp an initialized JSP action element
      */
     public A_CmsMappingDialog(CmsJspActionElement jsp) {
@@ -126,7 +129,7 @@ public class A_CmsMappingDialog extends CmsWidgetDialog {
 
     /**
      * Public constructor with JSP variables.<p>
-     * 
+     *
      * @param context the JSP page context
      * @param req the JSP request
      * @param res the JSP response
@@ -137,7 +140,7 @@ public class A_CmsMappingDialog extends CmsWidgetDialog {
     }
 
     /**
-     * Writes the updated search configuration back to the XML 
+     * Writes the updated search configuration back to the XML
      * configuration file and refreshes the complete list.<p>
      */
     protected static void writeConfiguration() {
@@ -149,19 +152,21 @@ public class A_CmsMappingDialog extends CmsWidgetDialog {
     /**
      * @see org.opencms.workplace.CmsWidgetDialog#actionCommit()
      */
+    @Override
     public void actionCommit() {
 
-        List errors = new ArrayList();
+        List<Throwable> errors = new ArrayList<Throwable>();
 
         try {
 
             // if new create it first
             boolean found = false;
-            Iterator itMappings = m_field.getMappings().iterator();
+            Iterator<I_CmsSearchFieldMapping> itMappings = m_field.getMappings().iterator();
             while (itMappings.hasNext()) {
-                CmsSearchFieldMapping curMapping = (CmsSearchFieldMapping)itMappings.next();
+                I_CmsSearchFieldMapping curMapping = itMappings.next();
                 if (curMapping.getType().toString().equals(m_mapping.getType().toString())
-                    && ((curMapping.getParam() == null && m_mapping.getParam() == null) || (curMapping.getParam().equals(m_mapping.getParam())))) {
+                    && (((curMapping.getParam() == null) && (m_mapping.getParam() == null))
+                        || (curMapping.getParam().equals(m_mapping.getParam())))) {
                     found = true;
                 }
             }
@@ -181,7 +186,7 @@ public class A_CmsMappingDialog extends CmsWidgetDialog {
 
     /**
      * Returns the request parameter value for parameter field. <p>
-     * 
+     *
      * @return the request parameter value for parameter field
      */
     public String getParamField() {
@@ -191,7 +196,7 @@ public class A_CmsMappingDialog extends CmsWidgetDialog {
 
     /**
      * Returns the request parameter value for parameter fieldconfiguration. <p>
-     * 
+     *
      * @return the request parameter value for parameter fieldconfiguration
      */
     public String getParamFieldconfiguration() {
@@ -201,7 +206,7 @@ public class A_CmsMappingDialog extends CmsWidgetDialog {
 
     /**
      * Returns the request parameter value for parameter mapping param. <p>
-     * 
+     *
      * @return the request parameter value for parameter mapping param
      */
     public String getParamParam() {
@@ -211,7 +216,7 @@ public class A_CmsMappingDialog extends CmsWidgetDialog {
 
     /**
      * Returns the request parameter value for parameter mapping type. <p>
-     * 
+     *
      * @return the request parameter value for parameter mapping type
      */
     public String getParamType() {
@@ -221,7 +226,7 @@ public class A_CmsMappingDialog extends CmsWidgetDialog {
 
     /**
      * Sets the request parameter value for parameter field. <p>
-     * 
+     *
      * @param field the request parameter value for parameter field
      */
     public void setParamField(String field) {
@@ -231,7 +236,7 @@ public class A_CmsMappingDialog extends CmsWidgetDialog {
 
     /**
      * Sets the request parameter value for parameter fieldconfiguration. <p>
-     * 
+     *
      * @param fieldconfiguration the request parameter value for parameter fieldconfiguration
      */
     public void setParamFieldconfiguration(String fieldconfiguration) {
@@ -241,7 +246,7 @@ public class A_CmsMappingDialog extends CmsWidgetDialog {
 
     /**
      * Sets the request parameter value for parameter mapping param. <p>
-     * 
+     *
      * @param param the request parameter value for parameter mapping param
      */
     public void setParamParam(String param) {
@@ -251,7 +256,7 @@ public class A_CmsMappingDialog extends CmsWidgetDialog {
 
     /**
      * Sets the request parameter value for parameter mapping type. <p>
-     * 
+     *
      * @param type the request parameter value for parameter mapping type
      */
     public void setParamType(String type) {
@@ -262,6 +267,7 @@ public class A_CmsMappingDialog extends CmsWidgetDialog {
     /**
      * @see org.opencms.workplace.CmsWidgetDialog#defaultActionHtmlEnd()
      */
+    @Override
     protected String defaultActionHtmlEnd() {
 
         return "";
@@ -270,6 +276,7 @@ public class A_CmsMappingDialog extends CmsWidgetDialog {
     /**
      * @see org.opencms.workplace.CmsWidgetDialog#defineWidgets()
      */
+    @Override
     protected void defineWidgets() {
 
         initUserObject();
@@ -279,6 +286,7 @@ public class A_CmsMappingDialog extends CmsWidgetDialog {
     /**
      * @see org.opencms.workplace.CmsWidgetDialog#getPageArray()
      */
+    @Override
     protected String[] getPageArray() {
 
         return PAGES;
@@ -286,7 +294,7 @@ public class A_CmsMappingDialog extends CmsWidgetDialog {
 
     /**
      * Initializes the user object to work with depending on the dialog state and request parameters.<p>
-     * 
+     *
      */
     protected void initUserObject() {
 
@@ -294,56 +302,58 @@ public class A_CmsMappingDialog extends CmsWidgetDialog {
             try {
                 m_fieldconfiguration = m_searchManager.getFieldConfiguration(getParamFieldconfiguration());
                 if (m_fieldconfiguration == null) {
-                    m_fieldconfiguration = new CmsSearchFieldConfiguration();
+                    m_fieldconfiguration = new CmsLuceneFieldConfiguration();
                 }
             } catch (Exception e) {
-                m_fieldconfiguration = new CmsSearchFieldConfiguration();
+                m_fieldconfiguration = new CmsLuceneFieldConfiguration();
             }
         }
 
         if (m_field == null) {
             try {
-                Iterator itFields = m_fieldconfiguration.getFields().iterator();
+                Iterator<CmsSearchField> itFields = m_fieldconfiguration.getFields().iterator();
                 while (itFields.hasNext()) {
-                    CmsSearchField curField = (CmsSearchField)itFields.next();
+                    CmsSearchField curField = itFields.next();
                     if (curField.getName().equals(getParamField())) {
                         m_field = curField;
                         break;
                     }
                 }
                 if (m_field == null) {
-                    m_field = new CmsSearchField();
+                    m_field = new CmsLuceneField();
                 }
             } catch (Exception e) {
-                m_field = new CmsSearchField();
+                m_field = new CmsLuceneField();
             }
         }
         if (m_mapping == null) {
             try {
-                Iterator itMappings = m_field.getMappings().iterator();
+                Iterator<I_CmsSearchFieldMapping> itMappings = m_field.getMappings().iterator();
                 while (itMappings.hasNext()) {
-                    CmsSearchFieldMapping curMapping = (CmsSearchFieldMapping)itMappings.next();
+                    I_CmsSearchFieldMapping curMapping = itMappings.next();
                     if (curMapping.getType().toString().equals(getParamType())
-                        && (curMapping.getParam() == null && getParamParam().equals("-") || (curMapping.getParam().equals(getParamParam())))) {
+                        && (((curMapping.getParam() == null) && getParamParam().equals("-"))
+                            || (curMapping.getParam().equals(getParamParam())))) {
                         m_mapping = curMapping;
                         break;
                     }
                 }
                 if (m_mapping == null) {
-                    m_mapping = new CmsSearchFieldMapping();
+                    m_mapping = new CmsSearchFieldMapping(true);
                 }
             } catch (Exception e) {
-                m_mapping = new CmsSearchFieldMapping();
+                m_mapping = new CmsSearchFieldMapping(true);
             }
         }
     }
 
     /**
-     * Overridden to initialize the internal <code>CmsSearchManager</code> before initWorkplaceRequestValues -> 
+     * Overridden to initialize the internal <code>CmsSearchManager</code> before initWorkplaceRequestValues ->
      * defineWidgets ->  will access it (NPE). <p>
-     * 
+     *
      * @see org.opencms.workplace.CmsWorkplace#initWorkplaceMembers(org.opencms.jsp.CmsJspActionElement)
      */
+    @Override
     protected void initWorkplaceMembers(CmsJspActionElement jsp) {
 
         m_searchManager = OpenCms.getSearchManager();
@@ -353,6 +363,8 @@ public class A_CmsMappingDialog extends CmsWidgetDialog {
     /**
      * @see org.opencms.workplace.CmsWorkplace#initWorkplaceRequestValues(org.opencms.workplace.CmsWorkplaceSettings, javax.servlet.http.HttpServletRequest)
      */
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    @Override
     protected void initWorkplaceRequestValues(CmsWorkplaceSettings settings, HttpServletRequest request) {
 
         // initialize parameters and dialog actions in super implementation
@@ -377,7 +389,7 @@ public class A_CmsMappingDialog extends CmsWidgetDialog {
 
     /**
      * Checks if the new search index dialog has to be displayed.<p>
-     * 
+     *
      * @return <code>true</code> if the new search index dialog has to be displayed
      */
     protected boolean isNewMapping() {
@@ -388,14 +400,14 @@ public class A_CmsMappingDialog extends CmsWidgetDialog {
     /**
      * @see org.opencms.workplace.CmsWidgetDialog#validateParamaters()
      */
+    @Override
     protected void validateParamaters() throws Exception {
 
         if (!isNewMapping()) {
             // test the needed parameters
             if ((getParamField() == null) && (getJsp().getRequest().getParameter("name.0") == null)) {
-                throw new CmsIllegalStateException(Messages.get().container(
-                    Messages.ERR_SEARCHINDEX_EDIT_MISSING_PARAM_1,
-                    PARAM_FIELD));
+                throw new CmsIllegalStateException(
+                    Messages.get().container(Messages.ERR_SEARCHINDEX_EDIT_MISSING_PARAM_1, PARAM_FIELD));
             }
         }
     }

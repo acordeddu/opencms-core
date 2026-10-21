@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -15,11 +15,11 @@
  * Lesser General Public License for more details.
  *
  * For further information about Alkacon Software, please see the
- * company website: http://www.alkacon.com
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -34,8 +34,12 @@ import org.opencms.gwt.client.util.CmsFadeAnimation;
 import org.opencms.util.CmsStringUtil;
 
 import java.util.Iterator;
+import java.util.List;
 
+import com.google.common.collect.Lists;
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Document;
+import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.EventTarget;
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.dom.client.Style.Position;
@@ -52,12 +56,14 @@ import com.google.gwt.event.logical.shared.CloseEvent;
 import com.google.gwt.event.logical.shared.CloseHandler;
 import com.google.gwt.event.logical.shared.ResizeEvent;
 import com.google.gwt.event.logical.shared.ResizeHandler;
+import com.google.gwt.event.logical.shared.ValueChangeEvent;
+import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.DOM;
-import com.google.gwt.user.client.Element;
 import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.Event.NativePreviewEvent;
+import com.google.gwt.user.client.History;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.HTML;
@@ -69,10 +75,63 @@ import com.google.gwt.user.client.ui.WidgetCollection;
 
 /**
  * Provides a pop up dialog base.
- * 
+ *
  * @since 8.0.0
  */
 public class CmsPopup extends PopupPanel implements I_CmsAutoHider {
+
+    /**
+     * Handles fragment changes by closing the active popups.<p>
+     *
+     * Only used for GWT dialogs opened from Vaadin.
+     */
+    public static class HistoryHandler implements ValueChangeHandler<String> {
+
+        /** The list of active popups. */
+        private List<CmsPopup> m_popups = Lists.newArrayList();
+
+        /**
+         * Adds a popup to the list of active popups.<p>
+         *
+         * @param popup the popup
+         */
+        public void addPopup(CmsPopup popup) {
+
+            m_popups.add(popup);
+        }
+
+        /**
+         * @see com.google.gwt.event.logical.shared.ValueChangeHandler#onValueChange(com.google.gwt.event.logical.shared.ValueChangeEvent)
+         */
+        public void onValueChange(ValueChangeEvent<String> event) {
+
+            if (GWT.getModuleName().equals("org.opencms.ui.WidgetSet")) {
+                // only do this when popup is opened from Vaadin
+                // (copying the list to avoid ConcurrentModificationExceptions)
+                for (CmsPopup popup : Lists.newArrayList(m_popups)) {
+                    try {
+                        if (popup.isAttached()) {
+                            popup.hide();
+                        }
+                    } catch (Exception e) {
+                        // ignore
+                    }
+                }
+            }
+            m_popups.clear();
+        }
+
+        /**
+         * Removes a popup from the list of active popups.<p>
+         *
+         * @param popup the popup to remove
+         */
+        public void removePopup(CmsPopup popup) {
+
+            m_popups.remove(popup);
+        }
+
+    }
 
     /**
      * The dialog button panel.<p>
@@ -89,7 +148,7 @@ public class CmsPopup extends PopupPanel implements I_CmsAutoHider {
 
         /**
          * Making function visible.<p>
-         * 
+         *
          * @see com.google.gwt.user.client.ui.Widget#onAttach()
          */
         @Override
@@ -100,7 +159,7 @@ public class CmsPopup extends PopupPanel implements I_CmsAutoHider {
 
         /**
          * Making function visible.<p>
-         * 
+         *
          * @see com.google.gwt.user.client.ui.Widget#onDetach()
          */
         @Override
@@ -125,7 +184,7 @@ public class CmsPopup extends PopupPanel implements I_CmsAutoHider {
 
         /**
          * Making function visible.<p>
-         * 
+         *
          * @see com.google.gwt.user.client.ui.Widget#onAttach()
          */
         @Override
@@ -136,7 +195,7 @@ public class CmsPopup extends PopupPanel implements I_CmsAutoHider {
 
         /**
          * Making function visible.<p>
-         * 
+         *
          * @see com.google.gwt.user.client.ui.Widget#onDetach()
          */
         @Override
@@ -161,7 +220,7 @@ public class CmsPopup extends PopupPanel implements I_CmsAutoHider {
 
         /**
          * Making function visible.<p>
-         * 
+         *
          * @see com.google.gwt.user.client.ui.Widget#onAttach()
          */
         @Override
@@ -172,7 +231,7 @@ public class CmsPopup extends PopupPanel implements I_CmsAutoHider {
 
         /**
          * Making function visible.<p>
-         * 
+         *
          * @see com.google.gwt.user.client.ui.Widget#onDetach()
          */
         @Override
@@ -195,16 +254,25 @@ public class CmsPopup extends PopupPanel implements I_CmsAutoHider {
             // nothing to do
         }
 
+        /**
+         * @see com.google.gwt.event.dom.client.MouseDownHandler#onMouseDown(com.google.gwt.event.dom.client.MouseDownEvent)
+         */
         public void onMouseDown(MouseDownEvent event) {
 
             beginDragging(event);
         }
 
+        /**
+         * @see com.google.gwt.event.dom.client.MouseMoveHandler#onMouseMove(com.google.gwt.event.dom.client.MouseMoveEvent)
+         */
         public void onMouseMove(MouseMoveEvent event) {
 
             continueDragging(event);
         }
 
+        /**
+         * @see com.google.gwt.event.dom.client.MouseUpHandler#onMouseUp(com.google.gwt.event.dom.client.MouseUpEvent)
+         */
         public void onMouseUp(MouseUpEvent event) {
 
             endDragging(event);
@@ -212,7 +280,19 @@ public class CmsPopup extends PopupPanel implements I_CmsAutoHider {
     }
 
     /** The default width of this dialog. */
-    private static final int DEFAULT_WIDTH = 300;
+    public static final int DEFAULT_WIDTH = 600;
+
+    /** The wide dialog width. */
+    public static final int WIDE_WIDTH = 800;
+
+    /** The history handler used to remove popups when the fragment is changed. */
+    private static HistoryHandler m_historyHandler;
+
+    /** The close command. */
+    protected Command m_closeCommand;
+
+    /** Flag which indicates whether the notification widget has already been installed. */
+    protected boolean m_notificationWidgetInstalled;
 
     /** The window width. */
     protected int m_windowWidth;
@@ -223,6 +303,10 @@ public class CmsPopup extends PopupPanel implements I_CmsAutoHider {
     /** The dialog caption. */
     private Caption m_caption;
 
+    /** Flag indicating if the dialog should catch all notifications while visible. */
+    private boolean m_catchNotifications;
+
+    /** The child widgets. */
     private WidgetCollection m_children;
 
     /** Body offset left. */
@@ -234,8 +318,14 @@ public class CmsPopup extends PopupPanel implements I_CmsAutoHider {
     /** The panel for the close button. */
     private CloseButton m_close;
 
+    /** The dialog closing handler registration used for organizing notifications. */
+    private HandlerRegistration m_closingHandlerRegistration;
+
     /** The popup container element. */
-    private com.google.gwt.user.client.Element m_containerElement;
+    private Element m_containerElement;
+
+    /** The content height correction, used when explicitly setting the dialog height. */
+    private int m_contentHeightCorrection = 6;
 
     /** Flag if dragging. */
     private boolean m_dragging;
@@ -249,11 +339,20 @@ public class CmsPopup extends PopupPanel implements I_CmsAutoHider {
     /** The main widget of this dialog containing all others. */
     private Element m_main;
 
+    /** The own notification widget. */
+    private CmsNotificationWidget m_ownNotificationWidget;
+
+    /** The parent notification widget. */
+    private I_CmsNotificationWidget m_parentNotificationWidget;
+
     /** The resize handler registration .*/
     private HandlerRegistration m_resizeHandlerRegistration;
 
     /** Signals whether a animation should be used to show the popup or not. */
     private boolean m_useAnimation = true;
+
+    /** The content width, -1 indicating the value was not set. */
+    private int m_width = -1;
 
     /**
      * Constructor.<p>
@@ -265,7 +364,7 @@ public class CmsPopup extends PopupPanel implements I_CmsAutoHider {
 
     /**
      * Constructor setting the width of the dialog.<p>
-     * 
+     *
      * @param width the width to set
      */
     public CmsPopup(int width) {
@@ -275,8 +374,12 @@ public class CmsPopup extends PopupPanel implements I_CmsAutoHider {
 
         m_containerElement = super.getContainerElement();
         setStyleName(I_CmsLayoutBundle.INSTANCE.dialogCss().popup());
+        addStyleName(I_CmsLayoutBundle.INSTANCE.generalCss().opencms());
         m_containerElement.setClassName(I_CmsLayoutBundle.INSTANCE.dialogCss().popupContent());
-        setGlassStyleName(I_CmsLayoutBundle.INSTANCE.dialogCss().popupOverlay());
+        setGlassStyleName(
+            I_CmsLayoutBundle.INSTANCE.dialogCss().popupOverlay()
+                + " "
+                + I_CmsLayoutBundle.INSTANCE.generalCss().opencms());
         Element dragOverlay = DOM.createDiv();
         dragOverlay.setClassName(I_CmsLayoutBundle.INSTANCE.dialogCss().dragOverlay());
         getElement().insertFirst(dragOverlay);
@@ -306,11 +409,17 @@ public class CmsPopup extends PopupPanel implements I_CmsAutoHider {
 
         setWidth(width);
         getElement().addClassName(I_CmsLayoutBundle.INSTANCE.dialogCss().hideCaption());
+
+        if (m_historyHandler == null) {
+            m_historyHandler = new HistoryHandler();
+            History.addValueChangeHandler(m_historyHandler);
+        }
+        m_historyHandler.addPopup(this);
     }
 
     /**
      * Constructor setting the dialog caption.<p>
-     * 
+     *
      * @param caption the caption to set
      */
     public CmsPopup(String caption) {
@@ -321,7 +430,7 @@ public class CmsPopup extends PopupPanel implements I_CmsAutoHider {
 
     /**
      * Constructor setting caption and width.<p>
-     * 
+     *
      * @param caption the caption to set
      * @param width the width to set
      */
@@ -333,7 +442,7 @@ public class CmsPopup extends PopupPanel implements I_CmsAutoHider {
 
     /**
      * The constructor.<p>
-     * 
+     *
      * @param title the title and heading of the dialog
      * @param content the content widget
      */
@@ -345,9 +454,9 @@ public class CmsPopup extends PopupPanel implements I_CmsAutoHider {
 
     /**
      * Wraps the given Widget with a cornered border, padding and margin.<p>
-     *  
+     *
      * @param w the widget to wrap
-     * 
+     *
      * @return a new widget that wraps the given one
      */
     public static Widget wrapWithBorderPadding(Widget w) {
@@ -361,7 +470,7 @@ public class CmsPopup extends PopupPanel implements I_CmsAutoHider {
 
     /**
      * Adds the given child widget.<p>
-     * 
+     *
      * @param w the widget
      */
     @Override
@@ -372,7 +481,7 @@ public class CmsPopup extends PopupPanel implements I_CmsAutoHider {
 
     /**
      * Adds a button widget to the button panel.<p>
-     * 
+     *
      * @param button the button widget
      */
     public void addButton(Widget button) {
@@ -382,7 +491,7 @@ public class CmsPopup extends PopupPanel implements I_CmsAutoHider {
 
     /**
      * Adds a button widget to the button panel before the given position.<p>
-     * 
+     *
      * @param button the button widget
      * @param position the position to insert the button
      */
@@ -394,11 +503,12 @@ public class CmsPopup extends PopupPanel implements I_CmsAutoHider {
 
     /**
      * Adds a close "button" to the top of the popup.<p>
-     * 
+     *
      * @param cmd the command that should be executed when the close button is clicked
      */
     public void addDialogClose(final Command cmd) {
 
+        m_closeCommand = cmd;
         if (m_close == null) {
             m_close = new CloseButton();
             m_close.setTitle(Messages.get().key(Messages.GUI_CLOSE_0));
@@ -414,8 +524,8 @@ public class CmsPopup extends PopupPanel implements I_CmsAutoHider {
 
                     boolean cancelled = false;
                     try {
-                        if (cmd != null) {
-                            cmd.execute();
+                        if (m_closeCommand != null) {
+                            m_closeCommand.execute();
                         }
                     } catch (CmsCancelCloseException e) {
                         cancelled = true;
@@ -429,6 +539,7 @@ public class CmsPopup extends PopupPanel implements I_CmsAutoHider {
             DOM.appendChild(m_containerElement, m_close.getElement());
             adopt(m_close);
         }
+
     }
 
     /**
@@ -436,27 +547,23 @@ public class CmsPopup extends PopupPanel implements I_CmsAutoHider {
      */
     public void catchNotifications() {
 
-        // remember current notification widget
-        final I_CmsNotificationWidget widget = CmsNotification.get().getWidget();
-        // create our own notification overlay
-        final CmsDialogNotificationWidget notificationWidget = new CmsDialogNotificationWidget();
-        add(notificationWidget);
-        CmsNotification.get().setWidget(notificationWidget);
+        m_catchNotifications = true;
+        if (isShowing()) {
+            installNotificationWidget();
+        }
+        if (m_closingHandlerRegistration == null) {
+            // when closing the dialog
+            m_closingHandlerRegistration = addCloseHandler(new CloseHandler<PopupPanel>() {
 
-        // when closing the dialog
-        addCloseHandler(new CloseHandler<PopupPanel>() {
+                /**
+                 * @see CloseHandler#onClose(CloseEvent)
+                 */
+                public void onClose(CloseEvent<PopupPanel> event) {
 
-            /**
-             * @see CloseHandler#onClose(CloseEvent)
-             */
-            public void onClose(CloseEvent<PopupPanel> event) {
-
-                // restore the previous notification widget
-                CmsNotification.get().setWidget(widget);
-                // remove the overlay notification widget
-                remove(notificationWidget);
-            }
-        });
+                    clearNotifications();
+                }
+            });
+        }
     }
 
     /**
@@ -465,28 +572,36 @@ public class CmsPopup extends PopupPanel implements I_CmsAutoHider {
     @Override
     public void center() {
 
-        super.center();
-        if (m_resizeHandlerRegistration == null) {
-            m_resizeHandlerRegistration = Window.addResizeHandler(new ResizeHandler() {
-
-                public void onResize(ResizeEvent event) {
-
-                    m_windowWidth = event.getWidth();
-                }
-            });
+        show();
+        if (Position.FIXED.getCssName().equals(getElement().getStyle().getPosition())) {
+            // keep position fixed, as may have been set to absolute
+            setPositionFixed();
+            int left = (Window.getClientWidth() - getOffsetWidth()) >> 1;
+            int top = (Window.getClientHeight() - getOffsetHeight()) >> 1;
+            setPopupPosition(Math.max(left, 0), Math.max(top, 0));
+        } else {
+            super.center();
         }
     }
 
     /**
      * Shows the dialog and centers it horizontally, but positions it at a fixed vertical position.<p>
-     * 
+     *
      * @param top the top position
      */
     public void centerHorizontally(int top) {
 
-        show();
-        int left = (Window.getClientWidth() - getOffsetWidth()) >> 1;
-        setPopupPosition(Math.max(Window.getScrollLeft() + left, 0), Math.max(Window.getScrollTop() + top, 0));
+        if (Position.FIXED.getCssName().equals(getElement().getStyle().getPosition())) {
+            show();
+            // keep position fixed, as may have been set to absolute
+            setPositionFixed();
+            int left = (Window.getClientWidth() - getOffsetWidth()) >> 1;
+            setPopupPosition(Math.max(left, 0), Math.max(top, 0));
+        } else {
+            show();
+            int left = (Window.getClientWidth() - getOffsetWidth()) >> 1;
+            setPopupPosition(Math.max(Window.getScrollLeft() + left, 0), Math.max(Window.getScrollTop() + top, 0));
+        }
     }
 
     /**
@@ -502,15 +617,30 @@ public class CmsPopup extends PopupPanel implements I_CmsAutoHider {
             } finally {
                 // Physical detach.
                 Element elem = w.getElement();
-                DOM.removeChild(DOM.getParent(elem), elem);
+                elem.removeFromParent();
             }
         }
         m_children = new WidgetCollection(this);
     }
 
     /**
+     * Returns the maximum available height inside the popup.<p>
+     *
+     * @param fixedContentHeight fixed content height to deduct from the available height
+     *
+     * @return the maximum available height
+     */
+    public int getAvailableHeight(int fixedContentHeight) {
+
+        if (m_buttonPanel.isVisible()) {
+            fixedContentHeight += m_buttonPanel.getOffsetHeight();
+        }
+        return Window.getClientHeight() - 150 - fixedContentHeight;
+    }
+
+    /**
      * Returns the dialog caption text.<p>
-     * 
+     *
      * @return the dialog caption
      */
     public String getCaption() {
@@ -520,9 +650,9 @@ public class CmsPopup extends PopupPanel implements I_CmsAutoHider {
 
     /**
      * Returns the child widget with the given index.<p>
-     * 
+     *
      * @param index the index
-     * 
+     *
      * @return the child widget
      */
     public Widget getWidget(int index) {
@@ -532,7 +662,7 @@ public class CmsPopup extends PopupPanel implements I_CmsAutoHider {
 
     /**
      * Returns the number of child widgets.<p>
-     * 
+     *
      * @return the number of child widgets
      */
     public int getWidgetCount() {
@@ -542,9 +672,9 @@ public class CmsPopup extends PopupPanel implements I_CmsAutoHider {
 
     /**
      * Returns the index of the given widget.<p>
-     * 
+     *
      * @param child the child widget
-     * 
+     *
      * @return the index of the child widget
      */
     public int getWidgetIndex(IsWidget child) {
@@ -554,9 +684,9 @@ public class CmsPopup extends PopupPanel implements I_CmsAutoHider {
 
     /**
      * Returns the index of the given child widget.<p>
-     * 
+     *
      * @param child the child widget
-     * 
+     *
      * @return the index
      */
     public int getWidgetIndex(Widget child) {
@@ -565,8 +695,18 @@ public class CmsPopup extends PopupPanel implements I_CmsAutoHider {
     }
 
     /**
+     * Returns the dialog content width, -1 if not set.<p>
+     *
+     * @return the dialog content width
+     */
+    public int getWidth() {
+
+        return m_width;
+    }
+
+    /**
      * Returns <code>true</code> if a caption is set for this popup <code>false</code> otherwise.<p>
-     * 
+     *
      * @return <code>true</code> if a caption is set for this popup <code>false</code> otherwise
      */
     public boolean hasCaption() {
@@ -588,11 +728,21 @@ public class CmsPopup extends PopupPanel implements I_CmsAutoHider {
     }
 
     /**
+     * @see com.google.gwt.user.client.ui.PopupPanel#hide(boolean)
+     */
+    @Override
+    public void hide(boolean autoClosed) {
+
+        super.hide(autoClosed);
+        m_historyHandler.removePopup(this);
+    }
+
+    /**
      * Inserts a child widget before the given index.<p>
-     * 
+     *
      * @param w the child widget
      * @param beforeIndex the index
-     * 
+     *
      * @throws IndexOutOfBoundsException if the index is out of bounds
      */
     public void insert(Widget w, int beforeIndex) throws IndexOutOfBoundsException {
@@ -602,8 +752,8 @@ public class CmsPopup extends PopupPanel implements I_CmsAutoHider {
 
     /**
      * Inserts a widget as the first widget in the popup.<p>
-     * 
-     * @param widget the widget to insert 
+     *
+     * @param widget the widget to insert
      */
     public void insertFront(Widget widget) {
 
@@ -645,9 +795,9 @@ public class CmsPopup extends PopupPanel implements I_CmsAutoHider {
 
     /**
      * Removes a child widget.<p>
-     * 
+     *
      * @param index the index of the widget to remove
-     * 
+     *
      * @return <code>true</code> if the there was a widget at the given index to remove
      */
     public boolean remove(int index) {
@@ -675,7 +825,7 @@ public class CmsPopup extends PopupPanel implements I_CmsAutoHider {
         } finally {
             // Physical detach.
             Element elem = w.getElement();
-            DOM.removeChild(DOM.getParent(elem), elem);
+            elem.removeFromParent();
 
             // Logical detach.
             getChildren().remove(w);
@@ -693,7 +843,7 @@ public class CmsPopup extends PopupPanel implements I_CmsAutoHider {
 
     /**
      * Removes the given button widget from the button panel.<p>
-     * 
+     *
      * @param button the button widget to remove
      */
     public void removeButton(Widget button) {
@@ -710,11 +860,12 @@ public class CmsPopup extends PopupPanel implements I_CmsAutoHider {
     public void removePadding() {
 
         m_main.removeClassName(I_CmsLayoutBundle.INSTANCE.dialogCss().contentPadding());
+        m_contentHeightCorrection = -6;
     }
 
     /**
      * Sets the popup's content background.<p>
-     * 
+     *
      * @param color the color to set
      */
     public void setBackgroundColor(String color) {
@@ -724,7 +875,7 @@ public class CmsPopup extends PopupPanel implements I_CmsAutoHider {
 
     /**
      * Sets the captions text.<p>
-     * 
+     *
      * @param caption the text to set
      */
     public void setCaption(String caption) {
@@ -739,24 +890,24 @@ public class CmsPopup extends PopupPanel implements I_CmsAutoHider {
 
     /**
      * Sets the height for the popup content.<p>
-     * 
+     *
      * @param height the height in pixels
      */
     public void setHeight(int height) {
 
         if (height <= 0) {
             m_containerElement.getStyle().clearWidth();
+            m_main.getStyle().clearHeight();
         } else {
-            int contentHeight = height;
+            int contentHeight = height - 6;
             if (hasCaption()) {
                 contentHeight = contentHeight - 36;
             }
             if (hasButtons()) {
                 contentHeight = contentHeight - 34;
             }
-            contentHeight = contentHeight - 6;
-            m_containerElement.getStyle().setProperty("height", height + Unit.PX.toString());
-            m_main.getStyle().setProperty("height", contentHeight + Unit.PX.toString());
+            contentHeight = contentHeight - m_contentHeightCorrection;
+            m_main.getStyle().setHeight(contentHeight, Unit.PX);
         }
     }
 
@@ -772,7 +923,7 @@ public class CmsPopup extends PopupPanel implements I_CmsAutoHider {
 
     /**
      * Replaces the content from the main widget.<p>
-     * 
+     *
      * @param w the widget that should replace the main content
      */
     public void setMainContent(Widget w) {
@@ -810,8 +961,18 @@ public class CmsPopup extends PopupPanel implements I_CmsAutoHider {
     }
 
     /**
+     * Sets an additional CSS class to the main content element.<p>
+     *
+     * @param cssClassName the CSS class to set
+     */
+    public void setSpecialBackgroundClass(String cssClassName) {
+
+        m_main.addClassName(cssClassName);
+    }
+
+    /**
      * Sets the use animation flag.<p>
-     * 
+     *
      * @param use <code>true</code> if the animation should be used, default is <code>true</code>
      */
     public void setUseAnimation(boolean use) {
@@ -821,7 +982,7 @@ public class CmsPopup extends PopupPanel implements I_CmsAutoHider {
 
     /**
      * Unsupported operation.<p>
-     * 
+     *
      * @see com.google.gwt.user.client.ui.PopupPanel#setWidget(com.google.gwt.user.client.ui.Widget)
      */
     @Override
@@ -833,15 +994,17 @@ public class CmsPopup extends PopupPanel implements I_CmsAutoHider {
 
     /**
      * Sets the width for the popup content.<p>
-     * 
+     *
      * @param width the width in pixels
      */
     public void setWidth(int width) {
 
         if (width <= 0) {
             m_containerElement.getStyle().clearWidth();
+            m_width = -1;
         } else {
-            m_containerElement.getStyle().setProperty("width", width + Unit.PX.toString());
+            m_containerElement.getStyle().setWidth(width, Unit.PX);
+            m_width = width;
         }
     }
 
@@ -861,9 +1024,15 @@ public class CmsPopup extends PopupPanel implements I_CmsAutoHider {
     @Override
     public void show() {
 
+        boolean fixed = Position.FIXED.getCssName().equals(getElement().getStyle().getPosition());
+        boolean wasAlreadyShowing = isShowing();
         super.show();
-        if (m_useAnimation) {
-            CmsFadeAnimation.fadeIn(getElement(), null, 500);
+        if (fixed) {
+            // keep position fixed as it may have been set to absolute
+            setPositionFixed();
+        }
+        if (m_useAnimation && !wasAlreadyShowing) {
+            CmsFadeAnimation.fadeIn(getElement(), null, 250);
         }
         if (m_resizeHandlerRegistration == null) {
             m_resizeHandlerRegistration = Window.addResizeHandler(new ResizeHandler() {
@@ -874,12 +1043,15 @@ public class CmsPopup extends PopupPanel implements I_CmsAutoHider {
                 }
             });
         }
+        if (m_catchNotifications) {
+            catchNotifications();
+        }
     }
 
     /**
      * Adds a new child widget to the panel, attaching its Element to the
      * specified container Element.
-     * 
+     *
      * @param child the child widget to be added
      * @param container the element within which the child will be contained
      */
@@ -901,7 +1073,7 @@ public class CmsPopup extends PopupPanel implements I_CmsAutoHider {
     /**
      * Adjusts beforeIndex to account for the possibility that the given widget is
      * already a child of this panel.
-     * 
+     *
      * @param child the widget that might be an existing child
      * @param beforeIndex the index at which it will be added to this panel
      * @return the modified index
@@ -926,7 +1098,7 @@ public class CmsPopup extends PopupPanel implements I_CmsAutoHider {
     /**
      * Called on mouse down in the caption area, begins the dragging loop by
      * turning on event capture.
-     * 
+     *
      * @see DOM#setCapture
      * @see #continueDragging
      * @param event the mouse down event that triggered dragging
@@ -946,7 +1118,7 @@ public class CmsPopup extends PopupPanel implements I_CmsAutoHider {
     /**
      * Checks that <code>index</code> is in the range [0, getWidgetCount()), which
      * is the valid range on accessible indexes.
-     * 
+     *
      * @param index the index being accessed
      */
     protected void checkIndexBoundsForAccess(int index) {
@@ -959,7 +1131,7 @@ public class CmsPopup extends PopupPanel implements I_CmsAutoHider {
     /**
      * Checks that <code>index</code> is in the range [0, getWidgetCount()], which
      * is the valid range for indexes on an insertion.
-     * 
+     *
      * @param index the index where insertion will occur
      */
     protected void checkIndexBoundsForInsertion(int index) {
@@ -972,7 +1144,7 @@ public class CmsPopup extends PopupPanel implements I_CmsAutoHider {
     /**
      * Called on mouse move in the caption area, continues dragging if it was
      * started by {@link #beginDragging}.
-     * 
+     *
      * @see #beginDragging
      * @see #endDragging
      * @param event the mouse move event that continues dragging
@@ -992,6 +1164,16 @@ public class CmsPopup extends PopupPanel implements I_CmsAutoHider {
 
             setPopupPosition(absX - m_dragStartX, absY - m_dragStartY);
         }
+    }
+
+    /**
+     * Creates a new notification widget for this dialog.<p>
+     *
+     * @return the notification widget for this dialog
+     */
+    protected CmsNotificationWidget createDialogNotificationWidget() {
+
+        return new CmsNotificationWidget();
     }
 
     /**
@@ -1036,9 +1218,9 @@ public class CmsPopup extends PopupPanel implements I_CmsAutoHider {
     /**
      * Called on mouse up in the caption area, ends dragging by ending event
      * capture.
-     * 
+     *
      * @param event the mouse up event that ended dragging
-     * 
+     *
      * @see DOM#releaseCapture
      * @see #beginDragging
      * @see #endDragging
@@ -1052,7 +1234,7 @@ public class CmsPopup extends PopupPanel implements I_CmsAutoHider {
 
     /**
      * Gets the list of children contained in this panel.
-     * 
+     *
      * @return a collection of child widgets
      */
     protected WidgetCollection getChildren() {
@@ -1063,13 +1245,14 @@ public class CmsPopup extends PopupPanel implements I_CmsAutoHider {
     /**
      * @see com.google.gwt.user.client.ui.PopupPanel#getContainerElement()
      */
+    @SuppressWarnings("deprecation")
     @Override
     protected com.google.gwt.user.client.Element getContainerElement() {
 
         if (m_containerElement == null) {
             m_containerElement = super.getContainerElement();
         }
-        return m_containerElement;
+        return (com.google.gwt.user.client.Element)m_containerElement;
     }
 
     /**
@@ -1077,7 +1260,7 @@ public class CmsPopup extends PopupPanel implements I_CmsAutoHider {
      * its Element to the specified container Element. The child Element will
      * either be attached to the container at the same index, or simply appended
      * to the container, depending on the value of <code>domInsert</code>.
-     * 
+     *
      * @param child the child Widget to be added
      * @param container the Element within which <code>child</code> will be
      *          contained
@@ -1110,8 +1293,27 @@ public class CmsPopup extends PopupPanel implements I_CmsAutoHider {
     }
 
     /**
+     * Sets the notification widget.<p>
+     */
+    protected void installNotificationWidget() {
+
+        if (m_notificationWidgetInstalled) {
+            return;
+        }
+        // remember current notification widget
+        m_parentNotificationWidget = CmsNotification.get().getWidget();
+        // create our own notification overlay
+        if (m_ownNotificationWidget == null) {
+            m_ownNotificationWidget = createDialogNotificationWidget();
+        }
+        add(m_ownNotificationWidget);
+        CmsNotification.get().setWidget(m_ownNotificationWidget);
+        m_notificationWidgetInstalled = true;
+    }
+
+    /**
      * Override to work around the glass overlay still showing after dialog hide.<p>
-     * 
+     *
      * @see com.google.gwt.user.client.ui.Widget#onDetach()
      */
     @Override
@@ -1129,20 +1331,23 @@ public class CmsPopup extends PopupPanel implements I_CmsAutoHider {
     @Override
     protected void onPreviewNativeEvent(NativePreviewEvent event) {
 
+        NativeEvent nativeEvent = event.getNativeEvent();
+        int eventType = event.getTypeInt();
+
         // We need to preventDefault() on mouseDown events (outside of the
         // DialogBox content) to keep text from being selected when it
         // is dragged.
-        NativeEvent nativeEvent = event.getNativeEvent();
 
-        if (!event.isCanceled() && (event.getTypeInt() == Event.ONMOUSEDOWN) && isCaptionEvent(nativeEvent)) {
+        if (!event.isCanceled() && (eventType == Event.ONMOUSEDOWN) && isCaptionEvent(nativeEvent)) {
             nativeEvent.preventDefault();
         }
+
         super.onPreviewNativeEvent(event);
     }
 
     /**
      * Appends the arrow element to the popup's dialog.<p>
-     * 
+     *
      * @param arrow the arrow element to add
      */
     protected void showArrow(Element arrow) {
@@ -1151,8 +1356,23 @@ public class CmsPopup extends PopupPanel implements I_CmsAutoHider {
     }
 
     /**
+     * Resets the notification to the parent notification widget and detaches the own notification widget.<p>
+     */
+    void clearNotifications() {
+
+        if (m_parentNotificationWidget != null) {
+            // restore the previous notification widget
+            CmsNotification.get().setWidget(m_parentNotificationWidget);
+        }
+        if (m_ownNotificationWidget != null) {
+            // remove the overlay notification widget
+            remove(m_ownNotificationWidget);
+        }
+    }
+
+    /**
      * Returns <code>true</code> if this popup has buttons <code>false</code> otherwise.<p>
-     * 
+     *
      * @return <code>true</code> if this popup has buttons <code>false</code> otherwise
      */
     private boolean hasButtons() {
@@ -1162,9 +1382,9 @@ public class CmsPopup extends PopupPanel implements I_CmsAutoHider {
 
     /**
      * Checks if the target of the given event is the caption or a child of the caption.<p>
-     * 
+     *
      * @param event the event to check
-     * 
+     *
      * @return <code>true</code> if the target of the given event is the caption <code>false</code> otherwise
      */
     private boolean isCaptionEvent(NativeEvent event) {
@@ -1174,20 +1394,5 @@ public class CmsPopup extends PopupPanel implements I_CmsAutoHider {
             return m_caption.getElement().isOrHasChild(com.google.gwt.dom.client.Element.as(target));
         }
         return false;
-    }
-
-    /**
-     * Returns the maximum available height inside the popup.<p>
-     * 
-     * @param fixedContentHeight fixed content height to deduct from the available height
-     * 
-     * @return the maximum available height
-     */
-    public int getAvailableHeight(int fixedContentHeight) {
-
-        if (m_buttonPanel.isVisible()) {
-            fixedContentHeight += m_buttonPanel.getOffsetHeight();
-        }
-        return Window.getClientHeight() - 150 - fixedContentHeight;
     }
 }

@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -15,11 +15,11 @@
  * Lesser General Public License for more details.
  *
  * For further information about Alkacon Software, please see the
- * company website: http://www.alkacon.com
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -33,17 +33,17 @@ import com.google.gwt.user.client.ui.Frame;
 
 /**
  * IFrame widget, extends the GWT core {@link com.google.gwt.user.client.ui.Frame} widget.<p>
- * 
+ *
  * This is necessary, as {@link com.google.gwt.user.client.ui.Frame} won't assign a name attribute on element creation.
- * This is needed, ass setting or changing this attribute later won't have any effect in IE.<p> 
- * 
+ * This is needed, ass setting or changing this attribute later won't have any effect in IE.<p>
+ *
  * @since 8.0.0
  */
 public class CmsIFrame extends Frame {
 
     /**
      * Constructor.<p>
-     * 
+     *
      * @param name the iFrame name attribute value
      */
     public CmsIFrame(String name) {
@@ -53,7 +53,7 @@ public class CmsIFrame extends Frame {
 
     /**
      * Constructor.<p>
-     * 
+     *
      * @param name the iFrame name attribute value
      * @param url the iFrame src attribute value
      */

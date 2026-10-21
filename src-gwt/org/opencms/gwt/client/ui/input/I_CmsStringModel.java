@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -15,11 +15,11 @@
  * Lesser General Public License for more details.
  *
  * For further information about Alkacon Software, please see the
- * company website: http://www.alkacon.com
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -31,29 +31,29 @@ import com.google.gwt.event.logical.shared.HasValueChangeHandlers;
 
 /**
  * The interface for a string model.<p>
- * 
+ *
  * @since 8.0.0
  */
 public interface I_CmsStringModel extends HasValueChangeHandlers<String> {
 
-    /** 
+    /**
      * Returns the model id.<p>
-     * @return the model id 
+     * @return the model id
      */
     String getId();
 
     /**
      * Returns the model value.<p>
-     * 
-     * @return the model value 
+     *
+     * @return the model value
      */
     String getValue();
 
     /**
      * Sets the model value.<p>
-     * 
-     * @param value the new model value 
-     * @param notify if true, value change listeners will be notified of the new value 
+     *
+     * @param value the new model value
+     * @param notify if true, value change listeners will be notified of the new value
      */
     void setValue(String value, boolean notify);
 }

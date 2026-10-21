@@ -1,0 +1,82 @@
+@external html-face, gwt-DatePicker, datePickerMonthSelector, datePickerMonth, datePickerPreviousButton, datePickerPreviousButton-up-hovering, datePickerPreviousButton-down-hovering, datePickerNextButton, datePickerNextButton-up-hovering, datePickerNextButton-down-hovering, datePickerDays, datePickerWeekdayLabel, datePickerWeekendLabel, datePickerDay, datePickerDayIsToday, datePickerDayIsWeekend, datePickerDayIsFiller, datePickerDayIsValue, datePickerDayIsDisabled, datePickerDayIsHighlighted, datePickerDayIsValueAndHighlighted;
+
+table.gwt-DatePicker {
+	border-bottom: value("constants.css.borderColor") 1px solid;
+	min-width: 200px;
+}
+table.gwt-DatePicker table.datePickerMonthSelector td, table.gwt-DatePicker table.datePickerDays td div{
+	text-align: center;
+}
+table.gwt-DatePicker table.datePickerMonthSelector { /*the month selector widget*/
+	border-bottom: 1px solid value("constants.css.borderColor");
+	width: 100%;
+}
+table.gwt-DatePicker table.datePickerMonthSelector td {
+	height: 24px;
+	width: 20px;
+}
+table.gwt-DatePicker table.datePickerMonthSelector td.datePickerMonth { /*the month in the month selector widget*/
+	width: auto;
+} 
+.datePickerPreviousButton { /*the previous month button*/ 
+	cursor: pointer;
+} 
+.datePickerNextButton { /*the next month button*/ 
+	cursor: pointer;
+} 
+.datePickerPreviousButton-up-hovering .html-face, .datePickerPreviousButton-down-hovering .html-face, .datePickerNextButton-up-hovering .html-face, .datePickerNextButton-down-hovering .html-face{
+	font-weight: bold;
+}
+table.gwt-DatePicker table.datePickerDays { 
+	width: 100%;
+}
+table.gwt-DatePicker table.datePickerDays td div, table.gwt-DatePicker table.datePickerDays td.datePickerWeekendLabel, table.gwt-DatePicker table.datePickerDays td.datePickerWeekdayLabel{ /* the cell for a day */
+	padding: 4px;
+	font-size: value("constants.css.dateboxDayFontSize");
+}
+.datePickerWeekdayLabel { /*the label over weekdays*/ }
+table.gwt-DatePicker table.datePickerDays td.datePickerWeekendLabel { /*the label over weekends*/
+	background: value("constants.css.dateboxWeekendBg");
+}
+table.datePickerDays td div.datePickerDay { /*a single day*/ 
+	cursor: pointer;
+}
+table.datePickerDays td div.datePickerDayIsToday { /*today's date*/
+	color: value("constants.css.dateboxTodayColor");
+}
+table.datePickerDays td div.datePickerDayIsWeekend { /*a weekend day*/
+	background: value("constants.css.dateboxWeekendBg");
+}
+table.datePickerDays td div.datePickerDayIsFiller { /*a day in another month*/
+	color: value("constants.css.dateboxAnotherMonthBg");
+}
+table.datePickerDays td div.datePickerDayIsValue { /*the selected day*/
+	background: value("constants.css.dateboxSelectedDayBg");
+}
+.datePickerDayIsDisabled { /*a disabled day*/ }
+table.datePickerDays td div.datePickerDayIsHighlighted { /*the currently highlighted day*/ 
+	background: value("constants.css.dateboxHoveredDayBg");
+}
+table.datePickerDays td div.datePickerDayIsValueAndHighlighted { /*the highlighted day if it is also selected*/ }
+
+.dateTime { /* Align the time panel */
+	padding: 6px;
+}
+.time { /* Format the time input field. */
+	margin-right: 6px;
+	display: inline-block;
+	vertical-align: top;
+	width: 50px;
+}
+
+.ampm { /* Format the am/pm outer div. */
+	margin-left: 6px;
+	vertical-align: top;
+}
+.dateTime .ampm div {
+	vertical-align: top;
+}
+.dateTime .ampm div span { /* Make a margin to separate the radiobuttons. */
+	margin-right: 1px;
+	vertical-align: top;
+}

@@ -1,0 +1,3924 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<export>
+	<info>
+		<infoproject>Offline</infoproject>
+		<export_version>10</export_version>
+	</info>
+	<module>
+		<name>org.opencms.base</name>
+		<nicename><![CDATA[OpenCms ADE Configuration]]></nicename>
+		<group>OpenCms ADE</group>
+		<class/>
+		<import-script><![CDATA[# sets access control entries  and properties on folders not exclusively belonging to this module
+chacc '/system/' 'ROLE' 'WORKPLACE_USER' '+I+R'
+chacc '/system/modules/' 'ROLE' 'WORKPLACE_USER' '+I+R+V'
+createFolder '/system/' 'config'
+writeProperty '/system/config/' 'export' 'false'
+writeProperty '/system/workplace/' 'content-encoding' 'UTF-8'
+writeProperty '/system/workplace/' 'export' 'false'
+writeProperty '/system/workplace/' 'login-form' '/system/login/index.html'
+chacc '/system/workplace/' 'GROUP' 'ALL_OTHERS' '+I+O'
+chacc '/system/workplace/' 'ROLE' 'WORKPLACE_USER' '+I+O+R+V'
+createFolder '/system/config/' 'notification'
+writeProperty '/system/config/notification/' 'Title' 'Content Notification'
+writeProperty '/system/workplace/commons/' 'cache' 'false'
+# create folders for categories and set title / german title
+createFolder '/system/' 'categories'
+writeProperty '/system/categories/' 'Title' 'Global categories'
+writeProperty '/system/categories/' 'Title_de' 'Globale Kategorien'
+# create folders for user images
+chacc '/system/userimages/' 'ROLE' 'ELEMENT_AUTHOR' '+I+O+R'
+writeProperty '/system/workplace/editors/' 'cache' 'false'
+chacc '/system/workplace/editors/' 'GROUP' 'ALL_OTHERS' '+I+O'
+chacc '/system/workplace/editors/' 'ROLE' 'ELEMENT_AUTHOR' '+I+O+R+V']]></import-script>
+		<site>/sites/default</site>
+		<export-mode name="reduced"/>
+		<description><![CDATA[Configuration for OpenCms websites.<br>
+<i>&copy; by Alkacon Software GmbH &amp; Co. KG (https://www.alkacon.com).</i>]]></description>
+		<version>22.0.0</version>
+		<authorname><![CDATA[Alkacon Software GmbH &amp; Co. KG]]></authorname>
+		<authoremail><![CDATA[sales@alkacon.com]]></authoremail>
+		<datecreated/>
+		<userinstalled/>
+		<dateinstalled/>
+		<dependencies/>
+		<exportpoints>
+			<exportpoint uri="/system/modules/org.opencms.base/classes/" destination="WEB-INF/classes/"/>
+		</exportpoints>
+		<resources>
+			<resource uri="/system/handler/"/>
+			<resource uri="/system/login/"/>
+			<resource uri="/system/modules/org.opencms.base/"/>
+			<resource uri="/system/userimages/temp/"/>
+			<resource uri="/system/workplace/commons/about.jsp"/>
+			<resource uri="/system/workplace/commons/editor-backlink.html"/>
+			<resource uri="/system/workplace/commons/resourceIcon.css"/>
+			<resource uri="/system/workplace/commons/gallery.jsp"/>
+			<resource uri="/system/workplace/commons/open_ade_gallery.jsp"/>
+			<resource uri="/system/workplace/commons/postupload_basicproperties.jsp"/>
+			<resource uri="/system/workplace/commons/postupload_useconfig.jsp"/>
+			<resource uri="/system/workplace/commons/postupload.jsp"/>
+			<resource uri="/system/workplace/commons/properties.jsp"/>
+			<resource uri="/system/workplace/commons/direct_publish.jsp"/>
+			<resource uri="/system/workplace/commons/publish_project.jsp"/>
+			<resource uri="/system/workplace/commons/publish.jsp"/>
+			<resource uri="/system/workplace/commons/download-aliases.jsp"/>
+			<resource uri="/system/workplace/commons/import-aliases.jsp"/>
+			<resource uri="/system/workplace/commons/sitemap.jsp"/>
+			<resource uri="/system/workplace/commons/upload.jsp"/>
+			<resource uri="/system/workplace/commons/uploadAction.jsp"/>
+			<resource uri="/system/workplace/resources/commons/notemplate.png"/>
+			<resource uri="/system/workplace/resources/filetypes/resourceNotFoundBig.png"/>
+			<resource uri="/system/workplace/resources/filetypes/resourceNotFoundSmall.png"/>
+			<resource uri="/system/workplace/editors/acacia/"/>
+			<resource uri="/system/workplace/editors/dialogs/"/>
+			<resource uri="/system/workplace/editors/simple/"/>
+			<resource uri="/system/workplace/editors/simplehtml/"/>
+			<resource uri="/system/workplace/editors/spellcheck"/>
+			<resource uri="/system/workplace/editors/direct_edit.jsp"/>
+			<resource uri="/system/workplace/editors/jquery_direct_edit_include.txt"/>
+			<resource uri="/system/workplace/editors/direct_edit_include.txt"/>
+			<resource uri="/system/workplace/editors/editor.jsp"/>
+			<resource uri="/system/workplace/editors/editor_main.jsp"/>
+			<resource uri="/system/workplace/resources/buttons/anchor.png"/>
+			<resource uri="/system/workplace/resources/buttons/bold.png"/>
+			<resource uri="/system/workplace/resources/buttons/bullist.png"/>
+			<resource uri="/system/workplace/resources/buttons/center.png"/>
+			<resource uri="/system/workplace/resources/buttons/cleanup.png"/>
+			<resource uri="/system/workplace/resources/buttons/color_fill.png"/>
+			<resource uri="/system/workplace/resources/buttons/color_text.png"/>
+			<resource uri="/system/workplace/resources/buttons/copy.png"/>
+			<resource uri="/system/workplace/resources/buttons/cut.png"/>
+			<resource uri="/system/workplace/resources/buttons/details.png"/>
+			<resource uri="/system/workplace/resources/buttons/directedit_cl.png"/>
+			<resource uri="/system/workplace/resources/buttons/directedit_in.png"/>
+			<resource uri="/system/workplace/resources/buttons/directedit_op.png"/>
+			<resource uri="/system/workplace/resources/buttons/editorsearch.png"/>
+			<resource uri="/system/workplace/resources/buttons/elements.png"/>
+			<resource uri="/system/workplace/resources/buttons/elements_in.png"/>
+			<resource uri="/system/workplace/resources/buttons/erase.png"/>
+			<resource uri="/system/workplace/resources/buttons/exit.png"/>
+			<resource uri="/system/workplace/resources/buttons/image.png"/>
+			<resource uri="/system/workplace/resources/buttons/indent.png"/>
+			<resource uri="/system/workplace/resources/buttons/italic.png"/>
+			<resource uri="/system/workplace/resources/buttons/left.png"/>
+			<resource uri="/system/workplace/resources/buttons/link.png"/>
+			<resource uri="/system/workplace/resources/buttons/numlist.png"/>
+			<resource uri="/system/workplace/resources/buttons/outdent.png"/>
+			<resource uri="/system/workplace/resources/buttons/paste.png"/>
+			<resource uri="/system/workplace/resources/buttons/properties.png"/>
+			<resource uri="/system/workplace/resources/buttons/properties_in.png"/>
+			<resource uri="/system/workplace/resources/buttons/redo.png"/>
+			<resource uri="/system/workplace/resources/buttons/right.png"/>
+			<resource uri="/system/workplace/resources/buttons/save.png"/>
+			<resource uri="/system/workplace/resources/buttons/save_exit.png"/>
+			<resource uri="/system/workplace/resources/buttons/specialchar.png"/>
+			<resource uri="/system/workplace/resources/buttons/table.png"/>
+			<resource uri="/system/workplace/resources/buttons/table_td.png"/>
+			<resource uri="/system/workplace/resources/buttons/table_tr.png"/>
+			<resource uri="/system/workplace/resources/buttons/underline.png"/>
+			<resource uri="/system/workplace/resources/buttons/undo.png"/>
+			<resource uri="/system/workplace/resources/buttons/xmledit.png"/>
+			<resource uri="/system/workplace/resources/buttons/xmledit_add.png"/>
+			<resource uri="/system/workplace/resources/buttons/xmledit_del.png"/>
+			<resource uri="/system/workplace/resources/buttons/xmledit_del_add.png"/>
+			<resource uri="/system/workplace/resources/editors/directedit/"/>
+			<resource uri="/system/workplace/resources/editors/simple/"/>
+			<resource uri="/system/workplace/resources/editors/simplehtml/"/>
+			<resource uri="/system/workplace/resources/editors/xmlcontent/"/>
+			<resource uri="/system/workplace/editors/codemirror/"/>
+			<resource uri="/system/workplace/editors/tinymce/base_content.css"/>
+			<resource uri="/system/workplace/editors/tinymce/filebrowser_gallery_integrator.js"/>
+			<resource uri="/system/workplace/editors/tinymce/image_popup.html"/>
+			<resource uri="/system/workplace/editors/tinymce/integrator.js"/>
+			<resource uri="/system/workplace/editors/tinymce/opencms_plugin.css"/>
+			<resource uri="/system/workplace/editors/tinymce/opencms_plugin.js"/>
+		</resources>
+		<excluderesources/>
+		<parameters/>
+		<resourcetypes>
+			<type class="org.opencms.file.types.CmsResourceTypeXmlContainerPage" name="containerpage" id="13">
+				<param name="formatter_gallery_preview">/system/workplace/editors/ade/container-preview-formatter.jsp</param>
+			</type>
+			<type class="org.opencms.file.types.CmsResourceTypeXmlAdeConfiguration" name="groupcontainer" id="17">
+				<properties>
+					<property>
+						<name>search.exclude</name>
+						<value><![CDATA[true]]></value>
+					</property>
+					<property>
+						<name>locale-available</name>
+						<value><![CDATA[en]]></value>
+					</property>
+					<property>
+						<name>locale</name>
+						<value><![CDATA[en]]></value>
+					</property>
+				</properties>
+				<param name="schema">/system/modules/org.opencms.ade.containerpage/schemas/group_container.xsd</param>
+			</type>
+			<type class="org.opencms.file.types.CmsResourceTypeXmlAdeConfiguration" name="elementview" id="310">
+				<properties>
+					<property>
+						<name>search.exclude</name>
+						<value><![CDATA[true]]></value>
+					</property>
+					<property>
+						<name>locale-available</name>
+						<value><![CDATA[en]]></value>
+					</property>
+					<property>
+						<name>locale</name>
+						<value><![CDATA[en]]></value>
+					</property>
+				</properties>
+				<param name="schema">/system/modules/org.opencms.ade.config/schemas/element_view.xsd</param>
+			</type>
+			<type class="org.opencms.file.types.CmsResourceTypeJsp" name="containerpage_template" id="21"/>
+			<type class="org.opencms.file.types.CmsResourceTypeXmlContent" name="function" id="22">
+				<param name="schema">/system/modules/org.opencms.ade.containerpage/schemas/function.xsd</param>
+			</type>
+			<type class="org.opencms.file.types.CmsResourceTypeFunctionConfig" name="function_config" id="29">
+				<properties>
+					<property>
+						<name>locale-available</name>
+						<value><![CDATA[en]]></value>
+					</property>
+					<property>
+						<name>locale</name>
+						<value><![CDATA[en]]></value>
+					</property>
+				</properties>
+				<param name="schema">/system/modules/org.opencms.ade.containerpage/schemas/function-v2.xsd</param>
+			</type>
+			<type class="org.opencms.file.types.CmsResourceTypeHtmlRedirect" name="htmlredirect" id="15">
+				<properties>
+					<property>
+						<name>search.exclude</name>
+						<value><![CDATA[all]]></value>
+					</property>
+					<property>
+						<name>locale-available</name>
+						<value><![CDATA[en]]></value>
+					</property>
+				</properties>
+				<param name="schema">/system/modules/org.opencms.ade.sitemap/schemas/redirect.xsd</param>
+			</type>
+			<type class="org.opencms.file.types.CmsResourceTypeFolderSubSitemap" name="subsitemap" id="23"/>
+			<type class="org.opencms.file.types.CmsResourceTypeSubsitemapContentFolder" name="content_folder" id="24"/>
+			<type class="org.opencms.file.types.CmsResourceTypeXmlAdeConfiguration" name="sitemap_config" id="14">
+				<properties>
+					<property>
+						<name>locale-available</name>
+						<value><![CDATA[en]]></value>
+					</property>
+					<property>
+						<name>locale</name>
+						<value><![CDATA[en]]></value>
+					</property>
+					<property>
+						<name>search.exclude</name>
+						<value><![CDATA[all]]></value>
+					</property>
+				</properties>
+				<param name="schema">/system/modules/org.opencms.ade.config/schemas/sitemap_config.xsd</param>
+			</type>
+			<type class="org.opencms.file.types.CmsResourceTypeXmlAdeConfiguration" name="module_config" id="28">
+				<properties>
+					<property>
+						<name>locale-available</name>
+						<value><![CDATA[en]]></value>
+					</property>
+					<property>
+						<name>locale</name>
+						<value><![CDATA[en]]></value>
+					</property>
+					<property>
+						<name>search.exclude</name>
+						<value><![CDATA[all]]></value>
+					</property>
+				</properties>
+				<param name="schema">/system/modules/org.opencms.ade.config/schemas/module_config.xsd</param>
+			</type>
+			<type class="org.opencms.file.types.CmsResourceTypeXmlAdeConfiguration" name="formatter_config" id="308">
+				<properties>
+					<property>
+						<name>locale-available</name>
+						<value><![CDATA[en]]></value>
+					</property>
+					<property>
+						<name>locale</name>
+						<value><![CDATA[en]]></value>
+					</property>
+					<property>
+						<name>search.exclude</name>
+						<value><![CDATA[all]]></value>
+					</property>
+				</properties>
+				<param name="schema">/system/modules/org.opencms.ade.config/schemas/formatters/new_formatter.xsd</param>
+			</type>
+			<type class="org.opencms.file.types.CmsResourceTypeSeoFile" name="seo_file" id="305">
+				<properties>
+					<property>
+						<name>locale-available</name>
+						<value><![CDATA[en]]></value>
+					</property>
+					<property>
+						<name>locale</name>
+						<value><![CDATA[en]]></value>
+					</property>
+					<property>
+						<name>search.exclude</name>
+						<value><![CDATA[all]]></value>
+					</property>
+				</properties>
+				<param name="schema">/system/modules/org.opencms.ade.config/schemas/seo_file.xsd</param>
+			</type>
+			<type class="org.opencms.file.types.CmsResourceTypeXmlAdeConfiguration" name="inheritance_group" id="303">
+				<properties>
+					<property>
+						<name>search.exclude</name>
+						<value><![CDATA[true]]></value>
+					</property>
+					<property>
+						<name>locale-available</name>
+						<value><![CDATA[en]]></value>
+					</property>
+					<property>
+						<name>locale</name>
+						<value><![CDATA[en]]></value>
+					</property>
+				</properties>
+				<param name="schema">/system/modules/org.opencms.ade.containerpage/schemas/inheritance_group.xsd</param>
+			</type>
+			<type class="org.opencms.file.types.CmsResourceTypeXmlContent" name="inheritance_config" id="304">
+				<properties>
+					<property>
+						<name>search.exclude</name>
+						<value><![CDATA[all]]></value>
+					</property>
+				</properties>
+				<param name="schema">/system/modules/org.opencms.ade.containerpage/schemas/inheritance_config.xsd</param>
+			</type>
+			<type class="org.opencms.file.types.CmsResourceTypeXmlContent" name="xmlvfsbundle" id="306">
+				<properties>
+					<property>
+						<name>search.exclude</name>
+						<value><![CDATA[all]]></value>
+					</property>
+				</properties>
+				<param name="schema">/system/modules/org.opencms.ade.config/schemas/xmlvfsbundle.xsd</param>
+			</type>
+			<type class="org.opencms.file.types.CmsResourceTypePlain" name="propertyvfsbundle" id="307">
+				<properties>
+					<property>
+						<name>search.exclude</name>
+						<value><![CDATA[all]]></value>
+					</property>
+				</properties>
+			</type>
+				<type class="org.opencms.file.types.CmsResourceTypeXmlAdeConfiguration" name="sitemap_master_config" id="313">
+				<properties>
+					<property>
+						<name>locale-available</name>
+						<value><![CDATA[en]]></value>
+					</property>
+					<property>
+						<name>locale</name>
+						<value><![CDATA[en]]></value>
+					</property>
+					<property>
+						<name>search.exclude</name>
+						<value><![CDATA[true]]></value>
+					</property>
+				</properties>
+				<param name="schema">/system/modules/org.opencms.ade.config/schemas/sitemap_master_config.xsd</param>
+			</type>
+			<type class="org.opencms.file.types.CmsResourceTypeXmlContainerPage" name="modelgroup" id="314">
+				<properties>
+					<property>
+						<name>search.exclude</name>
+						<value><![CDATA[true]]></value>
+					</property>
+				</properties>
+				<param name="formatter_gallery_preview">/system/workplace/editors/ade/container-preview-formatter.jsp</param>
+			</type>
+			<type class="org.opencms.file.types.CmsResourceTypeMacroFormatter" name="macro_formatter" id="315">
+				<properties>
+					<property>
+						<name>locale-available</name>
+						<value><![CDATA[en]]></value>
+					</property>
+					<property>
+						<name>locale</name>
+						<value><![CDATA[en]]></value>
+					</property>
+					<property>
+						<name>cache</name>
+						<value><![CDATA[container-element;locale;uri]]></value>
+					</property>
+					<property>
+						<name>search.exclude</name>
+						<value><![CDATA[all]]></value>
+					</property>
+				</properties>
+				<param name="schema">/system/modules/org.opencms.ade.config/schemas/formatters/macro_formatter.xsd</param>
+			</type>
+			<type class="org.opencms.file.types.CmsResourceTypeXmlAdeConfiguration" name="settings_config" id="316">
+				<properties>
+					<property>
+						<name>locale-available</name>
+						<value><![CDATA[en]]></value>
+					</property>
+					<property>
+						<name>locale</name>
+						<value><![CDATA[en]]></value>
+					</property>
+					<property>
+						<name>search.exclude</name>
+						<value><![CDATA[all]]></value>
+					</property>
+				</properties>
+				<param name="schema">/system/modules/org.opencms.ade.config/schemas/formatters/settings_config.xsd</param>
+			</type>
+			<type class="org.opencms.file.types.CmsResourceTypeXmlAdeConfiguration" name="bundledescriptor" id="320">
+				<properties>
+					<property>
+						<name>locale-available</name>
+						<value><![CDATA[en]]></value>
+					</property>
+					<property>
+						<name>locale</name>
+						<value><![CDATA[en]]></value>
+					</property>
+					<property>
+						<name>search.exclude</name>
+						<value><![CDATA[all]]></value>
+					</property>
+				</properties>
+				<param name="schema">/system/modules/org.opencms.ade.config/schemas/bundledescriptor.xsd</param>
+			</type>
+			<type class="org.opencms.file.types.CmsResourceTypeXmlAdeConfiguration" name="listconfig" id="321">
+				<properties>
+					<property>
+						<name>locale-available</name>
+						<value><![CDATA[en]]></value>
+					</property>
+					<property>
+						<name>locale</name>
+						<value><![CDATA[en]]></value>
+					</property>
+				</properties>
+				<param name="schema">/system/modules/org.opencms.ade.config/schemas/list_config.xsd</param>
+			</type>
+			<type class="org.opencms.file.types.CmsResourceTypeMacroFormatter" name="flex_formatter" id="322">
+				<properties>
+					<property>
+						<name>locale-available</name>
+						<value><![CDATA[en]]></value>
+					</property>
+					<property>
+						<name>locale</name>
+						<value><![CDATA[en]]></value>
+					</property>
+					<property>
+						<name>cache</name>
+						<value><![CDATA[container-element;locale;uri]]></value>
+					</property>
+					<property>
+						<name>search.exclude</name>
+						<value><![CDATA[all]]></value>
+					</property>
+				</properties>
+				<param name="schema">/system/modules/org.opencms.ade.config/schemas/formatters/flex_formatter.xsd</param>
+			</type>
+			<type class="org.opencms.file.types.CmsResourceTypeXmlAdeConfiguration" name="ugc_config" id="309">
+				<properties>
+					<property>
+						<name>locale-available</name>
+						<value><![CDATA[en]]></value>
+					</property>
+					<property>
+						<name>locale</name>
+						<value><![CDATA[en]]></value>
+					</property>
+				</properties>
+				<param name="resource.flag.internal">true</param>
+				<param name="schema">/system/modules/org.opencms.ugc/schemas/ugc_config.xsd</param>
+			</type>
+			<type class="org.opencms.file.types.CmsResourceTypeXmlContent" name="jsp-search" id="311">
+				<param name="schema">/system/modules/org.opencms.jsp.search/schemas/jsp-search.xsd</param>
+			</type>
+			<type class="org.opencms.file.types.CmsResourceTypeXmlAdeConfiguration" name="site_plugin" id="323">
+				<properties>
+					<property>
+						<name>locale-available</name>
+						<value><![CDATA[en]]></value>
+					</property>
+					<property>
+						<name>locale</name>
+						<value><![CDATA[en]]></value>
+					</property>
+				</properties>
+				<param name="resource.flag.internal">true</param>
+				<param name="schema">/system/modules/org.opencms.ade.config/schemas/site_plugin.xsd</param>
+			</type>
+			<type class="org.opencms.file.types.CmsResourceTypeXmlAdeConfiguration" name="attr_editor_config" id="324">
+				<properties>
+					<property>
+						<name>locale-available</name>
+						<value><![CDATA[en]]></value>
+					</property>
+					<property>
+						<name>locale</name>
+						<value><![CDATA[en]]></value>
+					</property>
+				</properties>
+				<param name="resource.flag.internal">true</param>
+				<param name="schema">/system/modules/org.opencms.ade.config/schemas/attr_editor_config.xsd</param>
+			</type>
+		</resourcetypes>
+		<explorertypes>
+			<explorertype name="subsitemap" key="fileicon.subsitemap" smalliconstyle="oc-icon-16-subsitemap" bigiconstyle="oc-icon-24-subsitemap" reference="folder">
+				<newresource creatable="true" order="490" autosetnavigation="false" autosettitle="false" info="desc.subsitemap"/>
+			</explorertype>
+			<explorertype name="modelpage" key="fileicon.modelpage" smalliconstyle="oc-icon-16-modelpage" bigiconstyle="oc-icon-24-modelpage" reference="folder">
+				<newresource creatable="false" order="490" autosetnavigation="false" autosettitle="false" info=""/>
+			</explorertype>
+			<explorertype name="category" key="fileicon.category" smalliconstyle="oc-icon-16-category" bigiconstyle="oc-icon-24-category" reference="folder">
+				<newresource creatable="false" order="490" autosetnavigation="false" autosettitle="false" info=""/>
+			</explorertype>
+			<explorertype name="htmlredirect" key="fileicon.htmlredirect" smalliconstyle="oc-icon-16-htmlredirect" bigiconstyle="oc-icon-24-htmlredirect" reference="xmlcontent">
+				<newresource creatable="true" order="27" autosetnavigation="true" autosettitle="true" info="desc.htmlredirect"/>
+				<accesscontrol>
+					<accessentry principal="ROLE.EDITOR" permissions="+r+v+w+c"/>
+				</accesscontrol>
+			</explorertype>
+			<explorertype name="containerpage" key="fileicon.containerpage" smalliconstyle="oc-icon-16-containerpage" bigiconstyle="oc-icon-24-containerpage" reference="xmlcontent">
+				<newresource creatable="true" order="25" autosetnavigation="false" autosettitle="false" info="desc.containerpage"/>
+				<accesscontrol>
+					<accessentry principal="ROLE.EDITOR" permissions="+r+v+w+c"/>
+					<accessentry principal="ROLE.ELEMENT_AUTHOR" permissions="+r+v+w"/>
+				</accesscontrol>
+				<editoptions>
+					<defaultproperties enabled="true" shownavigation="true">
+						<defaultproperty name="Title"/>
+						<defaultproperty name="Keywords"/>
+						<defaultproperty name="Description"/>
+					</defaultproperties>
+				</editoptions>
+			</explorertype>
+			<explorertype name="groupcontainer" key="fileicon.groupcontainer" smalliconstyle="oc-icon-16-elementgroup" bigiconstyle="oc-icon-24-elementgroup" reference="xmlcontent">
+				<newresource creatable="true" order="26" autosetnavigation="false" autosettitle="false" info="desc.groupcontainer"/>
+				<accesscontrol>
+					<accessentry principal="ROLE.ELEMENT_AUTHOR" permissions="+r+v+w+c"/>
+				</accesscontrol>
+			</explorertype>
+			<explorertype name="elementview" key="fileicon.elementview" smalliconstyle="oc-icon-16-function" bigiconstyle="oc-icon-24-function" reference="xmlcontent">
+				<newresource creatable="true" order="999" autosetnavigation="false" autosettitle="false" info="desc.elementview"/>
+				<accesscontrol>
+					<accessentry principal="ROLE.DEVELOPER" permissions="+r+v+w+c"/>
+					<accessentry principal="ROLE.WORKPLACE_USER" permissions="+r+v-w-c"/>
+				</accesscontrol>
+			</explorertype>
+			<explorertype name="function" key="fileicon.function" smalliconstyle="oc-icon-16-function" bigiconstyle="oc-icon-24-function" reference="xmlcontent">
+				<newresource creatable="true" order="999" autosetnavigation="false" autosettitle="false" info="desc.function"/>
+				<accesscontrol>
+					<accessentry principal="DEFAULT" permissions="+r+v"/>
+					<accessentry principal="ROLE.DEVELOPER" permissions="+r+v+w+c"/>
+				</accesscontrol>
+			</explorertype>
+			<explorertype name="function_config" key="fileicon.function_config" smalliconstyle="oc-icon-16-function" bigiconstyle="oc-icon-24-function" reference="xmlcontent">
+				<newresource creatable="true" order="999" autosetnavigation="false" autosettitle="false" info="desc.function"/>
+				<accesscontrol>
+					<accessentry principal="DEFAULT" permissions="+r+v"/>
+					<accessentry principal="ROLE.DEVELOPER" permissions="+r+v+w+c"/>
+				</accesscontrol>
+			</explorertype>
+			<explorertype name="seo_file" key="fileicon.seo_file" smalliconstyle="oc-icon-16-jsp_search" bigiconstyle="oc-icon-24-jsp_search" reference="xmlcontent">
+				<newresource creatable="true" order="998" autosetnavigation="false" autosettitle="false" info="desc.seo_file"/>
+			</explorertype>
+			<explorertype name="containerpage_template" key="fileicon.containerpage_template" smalliconstyle="oc-icon-16-containerpage_template" bigiconstyle="oc-icon-24-containerpage_template" reference="jsp">
+				<newresource creatable="true" order="22" autosetnavigation="false" autosettitle="false" info="desc.containerpage_template"/>
+			</explorertype>
+			<explorertype name="content_folder" key="fileicon.configfolder" smalliconstyle="oc-icon-16-configfolder" bigiconstyle="oc-icon-24-configfolder" reference="folder">
+				<newresource creatable="true" order="491" autosetnavigation="false" autosettitle="false" info="desc.configfolder"/>
+				<accesscontrol>
+					<accessentry principal="ROLE.EDITOR" permissions="+r+v+w+c"/>
+				</accesscontrol>
+			</explorertype>
+			<explorertype name="sitemap_config" key="fileicon.sitemap_config" smalliconstyle="oc-icon-16-sitemap_config" bigiconstyle="oc-icon-24-sitemap_config" reference="xmlcontent">
+				<newresource creatable="true" order="21" autosetnavigation="false" autosettitle="false" info="desc.sitemap_config"/>
+				<accesscontrol>
+					<accessentry principal="ROLE.EDITOR" permissions="+r+v+w+c"/>
+				</accesscontrol>
+				<editoptions>
+					<defaultproperties enabled="true" shownavigation="true">
+						<defaultproperty name="Title"/>
+						<defaultproperty name="Keywords"/>
+						<defaultproperty name="Description"/>
+					</defaultproperties>
+				</editoptions>
+			</explorertype>
+			<explorertype name="module_config" key="fileicon.module_config" smalliconstyle="oc-icon-16-module_config" bigiconstyle="oc-icon-24-module_config" reference="xmlcontent">
+				<newresource creatable="true" order="22" autosetnavigation="false" autosettitle="false" info="desc.module_config"/>
+				<accesscontrol>
+					<accessentry principal="ROLE.WORKPLACE_USER" permissions="+r+v+w+c"/>
+				</accesscontrol>
+			</explorertype>
+			<explorertype name="sitemap_master_config" key="fileicon.sitemap_master_config" smalliconstyle="oc-icon-16-module_config" bigiconstyle="oc-icon-24-module_config" reference="xmlcontent">
+				<newresource creatable="true" order="23" autosetnavigation="false" autosettitle="false" info="desc.sitemap_master_config"/>
+				<accesscontrol>
+					<accessentry principal="ROLE.WORKPLACE_USER" permissions="+r+v+w+c"/>
+				</accesscontrol>
+			</explorertype>
+			<explorertype name="formatter_config" key="fileicon.formatter_config" smalliconstyle="oc-icon-16-formatter_config" bigiconstyle="oc-icon-24-formatter_config" reference="xmlcontent">
+				<newresource creatable="true" order="23" autosetnavigation="false" autosettitle="false" info="desc.formatter_config"/>
+				<accesscontrol>
+					<accessentry principal="ROLE.WORKPLACE_USER" permissions="+r+v+w+c"/>
+				</accesscontrol>
+			</explorertype>
+			<explorertype name="settings_config" key="fileicon.settings_config" smalliconstyle="oc-icon-16-formatter_config" bigiconstyle="oc-icon-24-formatter_config" reference="xmlcontent">
+				<newresource creatable="true" order="23" autosetnavigation="false" autosettitle="false" info="desc.settings_config"/>
+				<accesscontrol>
+					<accessentry principal="ROLE.WORKPLACE_USER" permissions="+r+v+w+c"/>
+				</accesscontrol>
+			</explorertype>
+			<explorertype name="inheritance_group" key="fileicon.inheritance_group" smalliconstyle="oc-icon-16-inheritancegroup" bigiconstyle="oc-icon-24-inheritancegroup" reference="xmlcontent">
+				<newresource creatable="true" order="27" autosetnavigation="false" autosettitle="false" info="desc.inheritance_group"/>
+				<accesscontrol>
+					<accessentry principal="ROLE.ELEMENT_AUTHOR" permissions="+r+v+w+c"/>
+				</accesscontrol>
+			</explorertype>
+			<explorertype name="inheritance_config" key="fileicon.inheritance_config" smalliconstyle="oc-icon-16-inheritancegroup" bigiconstyle="oc-icon-24-inheritancegroup" reference="xmlcontent">
+				<newresource creatable="true" order="28" autosetnavigation="false" autosettitle="false" info="desc.inheritance_config"/>
+				<accesscontrol>
+					<accessentry principal="ROLE.ELEMENT_AUTHOR" permissions="+r+v+w+c"/>
+				</accesscontrol>
+			</explorertype>
+			<explorertype name="xmlvfsbundle" key="fileicon.xmlvfsbundle" smalliconstyle="oc-icon-16-localization" bigiconstyle="oc-icon-24-localization" reference="xmlcontent">
+				<newresource creatable="true" order="28" autosetnavigation="false" autosettitle="false" info="desc.xmlvfsbundle"/>
+				<accesscontrol>
+					<accessentry principal="ROLE.WORKPLACE_USER" permissions="+r+v+w+c"/>
+				</accesscontrol>
+			</explorertype>
+			<explorertype name="propertyvfsbundle" key="fileicon.propertyvfsbundle" smalliconstyle="oc-icon-16-localization" bigiconstyle="oc-icon-24-localization" reference="plain">
+				<newresource creatable="true" order="30" autosetnavigation="false" autosettitle="false" info="desc.propertyvfsbundle"/>
+				<accesscontrol>
+					<accessentry principal="ROLE.WORKPLACE_USER" permissions="+r+v+w+c"/>
+				</accesscontrol>
+			</explorertype>
+				<explorertype name="modelgroup" key="fileicon.modelgroup" smalliconstyle="oc-icon-16-modelgroup_reuse" bigiconstyle="oc-icon-24-modelgroup_reuse" reference="xmlcontent">
+				<newresource creatable="true" order="50" autosetnavigation="false" autosettitle="false" info="desc.modelgroup"/>
+				<accesscontrol>
+					<accessentry principal="ROLE.DEVELOPER" permissions="+r+v+w+c"/>
+					<accessentry principal="ROLE.ELEMENT_AUTHOR" permissions="+r+v"/>
+				</accesscontrol>
+			</explorertype>
+			<explorertype name="macro_formatter" key="fileicon.macro_formatter" smalliconstyle="oc-icon-16-formatter_config" bigiconstyle="oc-icon-24-formatter_config" reference="xmlcontent">
+				<newresource creatable="true" order="24" autosetnavigation="false" autosettitle="false" info="desc.macro_formatter"/>
+				<accesscontrol>
+					<accessentry principal="ROLE.DEVELOPER" permissions="+r+v+w+c"/>
+					<accessentry principal="ROLE.ELEMENT_AUTHOR" permissions="+r+v"/>
+				</accesscontrol>
+			</explorertype>
+			<explorertype name="view_basic" key="fileicon.view_basic" reference="folder" isview="true">
+				<newresource creatable="false" order="1000" autosetnavigation="false" autosettitle="false" info="desc.otheroptions"/>
+				<accesscontrol>
+					<accessentry principal="DEFAULT" permissions="+r+v"/>
+				</accesscontrol>
+			</explorertype>
+			<explorertype name="view_folders" key="fileicon.view_folders" reference="folder" isview="true">
+				<newresource creatable="false" order="2100" autosetnavigation="false" autosettitle="false" info="desc.otheroptions"/>
+				<accesscontrol>
+					<accessentry principal="DEFAULT" permissions="+r+v"/>
+				</accesscontrol>
+			</explorertype>
+			<explorertype name="view_configs" key="fileicon.view_configs" reference="folder" isview="true">
+				<newresource creatable="false" order="2200" autosetnavigation="false" autosettitle="false" info="desc.otheroptions"/>
+				<accesscontrol>
+					<accessentry principal="DEFAULT" permissions="+r+v"/>
+				</accesscontrol>
+			</explorertype>
+			<explorertype name="view_other" key="fileicon.view_other" reference="folder" isview="true">
+				<newresource creatable="false" order="2300" autosetnavigation="false" autosettitle="false" info=""/>
+				<accesscontrol>
+					<accessentry principal="DEFAULT" permissions="+r+v"/>
+				</accesscontrol>
+			</explorertype>
+			<explorertype name="bundledescriptor" key="fileicon.bundledescriptor" smalliconstyle="oc-icon-16-localization_descriptor" bigiconstyle="oc-icon-24-localization_descriptor" reference="xmlcontent">
+				<newresource creatable="true" order="29" autosetnavigation="false" autosettitle="false" info="desc.bundledescriptor"/>
+				<accesscontrol>
+					<accessentry principal="ROLE.WORKPLACE_USER" permissions="+r+v+w+c"/>
+				</accesscontrol>
+			</explorertype>
+			<explorertype name="listconfig" key="fileicon.listconfig" smalliconstyle="oc-icon-16-list" bigiconstyle="oc-icon-24-list" reference="xmlcontent">
+				<newresource creatable="true" order="29" autosetnavigation="false" autosettitle="false" info="desc.listconfig"/>
+				<accesscontrol>
+					<accessentry principal="ROLE.EDITOR" permissions="+r+v"/>
+					<accessentry principal="ROLE.LIST_EDITOR" permissions="+r+v+w+c"/>
+				</accesscontrol>
+			</explorertype>
+			<explorertype name="flex_formatter" key="fileicon.flex_formatter" smalliconstyle="oc-icon-16-formatter_config" bigiconstyle="oc-icon-24-formatter_config" reference="xmlcontent">
+				<newresource creatable="true" order="24" autosetnavigation="false" autosettitle="false" info="desc.flex_formatter"/>
+				<accesscontrol>
+					<accessentry principal="ROLE.DEVELOPER" permissions="+r+v+w+c"/>
+					<accessentry principal="ROLE.ELEMENT_AUTHOR" permissions="+r+v"/>
+				</accesscontrol>
+			</explorertype>
+			<explorertype name="ugc_config" key="fileicon.ugc_config" smalliconstyle="oc-icon-16-module_config" bigiconstyle="oc-icon-24-module_config" reference="xmlcontent">
+				<newresource creatable="true" order="23" autosetnavigation="false" autosettitle="false" info="desc.ugc_config"/>
+				<accesscontrol>
+					<accessentry principal="ROLE.WORKPLACE_USER" permissions="+r+v+w+c"/>
+				</accesscontrol>
+			</explorertype>
+			<explorertype name="jsp-search" key="fileicon.jsp-search" smalliconstyle="oc-icon-16-jsp_search" bigiconstyle="oc-icon-24-jsp_search" reference="xmlcontent">
+				<newresource creatable="true" order="10" autosetnavigation="false" autosettitle="false" info="desc.jsp-search" key="title.jsp-search"/>
+			</explorertype>
+			<explorertype name="site_plugin" key="fileicon.site_plugin" smalliconstyle="oc-icon-16-formatter_config" bigiconstyle="oc-icon-24-formatter_config" reference="xmlcontent">
+				<newresource creatable="true" order="23" autosetnavigation="false" autosettitle="false" info="desc.site_plugin"/>
+				<accesscontrol>
+					<accessentry principal="ROLE.WORKPLACE_USER" permissions="+r+v+w+c"/>
+				</accesscontrol>
+			</explorertype>
+			<explorertype name="attr_editor_config" key="fileicon.attr_editor_config" smalliconstyle="oc-icon-16-formatter_config" bigiconstyle="oc-icon-24-formatter_config" reference="xmlcontent">
+				<newresource creatable="true" order="23" autosetnavigation="false" autosettitle="false" info="desc.attr_editor_config"/>
+				<accesscontrol>
+					<accessentry principal="ROLE.WORKPLACE_USER" permissions="+r+v+w+c"/>
+				</accesscontrol>
+			</explorertype>
+		</explorertypes>
+	</module>
+	<files>
+		<file>
+			<destination>system</destination>
+			<type>folder</type>
+			<properties/>
+		</file>
+		<file>
+			<destination>system/handler</destination>
+			<type>folder</type>
+			<uuidstructure>82a54b3f-366c-11db-ab2a-8b2c5a4caf8d</uuidstructure>
+			<datecreated>Mon, 27 Jun 2005 08:00:00 GMT</datecreated>
+			<flags>0</flags>
+			<properties>
+				<property>
+					<name>cache</name>
+					<value><![CDATA[false]]></value>
+				</property>
+				<property>
+					<name>template</name>
+					<value><![CDATA[/system/handler/template/handlertemplate]]></value>
+				</property>
+			</properties>
+			<relations/>
+			<accesscontrol/>
+		</file>
+		<file>
+			<source>system/handler/handle404.html</source>
+			<destination>system/handler/handle404.html</destination>
+			<type>jsp</type>
+			<uuidstructure>82aff8a2-366c-11db-ab2a-8b2c5a4caf8d</uuidstructure>
+			<uuidresource>2ec39dda-a50d-11d9-b4c9-b7aef4fd014d</uuidresource>
+			<datecreated>Mon, 27 Jun 2005 08:00:00 GMT</datecreated>
+			<flags>0</flags>
+			<properties>
+				<property>
+					<name>Title</name>
+					<value><![CDATA[404 error handler page]]></value>
+				</property>
+				<property type="shared">
+					<name>export</name>
+					<value><![CDATA[false]]></value>
+				</property>
+			</properties>
+			<relations/>
+			<accesscontrol/>
+		</file>
+		<file>
+			<destination>system/handler/handle500.html</destination>
+			<type>jsp</type>
+			<uuidstructure>82bf3ae6-366c-11db-ab2a-8b2c5a4caf8d</uuidstructure>
+			<uuidresource>2ec39dda-a50d-11d9-b4c9-b7aef4fd014d</uuidresource>
+			<datecreated>Mon, 27 Jun 2005 08:00:00 GMT</datecreated>
+			<flags>0</flags>
+			<properties>
+				<property>
+					<name>Title</name>
+					<value><![CDATA[500 error handler page]]></value>
+				</property>
+				<property type="shared">
+					<name>export</name>
+					<value><![CDATA[false]]></value>
+				</property>
+			</properties>
+			<relations/>
+			<accesscontrol/>
+		</file>
+		<file>
+			<destination>system/login</destination>
+			<type>folder</type>
+			<uuidstructure>8247eafb-11b7-11db-91cd-fdbae480bac9</uuidstructure>
+			<datecreated>Mon, 27 Jun 2005 08:00:00 GMT</datecreated>
+			<flags>0</flags>
+			<properties>
+				<property>
+					<name>cache</name>
+					<value><![CDATA[false]]></value>
+				</property>
+				<property>
+					<name>content-encoding</name>
+					<value><![CDATA[UTF-8]]></value>
+				</property>
+				<property>
+					<name>export</name>
+					<value><![CDATA[false]]></value>
+				</property>
+			</properties>
+			<relations/>
+			<accesscontrol/>
+		</file>
+		<file>
+			<source>system/login/index.html</source>
+			<destination>system/login/index.html</destination>
+			<type>jsp</type>
+			<uuidstructure>824a34ef-11b7-11db-91cd-fdbae480bac9</uuidstructure>
+			<uuidresource>68a38133-f052-11d8-ba65-db38cc8f19d8</uuidresource>
+			<datecreated>Mon, 27 Jun 2005 08:00:00 GMT</datecreated>
+			<flags>0</flags>
+			<properties>
+				<property>
+					<name>Title</name>
+					<value><![CDATA[OpenCms login page]]></value>
+				</property>
+				<property>
+					<name>cache</name>
+					<value><![CDATA[bypass]]></value>
+				</property>
+				<property>
+					<name>export</name>
+					<value><![CDATA[false]]></value>
+				</property>
+			</properties>
+			<relations/>
+			<accesscontrol/>
+		</file>
+		<file>
+			<destination>system/login/useragreement</destination>
+			<type>folder</type>
+			<uuidstructure>cc60d8c4-ee69-11df-9711-c9a60a7588dd</uuidstructure>
+			<datecreated>Fri, 12 Nov 2010 14:33:21 GMT</datecreated>
+			<flags>0</flags>
+			<properties>
+				<property>
+					<name>template-elements</name>
+					<value><![CDATA[/system/login/useragreement/_conf/detail-ua.jsp]]></value>
+				</property>
+			</properties>
+			<relations/>
+			<accesscontrol>
+				<accessentry>
+					<uuidprincipal>ALL_OTHERS</uuidprincipal>
+					<flags>134</flags>
+					<permissionset>
+						<allowed>0</allowed>
+						<denied>0</denied>
+					</permissionset>
+				</accessentry>
+			</accesscontrol>
+		</file>
+		<file>
+			<destination>system/login/useragreement/_conf</destination>
+			<type>folder</type>
+			<uuidstructure>88b00c4c-f184-11df-b1c0-c9a60a7588dd</uuidstructure>
+			<datecreated>Tue, 16 Nov 2010 13:22:17 GMT</datecreated>
+			<flags>0</flags>
+			<properties/>
+			<relations/>
+			<accesscontrol/>
+		</file>
+		<file>
+			<source>system/login/useragreement/_conf/detail-ua.jsp</source>
+			<destination>system/login/useragreement/_conf/detail-ua.jsp</destination>
+			<type>jsp</type>
+			<uuidstructure>ba6fe525-f0bb-11df-b989-c9a60a7588dd</uuidstructure>
+			<uuidresource>ba6fe526-f0bb-11df-b989-c9a60a7588dd</uuidresource>
+			<datecreated>Mon, 15 Nov 2010 13:24:52 GMT</datecreated>
+			<flags>0</flags>
+			<properties>
+				<property>
+					<name>Title</name>
+					<value><![CDATA[Detail JSP for user agreement dialog]]></value>
+				</property>
+				<property type="shared">
+					<name>export</name>
+					<value><![CDATA[false]]></value>
+				</property>
+			</properties>
+			<relations/>
+			<accesscontrol/>
+		</file>
+		<file>
+			<source>system/login/useragreement/_conf/useragreement.xsd</source>
+			<destination>system/login/useragreement/_conf/useragreement.xsd</destination>
+			<type>plain</type>
+			<uuidstructure>f74fe7b6-ee69-11df-9711-c9a60a7588dd</uuidstructure>
+			<uuidresource>f74fe7b7-ee69-11df-9711-c9a60a7588dd</uuidresource>
+			<datecreated>Fri, 12 Nov 2010 14:34:33 GMT</datecreated>
+			<flags>0</flags>
+			<properties>
+				<property>
+					<name>Title</name>
+					<value><![CDATA[XSD for a user agreement configuration]]></value>
+				</property>
+			</properties>
+			<relations/>
+			<accesscontrol/>
+		</file>
+		<file>
+			<destination>system/login/useragreement/de</destination>
+			<type>folder</type>
+			<uuidstructure>b057df7f-f184-11df-b1c0-c9a60a7588dd</uuidstructure>
+			<datecreated>Tue, 16 Nov 2010 13:23:24 GMT</datecreated>
+			<flags>0</flags>
+			<properties>
+				<property>
+					<name>locale</name>
+					<value><![CDATA[de]]></value>
+				</property>
+			</properties>
+			<relations/>
+			<accesscontrol/>
+		</file>
+		<file>
+			<source>system/login/useragreement/de/configuration.html</source>
+			<destination>system/login/useragreement/de/configuration.html</destination>
+			<type>xmlcontent</type>
+			<uuidstructure>6aba466b-f0ba-11df-b989-c9a60a7588dd</uuidstructure>
+			<uuidresource>ed13adb2-ee6d-11df-9711-c9a60a7588dd</uuidresource>
+			<datecreated>Fri, 12 Nov 2010 15:02:54 GMT</datecreated>
+			<flags>0</flags>
+			<properties>
+				<property>
+					<name>Title</name>
+					<value><![CDATA[OpenCms User Agreement]]></value>
+				</property>
+				<property>
+					<name>login-form</name>
+					<value><![CDATA[false]]></value>
+				</property>
+			</properties>
+			<relations/>
+			<accesscontrol/>
+		</file>
+		<file>
+			<destination>system/login/useragreement/en</destination>
+			<type>folder</type>
+			<uuidstructure>c0ab6872-f184-11df-b1c0-c9a60a7588dd</uuidstructure>
+			<datecreated>Tue, 16 Nov 2010 13:23:51 GMT</datecreated>
+			<flags>0</flags>
+			<properties>
+				<property>
+					<name>locale</name>
+					<value><![CDATA[en]]></value>
+				</property>
+			</properties>
+			<relations/>
+			<accesscontrol/>
+		</file>
+		<file>
+			<destination>system/login/useragreement/en/configuration.html</destination>
+			<type>xmlcontent</type>
+			<uuidstructure>4514329a-f185-11df-b1c0-c9a60a7588dd</uuidstructure>
+			<uuidresource>ed13adb2-ee6d-11df-9711-c9a60a7588dd</uuidresource>
+			<datecreated>Fri, 12 Nov 2010 15:02:54 GMT</datecreated>
+			<flags>0</flags>
+			<properties>
+				<property>
+					<name>Title</name>
+					<value><![CDATA[OpenCms User Agreement]]></value>
+				</property>
+				<property>
+					<name>login-form</name>
+					<value><![CDATA[false]]></value>
+				</property>
+			</properties>
+			<relations/>
+			<accesscontrol/>
+		</file>
+		<file>
+			<destination>system/modules</destination>
+			<type>folder</type>
+			<properties/>
+		</file>
+		<file>
+			<destination>system/modules/org.opencms.base</destination>
+			<type>folder</type>
+			<uuidstructure>599661f3-70d4-11e0-9709-91706a02fba1</uuidstructure>
+			<datecreated>Wed, 27 Apr 2011 13:43:36 GMT</datecreated>
+			<flags>0</flags>
+			<properties/>
+			<relations/>
+			<accesscontrol/>
+		</file>
+		<file>
+			<source>system/modules/org.opencms.base/.config</source>
+			<destination>system/modules/org.opencms.base/.config</destination>
+			<type>module_config</type>
+			<uuidstructure>2baf86ab-62be-11e5-a6b9-35cf27d9ef56</uuidstructure>
+			<uuidresource>2baf86ac-62be-11e5-a6b9-35cf27d9ef56</uuidresource>
+			<datecreated>Thu, 24 Sep 2015 13:14:22 GMT</datecreated>
+			<flags>0</flags>
+			<properties>
+				<property>
+					<name>locale</name>
+					<value><![CDATA[en]]></value>
+				</property>
+				<property>
+					<name>locale-available</name>
+					<value><![CDATA[en]]></value>
+				</property>
+			</properties>
+			<relations/>
+			<accesscontrol/>
+		</file>
+		<file>
+			<destination>system/modules/org.opencms.base/classes</destination>
+			<type>folder</type>
+			<uuidstructure>59a974c5-70d4-11e0-9709-91706a02fba1</uuidstructure>
+			<datecreated>Wed, 27 Apr 2011 13:43:36 GMT</datecreated>
+			<flags>0</flags>
+			<properties/>
+			<relations/>
+			<accesscontrol/>
+		</file>
+		<file>
+			<destination>system/modules/org.opencms.base/classes/org</destination>
+			<type>folder</type>
+			<uuidstructure>59abbeb7-70d4-11e0-9709-91706a02fba1</uuidstructure>
+			<datecreated>Wed, 27 Apr 2011 13:43:36 GMT</datecreated>
+			<flags>0</flags>
+			<properties/>
+			<relations/>
+			<accesscontrol/>
+		</file>
+		<file>
+			<destination>system/modules/org.opencms.base/classes/org/opencms</destination>
+			<type>folder</type>
+			<uuidstructure>59ae2fb9-70d4-11e0-9709-91706a02fba1</uuidstructure>
+			<datecreated>Wed, 27 Apr 2011 13:43:36 GMT</datecreated>
+			<flags>0</flags>
+			<properties/>
+			<relations/>
+			<accesscontrol/>
+		</file>
+		<file>
+			<destination>system/modules/org.opencms.base/classes/org/opencms/base</destination>
+			<type>folder</type>
+			<uuidstructure>59b0a0bb-70d4-11e0-9709-91706a02fba1</uuidstructure>
+			<datecreated>Wed, 27 Apr 2011 13:43:36 GMT</datecreated>
+			<flags>0</flags>
+			<properties/>
+			<relations/>
+			<accesscontrol/>
+		</file>
+		<file>
+			<source>system/modules/org.opencms.base/classes/org/opencms/base/workplace.properties</source>
+			<destination>system/modules/org.opencms.base/classes/org/opencms/base/workplace.properties</destination>
+			<type>plain</type>
+			<uuidstructure>d789bd73-70d8-11e0-8f1f-91706a02fba1</uuidstructure>
+			<uuidresource>d789bd74-70d8-11e0-8f1f-91706a02fba1</uuidresource>
+			<datecreated>Wed, 27 Apr 2011 14:15:45 GMT</datecreated>
+			<flags>0</flags>
+			<properties>
+				<property>
+					<name>content-encoding</name>
+					<value><![CDATA[ISO-8859-1]]></value>
+				</property>
+			</properties>
+			<relations/>
+			<accesscontrol/>
+		</file>
+		<file>
+			<destination>system/modules/org.opencms.base/copyresources</destination>
+			<type>folder</type>
+			<uuidstructure>9d49825f-70d5-11e0-9709-91706a02fba1</uuidstructure>
+			<datecreated>Wed, 27 Apr 2011 13:52:39 GMT</datecreated>
+			<flags>0</flags>
+			<properties/>
+			<relations/>
+			<accesscontrol/>
+		</file>
+		<file>
+			<source>system/modules/org.opencms.base/copyresources/sample-formatter.jsp</source>
+			<destination>system/modules/org.opencms.base/copyresources/sample-formatter.jsp</destination>
+			<type>jsp</type>
+			<uuidstructure>61ad6a7c-75e7-11e8-8de8-8715041bae26</uuidstructure>
+			<uuidresource>61ad6a7d-75e7-11e8-8de8-8715041bae26</uuidresource>
+			<datecreated>Fri, 22 Jun 2018 06:42:07 GMT</datecreated>
+			<flags>0</flags>
+			<properties>
+				<property>
+					<name>Title</name>
+					<value><![CDATA[Sample formatter for new resource types]]></value>
+				</property>
+				<property type="shared">
+					<name>export</name>
+					<value><![CDATA[false]]></value>
+				</property>
+			</properties>
+			<relations/>
+			<accesscontrol/>
+		</file>
+		<file>
+			<source>system/modules/org.opencms.base/copyresources/sample-schema.xsd</source>
+			<destination>system/modules/org.opencms.base/copyresources/sample-schema.xsd</destination>
+			<type>plain</type>
+			<uuidstructure>8ed68af0-75e7-11e8-8de8-8715041bae26</uuidstructure>
+			<uuidresource>8ed68af1-75e7-11e8-8de8-8715041bae26</uuidresource>
+			<datecreated>Fri, 22 Jun 2018 06:43:22 GMT</datecreated>
+			<flags>0</flags>
+			<properties>
+				<property>
+					<name>Title</name>
+					<value><![CDATA[Sample schema for new resource types]]></value>
+				</property>
+			</properties>
+			<relations/>
+			<accesscontrol/>
+		</file>
+		<file>
+			<source>system/modules/org.opencms.base/copyresources/sitemap.config</source>
+			<destination>system/modules/org.opencms.base/copyresources/sitemap.config</destination>
+			<type>sitemap_config</type>
+			<uuidstructure>c9949dfa-70d5-11e0-9709-91706a02fba1</uuidstructure>
+			<uuidresource>c9949dfb-70d5-11e0-9709-91706a02fba1</uuidresource>
+			<datecreated>Wed, 27 Apr 2011 13:53:53 GMT</datecreated>
+			<flags>512</flags>
+			<properties>
+				<property>
+					<name>Title</name>
+					<value><![CDATA[Sitemap configuration file]]></value>
+				</property>
+				<property>
+					<name>locale</name>
+					<value><![CDATA[en]]></value>
+				</property>
+				<property>
+					<name>locale-available</name>
+					<value><![CDATA[en]]></value>
+				</property>
+				<property>
+					<name>search.exclude</name>
+					<value><![CDATA[all]]></value>
+				</property>
+			</properties>
+			<relations/>
+			<accesscontrol/>
+		</file>
+		<file>
+			<source>system/modules/org.opencms.base/copyresources/sitemap.config.nokeys</source>
+			<destination>system/modules/org.opencms.base/copyresources/sitemap.config.nokeys</destination>
+			<type>sitemap_config</type>
+			<uuidstructure>7245d584-44bb-4342-8666-5c075216f91d</uuidstructure>
+			<uuidresource>760c40ff-9a60-4c9a-9268-a418505f5f30</uuidresource>
+			<datecreated>Fri, 26 Mar 2021 13:53:53 GMT</datecreated>
+			<flags>512</flags>
+			<properties>
+				<property>
+					<name>Title</name>
+					<value><![CDATA[Sitemap configuration file]]></value>
+				</property>
+				<property>
+					<name>locale</name>
+					<value><![CDATA[en]]></value>
+				</property>
+				<property>
+					<name>locale-available</name>
+					<value><![CDATA[en]]></value>
+				</property>
+				<property>
+					<name>search.exclude</name>
+					<value><![CDATA[all]]></value>
+				</property>
+			</properties>
+			<relations/>
+			<accesscontrol/>
+		</file>
+		<file>
+			<source>system/modules/org.opencms.base/copyresources/sub-level-redirect.html</source>
+			<destination>system/modules/org.opencms.base/copyresources/sub-level-redirect.html</destination>
+			<type>htmlredirect</type>
+			<uuidstructure>bba62bd0-7f0c-11e1-a2a6-b38ba2bad1b2</uuidstructure>
+			<uuidresource>bba62bd1-7f0c-11e1-a2a6-b38ba2bad1b2</uuidresource>
+			<datecreated>Thu, 05 Apr 2012 10:47:26 GMT</datecreated>
+			<flags>0</flags>
+			<properties>
+				<property>
+					<name>Title</name>
+					<value><![CDATA[Redirect to first page in navigation]]></value>
+				</property>
+				<property type="shared">
+					<name>template-elements</name>
+					<value><![CDATA[/system/modules/org.opencms.ade.sitemap/pages/redirect-detail.jsp]]></value>
+				</property>
+			</properties>
+			<relations/>
+			<accesscontrol/>
+		</file>
+		<file>
+			<destination>system/modules/org.opencms.base/copyresources/models</destination>
+			<type>folder</type>
+			<uuidstructure>c913fc31-70d5-11e0-9709-91706a02fba1</uuidstructure>
+			<datecreated>Wed, 27 Apr 2011 13:53:52 GMT</datecreated>
+			<flags>0</flags>
+			<properties>
+				<property>
+					<name>Title</name>
+					<value><![CDATA[Model folder]]></value>
+				</property>
+			</properties>
+			<relations/>
+			<accesscontrol/>
+		</file>
+		<file>
+			<destination>system/modules/org.opencms.base/copyresources/models/pages</destination>
+			<type>folder</type>
+			<uuidstructure>c91fe314-70d5-11e0-9709-91706a02fba1</uuidstructure>
+			<datecreated>Wed, 27 Apr 2011 13:53:52 GMT</datecreated>
+			<flags>0</flags>
+			<properties>
+				<property>
+					<name>Title</name>
+					<value><![CDATA[Models for container pages]]></value>
+				</property>
+			</properties>
+			<relations/>
+			<accesscontrol/>
+		</file>
+		<file>
+			<destination>system/modules/org.opencms.base/elementviews</destination>
+			<type>folder</type>
+			<uuidstructure>69ccd65e-e116-11e5-8d6e-0242ac11002b</uuidstructure>
+			<datecreated>Thu, 03 Mar 2016 08:03:28 GMT</datecreated>
+			<flags>0</flags>
+			<properties/>
+			<relations/>
+			<accesscontrol/>
+		</file>
+		<file>
+			<source>system/modules/org.opencms.base/elementviews/system-elements</source>
+			<destination>system/modules/org.opencms.base/elementviews/system-elements</destination>
+			<type>elementview</type>
+			<uuidstructure>cf0f2604-e114-11e5-8d6e-0242ac11002b</uuidstructure>
+			<uuidresource>cf0f2605-e114-11e5-8d6e-0242ac11002b</uuidresource>
+			<datecreated>Thu, 03 Mar 2016 07:51:59 GMT</datecreated>
+			<flags>0</flags>
+			<properties>
+				<property>
+					<name>Title</name>
+					<value><![CDATA[System elements]]></value>
+				</property>
+				<property>
+					<name>locale</name>
+					<value><![CDATA[en]]></value>
+				</property>
+				<property>
+					<name>locale-available</name>
+					<value><![CDATA[en]]></value>
+				</property>
+				<property>
+					<name>search.exclude</name>
+					<value><![CDATA[true]]></value>
+				</property>
+			</properties>
+			<relations/>
+			<accesscontrol>
+				<accessentry>
+					<uuidprincipal>OVERWRITE_ALL</uuidprincipal>
+					<flags>256</flags>
+					<permissionset>
+						<allowed>0</allowed>
+						<denied>0</denied>
+					</permissionset>
+				</accessentry>
+				<accessentry>
+					<uuidprincipal>ROLE.CATEGORY_EDITOR</uuidprincipal>
+					<flags>512</flags>
+					<permissionset>
+						<allowed>5</allowed>
+						<denied>0</denied>
+					</permissionset>
+				</accessentry>
+				<accessentry>
+					<uuidprincipal>ROLE.GALLERY_EDITOR</uuidprincipal>
+					<flags>512</flags>
+					<permissionset>
+						<allowed>5</allowed>
+						<denied>0</denied>
+					</permissionset>
+				</accessentry>
+			</accesscontrol>
+		</file>
+		<file>
+			<destination>system/modules/org.opencms.base/formatters</destination>
+			<type>folder</type>
+			<uuidstructure>2bb6d9af-62be-11e5-a6b9-35cf27d9ef56</uuidstructure>
+			<datecreated>Thu, 24 Sep 2015 13:14:22 GMT</datecreated>
+			<flags>0</flags>
+			<properties/>
+			<relations/>
+			<accesscontrol/>
+		</file>
+		<file>
+			<source>system/modules/org.opencms.base/formatters/function-default.jsp</source>
+			<destination>system/modules/org.opencms.base/formatters/function-default.jsp</destination>
+			<type>jsp</type>
+			<uuidstructure>f25037c5-6654-47fe-80ef-20ca9f9c7e8f</uuidstructure>
+			<uuidresource>a3bee9a5-a2a3-4bd4-bc44-3ecbda0f07a0</uuidresource>
+			<datecreated>Mon, 17 Jul 2017 14:39:04 GMT</datecreated>
+			<flags>0</flags>
+			<properties>
+				<property type="shared">
+					<name>export</name>
+					<value><![CDATA[false]]></value>
+				</property>
+			</properties>
+			<relations/>
+			<accesscontrol/>
+		</file>
+		<file>
+			<source>system/modules/org.opencms.base/formatters/function-default.xml</source>
+			<destination>system/modules/org.opencms.base/formatters/function-default.xml</destination>
+			<type>function_config</type>
+			<uuidstructure>d9d312d4-9a06-11e8-b9b2-1f0f0d8667a3</uuidstructure>
+			<uuidresource>d9d312d5-9a06-11e8-b9b2-1f0f0d8667a3</uuidresource>
+			<datecreated>Tue, 07 Aug 2018 05:58:04 GMT</datecreated>
+			<flags>0</flags>
+			<properties>
+				<property>
+					<name>Title</name>
+					<value><![CDATA[Internal default function formatter]]></value>
+				</property>
+				<property>
+					<name>locale</name>
+					<value><![CDATA[en]]></value>
+				</property>
+				<property>
+					<name>locale-available</name>
+					<value><![CDATA[en]]></value>
+				</property>
+				<property>
+					<name>search.exclude</name>
+					<value><![CDATA[all]]></value>
+				</property>
+			</properties>
+			<relations/>
+			<accesscontrol/>
+		</file>
+		<file>
+			<source>system/modules/org.opencms.base/formatters/function.jsp</source>
+			<destination>system/modules/org.opencms.base/formatters/function.jsp</destination>
+			<type>jsp</type>
+			<uuidstructure>087ba7c9-e7fc-4336-acb8-d3416a4eb1fd</uuidstructure>
+			<uuidresource>087ba7c9-e7fc-4336-acb8-d3416a4eb1fe</uuidresource>
+			<datecreated>Thu, 24 Sep 2015 13:14:22 GMT</datecreated>
+			<flags>0</flags>
+			<properties>
+				<property>
+					<name>cache</name>
+					<value><![CDATA[ignore]]></value>
+				</property>
+			</properties>
+			<relations/>
+			<accesscontrol/>
+		</file>
+		<file>
+			<source>system/modules/org.opencms.base/formatters/group-container.jsp</source>
+			<destination>system/modules/org.opencms.base/formatters/group-container.jsp</destination>
+			<type>jsp</type>
+			<uuidstructure>e7029fa2-761e-11e0-bd7f-9ffeadaf4d46</uuidstructure>
+			<uuidresource>e7029fa3-761e-11e0-bd7f-9ffeadaf4d46</uuidresource>
+			<datecreated>Thu, 24 Sep 2015 13:14:22 GMT</datecreated>
+			<flags>0</flags>
+			<properties>
+				<property>
+					<name>Title</name>
+					<value><![CDATA[Formatter for group-containers]]></value>
+				</property>
+				<property type="shared">
+					<name>export</name>
+					<value><![CDATA[false]]></value>
+				</property>
+			</properties>
+			<relations/>
+			<accesscontrol/>
+		</file>
+		<file>
+			<source>system/modules/org.opencms.base/formatters/usergenerated-default.jsp</source>
+			<destination>system/modules/org.opencms.base/formatters/usergenerated-default.jsp</destination>
+			<type>jsp</type>
+			<uuidstructure>05d94da5-dfec-11e3-b2f0-005056b60ccd</uuidstructure>
+			<uuidresource>05d94da6-dfec-11e3-b2f0-005056b60ccd</uuidresource>
+			<datecreated>Tue, 20 May 2014 06:57:35 GMT</datecreated>
+			<flags>0</flags>
+			<properties>
+				<property>
+					<name>Title</name>
+					<value><![CDATA[Default formatter for UGC form elements]]></value>
+				</property>
+			</properties>
+			<relations/>
+			<accesscontrol/>
+		</file>
+		<file>
+			<destination>system/modules/org.opencms.base/pages</destination>
+			<type>folder</type>
+			<uuidstructure>e9bf555e-7734-11e0-89e5-d14bc4448678</uuidstructure>
+			<datecreated>Thu, 05 May 2011 16:29:56 GMT</datecreated>
+			<flags>0</flags>
+			<properties/>
+			<relations/>
+			<accesscontrol/>
+		</file>
+		<file>
+			<source>system/modules/org.opencms.base/pages/render-macro.jsp</source>
+			<destination>system/modules/org.opencms.base/pages/render-macro.jsp</destination>
+			<type>jsp</type>
+			<uuidstructure>7fdf3f5f-d164-11e5-b5bd-cf61f8636af1</uuidstructure>
+			<uuidresource>7fdf3f60-d164-11e5-b5bd-cf61f8636af1</uuidresource>
+			<datecreated>Fri, 12 Feb 2016 08:42:07 GMT</datecreated>
+			<flags>0</flags>
+			<properties>
+				<property type="shared">
+					<name>export</name>
+					<value><![CDATA[false]]></value>
+				</property>
+			</properties>
+			<relations/>
+			<accesscontrol/>
+		</file>
+		<file>
+			<source>system/modules/org.opencms.base/pages/render-seo-file.jsp</source>
+			<destination>system/modules/org.opencms.base/pages/render-seo-file.jsp</destination>
+			<type>jsp</type>
+			<uuidstructure>4a982d98-b3ec-4709-a5c3-2c57a9c670c5</uuidstructure>
+			<uuidresource>71b01b3d-207f-46b3-b7c0-d551782070ca</uuidresource>
+			<datecreated>Thu, 05 May 2011 16:33:23 GMT</datecreated>
+			<flags>0</flags>
+			<properties>
+				<property>
+					<name>Title</name>
+					<value><![CDATA[render-seo-file]]></value>
+				</property>
+				<property>
+					<name>cache</name>
+					<value><![CDATA[uri;params]]></value>
+				</property>
+				<property type="shared">
+					<name>export</name>
+					<value><![CDATA[false]]></value>
+				</property>
+			</properties>
+			<relations/>
+			<accesscontrol/>
+		</file>
+		<file>
+			<source>system/modules/org.opencms.base/pages/render-string-template.jsp</source>
+			<destination>system/modules/org.opencms.base/pages/render-string-template.jsp</destination>
+			<type>jsp</type>
+			<uuidstructure>aeab959f-6afd-11e7-b91c-a5f4ea347311</uuidstructure>
+			<uuidresource>aeab95a0-6afd-11e7-b91c-a5f4ea347311</uuidresource>
+			<datecreated>Mon, 17 Jul 2017 14:39:04 GMT</datecreated>
+			<flags>0</flags>
+			<properties>
+				<property type="shared">
+					<name>export</name>
+					<value><![CDATA[false]]></value>
+				</property>
+			</properties>
+			<relations/>
+			<accesscontrol/>
+		</file>
+		<file>
+			<source>system/modules/org.opencms.base/pages/updateModelGroups.jsp</source>
+			<destination>system/modules/org.opencms.base/pages/updateModelGroups.jsp</destination>
+			<type>jsp</type>
+			<uuidstructure>43feadd4-ab31-11e6-8ea0-a123275265e0</uuidstructure>
+			<uuidresource>43feadd5-ab31-11e6-8ea0-a123275265e0</uuidresource>
+			<datecreated>Tue, 15 Nov 2016 12:44:36 GMT</datecreated>
+			<flags>0</flags>
+			<properties>
+				<property type="shared">
+					<name>export</name>
+					<value><![CDATA[false]]></value>
+				</property>
+			</properties>
+			<relations/>
+			<accesscontrol>
+				<accessentry>
+					<uuidprincipal>ALL_OTHERS</uuidprincipal>
+					<flags>132</flags>
+					<permissionset>
+						<allowed>0</allowed>
+						<denied>0</denied>
+					</permissionset>
+				</accessentry>
+				<accessentry>
+					<uuidprincipal>ROLE.WORKPLACE_USER</uuidprincipal>
+					<flags>516</flags>
+					<permissionset>
+						<allowed>0</allowed>
+						<denied>0</denied>
+					</permissionset>
+				</accessentry>
+				<accessentry>
+					<uuidprincipal>ROLE.ROOT_ADMIN</uuidprincipal>
+					<flags>516</flags>
+					<permissionset>
+						<allowed>31</allowed>
+						<denied>0</denied>
+					</permissionset>
+				</accessentry>
+			</accesscontrol>
+		</file>
+		<file>
+			<destination>system/modules/org.opencms.base/schemas</destination>
+			<type>folder</type>
+			<uuidstructure>9663eff5-cc29-11dd-8fb7-53ec2a4a9072</uuidstructure>
+			<datecreated>Wed, 17 Dec 2008 10:58:08 GMT</datecreated>
+			<flags>0</flags>
+			<properties/>
+			<relations/>
+			<accesscontrol/>
+		</file>
+		<file>
+			<source>system/modules/org.opencms.base/schemas/links.xsd</source>
+			<destination>system/modules/org.opencms.base/schemas/links.xsd</destination>
+			<type>plain</type>
+			<uuidstructure>ab09bc07-cc29-11dd-8fb7-53ec2a4a9072</uuidstructure>
+			<uuidresource>ab09bc08-cc29-11dd-8fb7-53ec2a4a9072</uuidresource>
+			<datecreated>Wed, 17 Dec 2008 10:58:42 GMT</datecreated>
+			<flags>0</flags>
+			<properties>
+				<property>
+					<name>Title</name>
+					<value><![CDATA[XSD for link definitions]]></value>
+				</property>
+			</properties>
+			<relations/>
+			<accesscontrol/>
+		</file>
+		<file>
+			<source>system/modules/org.opencms.base/schemas/notification-user-password.xsd</source>
+			<destination>system/modules/org.opencms.base/schemas/notification-user-password.xsd</destination>
+			<type>plain</type>
+			<uuidstructure>8f676af3-89b7-11e8-b89f-e15be1fe1821</uuidstructure>
+			<uuidresource>8f676af4-89b7-11e8-b89f-e15be1fe1821</uuidresource>
+			<datecreated>Tue, 17 Jul 2018 11:50:11 GMT</datecreated>
+			<flags>0</flags>
+			<properties>
+				<property>
+					<name>Title</name>
+					<value><![CDATA[Schema Definition for Content Notifications]]></value>
+				</property>
+			</properties>
+			<relations/>
+			<accesscontrol>
+				<accessentry>
+					<uuidprincipal>ROLE.ELEMENT_AUTHOR</uuidprincipal>
+					<flags>518</flags>
+					<permissionset>
+						<allowed>1</allowed>
+						<denied>0</denied>
+					</permissionset>
+				</accessentry>
+			</accesscontrol>
+		</file>
+		<file>
+			<source>system/modules/org.opencms.base/schemas/notification.xsd</source>
+			<destination>system/modules/org.opencms.base/schemas/notification.xsd</destination>
+			<type>plain</type>
+			<uuidstructure>8266e3d5-11b7-11db-91cd-fdbae480bac9</uuidstructure>
+			<uuidresource>daf2e498-1bb6-11da-af9a-9151fb616b67</uuidresource>
+			<datecreated>Mon, 27 Jun 2005 08:00:00 GMT</datecreated>
+			<flags>0</flags>
+			<properties>
+				<property>
+					<name>Title</name>
+					<value><![CDATA[Schema Definition for Content Notifications]]></value>
+				</property>
+			</properties>
+			<relations/>
+			<accesscontrol>
+				<accessentry>
+					<uuidprincipal>ROLE.ELEMENT_AUTHOR</uuidprincipal>
+					<flags>518</flags>
+					<permissionset>
+						<allowed>1</allowed>
+						<denied>0</denied>
+					</permissionset>
+				</accessentry>
+			</accesscontrol>
+		</file>
+		<file>
+			<destination>system/userimages</destination>
+			<type>folder</type>
+			<properties/>
+		</file>
+		<file>
+			<destination>system/userimages/temp</destination>
+			<type>folder</type>
+			<uuidstructure>9ac1eb20-ce30-11e5-8623-5517cca7ff58</uuidstructure>
+			<datecreated>Mon, 08 Feb 2016 06:53:05 GMT</datecreated>
+			<flags>0</flags>
+			<properties/>
+			<relations/>
+			<accesscontrol>
+				<accessentry>
+					<uuidprincipal>ROLE.ELEMENT_AUTHOR</uuidprincipal>
+					<flags>518</flags>
+					<permissionset>
+						<allowed>7</allowed>
+						<denied>0</denied>
+					</permissionset>
+				</accessentry>
+			</accesscontrol>
+		</file>
+		<file>
+			<destination>system/workplace</destination>
+			<type>folder</type>
+			<properties/>
+		</file>
+		<file>
+			<destination>system/workplace/editors</destination>
+			<type>folder</type>
+			<properties/>
+		</file>
+		<file>
+			<destination>system/workplace/editors/acacia</destination>
+			<type>folder</type>
+			<uuidstructure>ad2766c6-991c-11e1-a85e-d138de4a8c16</uuidstructure>
+			<datecreated>Tue, 08 May 2012 14:47:04 GMT</datecreated>
+			<flags>0</flags>
+			<properties>
+				<property>
+					<name>Title</name>
+					<value><![CDATA[Acacia Editor]]></value>
+				</property>
+			</properties>
+			<relations/>
+			<accesscontrol/>
+		</file>
+		<file>
+			<source>system/workplace/editors/acacia/editor.jsp</source>
+			<destination>system/workplace/editors/acacia/editor.jsp</destination>
+			<type>jsp</type>
+			<uuidstructure>caf4cbc9-991c-11e1-a85e-d138de4a8c16</uuidstructure>
+			<uuidresource>b91dbe4c-53d1-11e1-af11-e5cbe0b4d4f3</uuidresource>
+			<datecreated>Fri, 10 Feb 2012 10:26:41 GMT</datecreated>
+			<flags>0</flags>
+			<properties>
+				<property type="shared">
+					<name>export</name>
+					<value><![CDATA[false]]></value>
+				</property>
+			</properties>
+			<relations/>
+			<accesscontrol/>
+		</file>
+		<file>
+			<source>system/workplace/editors/acacia/editor_configuration.xml</source>
+			<destination>system/workplace/editors/acacia/editor_configuration.xml</destination>
+			<type>plain</type>
+			<uuidstructure>07ab3efc-991d-11e1-a85e-d138de4a8c16</uuidstructure>
+			<uuidresource>07ab3efd-991d-11e1-a85e-d138de4a8c16</uuidresource>
+			<datecreated>Tue, 08 May 2012 14:49:35 GMT</datecreated>
+			<flags>0</flags>
+			<properties/>
+			<relations/>
+			<accesscontrol/>
+		</file>
+		<file>
+			<destination>system/workplace/editors/codemirror</destination>
+			<type>folder</type>
+			<uuidstructure>1ea80741-50b0-11e1-b660-49528da9658f</uuidstructure>
+			<datecreated>Mon, 06 Feb 2012 10:48:35 GMT</datecreated>
+			<flags>0</flags>
+			<properties>
+				<property>
+					<name>Title</name>
+					<value><![CDATA[CodeMirror]]></value>
+				</property>
+			</properties>
+			<relations/>
+			<accesscontrol/>
+		</file>
+		<file>
+			<source>system/workplace/editors/codemirror/editor.jsp</source>
+			<destination>system/workplace/editors/codemirror/editor.jsp</destination>
+			<type>jsp</type>
+			<uuidstructure>35f091b4-50b0-11e1-b660-49528da9658f</uuidstructure>
+			<uuidresource>35f091b5-50b0-11e1-b660-49528da9658f</uuidresource>
+			<datecreated>Mon, 06 Feb 2012 10:49:14 GMT</datecreated>
+			<flags>0</flags>
+			<properties>
+				<property>
+					<name>Title</name>
+					<value><![CDATA[CodeMirror editor]]></value>
+				</property>
+				<property>
+					<name>export</name>
+					<value><![CDATA[false]]></value>
+				</property>
+			</properties>
+			<relations/>
+			<accesscontrol/>
+		</file>
+		<file>
+			<source>system/workplace/editors/codemirror/editor_configuration.xml</source>
+			<destination>system/workplace/editors/codemirror/editor_configuration.xml</destination>
+			<type>plain</type>
+			<uuidstructure>35f79698-50b0-11e1-b660-49528da9658f</uuidstructure>
+			<uuidresource>35f79699-50b0-11e1-b660-49528da9658f</uuidresource>
+			<datecreated>Mon, 06 Feb 2012 10:49:14 GMT</datecreated>
+			<flags>0</flags>
+			<properties>
+				<property>
+					<name>Title</name>
+					<value><![CDATA[Editor configuration file]]></value>
+				</property>
+			</properties>
+			<relations/>
+			<accesscontrol/>
+		</file>
+		<file>
+			<destination>system/workplace/editors/dialogs</destination>
+			<type>folder</type>
+			<uuidstructure>89820b79-11b7-11db-91cd-fdbae480bac9</uuidstructure>
+			<datecreated>Mon, 27 Jun 2005 08:00:00 GMT</datecreated>
+			<flags>0</flags>
+			<properties>
+				<property>
+					<name>Title</name>
+					<value><![CDATA[Editor dialogs]]></value>
+				</property>
+			</properties>
+			<relations/>
+			<accesscontrol/>
+		</file>
+		<file>
+			<source>system/workplace/editors/dialogs/copylanguage.jsp</source>
+			<destination>system/workplace/editors/dialogs/copylanguage.jsp</destination>
+			<type>jsp</type>
+			<uuidstructure>514ba880-0a10-11dd-a4e2-2559755c82e0</uuidstructure>
+			<uuidresource>514ba881-0a10-11dd-a4e2-2559755c82e0</uuidresource>
+			<datecreated>Mon, 14 Apr 2008 10:48:29 GMT</datecreated>
+			<flags>0</flags>
+			<properties>
+				<property>
+					<name>Title</name>
+					<value><![CDATA[Copy language dialog]]></value>
+				</property>
+				<property type="shared">
+					<name>export</name>
+					<value><![CDATA[false]]></value>
+				</property>
+			</properties>
+			<relations/>
+			<accesscontrol/>
+		</file>
+		<file>
+			<source>system/workplace/editors/dialogs/elements.jsp</source>
+			<destination>system/workplace/editors/dialogs/elements.jsp</destination>
+			<type>jsp</type>
+			<uuidstructure>8986c66f-11b7-11db-91cd-fdbae480bac9</uuidstructure>
+			<uuidresource>5f43c1c2-f052-11d8-ba65-db38cc8f19d7</uuidresource>
+			<datecreated>Mon, 27 Jun 2005 08:00:00 GMT</datecreated>
+			<flags>0</flags>
+			<properties>
+				<property>
+					<name>Title</name>
+					<value><![CDATA[Element activation dialog]]></value>
+				</property>
+				<property>
+					<name>export</name>
+					<value><![CDATA[false]]></value>
+				</property>
+			</properties>
+			<relations/>
+			<accesscontrol/>
+		</file>
+		<file>
+			<source>system/workplace/editors/dialogs/link.jsp</source>
+			<destination>system/workplace/editors/dialogs/link.jsp</destination>
+			<type>jsp</type>
+			<uuidstructure>e563ae5d-fd44-11db-ab95-a9b5cedd49fe</uuidstructure>
+			<uuidresource>e563ae5e-fd44-11db-ab95-a9b5cedd49fe</uuidresource>
+			<datecreated>Tue, 08 May 2007 09:17:08 GMT</datecreated>
+			<flags>0</flags>
+			<properties>
+				<property>
+					<name>Title</name>
+					<value><![CDATA[Page link insertion dialog]]></value>
+				</property>
+				<property type="shared">
+					<name>export</name>
+					<value><![CDATA[false]]></value>
+				</property>
+			</properties>
+			<relations/>
+			<accesscontrol/>
+		</file>
+		<file>
+			<source>system/workplace/editors/dialogs/property.jsp</source>
+			<destination>system/workplace/editors/dialogs/property.jsp</destination>
+			<type>jsp</type>
+			<uuidstructure>898b8167-11b7-11db-91cd-fdbae480bac9</uuidstructure>
+			<uuidresource>5f5dd97a-f052-11d8-ba65-db38cc8f19d7</uuidresource>
+			<datecreated>Mon, 27 Jun 2005 08:00:00 GMT</datecreated>
+			<flags>0</flags>
+			<properties>
+				<property>
+					<name>Title</name>
+					<value><![CDATA[Page properties dialog]]></value>
+				</property>
+				<property>
+					<name>export</name>
+					<value><![CDATA[false]]></value>
+				</property>
+			</properties>
+			<relations/>
+			<accesscontrol/>
+		</file>
+		<file>
+			<source>system/workplace/editors/dialogs/specialchars.jsp</source>
+			<destination>system/workplace/editors/dialogs/specialchars.jsp</destination>
+			<type>jsp</type>
+			<uuidstructure>89903c5b-11b7-11db-91cd-fdbae480bac9</uuidstructure>
+			<uuidresource>5f69c05e-f052-11d8-ba65-db38cc8f19d7</uuidresource>
+			<datecreated>Mon, 27 Jun 2005 08:00:00 GMT</datecreated>
+			<flags>0</flags>
+			<properties>
+				<property>
+					<name>Title</name>
+					<value><![CDATA[Special character dialog]]></value>
+				</property>
+				<property>
+					<name>export</name>
+					<value><![CDATA[false]]></value>
+				</property>
+			</properties>
+			<relations/>
+			<accesscontrol/>
+		</file>
+		<file>
+			<source>system/workplace/editors/dialogs/table_element.jsp</source>
+			<destination>system/workplace/editors/dialogs/table_element.jsp</destination>
+			<type>jsp</type>
+			<uuidstructure>8992ad5f-11b7-11db-91cd-fdbae480bac9</uuidstructure>
+			<uuidresource>5f75a742-f052-11d8-ba65-db38cc8f19d7</uuidresource>
+			<datecreated>Mon, 27 Jun 2005 08:00:00 GMT</datecreated>
+			<flags>0</flags>
+			<properties>
+				<property>
+					<name>Title</name>
+					<value><![CDATA[Table element dialog]]></value>
+				</property>
+				<property>
+					<name>export</name>
+					<value><![CDATA[false]]></value>
+				</property>
+			</properties>
+			<relations/>
+			<accesscontrol/>
+		</file>
+		<file>
+			<source>system/workplace/editors/dialogs/table_new.jsp</source>
+			<destination>system/workplace/editors/dialogs/table_new.jsp</destination>
+			<type>jsp</type>
+			<uuidstructure>89951e63-11b7-11db-91cd-fdbae480bac9</uuidstructure>
+			<uuidresource>5f867026-f052-11d8-ba65-db38cc8f19d7</uuidresource>
+			<datecreated>Mon, 27 Jun 2005 08:00:00 GMT</datecreated>
+			<flags>0</flags>
+			<properties>
+				<property>
+					<name>Title</name>
+					<value><![CDATA[Create new table dialog]]></value>
+				</property>
+				<property>
+					<name>export</name>
+					<value><![CDATA[false]]></value>
+				</property>
+			</properties>
+			<relations/>
+			<accesscontrol/>
+		</file>
+		<file>
+			<destination>system/workplace/editors/simple</destination>
+			<type>folder</type>
+			<uuidstructure>89976858-11b7-11db-91cd-fdbae480bac9</uuidstructure>
+			<datecreated>Mon, 27 Jun 2005 08:00:00 GMT</datecreated>
+			<flags>0</flags>
+			<properties>
+				<property>
+					<name>Title</name>
+					<value><![CDATA[Simple textarea editor]]></value>
+				</property>
+			</properties>
+			<relations/>
+			<accesscontrol/>
+		</file>
+		<file>
+			<source>system/workplace/editors/simple/edit.js</source>
+			<destination>system/workplace/editors/simple/edit.js</destination>
+			<type>plain</type>
+			<uuidstructure>8999d95a-11b7-11db-91cd-fdbae480bac9</uuidstructure>
+			<uuidresource>b13c382e-f03b-11d8-bd02-ddc4b68c493a</uuidresource>
+			<datecreated>Mon, 27 Jun 2005 08:00:00 GMT</datecreated>
+			<flags>0</flags>
+			<properties/>
+			<relations/>
+			<accesscontrol/>
+		</file>
+		<file>
+			<source>system/workplace/editors/simple/editor.jsp</source>
+			<destination>system/workplace/editors/simple/editor.jsp</destination>
+			<type>jsp</type>
+			<uuidstructure>899c234c-11b7-11db-91cd-fdbae480bac9</uuidstructure>
+			<uuidresource>5ff89313-f052-11d8-ba65-db38cc8f19d7</uuidresource>
+			<datecreated>Mon, 27 Jun 2005 08:00:00 GMT</datecreated>
+			<flags>0</flags>
+			<properties>
+				<property>
+					<name>Title</name>
+					<value><![CDATA[Simple textarea editor]]></value>
+				</property>
+				<property>
+					<name>export</name>
+					<value><![CDATA[false]]></value>
+				</property>
+			</properties>
+			<relations/>
+			<accesscontrol/>
+		</file>
+		<file>
+			<source>system/workplace/editors/simple/editor_configuration.xml</source>
+			<destination>system/workplace/editors/simple/editor_configuration.xml</destination>
+			<type>plain</type>
+			<uuidstructure>899c2350-11b7-11db-91cd-fdbae480bac9</uuidstructure>
+			<uuidresource>600479f7-f052-11d8-ba65-db38cc8f19d7</uuidresource>
+			<datecreated>Mon, 27 Jun 2005 08:00:00 GMT</datecreated>
+			<flags>0</flags>
+			<properties>
+				<property>
+					<name>Title</name>
+					<value><![CDATA[Editor configuration file]]></value>
+				</property>
+			</properties>
+			<relations/>
+			<accesscontrol/>
+		</file>
+		<file>
+			<destination>system/workplace/editors/simplehtml</destination>
+			<type>folder</type>
+			<uuidstructure>89a10554-11b7-11db-91cd-fdbae480bac9</uuidstructure>
+			<datecreated>Mon, 27 Jun 2005 08:00:00 GMT</datecreated>
+			<flags>0</flags>
+			<properties>
+				<property>
+					<name>Title</name>
+					<value><![CDATA[Simple page editor]]></value>
+				</property>
+			</properties>
+			<relations/>
+			<accesscontrol/>
+		</file>
+		<file>
+			<source>system/workplace/editors/simplehtml/edit.js</source>
+			<destination>system/workplace/editors/simplehtml/edit.js</destination>
+			<type>plain</type>
+			<uuidstructure>89a34f46-11b7-11db-91cd-fdbae480bac9</uuidstructure>
+			<uuidresource>b6f00722-f03b-11d8-bd02-ddc4b68c493a</uuidresource>
+			<datecreated>Mon, 27 Jun 2005 08:00:00 GMT</datecreated>
+			<flags>0</flags>
+			<properties/>
+			<relations/>
+			<accesscontrol/>
+		</file>
+		<file>
+			<source>system/workplace/editors/simplehtml/editor.jsp</source>
+			<destination>system/workplace/editors/simplehtml/editor.jsp</destination>
+			<type>jsp</type>
+			<uuidstructure>89a5c048-11b7-11db-91cd-fdbae480bac9</uuidstructure>
+			<uuidresource>601c46c2-f052-11d8-ba65-db38cc8f19d7</uuidresource>
+			<datecreated>Mon, 27 Jun 2005 08:00:00 GMT</datecreated>
+			<flags>0</flags>
+			<properties>
+				<property>
+					<name>Title</name>
+					<value><![CDATA[Simple page editor]]></value>
+				</property>
+				<property>
+					<name>export</name>
+					<value><![CDATA[false]]></value>
+				</property>
+			</properties>
+			<relations/>
+			<accesscontrol/>
+		</file>
+		<file>
+			<source>system/workplace/editors/simplehtml/editor_configuration.xml</source>
+			<destination>system/workplace/editors/simplehtml/editor_configuration.xml</destination>
+			<type>plain</type>
+			<uuidstructure>89a8314c-11b7-11db-91cd-fdbae480bac9</uuidstructure>
+			<uuidresource>60282da6-f052-11d8-ba65-db38cc8f19d7</uuidresource>
+			<datecreated>Mon, 27 Jun 2005 08:00:00 GMT</datecreated>
+			<flags>0</flags>
+			<properties>
+				<property>
+					<name>Title</name>
+					<value><![CDATA[Editor configuration file]]></value>
+				</property>
+			</properties>
+			<relations/>
+			<accesscontrol/>
+		</file>
+		<file>
+			<destination>system/workplace/editors/spellcheck</destination>
+			<type>folder</type>
+			<uuidstructure>1c2765e3-aac5-11e3-b868-591400608713</uuidstructure>
+			<datecreated>Thu, 13 Mar 2014 15:35:30 GMT</datecreated>
+			<flags>0</flags>
+			<properties/>
+			<relations/>
+			<accesscontrol/>
+		</file>
+		<file>
+			<source>system/workplace/editors/spellcheck/dict_de.zip</source>
+			<destination>system/workplace/editors/spellcheck/dict_de.zip</destination>
+			<type>binary</type>
+			<uuidstructure>3d891535-aac5-11e3-b868-591400608713</uuidstructure>
+			<uuidresource>3d891536-aac5-11e3-b868-591400608713</uuidresource>
+			<datecreated>Thu, 13 Mar 2014 15:36:26 GMT</datecreated>
+			<flags>0</flags>
+			<properties>
+				<property>
+					<name>Title</name>
+					<value><![CDATA[dict_de]]></value>
+				</property>
+			</properties>
+			<relations/>
+			<accesscontrol/>
+		</file>
+		<file>
+			<source>system/workplace/editors/spellcheck/dict_en.zip</source>
+			<destination>system/workplace/editors/spellcheck/dict_en.zip</destination>
+			<type>binary</type>
+			<uuidstructure>3d963498-aac5-11e3-b868-591400608713</uuidstructure>
+			<uuidresource>3d963499-aac5-11e3-b868-591400608713</uuidresource>
+			<datecreated>Thu, 13 Mar 2014 15:36:26 GMT</datecreated>
+			<flags>0</flags>
+			<properties>
+				<property>
+					<name>Title</name>
+					<value><![CDATA[dict_en]]></value>
+				</property>
+			</properties>
+			<relations/>
+			<accesscontrol/>
+		</file>
+		<file>
+			<source>system/workplace/editors/spellcheck/dict_es.zip</source>
+			<destination>system/workplace/editors/spellcheck/dict_es.zip</destination>
+			<type>binary</type>
+			<uuidstructure>3d9e23db-aac5-11e3-b868-591400608713</uuidstructure>
+			<uuidresource>3d9e23dc-aac5-11e3-b868-591400608713</uuidresource>
+			<datecreated>Thu, 13 Mar 2014 15:36:27 GMT</datecreated>
+			<flags>0</flags>
+			<properties>
+				<property>
+					<name>Title</name>
+					<value><![CDATA[dict_es]]></value>
+				</property>
+			</properties>
+			<relations/>
+			<accesscontrol/>
+		</file>
+		<file>
+			<source>system/workplace/editors/spellcheck/dict_fr.zip</source>
+			<destination>system/workplace/editors/spellcheck/dict_fr.zip</destination>
+			<type>binary</type>
+			<uuidstructure>3db4b91e-aac5-11e3-b868-591400608713</uuidstructure>
+			<uuidresource>3db4b91f-aac5-11e3-b868-591400608713</uuidresource>
+			<datecreated>Thu, 13 Mar 2014 15:36:27 GMT</datecreated>
+			<flags>0</flags>
+			<properties>
+				<property>
+					<name>Title</name>
+					<value><![CDATA[dict_fr]]></value>
+				</property>
+			</properties>
+			<relations/>
+			<accesscontrol/>
+		</file>
+		<file>
+			<source>system/workplace/editors/spellcheck/dict_ru.zip</source>
+			<destination>system/workplace/editors/spellcheck/dict_ru.zip</destination>
+			<type>binary</type>
+			<uuidstructure>3dc64551-aac5-11e3-b868-591400608713</uuidstructure>
+			<uuidresource>3dc64552-aac5-11e3-b868-591400608713</uuidresource>
+			<datecreated>Thu, 13 Mar 2014 15:36:27 GMT</datecreated>
+			<flags>0</flags>
+			<properties>
+				<property>
+					<name>Title</name>
+					<value><![CDATA[dict_ru]]></value>
+				</property>
+			</properties>
+			<relations/>
+			<accesscontrol/>
+		</file>
+		<file>
+			<destination>system/workplace/resources</destination>
+			<type>folder</type>
+			<properties/>
+		</file>
+		<file>
+			<destination>system/workplace/resources/editors</destination>
+			<type>folder</type>
+			<properties/>
+		</file>
+		<file>
+			<destination>system/workplace/resources/editors/directedit</destination>
+			<type>folder</type>
+			<uuidstructure>367b2727-e09d-11dc-a7d2-9b4307eb5433</uuidstructure>
+			<datecreated>Thu, 21 Feb 2008 16:51:14 GMT</datecreated>
+			<flags>0</flags>
+			<properties>
+				<property>
+					<name>Title</name>
+					<value><![CDATA[JQuery direct edit resources]]></value>
+				</property>
+			</properties>
+			<relations/>
+			<accesscontrol/>
+		</file>
+		<file>
+			<source>system/workplace/resources/editors/directedit/jq_edit.css</source>
+			<destination>system/workplace/resources/editors/directedit/jq_edit.css</destination>
+			<type>plain</type>
+			<uuidstructure>9804a2ac-e09d-11dc-a7d2-9b4307eb5433</uuidstructure>
+			<uuidresource>e5eb1ac4-de12-11dc-b804-9b4307eb5433</uuidresource>
+			<datecreated>Mon, 18 Feb 2008 11:16:06 GMT</datecreated>
+			<flags>0</flags>
+			<properties>
+				<property>
+					<name>Title</name>
+					<value><![CDATA[The main stylesheet for the jquery direct edit buttons]]></value>
+				</property>
+			</properties>
+			<relations/>
+			<accesscontrol/>
+		</file>
+		<file>
+			<source>system/workplace/resources/editors/directedit/jq_edit.js</source>
+			<destination>system/workplace/resources/editors/directedit/jq_edit.js</destination>
+			<type>plain</type>
+			<uuidstructure>7319cc9a-e09d-11dc-a7d2-9b4307eb5433</uuidstructure>
+			<uuidresource>e64f33c6-de12-11dc-b804-9b4307eb5433</uuidresource>
+			<datecreated>Mon, 18 Feb 2008 11:16:06 GMT</datecreated>
+			<flags>0</flags>
+			<properties>
+				<property>
+					<name>Title</name>
+					<value><![CDATA[The main library for the jquery direct edit buttons]]></value>
+				</property>
+			</properties>
+			<relations/>
+			<accesscontrol/>
+		</file>
+		<file>
+			<destination>system/workplace/resources/editors/directedit/img</destination>
+			<type>folder</type>
+			<uuidstructure>10539608-e09e-11dc-a7d2-9b4307eb5433</uuidstructure>
+			<datecreated>Thu, 21 Feb 2008 16:57:19 GMT</datecreated>
+			<flags>0</flags>
+			<properties/>
+			<relations/>
+			<accesscontrol/>
+		</file>
+		<file>
+			<source>system/workplace/resources/editors/directedit/img/ocms_de_b.gif</source>
+			<destination>system/workplace/resources/editors/directedit/img/ocms_de_b.gif</destination>
+			<type>image</type>
+			<uuidstructure>cabf6420-e09d-11dc-a7d2-9b4307eb5433</uuidstructure>
+			<uuidresource>26dc02b2-dfcb-11dc-9fd1-9b4307eb5433</uuidresource>
+			<datecreated>Wed, 20 Feb 2008 15:47:33 GMT</datecreated>
+			<flags>0</flags>
+			<properties>
+				<property>
+					<name>Title</name>
+					<value><![CDATA[ocms_de_b]]></value>
+				</property>
+				<property type="shared">
+					<name>image.size</name>
+					<value><![CDATA[w:16,h:2]]></value>
+				</property>
+			</properties>
+			<relations/>
+			<accesscontrol/>
+		</file>
+		<file>
+			<source>system/workplace/resources/editors/directedit/img/ocms_de_delete_a.png</source>
+			<destination>system/workplace/resources/editors/directedit/img/ocms_de_delete_a.png</destination>
+			<type>image</type>
+			<uuidstructure>ca541f1e-e09d-11dc-a7d2-9b4307eb5433</uuidstructure>
+			<uuidresource>3a75b288-e066-11dc-a7d2-9b4307eb5433</uuidresource>
+			<datecreated>Thu, 21 Feb 2008 10:17:38 GMT</datecreated>
+			<flags>0</flags>
+			<properties>
+				<property>
+					<name>Title</name>
+					<value><![CDATA[de_delete_a]]></value>
+				</property>
+				<property type="shared">
+					<name>image.size</name>
+					<value><![CDATA[w:20,h:20]]></value>
+				</property>
+			</properties>
+			<relations/>
+			<accesscontrol/>
+		</file>
+		<file>
+			<source>system/workplace/resources/editors/directedit/img/ocms_de_delete_d.png</source>
+			<destination>system/workplace/resources/editors/directedit/img/ocms_de_delete_d.png</destination>
+			<type>image</type>
+			<uuidstructure>ca6731f0-e09d-11dc-a7d2-9b4307eb5433</uuidstructure>
+			<uuidresource>3c2655a1-e06b-11dc-a7d2-9b4307eb5433</uuidresource>
+			<datecreated>Thu, 21 Feb 2008 10:53:28 GMT</datecreated>
+			<flags>0</flags>
+			<properties>
+				<property>
+					<name>Title</name>
+					<value><![CDATA[de_delete_d]]></value>
+				</property>
+				<property type="shared">
+					<name>image.size</name>
+					<value><![CDATA[w:20,h:20]]></value>
+				</property>
+			</properties>
+			<relations/>
+			<accesscontrol/>
+		</file>
+		<file>
+			<source>system/workplace/resources/editors/directedit/img/ocms_de_delete_i.png</source>
+			<destination>system/workplace/resources/editors/directedit/img/ocms_de_delete_i.png</destination>
+			<type>image</type>
+			<uuidstructure>ca6e36d2-e09d-11dc-a7d2-9b4307eb5433</uuidstructure>
+			<uuidresource>3ab616ec-e066-11dc-a7d2-9b4307eb5433</uuidresource>
+			<datecreated>Thu, 21 Feb 2008 10:17:39 GMT</datecreated>
+			<flags>0</flags>
+			<properties>
+				<property>
+					<name>Title</name>
+					<value><![CDATA[de_delete_i]]></value>
+				</property>
+				<property type="shared">
+					<name>image.size</name>
+					<value><![CDATA[w:20,h:20]]></value>
+				</property>
+			</properties>
+			<relations/>
+			<accesscontrol/>
+		</file>
+		<file>
+			<source>system/workplace/resources/editors/directedit/img/ocms_de_edit_a.png</source>
+			<destination>system/workplace/resources/editors/directedit/img/ocms_de_edit_a.png</destination>
+			<type>image</type>
+			<uuidstructure>ca945c74-e09d-11dc-a7d2-9b4307eb5433</uuidstructure>
+			<uuidresource>3ac447c0-e066-11dc-a7d2-9b4307eb5433</uuidresource>
+			<datecreated>Thu, 21 Feb 2008 10:17:39 GMT</datecreated>
+			<flags>0</flags>
+			<properties>
+				<property>
+					<name>Title</name>
+					<value><![CDATA[de_edit_a]]></value>
+				</property>
+				<property type="shared">
+					<name>image.size</name>
+					<value><![CDATA[w:20,h:20]]></value>
+				</property>
+			</properties>
+			<relations/>
+			<accesscontrol/>
+		</file>
+		<file>
+			<source>system/workplace/resources/editors/directedit/img/ocms_de_edit_d.png</source>
+			<destination>system/workplace/resources/editors/directedit/img/ocms_de_edit_d.png</destination>
+			<type>image</type>
+			<uuidstructure>ca9b8866-e09d-11dc-a7d2-9b4307eb5433</uuidstructure>
+			<uuidresource>3c371e85-e06b-11dc-a7d2-9b4307eb5433</uuidresource>
+			<datecreated>Thu, 21 Feb 2008 10:53:29 GMT</datecreated>
+			<flags>0</flags>
+			<properties>
+				<property>
+					<name>Title</name>
+					<value><![CDATA[de_edit_d]]></value>
+				</property>
+				<property type="shared">
+					<name>image.size</name>
+					<value><![CDATA[w:20,h:20]]></value>
+				</property>
+			</properties>
+			<relations/>
+			<accesscontrol/>
+		</file>
+		<file>
+			<source>system/workplace/resources/editors/directedit/img/ocms_de_edit_i.png</source>
+			<destination>system/workplace/resources/editors/directedit/img/ocms_de_edit_i.png</destination>
+			<type>image</type>
+			<uuidstructure>caa2b458-e09d-11dc-a7d2-9b4307eb5433</uuidstructure>
+			<uuidresource>3ad29fa4-e066-11dc-a7d2-9b4307eb5433</uuidresource>
+			<datecreated>Thu, 21 Feb 2008 10:17:39 GMT</datecreated>
+			<flags>0</flags>
+			<properties>
+				<property>
+					<name>Title</name>
+					<value><![CDATA[de_edit_i]]></value>
+				</property>
+				<property type="shared">
+					<name>image.size</name>
+					<value><![CDATA[w:20,h:20]]></value>
+				</property>
+			</properties>
+			<relations/>
+			<accesscontrol/>
+		</file>
+		<file>
+			<source>system/workplace/resources/editors/directedit/img/ocms_de_l.gif</source>
+			<destination>system/workplace/resources/editors/directedit/img/ocms_de_l.gif</destination>
+			<type>image</type>
+			<uuidstructure>cac41f12-e09d-11dc-a7d2-9b4307eb5433</uuidstructure>
+			<uuidresource>27095446-dfcb-11dc-9fd1-9b4307eb5433</uuidresource>
+			<datecreated>Wed, 20 Feb 2008 15:47:34 GMT</datecreated>
+			<flags>0</flags>
+			<properties>
+				<property>
+					<name>Title</name>
+					<value><![CDATA[ocms_de_l]]></value>
+				</property>
+				<property type="shared">
+					<name>image.size</name>
+					<value><![CDATA[w:2,h:16]]></value>
+				</property>
+			</properties>
+			<relations/>
+			<accesscontrol/>
+		</file>
+		<file>
+			<source>system/workplace/resources/editors/directedit/img/ocms_de_new_a.png</source>
+			<destination>system/workplace/resources/editors/directedit/img/ocms_de_new_a.png</destination>
+			<type>image</type>
+			<uuidstructure>caa9e04a-e09d-11dc-a7d2-9b4307eb5433</uuidstructure>
+			<uuidresource>3ad75a98-e066-11dc-a7d2-9b4307eb5433</uuidresource>
+			<datecreated>Thu, 21 Feb 2008 10:17:39 GMT</datecreated>
+			<flags>0</flags>
+			<properties>
+				<property>
+					<name>Title</name>
+					<value><![CDATA[de_new_a]]></value>
+				</property>
+				<property type="shared">
+					<name>image.size</name>
+					<value><![CDATA[w:20,h:20]]></value>
+				</property>
+			</properties>
+			<relations/>
+			<accesscontrol/>
+		</file>
+		<file>
+			<source>system/workplace/resources/editors/directedit/img/ocms_de_new_d.png</source>
+			<destination>system/workplace/resources/editors/directedit/img/ocms_de_new_d.png</destination>
+			<type>image</type>
+			<uuidstructure>caae9b3c-e09d-11dc-a7d2-9b4307eb5433</uuidstructure>
+			<uuidresource>3c3e4a79-e06b-11dc-a7d2-9b4307eb5433</uuidresource>
+			<datecreated>Thu, 21 Feb 2008 10:53:29 GMT</datecreated>
+			<flags>0</flags>
+			<properties>
+				<property>
+					<name>Title</name>
+					<value><![CDATA[de_new_d]]></value>
+				</property>
+				<property type="shared">
+					<name>image.size</name>
+					<value><![CDATA[w:20,h:20]]></value>
+				</property>
+			</properties>
+			<relations/>
+			<accesscontrol/>
+		</file>
+		<file>
+			<source>system/workplace/resources/editors/directedit/img/ocms_de_new_i.png</source>
+			<destination>system/workplace/resources/editors/directedit/img/ocms_de_new_i.png</destination>
+			<type>image</type>
+			<uuidstructure>cab5c72e-e09d-11dc-a7d2-9b4307eb5433</uuidstructure>
+			<uuidresource>3ade868c-e066-11dc-a7d2-9b4307eb5433</uuidresource>
+			<datecreated>Thu, 21 Feb 2008 10:17:39 GMT</datecreated>
+			<flags>0</flags>
+			<properties>
+				<property>
+					<name>Title</name>
+					<value><![CDATA[de_new_i]]></value>
+				</property>
+				<property type="shared">
+					<name>image.size</name>
+					<value><![CDATA[w:20,h:20]]></value>
+				</property>
+			</properties>
+			<relations/>
+			<accesscontrol/>
+		</file>
+		<file>
+			<source>system/workplace/resources/editors/directedit/img/ocms_de_r.gif</source>
+			<destination>system/workplace/resources/editors/directedit/img/ocms_de_r.gif</destination>
+			<type>image</type>
+			<uuidstructure>cacb4b04-e09d-11dc-a7d2-9b4307eb5433</uuidstructure>
+			<uuidresource>270e0f3a-dfcb-11dc-9fd1-9b4307eb5433</uuidresource>
+			<datecreated>Wed, 20 Feb 2008 15:47:34 GMT</datecreated>
+			<flags>0</flags>
+			<properties>
+				<property>
+					<name>Title</name>
+					<value><![CDATA[ocms_de_r]]></value>
+				</property>
+				<property type="shared">
+					<name>image.size</name>
+					<value><![CDATA[w:2,h:16]]></value>
+				</property>
+			</properties>
+			<relations/>
+			<accesscontrol/>
+		</file>
+		<file>
+			<source>system/workplace/resources/editors/directedit/img/ocms_de_t.gif</source>
+			<destination>system/workplace/resources/editors/directedit/img/ocms_de_t.gif</destination>
+			<type>image</type>
+			<uuidstructure>caeeffa6-e09d-11dc-a7d2-9b4307eb5433</uuidstructure>
+			<uuidresource>27153b2e-dfcb-11dc-9fd1-9b4307eb5433</uuidresource>
+			<datecreated>Wed, 20 Feb 2008 15:47:34 GMT</datecreated>
+			<flags>0</flags>
+			<properties>
+				<property>
+					<name>Title</name>
+					<value><![CDATA[ocms_de_t]]></value>
+				</property>
+				<property type="shared">
+					<name>image.size</name>
+					<value><![CDATA[w:16,h:2]]></value>
+				</property>
+			</properties>
+			<relations/>
+			<accesscontrol/>
+		</file>
+		<file>
+			<destination>system/workplace/resources/editors/simple</destination>
+			<type>folder</type>
+			<uuidstructure>8ae544a7-11b7-11db-91cd-fdbae480bac9</uuidstructure>
+			<datecreated>Mon, 27 Jun 2005 08:00:00 GMT</datecreated>
+			<flags>0</flags>
+			<properties/>
+			<relations/>
+			<accesscontrol/>
+		</file>
+		<file>
+			<destination>system/workplace/resources/editors/simple/edit.js</destination>
+			<type>plain</type>
+			<uuidstructure>8ae78e98-11b7-11db-91cd-fdbae480bac9</uuidstructure>
+			<uuidresource>b13c382e-f03b-11d8-bd02-ddc4b68c493a</uuidresource>
+			<datecreated>Mon, 27 Jun 2005 08:00:00 GMT</datecreated>
+			<flags>0</flags>
+			<properties/>
+			<relations/>
+			<accesscontrol/>
+		</file>
+		<file>
+			<destination>system/workplace/resources/editors/simplehtml</destination>
+			<type>folder</type>
+			<uuidstructure>8ae9ff9a-11b7-11db-91cd-fdbae480bac9</uuidstructure>
+			<datecreated>Mon, 27 Jun 2005 08:00:00 GMT</datecreated>
+			<flags>0</flags>
+			<properties/>
+			<relations/>
+			<accesscontrol/>
+		</file>
+		<file>
+			<destination>system/workplace/resources/editors/simplehtml/edit.js</destination>
+			<type>plain</type>
+			<uuidstructure>8ae9ff9b-11b7-11db-91cd-fdbae480bac9</uuidstructure>
+			<uuidresource>b6f00722-f03b-11d8-bd02-ddc4b68c493a</uuidresource>
+			<datecreated>Mon, 27 Jun 2005 08:00:00 GMT</datecreated>
+			<flags>0</flags>
+			<properties/>
+			<relations/>
+			<accesscontrol/>
+		</file>
+		<file>
+			<destination>system/workplace/resources/editors/xmlcontent</destination>
+			<type>folder</type>
+			<uuidstructure>8aec709d-11b7-11db-91cd-fdbae480bac9</uuidstructure>
+			<datecreated>Mon, 27 Jun 2005 08:00:00 GMT</datecreated>
+			<flags>0</flags>
+			<properties/>
+			<relations/>
+			<accesscontrol/>
+		</file>
+		<file>
+			<source>system/workplace/resources/editors/xmlcontent/error.png</source>
+			<destination>system/workplace/resources/editors/xmlcontent/error.png</destination>
+			<type>image</type>
+			<uuidstructure>8aeeba8f-11b7-11db-91cd-fdbae480bac9</uuidstructure>
+			<uuidresource>fec47bba-dcd3-11d9-b163-0fc796c4637a</uuidresource>
+			<datecreated>Mon, 27 Jun 2005 08:00:00 GMT</datecreated>
+			<flags>0</flags>
+			<properties>
+				<property type="shared">
+					<name>image.size</name>
+					<value><![CDATA[w:16,h:16]]></value>
+				</property>
+			</properties>
+			<relations/>
+			<accesscontrol/>
+		</file>
+		<file>
+			<source>system/workplace/resources/editors/xmlcontent/warning.png</source>
+			<destination>system/workplace/resources/editors/xmlcontent/warning.png</destination>
+			<type>image</type>
+			<uuidstructure>8af37583-11b7-11db-91cd-fdbae480bac9</uuidstructure>
+			<uuidresource>fecda37d-dcd3-11d9-b163-0fc796c4637a</uuidresource>
+			<datecreated>Mon, 27 Jun 2005 08:00:00 GMT</datecreated>
+			<flags>0</flags>
+			<properties>
+				<property type="shared">
+					<name>image.size</name>
+					<value><![CDATA[w:16,h:16]]></value>
+				</property>
+			</properties>
+			<relations/>
+			<accesscontrol/>
+		</file>
+		<file>
+			<destination>system/workplace/commons</destination>
+			<type>folder</type>
+			<properties/>
+		</file>
+		<file>
+			<source>system/workplace/commons/about.jsp</source>
+			<destination>system/workplace/commons/about.jsp</destination>
+			<type>jsp</type>
+			<uuidstructure>1761c0f6-b2be-4d21-892f-0cfe75f67779</uuidstructure>
+			<uuidresource>9d8e5c90-9bad-4209-b71f-88a618eaef69</uuidresource>
+			<datecreated>Mon, 12 Apr 2010 07:44:27 GMT</datecreated>
+			<flags>0</flags>
+			<properties/>
+			<relations/>
+			<accesscontrol>
+				<accessentry>
+					<uuidprincipal>ROLE.ELEMENT_AUTHOR</uuidprincipal>
+					<flags>512</flags>
+					<permissionset>
+						<allowed>1</allowed>
+						<denied>0</denied>
+					</permissionset>
+				</accessentry>
+			</accesscontrol>
+		</file>
+		<file>
+			<source>system/workplace/commons/direct_publish.jsp</source>
+			<destination>system/workplace/commons/direct_publish.jsp</destination>
+			<type>jsp</type>
+			<uuidstructure>4794cb7c-0e03-4e48-b3fb-55f807c07e75</uuidstructure>
+			<uuidresource>385bcf53-98dd-40fc-b1bb-4c1365e99f2b</uuidresource>
+			<datecreated>Thu, 08 Dec 2011 08:18:04 GMT</datecreated>
+			<flags>0</flags>
+			<properties>
+				<property type="shared">
+					<name>export</name>
+					<value><![CDATA[false]]></value>
+				</property>
+			</properties>
+			<relations/>
+			<accesscontrol>
+				<accessentry>
+					<uuidprincipal>ALL_OTHERS</uuidprincipal>
+					<flags>132</flags>
+					<permissionset>
+						<allowed>0</allowed>
+						<denied>0</denied>
+					</permissionset>
+				</accessentry>
+			</accesscontrol>
+		</file>
+		<file>
+			<source>system/workplace/commons/download-aliases.jsp</source>
+			<destination>system/workplace/commons/download-aliases.jsp</destination>
+			<type>jsp</type>
+			<uuidstructure>08bb7d11-23eb-4507-ab0e-b978d582a8bb</uuidstructure>
+			<uuidresource>08bb7d12-23eb-4507-ab0e-b978d582a8bb</uuidresource>
+			<datecreated>Thu, 05 May 2011 16:33:23 GMT</datecreated>
+			<flags>0</flags>
+			<properties>
+				<property>
+					<name>Title</name>
+					<value><![CDATA[download-aliases]]></value>
+				</property>
+				<property>
+					<name>cache</name>
+					<value><![CDATA[bypass]]></value>
+				</property>
+				<property type="shared">
+					<name>export</name>
+					<value><![CDATA[false]]></value>
+				</property>
+			</properties>
+			<relations/>
+			<accesscontrol/>
+		</file>
+		<file>
+			<source>system/workplace/commons/editor-backlink.html</source>
+			<destination>system/workplace/commons/editor-backlink.html</destination>
+			<type>plain</type>
+			<uuidstructure>387d8625-4607-11df-941d-2393f34d19cc</uuidstructure>
+			<uuidresource>387d8626-4607-11df-941d-2393f34d19cc</uuidresource>
+			<datecreated>Mon, 12 Apr 2010 07:44:27 GMT</datecreated>
+			<flags>0</flags>
+			<properties/>
+			<relations/>
+			<accesscontrol/>
+		</file>
+		<file>
+			<source>system/workplace/commons/gallery.jsp</source>
+			<destination>system/workplace/commons/gallery.jsp</destination>
+			<type>jsp</type>
+			<uuidstructure>01e0b3b9-2d24-11df-abdb-43be96c33985</uuidstructure>
+			<uuidresource>01e0b3ba-2d24-11df-abdb-43be96c33985</uuidresource>
+			<datecreated>Thu, 11 Mar 2010 15:37:31 GMT</datecreated>
+			<flags>0</flags>
+			<properties>
+				<property type="shared">
+					<name>export</name>
+					<value><![CDATA[false]]></value>
+				</property>
+			</properties>
+			<relations/>
+			<accesscontrol>
+				<accessentry>
+					<uuidprincipal>ROLE.ELEMENT_AUTHOR</uuidprincipal>
+					<flags>512</flags>
+					<permissionset>
+						<allowed>1</allowed>
+						<denied>0</denied>
+					</permissionset>
+				</accessentry>
+			</accesscontrol>
+		</file>
+		<file>
+			<source>system/workplace/commons/import-aliases.jsp</source>
+			<destination>system/workplace/commons/import-aliases.jsp</destination>
+			<type>jsp</type>
+			<uuidstructure>367b6c2f-2a6d-4b5d-b4a0-3f7b8519a8ac</uuidstructure>
+			<uuidresource>8c32fbcd-a5b5-49e6-8ab5-aa792e5cb592</uuidresource>
+			<datecreated>Thu, 05 May 2011 16:33:23 GMT</datecreated>
+			<flags>0</flags>
+			<properties>
+				<property>
+					<name>Title</name>
+					<value><![CDATA[import-aliases]]></value>
+				</property>
+				<property type="shared">
+					<name>export</name>
+					<value><![CDATA[false]]></value>
+				</property>
+			</properties>
+			<relations/>
+			<accesscontrol/>
+		</file>
+		<file>
+			<source>system/workplace/commons/open_ade_gallery.jsp</source>
+			<destination>system/workplace/commons/open_ade_gallery.jsp</destination>
+			<type>jsp</type>
+			<uuidstructure>c94f1961-7489-11df-bd01-83befda52004</uuidstructure>
+			<uuidresource>c94f1962-7489-11df-bd01-83befda52004</uuidresource>
+			<datecreated>Thu, 10 Jun 2010 12:14:58 GMT</datecreated>
+			<flags>0</flags>
+			<properties>
+				<property>
+					<name>Title</name>
+					<value><![CDATA[Dialog - Open ADE gallery]]></value>
+				</property>
+				<property type="shared">
+					<name>export</name>
+					<value><![CDATA[false]]></value>
+				</property>
+			</properties>
+			<relations/>
+			<accesscontrol/>
+		</file>
+		<file>
+			<source>system/workplace/commons/postupload.jsp</source>
+			<destination>system/workplace/commons/postupload.jsp</destination>
+			<type>jsp</type>
+			<uuidstructure>8b5d8dfd-c4e3-11e1-8bdc-9d057d88828d</uuidstructure>
+			<uuidresource>8b5d8dfe-c4e3-11e1-8bdc-9d057d88828d</uuidresource>
+			<datecreated>Tue, 03 Jul 2012 07:48:57 GMT</datecreated>
+			<flags>0</flags>
+			<properties>
+				<property type="shared">
+					<name>export</name>
+					<value><![CDATA[false]]></value>
+				</property>
+			</properties>
+			<relations/>
+			<accesscontrol>
+				<accessentry>
+					<uuidprincipal>ROLE.ELEMENT_AUTHOR</uuidprincipal>
+					<flags>512</flags>
+					<permissionset>
+						<allowed>1</allowed>
+						<denied>0</denied>
+					</permissionset>
+				</accessentry>
+			</accesscontrol>
+		</file>
+		<file>
+			<source>system/workplace/commons/postupload_basicproperties.jsp</source>
+			<destination>system/workplace/commons/postupload_basicproperties.jsp</destination>
+			<type>jsp</type>
+			<uuidstructure>0da00905-0f45-11e5-b81f-e9e4a966f961</uuidstructure>
+			<uuidresource>0da00906-0f45-11e5-b81f-e9e4a966f961</uuidresource>
+			<datecreated>Wed, 10 Jun 2015 07:48:16 GMT</datecreated>
+			<flags>0</flags>
+			<properties>
+				<property type="shared">
+					<name>export</name>
+					<value><![CDATA[false]]></value>
+				</property>
+			</properties>
+			<relations/>
+			<accesscontrol>
+				<accessentry>
+					<uuidprincipal>ROLE.ELEMENT_AUTHOR</uuidprincipal>
+					<flags>512</flags>
+					<permissionset>
+						<allowed>1</allowed>
+						<denied>0</denied>
+					</permissionset>
+				</accessentry>
+			</accesscontrol>
+		</file>
+		<file>
+			<source>system/workplace/commons/postupload_useconfig.jsp</source>
+			<destination>system/workplace/commons/postupload_useconfig.jsp</destination>
+			<type>jsp</type>
+			<uuidstructure>ea643811-375c-4b14-ad4c-3df748f88ea2</uuidstructure>
+			<uuidresource>f782375a-1c07-4a01-ba1b-64595e157658</uuidresource>
+			<datecreated>Tue, 03 Jul 2012 07:48:57 GMT</datecreated>
+			<flags>0</flags>
+			<properties>
+				<property type="shared">
+					<name>export</name>
+					<value><![CDATA[false]]></value>
+				</property>
+			</properties>
+			<relations/>
+			<accesscontrol>
+				<accessentry>
+					<uuidprincipal>ROLE.ELEMENT_AUTHOR</uuidprincipal>
+					<flags>512</flags>
+					<permissionset>
+						<allowed>1</allowed>
+						<denied>0</denied>
+					</permissionset>
+				</accessentry>
+			</accesscontrol>
+		</file>
+		<file>
+			<source>system/workplace/commons/properties.jsp</source>
+			<destination>system/workplace/commons/properties.jsp</destination>
+			<type>jsp</type>
+			<uuidstructure>dd359570-c6cd-4493-8921-158890608979</uuidstructure>
+			<uuidresource>c71d3a56-233e-4bd0-9016-78299aa1181e</uuidresource>
+			<datecreated>Fri, 02 Nov 2012 11:48:07 GMT</datecreated>
+			<flags>0</flags>
+			<properties/>
+			<relations/>
+			<accesscontrol/>
+		</file>
+		<file>
+			<source>system/workplace/commons/publish.jsp</source>
+			<destination>system/workplace/commons/publish.jsp</destination>
+			<type>jsp</type>
+			<uuidstructure>26ada581-2175-11e1-a3f6-4d6aceb32220</uuidstructure>
+			<uuidresource>26ada582-2175-11e1-a3f6-4d6aceb32220</uuidresource>
+			<datecreated>Thu, 08 Dec 2011 08:18:04 GMT</datecreated>
+			<flags>0</flags>
+			<properties>
+				<property type="shared">
+					<name>export</name>
+					<value><![CDATA[false]]></value>
+				</property>
+				<property>
+					<name>login-form</name>
+					<value><![CDATA[/system/login/index.html]]></value>
+				</property>
+			</properties>
+			<relations/>
+			<accesscontrol>
+				<accessentry>
+					<uuidprincipal>ALL_OTHERS</uuidprincipal>
+					<flags>132</flags>
+					<permissionset>
+						<allowed>0</allowed>
+						<denied>0</denied>
+					</permissionset>
+				</accessentry>
+				<accessentry>
+					<uuidprincipal>ROLE.ELEMENT_AUTHOR</uuidprincipal>
+					<flags>518</flags>
+					<permissionset>
+						<allowed>1</allowed>
+						<denied>0</denied>
+					</permissionset>
+				</accessentry>
+			</accesscontrol>
+		</file>
+		<file>
+			<source>system/workplace/commons/publish_project.jsp</source>
+			<destination>system/workplace/commons/publish_project.jsp</destination>
+			<type>jsp</type>
+			<uuidstructure>0c187fef-58cc-433f-ba7e-be97f5f3b480</uuidstructure>
+			<uuidresource>0665ab9d-2833-49d1-bed4-53f05d6d2e51</uuidresource>
+			<datecreated>Thu, 08 Dec 2011 08:18:04 GMT</datecreated>
+			<flags>0</flags>
+			<properties>
+				<property type="shared">
+					<name>export</name>
+					<value><![CDATA[false]]></value>
+				</property>
+			</properties>
+			<relations/>
+			<accesscontrol>
+				<accessentry>
+					<uuidprincipal>ALL_OTHERS</uuidprincipal>
+					<flags>132</flags>
+					<permissionset>
+						<allowed>0</allowed>
+						<denied>0</denied>
+					</permissionset>
+				</accessentry>
+			</accesscontrol>
+		</file>
+		<file>
+			<source>system/workplace/commons/resourceIcon.css</source>
+			<destination>system/workplace/commons/resourceIcon.css</destination>
+			<type>jsp</type>
+			<uuidstructure>c69e7fdf-619d-11df-ace9-2393f34d19cc</uuidstructure>
+			<uuidresource>c69e7fe0-619d-11df-ace9-2393f34d19cc</uuidresource>
+			<datecreated>Mon, 17 May 2010 10:20:11 GMT</datecreated>
+			<flags>0</flags>
+			<properties>
+				<property type="shared">
+					<name>export</name>
+					<value><![CDATA[false]]></value>
+				</property>
+			</properties>
+			<relations/>
+			<accesscontrol/>
+		</file>
+		<file>
+			<source>system/workplace/commons/sitemap.jsp</source>
+			<destination>system/workplace/commons/sitemap.jsp</destination>
+			<type>jsp</type>
+			<uuidstructure>654be781-7735-11e0-89e5-d14bc4448678</uuidstructure>
+			<uuidresource>654be782-7735-11e0-89e5-d14bc4448678</uuidresource>
+			<datecreated>Thu, 05 May 2011 16:33:23 GMT</datecreated>
+			<flags>0</flags>
+			<properties>
+				<property>
+					<name>Title</name>
+					<value><![CDATA[sitemap]]></value>
+				</property>
+				<property type="shared">
+					<name>export</name>
+					<value><![CDATA[false]]></value>
+				</property>
+			</properties>
+			<relations/>
+			<accesscontrol>
+				<accessentry>
+					<uuidprincipal>ROLE.EDITOR</uuidprincipal>
+					<flags>512</flags>
+					<permissionset>
+						<allowed>1</allowed>
+						<denied>0</denied>
+					</permissionset>
+				</accessentry>
+			</accesscontrol>
+		</file>
+		<file>
+			<source>system/workplace/commons/upload.jsp</source>
+			<destination>system/workplace/commons/upload.jsp</destination>
+			<type>jsp</type>
+			<uuidstructure>be9eaf09-40df-11e0-b044-e756eface22e</uuidstructure>
+			<uuidresource>be9eaf0a-40df-11e0-b044-e756eface22e</uuidresource>
+			<datecreated>Fri, 25 Feb 2011 13:04:14 GMT</datecreated>
+			<flags>0</flags>
+			<properties>
+				<property type="shared">
+					<name>export</name>
+					<value><![CDATA[false]]></value>
+				</property>
+			</properties>
+			<relations/>
+			<accesscontrol/>
+		</file>
+		<file>
+			<source>system/workplace/commons/uploadAction.jsp</source>
+			<destination>system/workplace/commons/uploadAction.jsp</destination>
+			<type>jsp</type>
+			<uuidstructure>54fc80dc-287a-11e0-9363-9d0a6b56f130</uuidstructure>
+			<uuidresource>54fc80dd-287a-11e0-9363-9d0a6b56f130</uuidresource>
+			<datecreated>Tue, 25 Jan 2011 11:57:49 GMT</datecreated>
+			<flags>0</flags>
+			<properties>
+				<property>
+					<name>Title</name>
+					<value><![CDATA[The upload JSP]]></value>
+				</property>
+				<property type="shared">
+					<name>export</name>
+					<value><![CDATA[false]]></value>
+				</property>
+			</properties>
+			<relations/>
+			<accesscontrol>
+				<accessentry>
+					<uuidprincipal>ROLE.ELEMENT_AUTHOR</uuidprincipal>
+					<flags>512</flags>
+					<permissionset>
+						<allowed>1</allowed>
+						<denied>0</denied>
+					</permissionset>
+				</accessentry>
+			</accesscontrol>
+		</file>
+		<file>
+			<source>system/workplace/editors/direct_edit.jsp</source>
+			<destination>system/workplace/editors/direct_edit.jsp</destination>
+			<type>jsp</type>
+			<uuidstructure>8971427c-11b7-11db-91cd-fdbae480bac9</uuidstructure>
+			<uuidresource>60557f49-f052-11d8-ba65-db38cc8f19d7</uuidresource>
+			<datecreated>Mon, 27 Jun 2005 08:00:00 GMT</datecreated>
+			<flags>0</flags>
+			<properties>
+				<property>
+					<name>Title</name>
+					<value><![CDATA[Direct edit include file for JSP based provider (before 6.2.3)]]></value>
+				</property>
+				<property>
+					<name>export</name>
+					<value><![CDATA[false]]></value>
+				</property>
+			</properties>
+			<relations/>
+			<accesscontrol/>
+		</file>
+		<file>
+			<source>system/workplace/editors/direct_edit_include.txt</source>
+			<destination>system/workplace/editors/direct_edit_include.txt</destination>
+			<type>plain</type>
+			<uuidstructure>80a1427c-11b7-11db-91cd-fdbae480bfff</uuidstructure>
+			<uuidresource>60a57f49-f052-11d8-ba65-db38cc8f1fff</uuidresource>
+			<datecreated>Mon, 27 Jun 2005 08:00:00 GMT</datecreated>
+			<flags>0</flags>
+			<properties>
+				<property>
+					<name>Title</name>
+					<value><![CDATA[Direct edit include file for default provider (since 6.2.3)]]></value>
+				</property>
+				<property>
+					<name>export</name>
+					<value><![CDATA[false]]></value>
+				</property>
+			</properties>
+			<relations/>
+			<accesscontrol/>
+		</file>
+		<file>
+			<source>system/workplace/editors/editor.jsp</source>
+			<destination>system/workplace/editors/editor.jsp</destination>
+			<type>jsp</type>
+			<uuidstructure>8973b380-11b7-11db-91cd-fdbae480bac9</uuidstructure>
+			<uuidresource>605ef52d-f052-11d8-ba65-db38cc8f19d7</uuidresource>
+			<datecreated>Mon, 27 Jun 2005 08:00:00 GMT</datecreated>
+			<flags>0</flags>
+			<properties>
+				<property>
+					<name>Title</name>
+					<value><![CDATA[Editor frameset]]></value>
+				</property>
+				<property>
+					<name>export</name>
+					<value><![CDATA[false]]></value>
+				</property>
+			</properties>
+			<relations/>
+			<accesscontrol/>
+		</file>
+		<file>
+			<source>system/workplace/editors/editor_main.jsp</source>
+			<destination>system/workplace/editors/editor_main.jsp</destination>
+			<type>jsp</type>
+			<uuidstructure>89786e78-11b7-11db-91cd-fdbae480bac9</uuidstructure>
+			<uuidresource>60747905-f052-11d8-ba65-db38cc8f19d7</uuidresource>
+			<datecreated>Mon, 27 Jun 2005 08:00:00 GMT</datecreated>
+			<flags>0</flags>
+			<properties>
+				<property>
+					<name>Title</name>
+					<value><![CDATA[Main editor frame]]></value>
+				</property>
+				<property>
+					<name>export</name>
+					<value><![CDATA[false]]></value>
+				</property>
+			</properties>
+			<relations/>
+			<accesscontrol/>
+		</file>
+		<file>
+			<source>system/workplace/editors/jquery_direct_edit_include.txt</source>
+			<destination>system/workplace/editors/jquery_direct_edit_include.txt</destination>
+			<type>plain</type>
+			<uuidstructure>6a2b2939-dbb1-11dc-a85f-9b4307eb5433</uuidstructure>
+			<uuidresource>6a2b293a-dbb1-11dc-a85f-9b4307eb5433</uuidresource>
+			<datecreated>Fri, 15 Feb 2008 10:33:15 GMT</datecreated>
+			<flags>0</flags>
+			<properties>
+				<property>
+					<name>Title</name>
+					<value><![CDATA[Direct edit include file for jquery provider]]></value>
+				</property>
+				<property>
+					<name>export</name>
+					<value><![CDATA[false]]></value>
+				</property>
+			</properties>
+			<relations/>
+			<accesscontrol/>
+		</file>
+		<file>
+			<destination>system/workplace/editors/tinymce</destination>
+			<type>folder</type>
+			<properties/>
+		</file>
+		<file>
+			<source>system/workplace/editors/tinymce/base_content.css</source>
+			<destination>system/workplace/editors/tinymce/base_content.css</destination>
+			<type>plain</type>
+			<uuidstructure>126b832a-b3d4-11e1-9f11-43f8f38677e0</uuidstructure>
+			<uuidresource>126b832b-b3d4-11e1-9f11-43f8f38677e0</uuidresource>
+			<datecreated>Mon, 11 Jun 2012 14:45:22 GMT</datecreated>
+			<flags>0</flags>
+			<properties/>
+			<relations/>
+			<accesscontrol/>
+		</file>
+		<file>
+			<source>system/workplace/editors/tinymce/filebrowser_gallery_integrator.js</source>
+			<destination>system/workplace/editors/tinymce/filebrowser_gallery_integrator.js</destination>
+			<type>jsp</type>
+			<uuidstructure>f8d526bb-f078-4470-9ad0-9e58205807d5</uuidstructure>
+			<uuidresource>f8d526bc-f078-4470-9ad0-9e58205807d5</uuidresource>
+			<datecreated>Wed, 11 Jan 2012 13:55:37 GMT</datecreated>
+			<flags>0</flags>
+			<properties>
+				<property type="shared">
+					<name>export</name>
+					<value><![CDATA[false]]></value>
+				</property>
+			</properties>
+			<relations/>
+			<accesscontrol/>
+		</file>
+		<file>
+			<source>system/workplace/editors/tinymce/image_popup.html</source>
+			<destination>system/workplace/editors/tinymce/image_popup.html</destination>
+			<type>jsp</type>
+			<uuidstructure>becf6d4c-f860-11e2-b124-000c298a1fde</uuidstructure>
+			<uuidresource>becf6d4d-f860-11e2-b124-000c298a1fde</uuidresource>
+			<datecreated>Mon, 29 Jul 2013 15:08:37 GMT</datecreated>
+			<flags>0</flags>
+			<properties>
+				<property>
+					<name>Title</name>
+					<value><![CDATA[image popup]]></value>
+				</property>
+			</properties>
+			<relations/>
+			<accesscontrol/>
+		</file>
+		<file>
+			<source>system/workplace/editors/tinymce/integrator.js</source>
+			<destination>system/workplace/editors/tinymce/integrator.js</destination>
+			<type>jsp</type>
+			<uuidstructure>1cb323ac-99b2-4cb5-8957-bd49ae31ed03</uuidstructure>
+			<uuidresource>1cb323ad-99b2-4cb5-8957-bd49ae31ed03</uuidresource>
+			<datecreated>Wed, 11 Jan 2012 13:55:37 GMT</datecreated>
+			<flags>0</flags>
+			<properties>
+				<property type="shared">
+					<name>export</name>
+					<value><![CDATA[true]]></value>
+				</property>
+			</properties>
+			<relations/>
+			<accesscontrol/>
+		</file>
+		<file>
+			<source>system/workplace/editors/tinymce/opencms_plugin.css</source>
+			<destination>system/workplace/editors/tinymce/opencms_plugin.css</destination>
+			<type>plain</type>
+			<uuidstructure>d0273749-407c-11e3-bd65-13c7f20aeb68</uuidstructure>
+			<uuidresource>d027374a-407c-11e3-bd65-13c7f20aeb68</uuidresource>
+			<datecreated>Tue, 29 Oct 2013 09:30:56 GMT</datecreated>
+			<flags>0</flags>
+			<properties>
+				<property type="shared">
+					<name>export</name>
+					<value><![CDATA[false]]></value>
+				</property>
+			</properties>
+			<relations/>
+			<accesscontrol/>
+		</file>
+		<file>
+			<source>system/workplace/editors/tinymce/opencms_plugin.js</source>
+			<destination>system/workplace/editors/tinymce/opencms_plugin.js</destination>
+			<type>jsp</type>
+			<uuidstructure>5300593b-150f-48c0-9d1e-cc7884613ba6</uuidstructure>
+			<uuidresource>5300593c-150f-48c0-9d1e-cc7884613ba6</uuidresource>
+			<datecreated>Wed, 11 Jan 2012 13:55:37 GMT</datecreated>
+			<flags>0</flags>
+			<properties>
+				<property type="shared">
+					<name>export</name>
+					<value><![CDATA[false]]></value>
+				</property>
+			</properties>
+			<relations/>
+			<accesscontrol/>
+		</file>
+		<file>
+			<destination>system/workplace/resources/buttons</destination>
+			<type>folder</type>
+			<properties/>
+		</file>
+		<file>
+			<source>system/workplace/resources/buttons/anchor.png</source>
+			<destination>system/workplace/resources/buttons/anchor.png</destination>
+			<type>image</type>
+			<uuidstructure>8a5d5097-11b7-11db-91cd-fdbae480bac9</uuidstructure>
+			<uuidresource>c459682f-dd86-11d9-9663-016dc05e1977</uuidresource>
+			<datecreated>Mon, 27 Jun 2005 08:00:00 GMT</datecreated>
+			<flags>0</flags>
+			<properties>
+				<property type="shared">
+					<name>image.size</name>
+					<value><![CDATA[w:20,h:20]]></value>
+				</property>
+			</properties>
+			<relations/>
+			<accesscontrol/>
+		</file>
+		<file>
+			<source>system/workplace/resources/buttons/bold.png</source>
+			<destination>system/workplace/resources/buttons/bold.png</destination>
+			<type>image</type>
+			<uuidstructure>8a620b89-11b7-11db-91cd-fdbae480bac9</uuidstructure>
+			<uuidresource>c4628ff2-dd86-11d9-9663-016dc05e1977</uuidresource>
+			<datecreated>Mon, 27 Jun 2005 08:00:00 GMT</datecreated>
+			<flags>0</flags>
+			<properties>
+				<property type="shared">
+					<name>image.size</name>
+					<value><![CDATA[w:20,h:20]]></value>
+				</property>
+			</properties>
+			<relations/>
+			<accesscontrol/>
+		</file>
+		<file>
+			<source>system/workplace/resources/buttons/bullist.png</source>
+			<destination>system/workplace/resources/buttons/bullist.png</destination>
+			<type>image</type>
+			<uuidstructure>8a69377b-11b7-11db-91cd-fdbae480bac9</uuidstructure>
+			<uuidresource>c46723d5-dd86-11d9-9663-016dc05e1977</uuidresource>
+			<datecreated>Mon, 27 Jun 2005 08:00:00 GMT</datecreated>
+			<flags>0</flags>
+			<properties>
+				<property type="shared">
+					<name>image.size</name>
+					<value><![CDATA[w:20,h:20]]></value>
+				</property>
+			</properties>
+			<relations/>
+			<accesscontrol/>
+		</file>
+		<file>
+			<source>system/workplace/resources/buttons/center.png</source>
+			<destination>system/workplace/resources/buttons/center.png</destination>
+			<type>image</type>
+			<uuidstructure>8a751e5d-11b7-11db-91cd-fdbae480bac9</uuidstructure>
+			<uuidresource>c46bb7bb-dd86-11d9-9663-016dc05e1977</uuidresource>
+			<datecreated>Mon, 27 Jun 2005 08:00:00 GMT</datecreated>
+			<flags>0</flags>
+			<properties>
+				<property type="shared">
+					<name>image.size</name>
+					<value><![CDATA[w:20,h:20]]></value>
+				</property>
+			</properties>
+			<relations/>
+			<accesscontrol/>
+		</file>
+		<file>
+			<source>system/workplace/resources/buttons/cleanup.png</source>
+			<destination>system/workplace/resources/buttons/cleanup.png</destination>
+			<type>image</type>
+			<uuidstructure>8a7a005f-11b7-11db-91cd-fdbae480bac9</uuidstructure>
+			<uuidresource>c46ec4fe-dd86-11d9-9663-016dc05e1977</uuidresource>
+			<datecreated>Mon, 27 Jun 2005 08:00:00 GMT</datecreated>
+			<flags>0</flags>
+			<properties>
+				<property type="shared">
+					<name>image.size</name>
+					<value><![CDATA[w:20,h:20]]></value>
+				</property>
+			</properties>
+			<relations/>
+			<accesscontrol/>
+		</file>
+		<file>
+			<source>system/workplace/resources/buttons/color_fill.png</source>
+			<destination>system/workplace/resources/buttons/color_fill.png</destination>
+			<type>image</type>
+			<uuidstructure>8a7eba52-11b7-11db-91cd-fdbae480bac9</uuidstructure>
+			<uuidresource>c471d241-dd86-11d9-9663-016dc05e1977</uuidresource>
+			<datecreated>Mon, 27 Jun 2005 08:00:00 GMT</datecreated>
+			<flags>0</flags>
+			<properties>
+				<property type="shared">
+					<name>image.size</name>
+					<value><![CDATA[w:20,h:20]]></value>
+				</property>
+			</properties>
+			<relations/>
+			<accesscontrol/>
+		</file>
+		<file>
+			<source>system/workplace/resources/buttons/color_text.png</source>
+			<destination>system/workplace/resources/buttons/color_text.png</destination>
+			<type>image</type>
+			<uuidstructure>8a837544-11b7-11db-91cd-fdbae480bac9</uuidstructure>
+			<uuidresource>c474df84-dd86-11d9-9663-016dc05e1977</uuidresource>
+			<datecreated>Mon, 27 Jun 2005 08:00:00 GMT</datecreated>
+			<flags>0</flags>
+			<properties>
+				<property type="shared">
+					<name>image.size</name>
+					<value><![CDATA[w:20,h:20]]></value>
+				</property>
+			</properties>
+			<relations/>
+			<accesscontrol/>
+		</file>
+		<file>
+			<source>system/workplace/resources/buttons/copy.png</source>
+			<destination>system/workplace/resources/buttons/copy.png</destination>
+			<type>image</type>
+			<uuidstructure>8a883036-11b7-11db-91cd-fdbae480bac9</uuidstructure>
+			<uuidresource>c477ecc7-dd86-11d9-9663-016dc05e1977</uuidresource>
+			<datecreated>Mon, 27 Jun 2005 08:00:00 GMT</datecreated>
+			<flags>0</flags>
+			<properties>
+				<property type="shared">
+					<name>image.size</name>
+					<value><![CDATA[w:20,h:20]]></value>
+				</property>
+			</properties>
+			<relations/>
+			<accesscontrol/>
+		</file>
+		<file>
+			<source>system/workplace/resources/buttons/cut.png</source>
+			<destination>system/workplace/resources/buttons/cut.png</destination>
+			<type>image</type>
+			<uuidstructure>8a8d1238-11b7-11db-91cd-fdbae480bac9</uuidstructure>
+			<uuidresource>c479736a-dd86-11d9-9663-016dc05e1977</uuidresource>
+			<datecreated>Mon, 27 Jun 2005 08:00:00 GMT</datecreated>
+			<flags>0</flags>
+			<properties>
+				<property type="shared">
+					<name>image.size</name>
+					<value><![CDATA[w:20,h:20]]></value>
+				</property>
+			</properties>
+			<relations/>
+			<accesscontrol/>
+		</file>
+		<file>
+			<source>system/workplace/resources/buttons/details.png</source>
+			<destination>system/workplace/resources/buttons/details.png</destination>
+			<type>image</type>
+			<uuidstructure>8a91cd2a-11b7-11db-91cd-fdbae480bac9</uuidstructure>
+			<uuidresource>c47c80ad-dd86-11d9-9663-016dc05e1977</uuidresource>
+			<datecreated>Mon, 27 Jun 2005 08:00:00 GMT</datecreated>
+			<flags>0</flags>
+			<properties>
+				<property type="shared">
+					<name>image.size</name>
+					<value><![CDATA[w:20,h:20]]></value>
+				</property>
+			</properties>
+			<relations/>
+			<accesscontrol/>
+		</file>
+		<file>
+			<source>system/workplace/resources/buttons/directedit_cl.png</source>
+			<destination>system/workplace/resources/buttons/directedit_cl.png</destination>
+			<type>image</type>
+			<uuidstructure>8a94171c-11b7-11db-91cd-fdbae480bac9</uuidstructure>
+			<uuidresource>c47f8df0-dd86-11d9-9663-016dc05e1977</uuidresource>
+			<datecreated>Mon, 27 Jun 2005 08:00:00 GMT</datecreated>
+			<flags>0</flags>
+			<properties>
+				<property type="shared">
+					<name>image.size</name>
+					<value><![CDATA[w:20,h:20]]></value>
+				</property>
+			</properties>
+			<relations/>
+			<accesscontrol/>
+		</file>
+		<file>
+			<source>system/workplace/resources/buttons/directedit_in.png</source>
+			<destination>system/workplace/resources/buttons/directedit_in.png</destination>
+			<type>image</type>
+			<uuidstructure>8a96881f-11b7-11db-91cd-fdbae480bac9</uuidstructure>
+			<uuidresource>c4811493-dd86-11d9-9663-016dc05e1977</uuidresource>
+			<datecreated>Mon, 27 Jun 2005 08:00:00 GMT</datecreated>
+			<flags>0</flags>
+			<properties>
+				<property type="shared">
+					<name>image.size</name>
+					<value><![CDATA[w:20,h:20]]></value>
+				</property>
+			</properties>
+			<relations/>
+			<accesscontrol/>
+		</file>
+		<file>
+			<source>system/workplace/resources/buttons/directedit_op.png</source>
+			<destination>system/workplace/resources/buttons/directedit_op.png</destination>
+			<type>image</type>
+			<uuidstructure>8a98f922-11b7-11db-91cd-fdbae480bac9</uuidstructure>
+			<uuidresource>c4829b36-dd86-11d9-9663-016dc05e1977</uuidresource>
+			<datecreated>Mon, 27 Jun 2005 08:00:00 GMT</datecreated>
+			<flags>0</flags>
+			<properties>
+				<property type="shared">
+					<name>image.size</name>
+					<value><![CDATA[w:20,h:20]]></value>
+				</property>
+			</properties>
+			<relations/>
+			<accesscontrol/>
+		</file>
+		<file>
+			<source>system/workplace/resources/buttons/editorsearch.png</source>
+			<destination>system/workplace/resources/buttons/editorsearch.png</destination>
+			<type>image</type>
+			<uuidstructure>8a9b4315-11b7-11db-91cd-fdbae480bac9</uuidstructure>
+			<uuidresource>c48a3c5c-dd86-11d9-9663-016dc05e1977</uuidresource>
+			<datecreated>Mon, 27 Jun 2005 08:00:00 GMT</datecreated>
+			<flags>0</flags>
+			<properties>
+				<property type="shared">
+					<name>image.size</name>
+					<value><![CDATA[w:20,h:20]]></value>
+				</property>
+			</properties>
+			<relations/>
+			<accesscontrol/>
+		</file>
+		<file>
+			<source>system/workplace/resources/buttons/elements.png</source>
+			<destination>system/workplace/resources/buttons/elements.png</destination>
+			<type>image</type>
+			<uuidstructure>8a9db417-11b7-11db-91cd-fdbae480bac9</uuidstructure>
+			<uuidresource>c48d499f-dd86-11d9-9663-016dc05e1977</uuidresource>
+			<datecreated>Mon, 27 Jun 2005 08:00:00 GMT</datecreated>
+			<flags>0</flags>
+			<properties>
+				<property type="shared">
+					<name>image.size</name>
+					<value><![CDATA[w:20,h:20]]></value>
+				</property>
+			</properties>
+			<relations/>
+			<accesscontrol/>
+		</file>
+		<file>
+			<source>system/workplace/resources/buttons/elements_in.png</source>
+			<destination>system/workplace/resources/buttons/elements_in.png</destination>
+			<type>image</type>
+			<uuidstructure>8aa02519-11b7-11db-91cd-fdbae480bac9</uuidstructure>
+			<uuidresource>c48ed042-dd86-11d9-9663-016dc05e1977</uuidresource>
+			<datecreated>Mon, 27 Jun 2005 08:00:00 GMT</datecreated>
+			<flags>0</flags>
+			<properties>
+				<property type="shared">
+					<name>image.size</name>
+					<value><![CDATA[w:20,h:20]]></value>
+				</property>
+			</properties>
+			<relations/>
+			<accesscontrol/>
+		</file>
+		<file>
+			<source>system/workplace/resources/buttons/erase.png</source>
+			<destination>system/workplace/resources/buttons/erase.png</destination>
+			<type>image</type>
+			<uuidstructure>8aa26f0b-11b7-11db-91cd-fdbae480bac9</uuidstructure>
+			<uuidresource>c491dd85-dd86-11d9-9663-016dc05e1977</uuidresource>
+			<datecreated>Mon, 27 Jun 2005 08:00:00 GMT</datecreated>
+			<flags>0</flags>
+			<properties>
+				<property type="shared">
+					<name>image.size</name>
+					<value><![CDATA[w:20,h:20]]></value>
+				</property>
+			</properties>
+			<relations/>
+			<accesscontrol/>
+		</file>
+		<file>
+			<source>system/workplace/resources/buttons/exit.png</source>
+			<destination>system/workplace/resources/buttons/exit.png</destination>
+			<type>image</type>
+			<uuidstructure>8aa4e00e-11b7-11db-91cd-fdbae480bac9</uuidstructure>
+			<uuidresource>c4967168-dd86-11d9-9663-016dc05e1977</uuidresource>
+			<datecreated>Mon, 27 Jun 2005 08:00:00 GMT</datecreated>
+			<flags>0</flags>
+			<properties>
+				<property type="shared">
+					<name>image.size</name>
+					<value><![CDATA[w:20,h:20]]></value>
+				</property>
+			</properties>
+			<relations/>
+			<accesscontrol/>
+		</file>
+		<file>
+			<source>system/workplace/resources/buttons/image.png</source>
+			<destination>system/workplace/resources/buttons/image.png</destination>
+			<type>image</type>
+			<uuidstructure>8aa72a00-11b7-11db-91cd-fdbae480bac9</uuidstructure>
+			<uuidresource>c4a42d14-dd86-11d9-9663-016dc05e1977</uuidresource>
+			<datecreated>Mon, 27 Jun 2005 08:00:00 GMT</datecreated>
+			<flags>0</flags>
+			<properties>
+				<property type="shared">
+					<name>image.size</name>
+					<value><![CDATA[w:20,h:20]]></value>
+				</property>
+			</properties>
+			<relations/>
+			<accesscontrol/>
+		</file>
+		<file>
+			<source>system/workplace/resources/buttons/indent.png</source>
+			<destination>system/workplace/resources/buttons/indent.png</destination>
+			<type>image</type>
+			<uuidstructure>8aa99b02-11b7-11db-91cd-fdbae480bac9</uuidstructure>
+			<uuidresource>c4a8c0fa-dd86-11d9-9663-016dc05e1977</uuidresource>
+			<datecreated>Mon, 27 Jun 2005 08:00:00 GMT</datecreated>
+			<flags>0</flags>
+			<properties>
+				<property type="shared">
+					<name>image.size</name>
+					<value><![CDATA[w:20,h:20]]></value>
+				</property>
+			</properties>
+			<relations/>
+			<accesscontrol/>
+		</file>
+		<file>
+			<source>system/workplace/resources/buttons/italic.png</source>
+			<destination>system/workplace/resources/buttons/italic.png</destination>
+			<type>image</type>
+			<uuidstructure>8aac0c04-11b7-11db-91cd-fdbae480bac9</uuidstructure>
+			<uuidresource>c4abce3d-dd86-11d9-9663-016dc05e1977</uuidresource>
+			<datecreated>Mon, 27 Jun 2005 08:00:00 GMT</datecreated>
+			<flags>0</flags>
+			<properties>
+				<property type="shared">
+					<name>image.size</name>
+					<value><![CDATA[w:20,h:20]]></value>
+				</property>
+			</properties>
+			<relations/>
+			<accesscontrol/>
+		</file>
+		<file>
+			<source>system/workplace/resources/buttons/left.png</source>
+			<destination>system/workplace/resources/buttons/left.png</destination>
+			<type>image</type>
+			<uuidstructure>8aae55f6-11b7-11db-91cd-fdbae480bac9</uuidstructure>
+			<uuidresource>c4aedb80-dd86-11d9-9663-016dc05e1977</uuidresource>
+			<datecreated>Mon, 27 Jun 2005 08:00:00 GMT</datecreated>
+			<flags>0</flags>
+			<properties>
+				<property type="shared">
+					<name>image.size</name>
+					<value><![CDATA[w:20,h:20]]></value>
+				</property>
+			</properties>
+			<relations/>
+			<accesscontrol/>
+		</file>
+		<file>
+			<source>system/workplace/resources/buttons/link.png</source>
+			<destination>system/workplace/resources/buttons/link.png</destination>
+			<type>image</type>
+			<uuidstructure>8ab0c6f8-11b7-11db-91cd-fdbae480bac9</uuidstructure>
+			<uuidresource>c4b06223-dd86-11d9-9663-016dc05e1977</uuidresource>
+			<datecreated>Mon, 27 Jun 2005 08:00:00 GMT</datecreated>
+			<flags>0</flags>
+			<properties>
+				<property type="shared">
+					<name>image.size</name>
+					<value><![CDATA[w:20,h:20]]></value>
+				</property>
+			</properties>
+			<relations/>
+			<accesscontrol/>
+		</file>
+		<file>
+			<source>system/workplace/resources/buttons/numlist.png</source>
+			<destination>system/workplace/resources/buttons/numlist.png</destination>
+			<type>image</type>
+			<uuidstructure>8ab337fa-11b7-11db-91cd-fdbae480bac9</uuidstructure>
+			<uuidresource>c4b80349-dd86-11d9-9663-016dc05e1977</uuidresource>
+			<datecreated>Mon, 27 Jun 2005 08:00:00 GMT</datecreated>
+			<flags>0</flags>
+			<properties>
+				<property type="shared">
+					<name>image.size</name>
+					<value><![CDATA[w:20,h:20]]></value>
+				</property>
+			</properties>
+			<relations/>
+			<accesscontrol/>
+		</file>
+		<file>
+			<source>system/workplace/resources/buttons/outdent.png</source>
+			<destination>system/workplace/resources/buttons/outdent.png</destination>
+			<type>image</type>
+			<uuidstructure>8ab581ec-11b7-11db-91cd-fdbae480bac9</uuidstructure>
+			<uuidresource>c4bc972c-dd86-11d9-9663-016dc05e1977</uuidresource>
+			<datecreated>Mon, 27 Jun 2005 08:00:00 GMT</datecreated>
+			<flags>0</flags>
+			<properties>
+				<property type="shared">
+					<name>image.size</name>
+					<value><![CDATA[w:20,h:20]]></value>
+				</property>
+			</properties>
+			<relations/>
+			<accesscontrol/>
+		</file>
+		<file>
+			<source>system/workplace/resources/buttons/paste.png</source>
+			<destination>system/workplace/resources/buttons/paste.png</destination>
+			<type>image</type>
+			<uuidstructure>8abcadde-11b7-11db-91cd-fdbae480bac9</uuidstructure>
+			<uuidresource>c4be44df-dd86-11d9-9663-016dc05e1977</uuidresource>
+			<datecreated>Mon, 27 Jun 2005 08:00:00 GMT</datecreated>
+			<flags>0</flags>
+			<properties>
+				<property type="shared">
+					<name>image.size</name>
+					<value><![CDATA[w:20,h:20]]></value>
+				</property>
+			</properties>
+			<relations/>
+			<accesscontrol/>
+		</file>
+		<file>
+			<source>system/workplace/resources/buttons/properties.png</source>
+			<destination>system/workplace/resources/buttons/properties.png</destination>
+			<type>image</type>
+			<uuidstructure>8abcade0-11b7-11db-91cd-fdbae480bac9</uuidstructure>
+			<uuidresource>c4c2d7c5-dd86-11d9-9663-016dc05e1977</uuidresource>
+			<datecreated>Mon, 27 Jun 2005 08:00:00 GMT</datecreated>
+			<flags>0</flags>
+			<properties>
+				<property type="shared">
+					<name>image.size</name>
+					<value><![CDATA[w:20,h:20]]></value>
+				</property>
+			</properties>
+			<relations/>
+			<accesscontrol/>
+		</file>
+		<file>
+			<source>system/workplace/resources/buttons/properties_in.png</source>
+			<destination>system/workplace/resources/buttons/properties_in.png</destination>
+			<type>image</type>
+			<uuidstructure>8abf1ee2-11b7-11db-91cd-fdbae480bac9</uuidstructure>
+			<uuidresource>c4c45e68-dd86-11d9-9663-016dc05e1977</uuidresource>
+			<datecreated>Mon, 27 Jun 2005 08:00:00 GMT</datecreated>
+			<flags>0</flags>
+			<properties>
+				<property type="shared">
+					<name>image.size</name>
+					<value><![CDATA[w:20,h:20]]></value>
+				</property>
+			</properties>
+			<relations/>
+			<accesscontrol/>
+		</file>
+		<file>
+			<source>system/workplace/resources/buttons/redo.png</source>
+			<destination>system/workplace/resources/buttons/redo.png</destination>
+			<type>image</type>
+			<uuidstructure>8ac168d4-11b7-11db-91cd-fdbae480bac9</uuidstructure>
+			<uuidresource>c4c5e50b-dd86-11d9-9663-016dc05e1977</uuidresource>
+			<datecreated>Mon, 27 Jun 2005 08:00:00 GMT</datecreated>
+			<flags>0</flags>
+			<properties>
+				<property type="shared">
+					<name>image.size</name>
+					<value><![CDATA[w:20,h:20]]></value>
+				</property>
+			</properties>
+			<relations/>
+			<accesscontrol/>
+		</file>
+		<file>
+			<source>system/workplace/resources/buttons/right.png</source>
+			<destination>system/workplace/resources/buttons/right.png</destination>
+			<type>image</type>
+			<uuidstructure>8ac3d9d6-11b7-11db-91cd-fdbae480bac9</uuidstructure>
+			<uuidresource>c4cbff91-dd86-11d9-9663-016dc05e1977</uuidresource>
+			<datecreated>Mon, 27 Jun 2005 08:00:00 GMT</datecreated>
+			<flags>0</flags>
+			<properties>
+				<property type="shared">
+					<name>image.size</name>
+					<value><![CDATA[w:20,h:20]]></value>
+				</property>
+			</properties>
+			<relations/>
+			<accesscontrol/>
+		</file>
+		<file>
+			<source>system/workplace/resources/buttons/save.png</source>
+			<destination>system/workplace/resources/buttons/save.png</destination>
+			<type>image</type>
+			<uuidstructure>8ac64ad8-11b7-11db-91cd-fdbae480bac9</uuidstructure>
+			<uuidresource>c4cf0cd4-dd86-11d9-9663-016dc05e1977</uuidresource>
+			<datecreated>Mon, 27 Jun 2005 08:00:00 GMT</datecreated>
+			<flags>0</flags>
+			<properties>
+				<property type="shared">
+					<name>image.size</name>
+					<value><![CDATA[w:20,h:20]]></value>
+				</property>
+			</properties>
+			<relations/>
+			<accesscontrol/>
+		</file>
+		<file>
+			<source>system/workplace/resources/buttons/save_exit.png</source>
+			<destination>system/workplace/resources/buttons/save_exit.png</destination>
+			<type>image</type>
+			<uuidstructure>8ac894ca-11b7-11db-91cd-fdbae480bac9</uuidstructure>
+			<uuidresource>c4d09377-dd86-11d9-9663-016dc05e1977</uuidresource>
+			<datecreated>Mon, 27 Jun 2005 08:00:00 GMT</datecreated>
+			<flags>0</flags>
+			<properties>
+				<property type="shared">
+					<name>image.size</name>
+					<value><![CDATA[w:20,h:20]]></value>
+				</property>
+			</properties>
+			<relations/>
+			<accesscontrol/>
+		</file>
+		<file>
+			<source>system/workplace/resources/buttons/specialchar.png</source>
+			<destination>system/workplace/resources/buttons/specialchar.png</destination>
+			<type>image</type>
+			<uuidstructure>8acb05cc-11b7-11db-91cd-fdbae480bac9</uuidstructure>
+			<uuidresource>c4d3a0ba-dd86-11d9-9663-016dc05e1977</uuidresource>
+			<datecreated>Mon, 27 Jun 2005 08:00:00 GMT</datecreated>
+			<flags>0</flags>
+			<properties>
+				<property type="shared">
+					<name>image.size</name>
+					<value><![CDATA[w:20,h:20]]></value>
+				</property>
+			</properties>
+			<relations/>
+			<accesscontrol/>
+		</file>
+		<file>
+			<source>system/workplace/resources/buttons/table.png</source>
+			<destination>system/workplace/resources/buttons/table.png</destination>
+			<type>image</type>
+			<uuidstructure>8acd4fbe-11b7-11db-91cd-fdbae480bac9</uuidstructure>
+			<uuidresource>c4d9bb40-dd86-11d9-9663-016dc05e1977</uuidresource>
+			<datecreated>Mon, 27 Jun 2005 08:00:00 GMT</datecreated>
+			<flags>0</flags>
+			<properties>
+				<property type="shared">
+					<name>image.size</name>
+					<value><![CDATA[w:20,h:20]]></value>
+				</property>
+			</properties>
+			<relations/>
+			<accesscontrol/>
+		</file>
+		<file>
+			<source>system/workplace/resources/buttons/table_td.png</source>
+			<destination>system/workplace/resources/buttons/table_td.png</destination>
+			<type>image</type>
+			<uuidstructure>8acfc0c0-11b7-11db-91cd-fdbae480bac9</uuidstructure>
+			<uuidresource>c4db41e3-dd86-11d9-9663-016dc05e1977</uuidresource>
+			<datecreated>Mon, 27 Jun 2005 08:00:00 GMT</datecreated>
+			<flags>0</flags>
+			<properties>
+				<property type="shared">
+					<name>image.size</name>
+					<value><![CDATA[w:20,h:20]]></value>
+				</property>
+			</properties>
+			<relations/>
+			<accesscontrol/>
+		</file>
+		<file>
+			<source>system/workplace/resources/buttons/table_tr.png</source>
+			<destination>system/workplace/resources/buttons/table_tr.png</destination>
+			<type>image</type>
+			<uuidstructure>8acfc0c2-11b7-11db-91cd-fdbae480bac9</uuidstructure>
+			<uuidresource>c4dfd5c6-dd86-11d9-9663-016dc05e1977</uuidresource>
+			<datecreated>Mon, 27 Jun 2005 08:00:00 GMT</datecreated>
+			<flags>0</flags>
+			<properties>
+				<property type="shared">
+					<name>image.size</name>
+					<value><![CDATA[w:20,h:20]]></value>
+				</property>
+			</properties>
+			<relations/>
+			<accesscontrol/>
+		</file>
+		<file>
+			<source>system/workplace/resources/buttons/underline.png</source>
+			<destination>system/workplace/resources/buttons/underline.png</destination>
+			<type>image</type>
+			<uuidstructure>8ad231c4-11b7-11db-91cd-fdbae480bac9</uuidstructure>
+			<uuidresource>c4e5f04f-dd86-11d9-9663-016dc05e1977</uuidresource>
+			<datecreated>Mon, 27 Jun 2005 08:00:00 GMT</datecreated>
+			<flags>0</flags>
+			<properties>
+				<property type="shared">
+					<name>image.size</name>
+					<value><![CDATA[w:20,h:20]]></value>
+				</property>
+			</properties>
+			<relations/>
+			<accesscontrol/>
+		</file>
+		<file>
+			<source>system/workplace/resources/buttons/undo.png</source>
+			<destination>system/workplace/resources/buttons/undo.png</destination>
+			<type>image</type>
+			<uuidstructure>8ad47bb6-11b7-11db-91cd-fdbae480bac9</uuidstructure>
+			<uuidresource>c4ea8432-dd86-11d9-9663-016dc05e1977</uuidresource>
+			<datecreated>Mon, 27 Jun 2005 08:00:00 GMT</datecreated>
+			<flags>0</flags>
+			<properties>
+				<property type="shared">
+					<name>image.size</name>
+					<value><![CDATA[w:20,h:20]]></value>
+				</property>
+			</properties>
+			<relations/>
+			<accesscontrol/>
+		</file>
+		<file>
+			<source>system/workplace/resources/buttons/xmledit.png</source>
+			<destination>system/workplace/resources/buttons/xmledit.png</destination>
+			<type>image</type>
+			<uuidstructure>8ad95db8-11b7-11db-91cd-fdbae480bac9</uuidstructure>
+			<uuidresource>087ad4c2-ba48-11da-8cb6-0df9507b543e</uuidresource>
+			<datecreated>Thu, 23 Mar 2006 08:35:50 GMT</datecreated>
+			<flags>0</flags>
+			<properties>
+				<property type="shared">
+					<name>image.size</name>
+					<value><![CDATA[w:20,h:20]]></value>
+				</property>
+			</properties>
+			<relations/>
+			<accesscontrol/>
+		</file>
+		<file>
+			<source>system/workplace/resources/buttons/xmledit_add.png</source>
+			<destination>system/workplace/resources/buttons/xmledit_add.png</destination>
+			<type>image</type>
+			<uuidstructure>8adba7ab-11b7-11db-91cd-fdbae480bac9</uuidstructure>
+			<uuidresource>1bde0eb7-ba48-11da-8cb6-0df9507b543e</uuidresource>
+			<datecreated>Thu, 23 Mar 2006 08:36:22 GMT</datecreated>
+			<flags>0</flags>
+			<properties>
+				<property type="shared">
+					<name>image.size</name>
+					<value><![CDATA[w:20,h:20]]></value>
+				</property>
+			</properties>
+			<relations/>
+			<accesscontrol/>
+		</file>
+		<file>
+			<source>system/workplace/resources/buttons/xmledit_del.png</source>
+			<destination>system/workplace/resources/buttons/xmledit_del.png</destination>
+			<type>image</type>
+			<uuidstructure>8ade18ae-11b7-11db-91cd-fdbae480bac9</uuidstructure>
+			<uuidresource>1bf4f21c-ba48-11da-8cb6-0df9507b543e</uuidresource>
+			<datecreated>Thu, 23 Mar 2006 08:36:23 GMT</datecreated>
+			<flags>0</flags>
+			<properties>
+				<property type="shared">
+					<name>image.size</name>
+					<value><![CDATA[w:20,h:20]]></value>
+				</property>
+			</properties>
+			<relations/>
+			<accesscontrol/>
+		</file>
+		<file>
+			<source>system/workplace/resources/buttons/xmledit_del_add.png</source>
+			<destination>system/workplace/resources/buttons/xmledit_del_add.png</destination>
+			<type>image</type>
+			<uuidstructure>8ae062a1-11b7-11db-91cd-fdbae480bac9</uuidstructure>
+			<uuidresource>1bffa081-ba48-11da-8cb6-0df9507b543e</uuidresource>
+			<datecreated>Thu, 23 Mar 2006 08:36:23 GMT</datecreated>
+			<flags>0</flags>
+			<properties>
+				<property type="shared">
+					<name>image.size</name>
+					<value><![CDATA[w:20,h:20]]></value>
+				</property>
+			</properties>
+			<relations/>
+			<accesscontrol/>
+		</file>
+		<file>
+			<destination>system/workplace/resources/commons</destination>
+			<type>folder</type>
+			<properties/>
+		</file>
+		<file>
+			<source>system/workplace/resources/commons/notemplate.png</source>
+			<destination>system/workplace/resources/commons/notemplate.png</destination>
+			<type>image</type>
+			<uuidstructure>653b45a9-7735-11e0-89e5-d14bc4448678</uuidstructure>
+			<uuidresource>653b45aa-7735-11e0-89e5-d14bc4448678</uuidresource>
+			<datecreated>Thu, 05 May 2011 16:33:23 GMT</datecreated>
+			<flags>0</flags>
+			<properties>
+				<property>
+					<name>Title</name>
+					<value><![CDATA[notemplate]]></value>
+				</property>
+				<property type="shared">
+					<name>image.size</name>
+					<value><![CDATA[w:64,h:64]]></value>
+				</property>
+			</properties>
+			<relations/>
+			<accesscontrol/>
+		</file>
+		<file>
+			<destination>system/workplace/resources/filetypes</destination>
+			<type>folder</type>
+			<properties/>
+		</file>
+		<file>
+			<source>system/workplace/resources/filetypes/resourceNotFoundBig.png</source>
+			<destination>system/workplace/resources/filetypes/resourceNotFoundBig.png</destination>
+			<type>image</type>
+			<uuidstructure>b36a0f4a-1779-11e2-8a36-61f65c67cbab</uuidstructure>
+			<uuidresource>b36a0f4b-1779-11e2-8a36-61f65c67cbab</uuidresource>
+			<datecreated>Tue, 16 Oct 2012 10:10:24 GMT</datecreated>
+			<flags>0</flags>
+			<properties>
+				<property>
+					<name>Description</name>
+					<value><![CDATA[The big resource not found icon.]]></value>
+				</property>
+				<property>
+					<name>Title</name>
+					<value><![CDATA[Resource not found icon]]></value>
+				</property>
+				<property type="shared">
+					<name>image.size</name>
+					<value><![CDATA[w:24,h:24]]></value>
+				</property>
+			</properties>
+			<relations/>
+			<accesscontrol/>
+		</file>
+		<file>
+			<source>system/workplace/resources/filetypes/resourceNotFoundSmall.png</source>
+			<destination>system/workplace/resources/filetypes/resourceNotFoundSmall.png</destination>
+			<type>image</type>
+			<uuidstructure>b36ef14e-1779-11e2-8a36-61f65c67cbab</uuidstructure>
+			<uuidresource>b36ef14f-1779-11e2-8a36-61f65c67cbab</uuidresource>
+			<datecreated>Tue, 16 Oct 2012 10:10:24 GMT</datecreated>
+			<flags>0</flags>
+			<properties>
+				<property>
+					<name>Description</name>
+					<value><![CDATA[The small resource not found icon.]]></value>
+				</property>
+				<property>
+					<name>Title</name>
+					<value><![CDATA[Resource not found icon]]></value>
+				</property>
+				<property type="shared">
+					<name>image.size</name>
+					<value><![CDATA[w:16,h:16]]></value>
+				</property>
+			</properties>
+			<relations/>
+			<accesscontrol/>
+		</file>
+	</files>
+</export>

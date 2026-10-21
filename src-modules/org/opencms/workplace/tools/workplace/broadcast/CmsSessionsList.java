@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -14,12 +14,12 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * Lesser General Public License for more details.
  *
- * For further information about Alkacon Software GmbH, please see the
- * company website: http://www.alkacon.com
+ * For further information about Alkacon Software GmbH & Co. KG, please see the
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -28,11 +28,14 @@
 package org.opencms.workplace.tools.workplace.broadcast;
 
 import org.opencms.file.CmsUser;
+import org.opencms.i18n.I_CmsMessageBundle;
 import org.opencms.jsp.CmsJspActionElement;
 import org.opencms.main.CmsException;
+import org.opencms.main.CmsRuntimeException;
 import org.opencms.main.CmsSessionInfo;
 import org.opencms.main.OpenCms;
 import org.opencms.security.CmsOrganizationalUnit;
+import org.opencms.util.CmsStringUtil;
 import org.opencms.util.CmsUUID;
 import org.opencms.workplace.CmsDialog;
 import org.opencms.workplace.list.A_CmsListDialog;
@@ -65,8 +68,8 @@ import javax.servlet.jsp.PageContext;
 
 /**
  * Session list for broadcasting messages.<p>
- * 
- * @since 6.0.0 
+ *
+ * @since 6.0.0
  */
 public class CmsSessionsList extends A_CmsListDialog {
 
@@ -115,6 +118,9 @@ public class CmsSessionsList extends A_CmsListDialog {
     /** list action id constant. */
     public static final String LIST_MACTION_EMAIL = "me";
 
+    /** list multi action id. */
+    public static final String LIST_MACTION_KILL_SESSION = "LIST_MACTION_KILL_SESSION";
+
     /** list action id constant. */
     public static final String LIST_MACTION_MESSAGE = "mm";
 
@@ -123,7 +129,7 @@ public class CmsSessionsList extends A_CmsListDialog {
 
     /**
      * Public constructor.<p>
-     * 
+     *
      * @param jsp an initialized JSP action element
      */
     public CmsSessionsList(CmsJspActionElement jsp) {
@@ -139,7 +145,7 @@ public class CmsSessionsList extends A_CmsListDialog {
 
     /**
      * Public constructor with JSP variables.<p>
-     * 
+     *
      * @param context the JSP page context
      * @param req the JSP request
      * @param res the JSP response
@@ -152,12 +158,13 @@ public class CmsSessionsList extends A_CmsListDialog {
     /**
      * @see org.opencms.workplace.list.A_CmsListDialog#executeListMultiActions()
      */
+    @Override
     public void executeListMultiActions() throws IOException, ServletException {
 
-        Map params = new HashMap();
-        params.put(A_CmsMessageDialog.PARAM_SESSIONIDS, getParamSelItems());
+        Map<String, String[]> params = new HashMap<String, String[]>();
+        params.put(A_CmsMessageDialog.PARAM_SESSIONIDS, new String[] {getParamSelItems()});
         // set action parameter to initial dialog call
-        params.put(CmsDialog.PARAM_ACTION, CmsDialog.DIALOG_INITIAL);
+        params.put(CmsDialog.PARAM_ACTION, new String[] {CmsDialog.DIALOG_INITIAL});
 
         if (getParamListAction().equals(LIST_MACTION_MESSAGE)) {
             // execute the send message multiaction
@@ -167,6 +174,15 @@ public class CmsSessionsList extends A_CmsListDialog {
             // execute the send email multiaction
             // forward to the edit email screen
             getToolManager().jspForwardTool(this, "/workplace/broadcast/email", params);
+        } else if (getParamListAction().equals(LIST_MACTION_KILL_SESSION)) {
+            List<String> selectedItems = CmsStringUtil.splitAsList(getParamSelItems(), "|");
+            for (String selectedItem : selectedItems) {
+                try {
+                    OpenCms.getSessionManager().killSession(getCms(), new CmsUUID(selectedItem));
+                } catch (CmsException e) {
+                    throw new CmsRuntimeException(e.getMessageContainer(), e);
+                }
+            }
         } else {
             throwListUnsupportedActionException();
         }
@@ -175,12 +191,13 @@ public class CmsSessionsList extends A_CmsListDialog {
     /**
      * @see org.opencms.workplace.list.A_CmsListDialog#executeListSingleActions()
      */
+    @Override
     public void executeListSingleActions() throws IOException, ServletException {
 
-        Map params = new HashMap();
-        params.put(A_CmsMessageDialog.PARAM_SESSIONIDS, getSelectedItem().getId());
+        Map<String, String[]> params = new HashMap<String, String[]>();
+        params.put(A_CmsMessageDialog.PARAM_SESSIONIDS, new String[] {getSelectedItem().getId()});
         // set action parameter to initial dialog call
-        params.put(CmsDialog.PARAM_ACTION, CmsDialog.DIALOG_INITIAL);
+        params.put(CmsDialog.PARAM_ACTION, new String[] {CmsDialog.DIALOG_INITIAL});
 
         if (getParamListAction().equals(LIST_ACTION_MESSAGE) || getParamListAction().equals(LIST_DEFACTION_MESSAGE)) {
             getToolManager().jspForwardTool(this, "/workplace/broadcast/message", params);
@@ -193,13 +210,14 @@ public class CmsSessionsList extends A_CmsListDialog {
     /**
      * @see org.opencms.workplace.list.A_CmsListDialog#fillDetails(java.lang.String)
      */
+    @Override
     protected void fillDetails(String detailId) {
 
         // get content
-        List sessions = getList().getAllContent();
-        Iterator i = sessions.iterator();
+        List<CmsListItem> sessions = getList().getAllContent();
+        Iterator<CmsListItem> i = sessions.iterator();
         while (i.hasNext()) {
-            CmsListItem item = (CmsListItem)i.next();
+            CmsListItem item = i.next();
             CmsSessionInfo session = OpenCms.getSessionManager().getSessionInfo(new CmsUUID(item.getId()));
             StringBuffer html = new StringBuffer(32);
             if (detailId.equals(LIST_DETAIL_EMAIL)) {
@@ -220,29 +238,32 @@ public class CmsSessionsList extends A_CmsListDialog {
     /**
      * @see org.opencms.workplace.list.A_CmsListDialog#getListItems()
      */
-    protected List getListItems() throws CmsException {
+    @Override
+    protected List<CmsListItem> getListItems() throws CmsException {
 
-        List ret = new ArrayList();
+        List<CmsListItem> ret = new ArrayList<CmsListItem>();
         // get content
-        List sessionInfos = OpenCms.getSessionManager().getSessionInfos();
-        Iterator itSessions = sessionInfos.iterator();
+        List<CmsSessionInfo> sessionInfos = OpenCms.getSessionManager().getSessionInfos();
+        Iterator<CmsSessionInfo> itSessions = sessionInfos.iterator();
         List<CmsOrganizationalUnit> manageableOus = OpenCms.getRoleManager().getManageableOrgUnits(
             getCms(),
             "",
             true,
             false);
         while (itSessions.hasNext()) {
-            CmsSessionInfo sessionInfo = (CmsSessionInfo)itSessions.next();
+            CmsSessionInfo sessionInfo = itSessions.next();
             CmsListItem item = getList().newItem(sessionInfo.getSessionId().toString());
             CmsUser user = getCms().readUser(sessionInfo.getUserId());
-            CmsOrganizationalUnit userOu = OpenCms.getOrgUnitManager().readOrganizationalUnit(getCms(), user.getOuFqn());
+            CmsOrganizationalUnit userOu = OpenCms.getOrgUnitManager().readOrganizationalUnit(
+                getCms(),
+                user.getOuFqn());
             if (!(manageableOus.contains(userOu) && !user.isWebuser())) {
                 continue;
             }
             item.set(LIST_COLUMN_USER, user.getFullName());
             item.set(LIST_COLUMN_ORGUNIT, userOu.getDisplayName(getLocale()));
             item.set(LIST_COLUMN_CREATION, new Date(sessionInfo.getTimeCreated()));
-            item.set(LIST_COLUMN_INACTIVE, new Long(System.currentTimeMillis() - sessionInfo.getTimeUpdated()));
+            item.set(LIST_COLUMN_INACTIVE, Long.valueOf(System.currentTimeMillis() - sessionInfo.getTimeUpdated()));
             try {
                 item.set(LIST_COLUMN_PROJECT, getCms().readProject(sessionInfo.getProject()).getName());
             } catch (Exception e) {
@@ -271,6 +292,7 @@ public class CmsSessionsList extends A_CmsListDialog {
     /**
      * @see org.opencms.workplace.CmsWorkplace#initMessages()
      */
+    @Override
     protected void initMessages() {
 
         // add specific dialog resource bundle
@@ -283,6 +305,7 @@ public class CmsSessionsList extends A_CmsListDialog {
     /**
      * @see org.opencms.workplace.list.A_CmsListDialog#setColumns(org.opencms.workplace.list.CmsListMetadata)
      */
+    @Override
     protected void setColumns(CmsListMetadata metadata) {
 
         // create column for send message
@@ -313,6 +336,7 @@ public class CmsSessionsList extends A_CmsListDialog {
             /**
              * @see org.opencms.workplace.tools.A_CmsHtmlIconButton#isVisible()
              */
+            @Override
             public boolean isVisible() {
 
                 if (getItem() != null) {
@@ -333,6 +357,7 @@ public class CmsSessionsList extends A_CmsListDialog {
             /**
              * @see org.opencms.workplace.tools.A_CmsHtmlIconButton#isVisible()
              */
+            @Override
             public boolean isVisible() {
 
                 if (getItem() != null) {
@@ -399,14 +424,15 @@ public class CmsSessionsList extends A_CmsListDialog {
     /**
      * @see org.opencms.workplace.list.A_CmsListDialog#setIndependentActions(org.opencms.workplace.list.CmsListMetadata)
      */
+    @Override
     protected void setIndependentActions(CmsListMetadata metadata) {
 
         // create list item detail
         CmsListItemDetails emailDetail = new CmsListItemDetails(LIST_DETAIL_EMAIL);
         emailDetail.setAtColumn(LIST_COLUMN_USER);
         emailDetail.setVisible(false);
-        emailDetail.setFormatter(new CmsListItemDetailsFormatter(Messages.get().container(
-            Messages.GUI_SESSIONS_LABEL_EMAIL_0)));
+        emailDetail.setFormatter(
+            new CmsListItemDetailsFormatter(Messages.get().container(Messages.GUI_SESSIONS_LABEL_EMAIL_0)));
         emailDetail.setShowActionName(Messages.get().container(Messages.GUI_SESSIONS_DETAIL_SHOW_EMAIL_NAME_0));
         emailDetail.setShowActionHelpText(Messages.get().container(Messages.GUI_SESSIONS_DETAIL_SHOW_EMAIL_HELP_0));
         emailDetail.setHideActionName(Messages.get().container(Messages.GUI_SESSIONS_DETAIL_HIDE_EMAIL_NAME_0));
@@ -417,14 +443,15 @@ public class CmsSessionsList extends A_CmsListDialog {
     /**
      * @see org.opencms.workplace.list.A_CmsListDialog#setMultiActions(org.opencms.workplace.list.CmsListMetadata)
      */
+    @Override
     protected void setMultiActions(CmsListMetadata metadata) {
 
         // add message multi action
         CmsListMultiAction messageMultiAction = new CmsListMultiAction(LIST_MACTION_MESSAGE);
         messageMultiAction.setName(Messages.get().container(Messages.GUI_SESSIONS_LIST_MACTION_MESSAGE_NAME_0));
         messageMultiAction.setHelpText(Messages.get().container(Messages.GUI_SESSIONS_LIST_MACTION_MESSAGE_HELP_0));
-        messageMultiAction.setConfirmationMessage(Messages.get().container(
-            Messages.GUI_SESSIONS_LIST_MACTION_MESSAGE_CONF_0));
+        messageMultiAction.setConfirmationMessage(
+            Messages.get().container(Messages.GUI_SESSIONS_LIST_MACTION_MESSAGE_CONF_0));
         messageMultiAction.setIconPath(PATH_BUTTONS + "multi_send_message.png");
         metadata.addMultiAction(messageMultiAction);
 
@@ -432,10 +459,17 @@ public class CmsSessionsList extends A_CmsListDialog {
         CmsListMultiAction emailMultiAction = new CmsListMultiAction(LIST_MACTION_EMAIL);
         emailMultiAction.setName(Messages.get().container(Messages.GUI_SESSIONS_LIST_MACTION_EMAIL_NAME_0));
         emailMultiAction.setHelpText(Messages.get().container(Messages.GUI_SESSIONS_LIST_MACTION_EMAIL_HELP_0));
-        emailMultiAction.setConfirmationMessage(Messages.get().container(
-            Messages.GUI_SESSIONS_LIST_MACTION_EMAIL_CONF_0));
+        emailMultiAction.setConfirmationMessage(
+            Messages.get().container(Messages.GUI_SESSIONS_LIST_MACTION_EMAIL_CONF_0));
         emailMultiAction.setIconPath(PATH_BUTTONS + "multi_send_email.png");
         metadata.addMultiAction(emailMultiAction);
+
+        CmsListMultiAction killMultiAction = new CmsListMultiAction(LIST_MACTION_KILL_SESSION);
+        I_CmsMessageBundle m = Messages.get();
+        killMultiAction.setName(m.container(Messages.GUI_SESSIONS_LIST_MACTION_KILL_NAME_0));
+        killMultiAction.setHelpText(m.container(Messages.GUI_SESSIONS_LIST_MACTION_KILL_HELP_0));
+        killMultiAction.setIconPath("list/delete.png");
+        metadata.addMultiAction(killMultiAction);
     }
 
 }

@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -14,12 +14,12 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * Lesser General Public License for more details.
  *
- * For further information about Alkacon Software GmbH, please see the
- * company website: http://www.alkacon.com
+ * For further information about Alkacon Software GmbH & Co. KG, please see the
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -31,34 +31,45 @@ import org.opencms.file.CmsObject;
 import org.opencms.main.CmsLog;
 import org.opencms.main.OpenCms;
 import org.opencms.report.A_CmsReportThread;
+import org.opencms.util.CmsUUID;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Vector;
 
 import org.apache.commons.logging.Log;
 
 /**
  * Replaces a module.<p>
- * 
- * @since 6.0.0 
+ *
+ * @since 6.0.0
  */
 public class CmsModuleReplaceThread extends A_CmsReportThread {
 
     /** The log object for this class. */
     private static final Log LOG = CmsLog.getLog(CmsModuleReplaceThread.class);
 
+    /** The delete thread. */
     private A_CmsReportThread m_deleteThread;
+
+    /** The import thread. */
     private A_CmsReportThread m_importThread;
+
+    /** The module name. */
     private String m_moduleName;
+
+    /** The replacement phase. */
     private int m_phase;
+
+    /** The report content. */
     private String m_reportContent;
+
+    /** The zip file name. */
     private String m_zipName;
 
     /**
      * Creates the module replace thread.<p>
-     * @param cms the current cms context  
-     * @param moduleName the name of the module 
+     * @param cms the current cms context
+     * @param moduleName the name of the module
      * @param zipName the name of the module ZIP file
      */
     public CmsModuleReplaceThread(CmsObject cms, String moduleName, String zipName) {
@@ -67,7 +78,7 @@ public class CmsModuleReplaceThread extends A_CmsReportThread {
         m_moduleName = moduleName;
         m_zipName = zipName;
 
-        List modules = new ArrayList();
+        List<String> modules = new ArrayList<String>();
         modules.add(m_moduleName);
         m_deleteThread = new CmsModuleDeleteThread(getCms(), modules, true);
         m_importThread = new CmsDatabaseImportThread(getCms(), m_zipName, true);
@@ -78,21 +89,9 @@ public class CmsModuleReplaceThread extends A_CmsReportThread {
     }
 
     /**
-     * Collects all resource names belonging to a module in a Vector.<p>
-     * 
-     * @param moduleName the name of the module
-     * 
-     * @return Vector with path Strings of resources
-     */
-    public static Vector getModuleResources(String moduleName) {
-
-        Vector resNames = new Vector(OpenCms.getModuleManager().getModule(moduleName).getResources());
-        return resNames;
-    }
-
-    /**
      * @see org.opencms.report.A_CmsReportThread#getReportUpdate()
      */
+    @Override
     public String getReportUpdate() {
 
         switch (m_phase) {
@@ -116,40 +115,47 @@ public class CmsModuleReplaceThread extends A_CmsReportThread {
     /**
      * @see java.lang.Runnable#run()
      */
+    @Override
     public void run() {
 
         if (LOG.isDebugEnabled()) {
             LOG.debug(Messages.get().getBundle().key(Messages.LOG_REPLACE_THREAD_START_DELETE_0));
         }
-        // phase 1: delete the existing module  
-        m_phase = 1;
-        m_deleteThread.start();
+
+        CmsUUID pauseId = OpenCms.getSearchManager().pauseOfflineIndexing();
         try {
-            m_deleteThread.join();
-        } catch (InterruptedException e) {
-            // should never happen
-            if (LOG.isErrorEnabled()) {
-                LOG.error(e.getLocalizedMessage(), e);
+            // phase 1: delete the existing module
+            m_phase = 1;
+            m_deleteThread.start();
+            try {
+                m_deleteThread.join();
+            } catch (InterruptedException e) {
+                // should never happen
+                if (LOG.isErrorEnabled()) {
+                    LOG.error(e.getLocalizedMessage(), e);
+                }
             }
-        }
-        // get remaining report contents
-        m_reportContent = m_deleteThread.getReportUpdate();
-        if (LOG.isDebugEnabled()) {
-            LOG.debug(Messages.get().getBundle().key(Messages.LOG_REPLACE_THREAD_START_IMPORT_0));
-        }
-        // phase 2: import the new module 
-        m_phase = 2;
-        m_importThread.start();
-        try {
-            m_importThread.join();
-        } catch (InterruptedException e) {
-            // should never happen
-            if (LOG.isErrorEnabled()) {
-                LOG.error(e.getLocalizedMessage(), e);
+            // get remaining report contents
+            m_reportContent = m_deleteThread.getReportUpdate();
+            if (LOG.isDebugEnabled()) {
+                LOG.debug(Messages.get().getBundle().key(Messages.LOG_REPLACE_THREAD_START_IMPORT_0));
             }
-        }
-        if (LOG.isDebugEnabled()) {
-            LOG.debug(Messages.get().getBundle().key(Messages.LOG_REPLACE_THREAD_FINISHED_0));
+            // phase 2: import the new module
+            m_phase = 2;
+            m_importThread.start();
+            try {
+                m_importThread.join();
+            } catch (InterruptedException e) {
+                // should never happen
+                if (LOG.isErrorEnabled()) {
+                    LOG.error(e.getLocalizedMessage(), e);
+                }
+            }
+            if (LOG.isDebugEnabled()) {
+                LOG.debug(Messages.get().getBundle().key(Messages.LOG_REPLACE_THREAD_FINISHED_0));
+            }
+        } finally {
+            OpenCms.getSearchManager().resumeOfflineIndexing(pauseId);
         }
     }
 }

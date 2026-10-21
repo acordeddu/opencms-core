@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -14,12 +14,12 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * Lesser General Public License for more details.
  *
- * For further information about Alkacon Software GmbH, please see the
- * company website: http://www.alkacon.com
+ * For further information about Alkacon Software GmbH & Co. KG, please see the
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -32,20 +32,20 @@ import org.opencms.file.CmsResourceFilter;
 import org.opencms.i18n.CmsEncoder;
 import org.opencms.jsp.CmsJspActionElement;
 import org.opencms.main.OpenCms;
+import org.opencms.staticexport.CmsLinkManager;
+import org.opencms.ui.CmsVaadinUtils;
 import org.opencms.util.CmsStringUtil;
 import org.opencms.workplace.CmsDialog;
-import org.opencms.workplace.CmsFrameset;
 import org.opencms.workplace.CmsWorkplace;
-import org.opencms.workplace.commons.CmsPublishProject;
 
 import java.io.IOException;
 
 import javax.servlet.jsp.JspException;
 
 /**
- * Provides a method to perform a user defined action when editing a page.<p> 
- * 
- * @since 6.0.0 
+ * Provides a method to perform a user defined action when editing a page.<p>
+ *
+ * @since 6.0.0
  */
 public class CmsEditorActionDefault implements I_CmsEditorActionHandler {
 
@@ -68,23 +68,24 @@ public class CmsEditorActionDefault implements I_CmsEditorActionHandler {
         editor.actionClear(true);
         // create the publish link to redirect to
         String publishLink = jsp.link(CmsWorkplace.PATH_DIALOGS + "publishresource.jsp");
-        // define the parameters which are necessary for publishing the resource 
+        // define the parameters which are necessary for publishing the resource
         StringBuffer params = new StringBuffer(256);
         params.append("?").append(CmsDialog.PARAM_RESOURCE).append("=").append(editor.getParamResource());
         params.append("&").append(CmsDialog.PARAM_ACTION).append("=").append(CmsDialog.DIALOG_CONFIRMED);
-        params.append("&").append(CmsPublishProject.PARAM_DIRECTPUBLISH).append("=").append(CmsStringUtil.TRUE);
-        params.append("&").append(CmsPublishProject.PARAM_PUBLISHSIBLINGS).append("=").append(
+        params.append("&").append(CmsWorkplace.PARAM_DIRECTPUBLISH).append("=").append(CmsStringUtil.TRUE);
+        params.append("&").append(CmsWorkplace.PARAM_PUBLISHSIBLINGS).append("=").append(
             editor.getSettings().getUserSettings().getDialogPublishSiblings());
         // set the related resources option
         String pubRelated = CmsStringUtil.TRUE;
         if (OpenCms.getWorkplaceManager().getDefaultUserSettings().getPublishRelatedResources() == CmsDefaultUserSettings.PUBLISH_RELATED_RESOURCES_MODE_FALSE) {
             pubRelated = CmsStringUtil.FALSE;
         }
-        params.append("&").append(CmsPublishProject.PARAM_RELATEDRESOURCES).append("=").append(pubRelated);
+        params.append("&").append(CmsWorkplace.PARAM_RELATEDRESOURCES).append("=").append(pubRelated);
         params.append("&").append(CmsDialog.PARAM_TITLE).append("=");
-        params.append(CmsEncoder.escapeWBlanks(editor.key(Messages.GUI_MESSAGEBOX_TITLE_PUBLISHRESOURCE_0)
-            + ": "
-            + editor.getParamResource(), CmsEncoder.ENCODING_UTF_8));
+        params.append(
+            CmsEncoder.escapeWBlanks(
+                editor.key(Messages.GUI_MESSAGEBOX_TITLE_PUBLISHRESOURCE_0) + ": " + editor.getParamResource(),
+                CmsEncoder.ENCODING_UTF_8));
         params.append("&").append(CmsDialog.PARAM_REDIRECT).append("=").append(CmsStringUtil.TRUE);
         params.append("&").append(CmsDialog.PARAM_CLOSELINK).append("=");
         if (Boolean.valueOf(editor.getParamDirectedit()).booleanValue()) {
@@ -97,9 +98,14 @@ public class CmsEditorActionDefault implements I_CmsEditorActionHandler {
             // append the parameters and the report "ok" button action to the link
             publishLink += params.toString() + CmsEncoder.escapeWBlanks(linkTarget, CmsEncoder.ENCODING_UTF_8);
         } else {
-            // append the parameters and the report "ok" button action to the link
-            publishLink += params.toString()
-                + CmsEncoder.escapeWBlanks(jsp.link(CmsFrameset.JSP_WORKPLACE_URI), CmsEncoder.ENCODING_UTF_8);
+            // check for links to the new workplace
+            if (CmsLinkManager.isWorkplaceLink(editor.getParamBacklink())) {
+                publishLink += params.toString()
+                    + CmsEncoder.escapeWBlanks(jsp.link(editor.getParamBacklink()), CmsEncoder.ENCODING_UTF_8);
+            } else {
+                publishLink += params.toString()
+                    + CmsEncoder.escapeWBlanks(CmsVaadinUtils.getWorkplaceLink(), CmsEncoder.ENCODING_UTF_8);
+            }
 
         }
         // redirect to the publish dialog with all necessary parameters

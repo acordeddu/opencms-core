@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -14,12 +14,12 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * Lesser General Public License for more details.
  *
- * For further information about Alkacon Software GmbH, please see the
- * company website: http://www.alkacon.com
+ * For further information about Alkacon Software GmbH & Co. KG, please see the
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -64,15 +64,15 @@ import javax.servlet.jsp.PageContext;
 import org.apache.commons.logging.Log;
 
 /**
- * A list that displays information about the <code>{@link org.opencms.search.CmsSearchIndexSource}</code> 
- * that are members of the <code>{@link org.opencms.search.CmsSearchIndex}</code> 
- * in the current request scope (param "searchindex").<p> 
- * 
- * Unlike <code>{@link org.opencms.workplace.tools.searchindex.CmsSearchIndexSourceList}</code> 
- * this list is stand-alone displayable (not to embed in another dialog) and 
- * offers single actions within the rows related to the current selected indexsource 
+ * A list that displays information about the <code>{@link org.opencms.search.CmsSearchIndexSource}</code>
+ * that are members of the <code>{@link org.opencms.search.CmsSearchIndex}</code>
+ * in the current request scope (param "searchindex").<p>
+ *
+ * Unlike <code>{@link org.opencms.workplace.tools.searchindex.CmsSearchIndexSourceList}</code>
+ * this list is stand-alone displayable (not to embed in another dialog) and
+ * offers single actions within the rows related to the current selected indexsource
  * which has to be found by the <b>request parameter <code></code></b>.
- * 
+ *
  * @since 6.0.0
  */
 public class CmsSearchIndexSourceControlList extends A_CmsListDialog {
@@ -89,13 +89,13 @@ public class CmsSearchIndexSourceControlList extends A_CmsListDialog {
     /** list action dummy id constant. */
     public static final String LIST_ACTION_OVERVIEW_INDEXSOURCE = "aois";
 
-    /** 
-     * List action dummy id constant. <p> 
-     * 
-     * This is meant to be used for the same action as 
-     * <code>{@link #LIST_ACTION_OVERVIEW_INDEXSOURCE}</code> but has to be used if 
+    /**
+     * List action dummy id constant. <p>
+     *
+     * This is meant to be used for the same action as
+     * <code>{@link #LIST_ACTION_OVERVIEW_INDEXSOURCE}</code> but has to be used if
      * within one list two columns shall trigger the same action...<p>
-     **/
+     */
     public static final String LIST_ACTION_OVERVIEW_INDEXSOURCE2 = "aois2";
 
     /** list action dummy id constant. */
@@ -139,7 +139,7 @@ public class CmsSearchIndexSourceControlList extends A_CmsListDialog {
 
     /**
      * Public constructor.<p>
-     * 
+     *
      * @param jsp an initialized JSP action element
      */
     public CmsSearchIndexSourceControlList(CmsJspActionElement jsp) {
@@ -149,7 +149,7 @@ public class CmsSearchIndexSourceControlList extends A_CmsListDialog {
 
     /**
      * Public constructor.<p>
-     * 
+     *
      * @param jsp an initialized JSP action element
      * @param listId the id of the list
      * @param listName the list name
@@ -161,7 +161,7 @@ public class CmsSearchIndexSourceControlList extends A_CmsListDialog {
 
     /**
      * Public constructor.<p>
-     * 
+     *
      * @param jsp an initialized JSP action element
      * @param listId the id of the displayed list
      * @param listName the name of the list
@@ -183,9 +183,9 @@ public class CmsSearchIndexSourceControlList extends A_CmsListDialog {
 
     /**
      * Public constructor.<p>
-     * 
+     *
      * Public constructor with JSP variables.<p>
-     * 
+     *
      * @param context the JSP page context
      * @param req the JSP request
      * @param res the JSP response
@@ -198,16 +198,17 @@ public class CmsSearchIndexSourceControlList extends A_CmsListDialog {
     /**
      * @see org.opencms.workplace.list.A_CmsListDialog#executeListMultiActions()
      */
+    @Override
     public void executeListMultiActions() {
 
         CmsSearchManager searchManager = OpenCms.getSearchManager();
         if (getParamListAction().equals(LIST_MACTION_DELETESOURCE)) {
             // execute the delete multiaction
-            Iterator itItems = getSelectedItems().iterator();
+            Iterator<CmsListItem> itItems = getSelectedItems().iterator();
             CmsListItem listItem;
             CmsSearchIndexSource idxsource;
             while (itItems.hasNext()) {
-                listItem = (CmsListItem)itItems.next();
+                listItem = itItems.next();
                 idxsource = searchManager.getIndexSource((String)listItem.get(LIST_COLUMN_NAME));
                 searchManager.removeSearchIndexSource(idxsource);
             }
@@ -220,39 +221,31 @@ public class CmsSearchIndexSourceControlList extends A_CmsListDialog {
     /**
      * @see org.opencms.workplace.list.A_CmsListDialog#executeListSingleActions()
      */
+    @Override
     public void executeListSingleActions() throws IOException, ServletException {
 
         String indexSource = getSelectedItem().getId();
-        Map params = new HashMap();
+
+        Map<String, String[]> params = new HashMap<String, String[]>();
+        params.put(A_CmsEditIndexSourceDialog.PARAM_INDEXSOURCE, new String[] {indexSource});
+        params.put(PARAM_STYLE, new String[] {CmsToolDialog.STYLE_NEW});
+        params.put(PARAM_ACTION, new String[] {DIALOG_INITIAL});
+
         String action = getParamListAction();
         if (action.equals(LIST_ACTION_EDIT)) {
-            // forward to the edit indexsource screen   
-            params.put(A_CmsEditIndexSourceDialog.PARAM_INDEXSOURCE, indexSource);
-            params.put(PARAM_STYLE, CmsToolDialog.STYLE_NEW);
+            // forward to the edit indexsource screen
             getToolManager().jspForwardTool(this, "/searchindex/indexsources/indexsource/edit", params);
         } else if (action.equals(LIST_ACTION_DELETE)) {
-            // forward to the delete indexsource screen   
-            params.put(A_CmsEditIndexSourceDialog.PARAM_INDEXSOURCE, indexSource);
-            params.put(PARAM_ACTION, DIALOG_INITIAL);
-            params.put(PARAM_STYLE, CmsToolDialog.STYLE_NEW);
+            // forward to the delete indexsource screen
             getToolManager().jspForwardTool(this, "/searchindex/indexsources/indexsource/delete", params);
         } else if (action.equals(LIST_ACTION_RESOURCES)) {
-            // forward to the assign resources to indexsource screen   
-            params.put(A_CmsEditIndexSourceDialog.PARAM_INDEXSOURCE, indexSource);
-            params.put(PARAM_ACTION, DIALOG_INITIAL);
-            params.put(PARAM_STYLE, CmsToolDialog.STYLE_NEW);
+            // forward to the assign resources to indexsource screen
             getToolManager().jspForwardTool(this, "/searchindex/indexsources/indexsource/resources", params);
         } else if (action.equals(LIST_ACTION_DOCUMENTS)) {
-            // forward to the assign document types to indexsource screen   
-            params.put(A_CmsEditIndexSourceDialog.PARAM_INDEXSOURCE, indexSource);
-            params.put(PARAM_ACTION, DIALOG_INITIAL);
-            params.put(PARAM_STYLE, CmsToolDialog.STYLE_NEW);
+            // forward to the assign document types to indexsource screen
             getToolManager().jspForwardTool(this, "/searchindex/indexsources/indexsource/doctypes", params);
         } else if (action.equals(LIST_ACTION_OVERVIEW_INDEXSOURCE)) {
-            // forward to the index overview screen   
-            params.put(A_CmsEditIndexSourceDialog.PARAM_INDEXSOURCE, indexSource);
-            params.put(PARAM_ACTION, DIALOG_INITIAL);
-            params.put(PARAM_STYLE, CmsToolDialog.STYLE_NEW);
+            // forward to the index overview screen
             getToolManager().jspForwardTool(this, "/searchindex/indexsources/indexsource", params);
         }
         listSave();
@@ -261,44 +254,42 @@ public class CmsSearchIndexSourceControlList extends A_CmsListDialog {
     /**
      * @see org.opencms.workplace.list.A_CmsListDialog#fillDetails(java.lang.String)
      */
+    @Override
     protected void fillDetails(String detailId) {
 
         // get content
-        List items = getList().getAllContent();
-        Iterator itItems = items.iterator();
+        List<CmsListItem> items = getList().getAllContent();
+        Iterator<CmsListItem> itItems = items.iterator();
         CmsListItem item;
         if (detailId.equals(LIST_DETAIL_DOCTYPES)) {
             while (itItems.hasNext()) {
-                item = (CmsListItem)itItems.next();
+                item = itItems.next();
                 fillDetailDocTypes(item, detailId);
-
             }
         }
         if (detailId.equals(LIST_DETAIL_RESOURCES)) {
             while (itItems.hasNext()) {
-                item = (CmsListItem)itItems.next();
+                item = itItems.next();
                 fillDetailResources(item, detailId);
-
             }
-
         }
-
     }
 
     /**
      * @see org.opencms.workplace.list.A_CmsListDialog#getListItems()
      */
-    protected List getListItems() {
+    @Override
+    protected List<CmsListItem> getListItems() {
 
-        List result = new ArrayList();
+        List<CmsListItem> result = new ArrayList<CmsListItem>();
         // get content
-        List sources = searchIndexSources();
-        Iterator itSources = sources.iterator();
+        List<CmsSearchIndexSource> sources = searchIndexSources();
+        Iterator<CmsSearchIndexSource> itSources = sources.iterator();
         CmsSearchIndexSource source;
         String value;
         while (itSources.hasNext()) {
             try {
-                source = (CmsSearchIndexSource)itSources.next();
+                source = itSources.next();
                 // use "null" String and avoid list exception in gui.
                 CmsListItem item = getList().newItem(source.getName());
                 item.set(LIST_COLUMN_NAME, source.getName());
@@ -325,6 +316,7 @@ public class CmsSearchIndexSourceControlList extends A_CmsListDialog {
     /**
      * @see org.opencms.workplace.CmsWorkplace#initMessages()
      */
+    @Override
     protected void initMessages() {
 
         // add specific dialog resource bundle
@@ -336,6 +328,7 @@ public class CmsSearchIndexSourceControlList extends A_CmsListDialog {
     /**
      * @see org.opencms.workplace.list.A_CmsListDialog#setColumns(org.opencms.workplace.list.CmsListMetadata)
      */
+    @Override
     protected void setColumns(CmsListMetadata metadata) {
 
         // create column for edit
@@ -397,7 +390,7 @@ public class CmsSearchIndexSourceControlList extends A_CmsListDialog {
         CmsListDirectAction deleteAction = new CmsListDirectAction(LIST_ACTION_DELETE);
         deleteAction.setName(Messages.get().container(Messages.GUI_LIST_SEARCHINDEX_ACTION_DELETE_NAME_0));
         deleteAction.setHelpText(Messages.get().container(Messages.GUI_LIST_SEARCHINDEX_ACTION_DELETE_HELP_0));
-        // skipped as the following page will have to ask for confirmation again (and additionally check a constraint) 
+        // skipped as the following page will have to ask for confirmation again (and additionally check a constraint)
         //        deleteAction.setConfirmationMessage(Messages.get().container(Messages.GUI_LIST_INDEXSOURCE_ACTION_DELETE_CONF_0));
         deleteAction.setIconPath(ICON_DELETE);
         deleteCol.addDirectAction(deleteAction);
@@ -428,6 +421,7 @@ public class CmsSearchIndexSourceControlList extends A_CmsListDialog {
     /**
      * @see org.opencms.workplace.list.A_CmsListDialog#setIndependentActions(org.opencms.workplace.list.CmsListMetadata)
      */
+    @Override
     protected void setIndependentActions(CmsListMetadata metadata) {
 
         // add document types of index source detail help
@@ -435,29 +429,33 @@ public class CmsSearchIndexSourceControlList extends A_CmsListDialog {
         doctypeDetails.setAtColumn(LIST_COLUMN_NAME);
         doctypeDetails.setVisible(false);
         doctypeDetails.setShowActionName(Messages.get().container(Messages.GUI_LIST_INDEXSOURCE_DETAIL_DOCTYPE_SHOW_0));
-        doctypeDetails.setShowActionHelpText(Messages.get().container(
-            Messages.GUI_LIST_INDEXSOURCE_DETAIL_DOCTYPE_SHOW_HELP_0));
+        doctypeDetails.setShowActionHelpText(
+            Messages.get().container(Messages.GUI_LIST_INDEXSOURCE_DETAIL_DOCTYPE_SHOW_HELP_0));
         doctypeDetails.setHideActionName(Messages.get().container(Messages.GUI_LIST_INDEXSOURCE_DETAIL_DOCTYPE_HIDE_0));
-        doctypeDetails.setHideActionHelpText(Messages.get().container(
-            Messages.GUI_LIST_INDEXSOURCE_DETAIL_DOCTYPE_HIDE_HELP_0));
+        doctypeDetails.setHideActionHelpText(
+            Messages.get().container(Messages.GUI_LIST_INDEXSOURCE_DETAIL_DOCTYPE_HIDE_HELP_0));
         doctypeDetails.setName(Messages.get().container(Messages.GUI_LIST_INDEXSOURCE_DETAIL_DOCTYPE_NAME_0));
-        doctypeDetails.setFormatter(new CmsListItemDetailsFormatter(Messages.get().container(
-            Messages.GUI_LIST_INDEXSOURCE_DETAIL_DOCTYPE_NAME_0)));
+        doctypeDetails.setFormatter(
+            new CmsListItemDetailsFormatter(
+                Messages.get().container(Messages.GUI_LIST_INDEXSOURCE_DETAIL_DOCTYPE_NAME_0)));
         metadata.addItemDetails(doctypeDetails);
 
         // add resources of index source detail help
         CmsListItemDetails resourceDetails = new CmsListItemDetails(LIST_DETAIL_RESOURCES);
         resourceDetails.setAtColumn(LIST_COLUMN_NAME);
         resourceDetails.setVisible(false);
-        resourceDetails.setShowActionName(Messages.get().container(Messages.GUI_LIST_INDEXSOURCE_DETAIL_RESOURCE_SHOW_0));
-        resourceDetails.setShowActionHelpText(Messages.get().container(
-            Messages.GUI_LIST_INDEXSOURCE_DETAIL_RESOURCE_SHOW_HELP_0));
-        resourceDetails.setHideActionName(Messages.get().container(Messages.GUI_LIST_INDEXSOURCE_DETAIL_RESOURCE_HIDE_0));
-        resourceDetails.setHideActionHelpText(Messages.get().container(
-            Messages.GUI_LIST_INDEXSOURCE_DETAIL_RESOURCE_HIDE_HELP_0));
+        resourceDetails.setShowActionName(
+            Messages.get().container(Messages.GUI_LIST_INDEXSOURCE_DETAIL_RESOURCE_SHOW_0));
+        resourceDetails.setShowActionHelpText(
+            Messages.get().container(Messages.GUI_LIST_INDEXSOURCE_DETAIL_RESOURCE_SHOW_HELP_0));
+        resourceDetails.setHideActionName(
+            Messages.get().container(Messages.GUI_LIST_INDEXSOURCE_DETAIL_RESOURCE_HIDE_0));
+        resourceDetails.setHideActionHelpText(
+            Messages.get().container(Messages.GUI_LIST_INDEXSOURCE_DETAIL_RESOURCE_HIDE_HELP_0));
         resourceDetails.setName(Messages.get().container(Messages.GUI_LIST_INDEXSOURCE_DETAIL_RESOURCE_NAME_0));
-        resourceDetails.setFormatter(new CmsListItemDetailsFormatter(Messages.get().container(
-            Messages.GUI_LIST_INDEXSOURCE_DETAIL_RESOURCE_NAME_0)));
+        resourceDetails.setFormatter(
+            new CmsListItemDetailsFormatter(
+                Messages.get().container(Messages.GUI_LIST_INDEXSOURCE_DETAIL_RESOURCE_NAME_0)));
         metadata.addItemDetails(resourceDetails);
 
     }
@@ -465,24 +463,25 @@ public class CmsSearchIndexSourceControlList extends A_CmsListDialog {
     /**
      * @see org.opencms.workplace.list.A_CmsListDialog#setMultiActions(org.opencms.workplace.list.CmsListMetadata)
      */
+    @Override
     protected void setMultiActions(CmsListMetadata metadata) {
 
         // add add multi action
         CmsListMultiAction deleteMultiAction = new CmsListMultiAction(LIST_MACTION_DELETESOURCE);
         deleteMultiAction.setName(Messages.get().container(Messages.GUI_LIST_INDEXSOURCE_MACTION_DELETESOURCE_NAME_0));
-        deleteMultiAction.setHelpText(Messages.get().container(
-            Messages.GUI_LIST_INDEXSOURCE_MACTION_DELETESOURCE_NAME_HELP_0));
-        deleteMultiAction.setConfirmationMessage(Messages.get().container(
-            Messages.GUI_LIST_INDEXSOURCE_MACTION_DELETESOURCE_CONF_0));
+        deleteMultiAction.setHelpText(
+            Messages.get().container(Messages.GUI_LIST_INDEXSOURCE_MACTION_DELETESOURCE_NAME_HELP_0));
+        deleteMultiAction.setConfirmationMessage(
+            Messages.get().container(Messages.GUI_LIST_INDEXSOURCE_MACTION_DELETESOURCE_CONF_0));
         deleteMultiAction.setIconPath(ICON_MULTI_MINUS);
         metadata.addMultiAction(deleteMultiAction);
 
     }
 
     /**
-     * Writes the updated search configuration back to the XML 
+     * Writes the updated search configuration back to the XML
      * configuration file and refreshes the complete list.<p>
-     * 
+     *
      * @param refresh if true, the list items are refreshed
      */
     protected void writeConfiguration(boolean refresh) {
@@ -495,31 +494,31 @@ public class CmsSearchIndexSourceControlList extends A_CmsListDialog {
     }
 
     /**
-     * Fills details about document types of the index source into the given item. <p> 
-     * 
-     * @param item the list item to fill 
+     * Fills details about document types of the index source into the given item. <p>
+     *
+     * @param item the list item to fill
      * @param detailId the id for the detail to fill
-     * 
+     *
      */
     private void fillDetailDocTypes(CmsListItem item, String detailId) {
 
         CmsSearchManager searchManager = OpenCms.getSearchManager();
         StringBuffer html = new StringBuffer();
 
-        // search for the corresponding CmsSearchIndexSource: 
+        // search for the corresponding CmsSearchIndexSource:
         String idxSourceName = (String)item.get(LIST_COLUMN_NAME);
         CmsSearchIndexSource idxSource = searchManager.getIndexSource(idxSourceName);
 
-        // get the index sources doc types 
-        List docTypes = idxSource.getDocumentTypes();
+        // get the index sources doc types
+        List<String> docTypes = idxSource.getDocumentTypes();
         // output of found index sources
-        Iterator itDocTypes = docTypes.iterator();
+        Iterator<String> itDocTypes = docTypes.iterator();
         CmsSearchDocumentType docType;
         html.append("<ul>\n");
         while (itDocTypes.hasNext()) {
-            // get the instance (instead of plain name) for more detail in future... 
-            docType = searchManager.getDocumentTypeConfig(itDocTypes.next().toString());
-            // harden against unconfigured doctypes that are refferred to by indexsource nodes 
+            // get the instance (instead of plain name) for more detail in future...
+            docType = searchManager.getDocumentTypeConfig(itDocTypes.next());
+            // harden against unconfigured doctypes that are refferred to by indexsource nodes
             if (docType != null) {
 
                 html.append("  <li>\n").append("  ").append(docType.getName()).append("\n");
@@ -532,29 +531,29 @@ public class CmsSearchIndexSourceControlList extends A_CmsListDialog {
     }
 
     /**
-     * Fills details about resource paths of the index source into the given item. <p> 
-     * 
-     * @param item the list item to fill 
+     * Fills details about resource paths of the index source into the given item. <p>
+     *
+     * @param item the list item to fill
      * @param detailId the id for the detail to fill
-     * 
+     *
      */
     private void fillDetailResources(CmsListItem item, String detailId) {
 
         CmsSearchManager searchManager = OpenCms.getSearchManager();
         StringBuffer html = new StringBuffer();
 
-        // search for the corresponding CmsSearchIndexSource: 
+        // search for the corresponding CmsSearchIndexSource:
         String idxSourceName = (String)item.get(LIST_COLUMN_NAME);
         CmsSearchIndexSource idxSource = searchManager.getIndexSource(idxSourceName);
 
         // get the index sources resource strings
-        List resources = idxSource.getResourcesNames();
+        List<String> resources = idxSource.getResourcesNames();
         // output of found index sources
-        Iterator itResources = resources.iterator();
+        Iterator<String> itResources = resources.iterator();
         html.append("<ul>\n");
         while (itResources.hasNext()) {
 
-            html.append("  <li>\n").append("  ").append(itResources.next().toString()).append("\n");
+            html.append("  <li>\n").append("  ").append(itResources.next()).append("\n");
             html.append("  </li>");
         }
 
@@ -564,14 +563,14 @@ public class CmsSearchIndexSourceControlList extends A_CmsListDialog {
     }
 
     /**
-     * Returns the available search indexes of this installation. 
-     * 
+     * Returns the available search indexes of this installation.
+     *
      * @return the available search indexes of this installation
      */
-    private List searchIndexSources() {
+    private List<CmsSearchIndexSource> searchIndexSources() {
 
         CmsSearchManager manager = OpenCms.getSearchManager();
-        return new LinkedList(manager.getSearchIndexSources().values());
+        return new LinkedList<CmsSearchIndexSource>(manager.getSearchIndexSources().values());
 
     }
 }

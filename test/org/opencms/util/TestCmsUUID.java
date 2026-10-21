@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -14,12 +14,12 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * Lesser General Public License for more details.
  *
- * For further information about Alkacon Software GmbH, please see the
- * company website: http://www.alkacon.com
+ * For further information about Alkacon Software GmbH & Co. KG, please see the
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -27,7 +27,7 @@
 
 package org.opencms.util;
 
-import org.opencms.test.OpenCmsTestCase;
+import org.opencms.test.OpenCmsTestRunner;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -40,33 +40,37 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Random;
 
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.MethodOrderer;
+import org.junit.jupiter.api.Order;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestMethodOrder;
 import org.safehaus.uuid.UUID;
 
-/** 
+/**
  * Test case for the UUID generator.<p>
- * 
+ *
  * @since 6.0.0
  */
-public class TestCmsUUID extends OpenCmsTestCase {
+@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
+public class TestCmsUUID extends OpenCmsTestRunner {
 
     /** Map to store serialized objects with a name. */
     private Map m_serializedMap = new HashMap();
 
-    /**
-     * Default JUnit constructor.<p>
-     * 
-     * @param arg0 JUnit parameters
-     */
-    public TestCmsUUID(String arg0) {
+    @BeforeAll
+    public void setUpConfiguration() {
 
-        super(arg0);
+        initConfiguration();
     }
 
     /**
      * Tests UUID generation.<p>
-     * 
+     *
      * @throws Exception if the test fails
      */
+    @Test
+    @Order(1)
     public void testUUID() throws Exception {
 
         CmsUUID.init(CmsUUID.getDummyEthernetAddress());
@@ -87,26 +91,12 @@ public class TestCmsUUID extends OpenCmsTestCase {
     }
 
     /**
-     * Tests serialization of the CmsUUID.<p> 
-     * 
+     * Tests de-serialization of CmsUUIDs from various OpenCms versions.<p>
+     *
      * @throws Exception if the test fails
      */
-    public void testUUIDSerialization() throws Exception {
-
-        CmsUUID.init(CmsUUID.getDummyEthernetAddress());
-        CmsUUID id1 = new CmsUUID();
-        serializeObject("id1", id1);
-        CmsUUID d_id1 = (CmsUUID)deSerializeObject("id1");
-        assertEquals(id1, d_id1);
-
-        // serializeObjectToFile("org/opencms/util/uuid_v535.bmp", id1);
-    }
-
-    /**
-     * Tests de-serialization of CmsUUIDs from various OpenCms versions.<p> 
-     * 
-     * @throws Exception if the test fails
-     */
+    @Test
+    @Order(3)
     public void testUUIDDeSerialization() throws Exception {
 
         CmsUUID uuid_v702 = (CmsUUID)deSerializeObjectFromFile("org/opencms/util/uuid_v702.bmp");
@@ -125,19 +115,21 @@ public class TestCmsUUID extends OpenCmsTestCase {
 
         //        CmsUUID uuid_v605 = (CmsUUID)deSerializeObjectFromFile("org/opencms/util/uuid_v605.bmp");
         //        System.out.println("De-Serialized from version 6.0.5: " + uuid_v605.toString());
-        //        
+        //
         //        CmsUUID uuid_v600 = (CmsUUID)deSerializeObjectFromFile("org/opencms/util/uuid_v600.bmp");
         //        System.out.println("De-Serialized from version 6.0.0: " + uuid_v600.toString());
-        //        
+        //
         //        CmsUUID uuid_v535 = (CmsUUID)deSerializeObjectFromFile("org/opencms/util/uuid_v535.bmp");
         //        System.out.println("De-Serialized from version 5.3.5: " + uuid_v535.toString());
     }
 
     /**
      * Tests UUID equals() method.<p>
-     * 
+     *
      * @throws Exception if the test fails
      */
+    @Test
+    @Order(2)
     public void testUUIDEquals() throws Exception {
 
         CmsUUID.init(CmsUUID.getDummyEthernetAddress());
@@ -192,10 +184,12 @@ public class TestCmsUUID extends OpenCmsTestCase {
     }
 
     /**
-     * Tests the {@link CmsUUID#isValidUUID(String)} method.<p> 
-     * 
+     * Tests the {@link CmsUUID#isValidUUID(String)} method.<p>
+     *
      * @throws Exception if the test fails
      */
+    @Test
+    @Order(5)
     public void testUUIDisValid() throws Exception {
 
         assertTrue(CmsUUID.isValidUUID((new CmsUUID()).toString()));
@@ -208,12 +202,30 @@ public class TestCmsUUID extends OpenCmsTestCase {
     }
 
     /**
+     * Tests serialization of the CmsUUID.<p>
+     *
+     * @throws Exception if the test fails
+     */
+    @Test
+    @Order(4)
+    public void testUUIDSerialization() throws Exception {
+
+        CmsUUID.init(CmsUUID.getDummyEthernetAddress());
+        CmsUUID id1 = new CmsUUID();
+        serializeObject("id1", id1);
+        CmsUUID d_id1 = (CmsUUID)deSerializeObject("id1");
+        assertEquals(id1, d_id1);
+
+        // serializeObjectToFile("org/opencms/util/uuid_v535.bmp", id1);
+    }
+
+    /**
      * De-Serializes an object with the given name from the internal Map.<p>
-     * 
+     *
      * @param name the name to use
-     * 
+     *
      * @return the de-serialized Object
-     * 
+     *
      * @throws Exception if something goes wrong
      */
     protected Object deSerializeObject(String name) throws Exception {
@@ -226,11 +238,11 @@ public class TestCmsUUID extends OpenCmsTestCase {
 
     /**
      * De-Serializes an object from an external File with the given name.<p>
-     * 
+     *
      * @param name the name to use
-     * 
+     *
      * @return the de-serialized Object
-     * 
+     *
      * @throws Exception if something goes wrong
      */
     protected Object deSerializeObjectFromFile(String name) throws Exception {
@@ -241,10 +253,10 @@ public class TestCmsUUID extends OpenCmsTestCase {
 
     /**
      * Serializes an object and stores the result into an internal Map using the given name.<p>
-     * 
+     *
      * @param name the name to use
      * @param o the Object to serialize
-     * 
+     *
      * @throws Exception if something goes wrong
      */
     protected void serializeObject(String name, Object o) throws Exception {
@@ -258,10 +270,10 @@ public class TestCmsUUID extends OpenCmsTestCase {
 
     /**
      * Serializes an object and stores the result into a file with the given name.<p>
-     * 
+     *
      * @param name the name to use
      * @param o the Object to serialize
-     * 
+     *
      * @throws Exception if something goes wrong
      */
     protected void serializeObjectToFile(String name, Object o) throws Exception {

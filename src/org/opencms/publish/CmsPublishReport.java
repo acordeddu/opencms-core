@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -14,12 +14,12 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * Lesser General Public License for more details.
  *
- * For further information about Alkacon Software GmbH, please see the
- * company website: http://www.alkacon.com
+ * For further information about Alkacon Software GmbH & Co. KG, please see the
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -31,6 +31,7 @@ import org.opencms.i18n.CmsMessageContainer;
 import org.opencms.report.CmsHtmlReport;
 import org.opencms.report.CmsPrintStreamReport;
 import org.opencms.report.I_CmsReport;
+import org.opencms.report.I_CmsReportUpdateFormatter;
 import org.opencms.util.CmsStringUtil;
 
 import java.io.ByteArrayOutputStream;
@@ -41,10 +42,10 @@ import java.util.Locale;
 
 /**
  * Report class used for the publish operations.<p>
- * 
+ *
  * It stores nothing. It just prints everything to a temporary file.<p>
- * 
- * @since 6.5.5 
+ *
+ * @since 6.5.5
  */
 public class CmsPublishReport extends CmsPrintStreamReport {
 
@@ -59,9 +60,9 @@ public class CmsPublishReport extends CmsPrintStreamReport {
 
     /**
      * Constructs a new publish report using the provided locale for the output language.<p>
-     *  
+     *
      * @param locale the locale to use for the output language
-     * 
+     *
      */
     protected CmsPublishReport(Locale locale) {
 
@@ -70,22 +71,21 @@ public class CmsPublishReport extends CmsPrintStreamReport {
 
     /**
      * Constructs a new publish report using the provided locale for the output language.<p>
-     *  
+     *
      * @param outputStream the underlying byte array output stream
      * @param locale the locale to use for the output language
-     * 
+     *
      */
     private CmsPublishReport(ByteArrayOutputStream outputStream, Locale locale) {
 
         super(new PrintStream(outputStream), locale, true);
         init(locale, null);
-
         m_outputStream = outputStream;
     }
 
     /**
      * Constructs a new publish report decorating the provided report.<p>
-     *  
+     *
      * @param report the report to decorate
      */
     private CmsPublishReport(I_CmsReport report) {
@@ -104,11 +104,11 @@ public class CmsPublishReport extends CmsPrintStreamReport {
     }
 
     /**
-     * Returns a publish report instance that writes to the given report as well as 
-     * to the given temporary file.<p> 
-     * 
+     * Returns a publish report instance that writes to the given report as well as
+     * to the given temporary file.<p>
+     *
      * @param report the report to decorate
-     * 
+     *
      * @return the publish report
      */
     protected static CmsPrintStreamReport decorate(final I_CmsReport report) {
@@ -146,7 +146,7 @@ public class CmsPublishReport extends CmsPrintStreamReport {
 
     /**
      * Returns the contents of the publish report as byte array.<p>
-     * 
+     *
      * @return the contents of the publish report
      */
     public byte[] getContents() {
@@ -176,6 +176,18 @@ public class CmsPublishReport extends CmsPrintStreamReport {
             return m_report.getReportUpdate();
         }
         return super.getReportUpdate();
+    }
+
+    /**
+     * @see org.opencms.report.A_CmsReport#getReportUpdate(org.opencms.report.I_CmsReportUpdateFormatter)
+     */
+    @Override
+    public synchronized String getReportUpdate(I_CmsReportUpdateFormatter formatter) {
+
+        if (m_report != null) {
+            return m_report.getReportUpdate(formatter);
+        }
+        return super.getReportUpdate(formatter);
     }
 
     /**

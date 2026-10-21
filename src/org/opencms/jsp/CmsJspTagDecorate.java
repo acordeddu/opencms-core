@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -14,12 +14,12 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * Lesser General Public License for more details.
  *
- * For further information about Alkacon Software GmbH, please see the
- * company website: http://www.alkacon.com
+ * For further information about Alkacon Software GmbH & Co. KG, please see the
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -29,6 +29,7 @@ package org.opencms.jsp;
 
 import org.opencms.file.CmsProperty;
 import org.opencms.flex.CmsFlexController;
+import org.opencms.i18n.CmsLocaleManager;
 import org.opencms.jsp.decorator.CmsHtmlDecorator;
 import org.opencms.jsp.decorator.I_CmsDecoratorConfiguration;
 import org.opencms.main.CmsLog;
@@ -45,10 +46,10 @@ import javax.servlet.jsp.tagext.BodyTagSupport;
 import org.apache.commons.logging.Log;
 
 /**
- * Implements the <code>&lt;cms:decorate&gt;&lt;/cms:decorate&gt;</code> 
+ * Implements the <code>&lt;cms:decorate&gt;&lt;/cms:decorate&gt;</code>
  * tag to decorate HTML content with configurated decoration maps.<p>
- * 
- * @since 6.1.3 
+ *
+ * @since 6.1.3
  */
 public class CmsJspTagDecorate extends BodyTagSupport {
 
@@ -64,6 +65,9 @@ public class CmsJspTagDecorate extends BodyTagSupport {
     /** Serial version UID required for safe serialization. */
     private static final long serialVersionUID = 3072561342127379294L;
 
+    /** Indicates the parse action should be disabled to allow inline editing in the container page editor. */
+    private boolean m_allowInlineEdit;
+
     /** The configuration. */
     private String m_file;
 
@@ -75,14 +79,14 @@ public class CmsJspTagDecorate extends BodyTagSupport {
 
     /**
      * Internal action method.<p>
-     * 
+     *
      * DEcorates a HTMl content block.<p>
-     * 
+     *
      * @param content the content to be decorated
      * @param configFile the config file
      * @param locale the locale to use for decoration or NOLOCALE if not locale should be used
      * @param req the current request
-     * 
+     *
      * @return the decorated content
      */
     public String decorateTagAction(String content, String configFile, String locale, ServletRequest req) {
@@ -93,7 +97,7 @@ public class CmsJspTagDecorate extends BodyTagSupport {
             if (CmsStringUtil.isEmpty(locale)) {
                 loc = controller.getCmsObject().getRequestContext().getLocale();
             } else {
-                loc = new Locale(locale);
+                loc = CmsLocaleManager.getLocale(locale);
             }
 
             // read the decorator configurator class
@@ -108,7 +112,8 @@ public class CmsJspTagDecorate extends BodyTagSupport {
 
             String encoding = controller.getCmsObject().getRequestContext().getEncoding();
             // use the correct decorator configurator and initialize it
-            I_CmsDecoratorConfiguration config = (I_CmsDecoratorConfiguration)Class.forName(decoratorClassName).newInstance();
+            I_CmsDecoratorConfiguration config = (I_CmsDecoratorConfiguration)Class.forName(
+                decoratorClassName).newInstance();
             config.init(controller.getCmsObject(), configFile, loc);
 
             CmsHtmlDecorator decorator = new CmsHtmlDecorator(controller.getCmsObject(), config);
@@ -132,20 +137,34 @@ public class CmsJspTagDecorate extends BodyTagSupport {
     public int doEndTag() throws JspException {
 
         ServletRequest req = pageContext.getRequest();
-
-        // This will always be true if the page is called through OpenCms 
-        if (CmsFlexController.isCmsRequest(req)) {
+        if (m_allowInlineEdit && CmsJspTagEditable.isEditableRequest(req)) {
+            // during inline editing the content should not be parsed
             try {
-                String content = decorateTagAction(getBodyContent().getString(), getFile(), getLocale(), req);
-                getBodyContent().clear();
-                getBodyContent().print(content);
                 getBodyContent().writeOut(pageContext.getOut());
-
+                release();
             } catch (Exception ex) {
+                release();
                 if (LOG.isErrorEnabled()) {
                     LOG.error(Messages.get().getBundle().key(Messages.ERR_PROCESS_TAG_1, "decoration"), ex);
                 }
+                // this is severe
                 throw new JspException(ex);
+            }
+        } else {
+            // This will always be true if the page is called through OpenCms
+            if (CmsFlexController.isCmsRequest(req)) {
+                try {
+                    String content = decorateTagAction(getBodyContent().getString(), getFile(), getLocale(), req);
+                    getBodyContent().clear();
+                    getBodyContent().print(content);
+                    getBodyContent().writeOut(pageContext.getOut());
+
+                } catch (Exception ex) {
+                    if (LOG.isErrorEnabled()) {
+                        LOG.error(Messages.get().getBundle().key(Messages.ERR_PROCESS_TAG_1, "decoration"), ex);
+                    }
+                    throw new JspException(ex);
+                }
             }
         }
         return EVAL_PAGE;
@@ -153,7 +172,7 @@ public class CmsJspTagDecorate extends BodyTagSupport {
 
     /**
      * Returns the file name.<p>
-     * 
+     *
      * @return the file name
      */
     public String getFile() {
@@ -163,7 +182,7 @@ public class CmsJspTagDecorate extends BodyTagSupport {
 
     /**
      * Returns the locale name.<p>
-     * 
+     *
      * @return the locale name
      */
     public String getLocale() {
@@ -173,13 +192,13 @@ public class CmsJspTagDecorate extends BodyTagSupport {
 
     /**
      * Getter for the attribute "noAutoCloseTags" of the &lt;cms:parse&gt; tag.<p>
-     *  
-     * Returns a <code>String</code> that consists of the comma-separated upper case tag names for which this 
+     *
+     * Returns a <code>String</code> that consists of the comma-separated upper case tag names for which this
      * tag will not correct missing closing tags. <p>
-     * 
-     * 
-     * @return a String that consists of the comma-separated upper case tag names for which this 
-     *      tag will not correct missing closing tags. 
+     *
+     *
+     * @return a String that consists of the comma-separated upper case tag names for which this
+     *      tag will not correct missing closing tags.
      */
     public String getNoAutoCloseTags() {
 
@@ -194,8 +213,28 @@ public class CmsJspTagDecorate extends BodyTagSupport {
     }
 
     /**
+     * Returns if the parse action should be disabled to allow inline editing in the container page editor.<p>
+     *
+     * @return <code>true</code> if the parse action should be disabled to allow inline editing in the container page editor
+     */
+    public boolean isAllowInlineEdit() {
+
+        return m_allowInlineEdit;
+    }
+
+    /**
+     * Sets if the parse action should be disabled to allow inline editing in the container page editor.<p>
+     *
+     * @param allowInlineEdit <code>true</code> to allow inline editing
+     */
+    public void setAllowInlineEdit(boolean allowInlineEdit) {
+
+        m_allowInlineEdit = allowInlineEdit;
+    }
+
+    /**
      * Sets the file name.<p>
-     * 
+     *
      * @param file the file name
      */
     public void setFile(String file) {
@@ -209,7 +248,7 @@ public class CmsJspTagDecorate extends BodyTagSupport {
 
     /**
      * Sets the locale name.<p>
-     * 
+     *
      * @param locale the locale name
      */
     public void setLocale(String locale) {
@@ -219,11 +258,11 @@ public class CmsJspTagDecorate extends BodyTagSupport {
 
     /**
      * Setter for the attribute "noAutoCloseTags" of the &lt;cms:parse&gt; tag.<p>
-     *  
-     * Awaits a <code>String</code> that consists of the comma-separated upper case tag names for which this 
+     *
+     * Awaits a <code>String</code> that consists of the comma-separated upper case tag names for which this
      * tag should not correct missing closing tags.<p>
-     * 
-     * @param noAutoCloseTagList a <code>String</code> that consists of the comma-separated upper case tag names for which this 
+     *
+     * @param noAutoCloseTagList a <code>String</code> that consists of the comma-separated upper case tag names for which this
      *      tag should not correct missing closing tags.
      */
     public void setNoAutoCloseTags(String noAutoCloseTagList) {

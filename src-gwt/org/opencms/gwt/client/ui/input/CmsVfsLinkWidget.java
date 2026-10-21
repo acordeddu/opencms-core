@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -15,11 +15,11 @@
  * Lesser General Public License for more details.
  *
  * For further information about Alkacon Software, please see the
- * company website: http://www.alkacon.com
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -38,14 +38,16 @@ import org.opencms.gwt.client.ui.input.form.I_CmsFormWidgetFactory;
 
 import java.util.Map;
 
+import com.google.common.base.Optional;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
+import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.FlowPanel;
 
 /**
  * The vfs-link widget.<p>
- * 
+ *
  * @since 8.0.0
  */
 public class CmsVfsLinkWidget extends Composite implements I_CmsFormWidget, I_CmsHasInit, I_CmsHasGhostValue {
@@ -60,7 +62,7 @@ public class CmsVfsLinkWidget extends Composite implements I_CmsFormWidget, I_Cm
     protected CmsTextBox m_textbox;
 
     /** The vfs-selector popup. */
-    protected CmsVfsSelector m_vfsSelector;
+    //protected CmsVfsSelector m_vfsSelector;
 
     /** The widget panel. */
     private FlowPanel m_main;
@@ -85,6 +87,14 @@ public class CmsVfsLinkWidget extends Composite implements I_CmsFormWidget, I_Cm
                 openSelector(getSelectorUrl());
             }
         });
+
+        /*m_textbox.addFocusHandler(new FocusHandler() {
+
+            public void onFocus(FocusEvent arg0) {
+
+                openSelector(getSelectorUrl());
+            }
+        });*/
         m_main.add(m_browseButton);
     }
 
@@ -97,9 +107,9 @@ public class CmsVfsLinkWidget extends Composite implements I_CmsFormWidget, I_Cm
         CmsWidgetFactoryRegistry.instance().registerFactory(WIDGET_TYPE, new I_CmsFormWidgetFactory() {
 
             /**
-             * @see org.opencms.gwt.client.ui.input.form.I_CmsFormWidgetFactory#createWidget(java.util.Map)
+             * @see org.opencms.gwt.client.ui.input.form.I_CmsFormWidgetFactory#createWidget(java.util.Map, com.google.common.base.Optional)
              */
-            public I_CmsFormWidget createWidget(Map<String, String> widgetParams) {
+            public I_CmsFormWidget createWidget(Map<String, String> widgetParams, Optional<String> defaultValue) {
 
                 return new CmsVfsLinkWidget();
             }
@@ -108,7 +118,7 @@ public class CmsVfsLinkWidget extends Composite implements I_CmsFormWidget, I_Cm
 
     /**
      * Adds a style-name to the browse button.<p>
-     * 
+     *
      * @param styleName the style name
      */
     public void addButtonStyle(String styleName) {
@@ -118,12 +128,22 @@ public class CmsVfsLinkWidget extends Composite implements I_CmsFormWidget, I_Cm
 
     /**
      * Adds a style-name to the input text-box.<p>
-     * 
+     *
      * @param styleName the style name
      */
     public void addInputStyleName(String styleName) {
 
         m_textbox.addStyleName(styleName);
+    }
+
+    /**
+     * Adds a value change handler.<p>
+     *
+     * @param handler the handler to add
+     */
+    public void addValueChangeHandler(ValueChangeHandler<String> handler) {
+
+        m_textbox.addValueChangeHandler(handler);
     }
 
     /**
@@ -168,7 +188,7 @@ public class CmsVfsLinkWidget extends Composite implements I_CmsFormWidget, I_Cm
 
     /**
      * Removes a style-name from the browse button.<p>
-     * 
+     *
      * @param styleName the style name
      */
     public void removeButtonStyle(String styleName) {
@@ -178,7 +198,7 @@ public class CmsVfsLinkWidget extends Composite implements I_CmsFormWidget, I_Cm
 
     /**
      * Removes a style-name from the input text-box.<p>
-     * 
+     *
      * @param styleName the style name
      */
     public void removeInputStyle(String styleName) {
@@ -199,12 +219,12 @@ public class CmsVfsLinkWidget extends Composite implements I_CmsFormWidget, I_Cm
      */
     public void setAutoHideParent(I_CmsAutoHider autoHideParent) {
 
-        // do nothing 
+        // do nothing
     }
 
     /**
      * Set the browse button size.<p>
-     * 
+     *
      * @param size the button size
      */
     public void setButtonSize(Size size) {
@@ -225,7 +245,7 @@ public class CmsVfsLinkWidget extends Composite implements I_CmsFormWidget, I_Cm
      */
     public void setErrorMessage(String errorMessage) {
 
-        // do nothing 
+        // do nothing
     }
 
     /**
@@ -234,6 +254,7 @@ public class CmsVfsLinkWidget extends Composite implements I_CmsFormWidget, I_Cm
     public void setFormValueAsString(String value) {
 
         m_textbox.setFormValueAsString(value);
+        m_textbox.fireValueChangedEvent();
 
     }
 
@@ -255,7 +276,7 @@ public class CmsVfsLinkWidget extends Composite implements I_CmsFormWidget, I_Cm
 
     /**
      * Returns the URL to the link selector popup.<p>
-     * 
+     *
      * @return the URL to the link selector popup
      */
     protected String getSelectorUrl() {
@@ -269,7 +290,7 @@ public class CmsVfsLinkWidget extends Composite implements I_CmsFormWidget, I_Cm
 
     /**
      * Opens the vfs-selector.<p>
-     * 
+     *
      * @param selectorUrl the URL to the link selector popup
      */
     protected native void openSelector(String selectorUrl)/*-{
@@ -282,6 +303,9 @@ public class CmsVfsLinkWidget extends Composite implements I_CmsFormWidget, I_Cm
             if (newwin.opener == null) {
                 newwin.opener = $wnd.self;
             }
+        } else {
+            @org.opencms.gwt.client.util.CmsDomUtil::showPopupBlockerMessage()();
+            return;
         }
         newwin.focus();
         var self = this;

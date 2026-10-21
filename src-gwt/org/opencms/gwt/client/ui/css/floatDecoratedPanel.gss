@@ -1,0 +1,33 @@
+@external html-face;
+
+.primary {
+}
+
+.floatBox {
+	width: auto;
+}
+
+.floatDecoratedPanel {
+	zoom: 1;
+}
+
+.decorationBox.decorationBoxSmall {
+	float:left;
+	margin-top: 0px;
+}
+
+.decorationBox.decorationBoxSmall .html-face {
+	line-height: 22px !important;
+	vertical-align: middle !important;
+}
+
+
+.decorationBox {
+	float:left;
+	margin-top: 0px;
+}
+
+.decorationBox .html-face {
+	line-height: 40px !important;
+	vertical-align: middle !important;
+}

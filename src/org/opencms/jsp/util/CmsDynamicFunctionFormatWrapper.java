@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (C) Alkacon Software (http://www.alkacon.com)
+ * Copyright (C) Alkacon Software (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -15,11 +15,11 @@
  * Lesser General Public License for more details.
  *
  * For further information about Alkacon Software, please see the
- * company website: http://www.alkacon.com
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -57,11 +57,11 @@ public class CmsDynamicFunctionFormatWrapper {
 
     /**
      * Creates a new wrapper instance for a given format.<p>
-     * 
+     *
      * The format parameter may be null.
-     * 
-     * @param cms the current CMS context  
-     * @param format the dynamic function format 
+     *
+     * @param cms the current CMS context
+     * @param format the dynamic function format
      */
     public CmsDynamicFunctionFormatWrapper(CmsObject cms, CmsDynamicFunctionBean.Format format) {
 
@@ -78,8 +78,8 @@ public class CmsDynamicFunctionFormatWrapper {
 
     /**
      * Check if this format is actually valid, i.e. was not created with a null format argument.<p>
-     * 
-     * @return true if this format is valid 
+     *
+     * @return true if this format is valid
      */
     public boolean getExists() {
 
@@ -88,8 +88,8 @@ public class CmsDynamicFunctionFormatWrapper {
 
     /**
      * Gets the jsp site path for this dynamic function format.<p>
-     * 
-     * @return the jsp site path for this dynamic function format  
+     *
+     * @return the jsp site path for this dynamic function format
      */
     public String getJsp() {
 
@@ -101,8 +101,8 @@ public class CmsDynamicFunctionFormatWrapper {
 
     /**
      * Gets the parameters for this dynamic function format.<p>
-     * 
-     * @return the map of parameters for the dynamic function 
+     *
+     * @return the map of parameters for the dynamic function
      */
     public Map<String, String> getParam() {
 
@@ -111,8 +111,8 @@ public class CmsDynamicFunctionFormatWrapper {
 
     /**
      * Gets the parameters for this dynamic function format.<p>
-     * 
-     * @return the map of parameters for the dynamic function 
+     *
+     * @return the map of parameters for the dynamic function
      */
     public Map<String, String> getParameters() {
 

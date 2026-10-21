@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -14,12 +14,12 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * Lesser General Public License for more details.
  *
- * For further information about Alkacon Software GmbH, please see the
- * company website: http://www.alkacon.com
+ * For further information about Alkacon Software GmbH & Co. KG, please see the
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -28,20 +28,32 @@
 package org.opencms.widgets;
 
 import org.opencms.file.CmsObject;
+import org.opencms.main.CmsException;
+import org.opencms.main.CmsLog;
 import org.opencms.main.OpenCms;
+import org.opencms.security.CmsOrganizationalUnit;
 import org.opencms.security.CmsRole;
 import org.opencms.util.CmsStringUtil;
 import org.opencms.workplace.CmsWorkplace;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Locale;
+
+import org.apache.commons.logging.Log;
+
 /**
  * Provides a OpenCms orgaizational unit selection widget, for use on a widget dialog.<p>
- * 
- * @since 6.5.6 
+ *
+ * @since 6.5.6
  */
-public class CmsOrgUnitWidget extends A_CmsWidget {
+public class CmsOrgUnitWidget extends A_CmsSelectWidget implements I_CmsADEWidget {
 
     /** Configuration parameter to set the role the current user must have in the selected ou, optional. */
     public static final String CONFIGURATION_ROLE = "role";
+
+    /** The logger instance for this class. */
+    private static final Log LOG = CmsLog.getLog(CmsOrgUnitWidget.class);
 
     /** The role used in the popup window. */
     private CmsRole m_role;
@@ -57,7 +69,7 @@ public class CmsOrgUnitWidget extends A_CmsWidget {
 
     /**
      * Creates a new user selection widget with the parameters to configure the popup window behaviour.<p>
-     * 
+     *
      * @param role the role to restrict the organizational unit selection, can be <code>null</code>
      */
     public CmsOrgUnitWidget(CmsRole role) {
@@ -67,7 +79,7 @@ public class CmsOrgUnitWidget extends A_CmsWidget {
 
     /**
      * Creates a new organizational unit selection widget with the given configuration.<p>
-     * 
+     *
      * @param configuration the configuration to use
      */
     public CmsOrgUnitWidget(String configuration) {
@@ -117,7 +129,8 @@ public class CmsOrgUnitWidget extends A_CmsWidget {
         StringBuffer result = new StringBuffer(128);
 
         result.append("<td class=\"xmlTd\">");
-        result.append("<table border=\"0\" cellpadding=\"0\" cellspacing=\"0\" class=\"maxwidth\"><tr><td style=\"width: 100%;\">");
+        result.append(
+            "<table border=\"0\" cellpadding=\"0\" cellspacing=\"0\" class=\"maxwidth\"><tr><td style=\"width: 100%;\">");
         result.append("<input style=\"width: 99%;\" class=\"xmlInput");
         if (param.hasError()) {
             result.append(" xmlInputError");
@@ -130,7 +143,8 @@ public class CmsOrgUnitWidget extends A_CmsWidget {
         result.append(id);
         result.append("\"></td>");
         result.append(widgetDialog.dialogHorizontalSpacer(10));
-        result.append("<td><table class=\"editorbuttonbackground\" border=\"0\" cellpadding=\"0\" cellspacing=\"0\"><tr>");
+        result.append(
+            "<td><table class=\"editorbuttonbackground\" border=\"0\" cellpadding=\"0\" cellspacing=\"0\"><tr>");
 
         StringBuffer buttonJs = new StringBuffer(8);
         buttonJs.append("javascript:openOrgUnitWin('");
@@ -148,12 +162,13 @@ public class CmsOrgUnitWidget extends A_CmsWidget {
         }
         buttonJs.append(");");
 
-        result.append(widgetDialog.button(
-            buttonJs.toString(),
-            null,
-            "orgunit",
-            org.opencms.workplace.Messages.GUI_DIALOG_BUTTON_SEARCH_0,
-            widgetDialog.getButtonStyle()));
+        result.append(
+            widgetDialog.button(
+                buttonJs.toString(),
+                null,
+                "orgunit",
+                org.opencms.workplace.Messages.GUI_DIALOG_BUTTON_SEARCH_0,
+                widgetDialog.getButtonStyle()));
         result.append("</tr></table>");
         result.append("</td></tr></table>");
 
@@ -170,6 +185,15 @@ public class CmsOrgUnitWidget extends A_CmsWidget {
     public CmsRole getRole() {
 
         return m_role;
+    }
+
+    /**
+     * @see org.opencms.widgets.I_CmsADEWidget#getWidgetName()
+     */
+    @Override
+    public String getWidgetName() {
+
+        return CmsComboWidget.class.getName();
     }
 
     /**
@@ -200,5 +224,36 @@ public class CmsOrgUnitWidget extends A_CmsWidget {
             }
         }
         super.setConfiguration(configuration);
+    }
+
+    /**
+     * @see org.opencms.widgets.A_CmsSelectWidget#parseSelectOptions(org.opencms.file.CmsObject, org.opencms.widgets.I_CmsWidgetDialog, org.opencms.widgets.I_CmsWidgetParameter)
+     */
+    @Override
+    protected List<CmsSelectWidgetOption> parseSelectOptions(
+        CmsObject cms,
+        I_CmsWidgetDialog widgetDialog,
+        I_CmsWidgetParameter param) {
+
+        Locale locale = OpenCms.getWorkplaceManager().getWorkplaceLocale(cms);
+
+        List<CmsOrganizationalUnit> orgUnits = new ArrayList<CmsOrganizationalUnit>();
+        try {
+            if (m_role != null) {
+                orgUnits.addAll(OpenCms.getRoleManager().getOrgUnitsForRole(cms, m_role.forOrgUnit(""), true));
+            } else {
+                orgUnits.addAll(OpenCms.getOrgUnitManager().getOrganizationalUnits(cms, "", true));
+            }
+        } catch (CmsException e) {
+            LOG.error(e.getLocalizedMessage(), e);
+        }
+
+        List<CmsSelectWidgetOption> result = new ArrayList<>();
+        for (CmsOrganizationalUnit ou : orgUnits) {
+            CmsSelectWidgetOption option = new CmsSelectWidgetOption(ou.getName(), false, ou.getDisplayName(locale));
+            result.add(option);
+        }
+        setSelectOptions(result);
+        return result;
     }
 }

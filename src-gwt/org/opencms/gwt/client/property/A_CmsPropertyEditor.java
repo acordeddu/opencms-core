@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -15,11 +15,11 @@
  * Lesser General Public License for more details.
  *
  * For further information about Alkacon Software, please see the
- * company website: http://www.alkacon.com
- * 
- * For further information about OpenCms, please see the 
- * project website: http://www.opencms.org
- * 
+ * company website: https://www.alkacon.com
+ *
+ * For further information about OpenCms, please see the
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -31,6 +31,7 @@ import org.opencms.file.CmsResource;
 import org.opencms.gwt.client.Messages;
 import org.opencms.gwt.client.ui.CmsNotification;
 import org.opencms.gwt.client.ui.CmsNotification.Type;
+import org.opencms.gwt.client.ui.CmsPopup;
 import org.opencms.gwt.client.ui.input.CmsDefaultStringModel;
 import org.opencms.gwt.client.ui.input.CmsSelectBox;
 import org.opencms.gwt.client.ui.input.CmsTextBox;
@@ -40,24 +41,23 @@ import org.opencms.gwt.client.ui.input.I_CmsHasGhostValue;
 import org.opencms.gwt.client.ui.input.I_CmsStringModel;
 import org.opencms.gwt.client.ui.input.form.CmsBasicFormField;
 import org.opencms.gwt.client.ui.input.form.CmsForm;
-import org.opencms.gwt.client.ui.input.form.CmsFormDialog;
 import org.opencms.gwt.client.ui.input.form.CmsWidgetFactoryRegistry;
 import org.opencms.gwt.client.ui.input.form.I_CmsFormWidgetMultiFactory;
+import org.opencms.gwt.client.ui.input.tinymce.CmsTinyMCEWidget;
 import org.opencms.gwt.shared.property.CmsClientTemplateBean;
-import org.opencms.util.CmsPair;
 import org.opencms.util.CmsUUID;
 import org.opencms.xml.content.CmsXmlContentProperty;
 
-import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+import com.google.common.base.Optional;
 import com.google.gwt.event.logical.shared.HasValueChangeHandlers;
 
 /**
  * The abstract base class for dialogs to edit properties.<p>
- *  
+ *
  *  @since 8.0.0
  */
 public abstract class A_CmsPropertyEditor implements I_CmsFormWidgetMultiFactory {
@@ -71,14 +71,14 @@ public abstract class A_CmsPropertyEditor implements I_CmsFormWidgetMultiFactory
     /** The list of all property names. */
     protected List<String> m_allProps;
 
-    /** The form dialog. */
-    protected CmsFormDialog m_dialog;
+    /** The reason to disable the form input fields. */
+    protected String m_disabledReason;
+
+    /** True if only the name edit field is disabled. */
+    protected boolean m_nameOnlyDisabled;
 
     /** The form containing the fields. */
     protected CmsForm m_form;
-
-    /** The reason to disable the form input fields. */
-    protected String m_disabledReason;
 
     /** The handler for this sitemap entry editor. */
     protected I_CmsPropertyEditorHandler m_handler;
@@ -92,11 +92,14 @@ public abstract class A_CmsPropertyEditor implements I_CmsFormWidgetMultiFactory
     /** The model for the URL name field. */
     protected CmsDefaultStringModel m_urlNameModel;
 
+    /** True if the 'disabled' notification has already been sent. */
+    private boolean m_disabledNotificationSent;
+
     /**
      * Creates a new sitemap entry editor.<p>
-     * 
+     *
      * @param handler the handler
-     * @param propertyConfig the property configuration 
+     * @param propertyConfig the property configuration
      */
     public A_CmsPropertyEditor(
         Map<String, CmsXmlContentProperty> propertyConfig,
@@ -104,44 +107,53 @@ public abstract class A_CmsPropertyEditor implements I_CmsFormWidgetMultiFactory
 
         CmsForm form = new CmsForm(null);
         m_form = form;
-        m_dialog = new CmsFormDialog(handler.getDialogTitle(), form);
         m_handler = handler;
         m_propertyConfig = removeHiddenProperties(propertyConfig);
 
-        m_dialog.setFormHandler(new CmsPropertyFormHandler(m_handler, m_dialog));
     }
 
     /**
      * Checks whether a widget can be used in the sitemap entry editor, and throws an exception otherwise.<p>
-     * 
-     * @param key the widget key 
-     * @param widget the created widget 
+     *
+     * @param key the widget key
+     * @param widget the created widget
      */
     public static void checkWidgetRequirements(String key, I_CmsFormWidget widget) {
 
+        if (widget instanceof CmsTinyMCEWidget) {
+            return;
+        }
         if (!((widget instanceof I_CmsHasGhostValue) && (widget instanceof HasValueChangeHandlers<?>))) {
             throw new CmsWidgetNotSupportedException(key);
         }
     }
 
     /**
-     * @see org.opencms.gwt.client.ui.input.form.I_CmsFormWidgetMultiFactory#createFormWidget(java.lang.String, java.util.Map)
+     * @see org.opencms.gwt.client.ui.input.form.I_CmsFormWidgetMultiFactory#createFormWidget(java.lang.String, java.util.Map, com.google.common.base.Optional)
      */
-    public I_CmsFormWidget createFormWidget(String key, Map<String, String> widgetParams) {
+    public I_CmsFormWidget createFormWidget(
+        String key,
+        Map<String, String> widgetParams,
+        Optional<String> defaultValue) {
 
         I_CmsFormWidget result = null;
 
         if ("template".equals(key)) {
             result = createTemplateSelector();
         } else if (CmsTextBox.WIDGET_TYPE.equals(key)) {
-            CmsTextBox textBox = new CmsTextBox();
+            CmsTextBox textBox = new CmsTextBox().colorWhite();
             textBox.setErrorMessageWidth("345px");
-            // we need this because the tab containing the text box may not be visible 
+            textBox.setTriggerChangeOnKeyPress(true);
+            // we need this because the tab containing the text box may not be visible
             // at the time the error message is set, so measuring the field's size would
-            // yield an invalid value  
+            // yield an invalid value
             result = textBox;
+        } else if (CmsSelectBox.WIDGET_TYPE.equals(key)) {
+            final CmsPropertySelectBox box = new CmsPropertySelectBox(widgetParams);
+            result = box;
+
         } else {
-            result = CmsWidgetFactoryRegistry.instance().createFormWidget(key, widgetParams);
+            result = CmsWidgetFactoryRegistry.instance().createFormWidget(key, widgetParams, defaultValue);
             checkWidgetRequirements(key, result);
         }
         return result;
@@ -149,24 +161,56 @@ public abstract class A_CmsPropertyEditor implements I_CmsFormWidgetMultiFactory
 
     /**
      * Disables all input to the form.<p>
-     * 
-     * @param disabledReason the reason to display to the user 
+     *
+     * @param disabledReason the reason to display to the user
+     * @param nameOnlyDisabled true if only the name editing field is disabled
      */
-    public void disableInput(String disabledReason) {
+    public void disableInput(String disabledReason, boolean nameOnlyDisabled) {
 
         m_disabledReason = disabledReason;
-        for (I_CmsFormField field : m_form.getFields().values()) {
-            field.getWidget().setEnabled(false);
+        m_nameOnlyDisabled = nameOnlyDisabled;
+        if (!nameOnlyDisabled) {
+            for (I_CmsFormField field : m_form.getFields().values()) {
+                field.getWidget().setEnabled(false);
+            }
         }
         m_urlNameField.getWidget().setEnabled(false);
-        m_dialog.getOkButton().disable(m_disabledReason);
-        CmsNotification.get().send(Type.WARNING, m_disabledReason);
+        if (!m_disabledNotificationSent && (m_disabledReason != null)) {
+            CmsNotification.get().send(Type.WARNING, m_disabledReason);
+            m_disabledNotificationSent = true;
+        }
+    }
+
+    /**
+     * Gets the form for the properties.<p>
+     *
+     * @return the property form
+     */
+    public CmsForm getForm() {
+
+        return m_form;
+    }
+
+    /**
+     * Initializes the widgets for editing the properties.<p>
+     *
+     * @param dialog the dialog which the property editor is part of
+     */
+    public void initializeWidgets(CmsPopup dialog) {
+
+        // creates tabs, etc. if necessary
+        setupFieldContainer();
+        addSpecialFields();
+        // create fields and add them to the correct location
+        buildFields();
+        m_form.setValidatorClass("org.opencms.gwt.CmsDefaultFormValidator");
+        m_form.render();
     }
 
     /**
      * Sets the names of properties which can be edited.<p>
-     * 
-     * @param propertyNames the property names 
+     *
+     * @param propertyNames the property names
      */
     public void setPropertyNames(List<String> propertyNames) {
 
@@ -174,29 +218,16 @@ public abstract class A_CmsPropertyEditor implements I_CmsFormWidgetMultiFactory
     }
 
     /**
-     * Shows the sitemap entry editor to the user.<p>
+     * Method to add special, non-property fields.<p>
      */
-    public void start() {
+    protected void addSpecialFields() {
 
-        CmsForm form = m_dialog.getForm();
-
-        // creates tabs, etc. if necessary 
-        setupFieldContainer();
-
-        String firstTab = form.getWidget().getDefaultGroup();
-
+        String firstTab = m_form.getWidget().getDefaultGroup();
         if (m_handler.hasEditableName()) {
-            // the root entry name can't be edited 
+            // the root entry name can't be edited
             CmsBasicFormField urlNameField = createUrlNameField();
-            form.addField(firstTab, urlNameField);
+            m_form.addField(firstTab, urlNameField);
         }
-
-        // create fields and add them to the correct location 
-        buildFields();
-        form.setValidatorClass("org.opencms.gwt.CmsDefaultFormValidator");
-        form.render();
-        m_dialog.centerHorizontally(50);
-        m_dialog.catchNotifications();
     }
 
     /**
@@ -206,8 +237,8 @@ public abstract class A_CmsPropertyEditor implements I_CmsFormWidgetMultiFactory
 
     /**
      * Creates the text field for editing the URL name.<p>
-     * 
-     * @return the newly created form field 
+     *
+     * @return the newly created form field
       */
     protected CmsBasicFormField createUrlNameField() {
 
@@ -218,8 +249,11 @@ public abstract class A_CmsPropertyEditor implements I_CmsFormWidgetMultiFactory
         String description = message(Messages.GUI_URLNAME_PROPERTY_DESC_0);
         String label = message(Messages.GUI_URLNAME_PROPERTY_0);
         final CmsTextBox textbox = new CmsTextBox();
+        textbox.setTriggerChangeOnKeyPress(true);
+        textbox.setInhibitValidationForKeypresses(true);
 
         CmsBasicFormField result = new CmsBasicFormField(FIELD_URLNAME, description, label, null, textbox);
+        result.getLayoutData().put("property", A_CmsPropertyEditor.FIELD_URLNAME);
         String urlName = m_handler.getName();
         if (urlName == null) {
             urlName = "";
@@ -238,9 +272,9 @@ public abstract class A_CmsPropertyEditor implements I_CmsFormWidgetMultiFactory
 
     /**
      * Gets the title from a map of field values.<p>
-     * 
-     * @param fieldValues the map of field values 
-     * @return the title 
+     *
+     * @param fieldValues the map of field values
+     * @return the title
      */
     protected String getTitle(Map<String, String> fieldValues) {
 
@@ -254,10 +288,10 @@ public abstract class A_CmsPropertyEditor implements I_CmsFormWidgetMultiFactory
 
     /**
      * Lazily creates the model object for the URL name field.<p>
-     * 
-     * @param urlName the initial value for the URL name 
-     * 
-     * @return the model object for the URL name field 
+     *
+     * @param urlName the initial value for the URL name
+     *
+     * @return the model object for the URL name field
      */
     protected CmsDefaultStringModel getUrlNameModel(String urlName) {
 
@@ -270,11 +304,11 @@ public abstract class A_CmsPropertyEditor implements I_CmsFormWidgetMultiFactory
 
     /**
      * Returns a localized message from the message bundle.<p>
-     * 
+     *
      * @param key the message key
      * @param args the message parameters
-     *  
-     * @return the localized message 
+     *
+     * @return the localized message
      */
     protected String message(String key, Object... args) {
 
@@ -283,10 +317,10 @@ public abstract class A_CmsPropertyEditor implements I_CmsFormWidgetMultiFactory
 
     /**
      * Sets the ghost value for a form field if its normal value is empty and the field's widget supports ghost values.<p>
-     *  
-     * @param field the form field 
+     *
+     * @param field the form field
      * @param value the ghost value to set
-     * @param ghostMode if true, sets the widget to ghost mode  
+     * @param ghostMode if true, sets the widget to ghost mode
      */
     protected void setGhostValue(I_CmsFormField field, String value, boolean ghostMode) {
 
@@ -303,34 +337,34 @@ public abstract class A_CmsPropertyEditor implements I_CmsFormWidgetMultiFactory
 
     /**
      * Sets the contents of the URL name field in the form.<p>
-     * 
+     *
      * @param urlName the new URL name
      */
     protected void setUrlNameField(String urlName) {
 
-        m_dialog.getForm().getField(FIELD_URLNAME).getWidget().setFormValueAsString(urlName);
+        m_form.getField(FIELD_URLNAME).getWidget().setFormValueAsString(urlName);
     }
 
     /**
      * Shows an error message next to the URL name input field.<p>
-     * 
-     * @param message the message which should be displayed, or null if no message should be displayed 
+     *
+     * @param message the message which should be displayed, or null if no message should be displayed
      */
     protected void showUrlNameError(String message) {
 
-        m_dialog.getForm().getField(FIELD_URLNAME).getWidget().setErrorMessage(message);
+        m_form.getField(FIELD_URLNAME).getWidget().setErrorMessage(message);
     }
 
     /**
      * Helper method for creating the template selection widget.<p>
-     * 
-     * @return the template selector widget 
+     *
+     * @return the template selector widget
      */
     private I_CmsFormWidget createTemplateSelector() {
 
         if (m_handler.useAdeTemplates()) {
 
-            CmsSelectBox selectBox = new CmsSelectBox(new ArrayList<CmsPair<String, String>>());
+            CmsSelectBox selectBox = null;
             Map<String, String> values = new LinkedHashMap<String, String>();
             for (Map.Entry<String, CmsClientTemplateBean> templateEntry : m_handler.getPossibleTemplates().entrySet()) {
                 CmsClientTemplateBean template = templateEntry.getValue();
@@ -340,7 +374,7 @@ public abstract class A_CmsPropertyEditor implements I_CmsFormWidgetMultiFactory
                 }
                 values.put(template.getSitePath(), title);
             }
-            selectBox = new CmsSelectBox(values, true);
+            selectBox = new CmsPropertySelectBox(values);
             return selectBox;
         } else {
             CmsTextBox textbox = new CmsTextBox();
@@ -350,13 +384,13 @@ public abstract class A_CmsPropertyEditor implements I_CmsFormWidgetMultiFactory
 
     /**
      * Helper method for removing hidden properties from a map of property configurations.<p>
-     * 
+     *
      * The map passed into the method is not changed; a map which only contains the non-hidden
      * property definitions is returned.<p>
-     * 
-     * @param propConfig the property configuration 
-     * 
-     * @return the filtered property configuration 
+     *
+     * @param propConfig the property configuration
+     *
+     * @return the filtered property configuration
      */
     private Map<String, CmsXmlContentProperty> removeHiddenProperties(Map<String, CmsXmlContentProperty> propConfig) {
 

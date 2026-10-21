@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -15,11 +15,11 @@
  * Lesser General Public License for more details.
  *
  * For further information about Alkacon Software, please see the
- * company website: http://www.alkacon.com
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -29,24 +29,29 @@ package org.opencms.ade.galleries.shared;
 
 import org.opencms.gwt.shared.CmsListInfoBean;
 import org.opencms.gwt.shared.sort.I_CmsHasPath;
-import org.opencms.gwt.shared.sort.I_CmsHasTitle;
-import org.opencms.gwt.shared.sort.I_CmsHasType;
 import org.opencms.util.CmsStringUtil;
 
 /**
- * A specific bean holding all info to be displayed in {@link org.opencms.ade.galleries.client.ui.CmsResultListItem}s.<p>
- * 
- * @see org.opencms.ade.galleries.client.ui.CmsResultListItem
- * 
+ * A specific bean holding all info to be displayed in <code>CmsResultListItem</code>s.<p>
+ *
  * @since 8.0.0
  */
-public class CmsResultItemBean extends CmsListInfoBean implements I_CmsHasTitle, I_CmsHasPath, I_CmsHasType {
+public class CmsResultItemBean extends CmsListInfoBean implements I_CmsHasPath {
 
     /** The structured id of the resource. */
     private String m_clientId;
 
+    /** The formatted date of the last modification. */
+    private String m_dateLastModified;
+
     /** The result item description. */
     private String m_description;
+
+    /** The image dimensions. */
+    private String m_dimension;
+
+    /** Flag which indicates whether the resource for this result is a copy model. */
+    private boolean m_isCopyModel;
 
     /** A flag which indicates whether this result item corresponds to a preset value in the editor.<p> */
     private boolean m_isPreset;
@@ -57,11 +62,28 @@ public class CmsResultItemBean extends CmsListInfoBean implements I_CmsHasTitle,
     /** The resource path as a unique resource id. */
     private String m_path;
 
+    /** The raw title, without any status information attached. */
+    private String m_rawTitle = "";
+
     /** Flag indicating if the result item resource is currently released and not expired. */
     private boolean m_releasedAndNotExpired;
 
-    /** The resource type name. */
-    private String m_type;
+    /** The name of the user who last modified the resource. */
+    private String m_userLastModified;
+
+    /** The link for displaying the resource. */
+    private String m_viewLink;
+
+    /** True if the result is deactivated. */
+    private boolean m_deactivated;
+
+    /**
+     * Default constructor.<p>
+     */
+    public CmsResultItemBean() {
+
+        // empty default constructor
+    }
 
     /**
      * Returns the structured id.<p>
@@ -74,6 +96,16 @@ public class CmsResultItemBean extends CmsListInfoBean implements I_CmsHasTitle,
     }
 
     /**
+     * Returns the formatted last modification date.<p>
+     *
+     * @return the formatted last modification date
+     */
+    public String getDateLastModified() {
+
+        return m_dateLastModified;
+    }
+
+    /**
      * Returns the description.<p>
      *
      * @return the description
@@ -81,6 +113,16 @@ public class CmsResultItemBean extends CmsListInfoBean implements I_CmsHasTitle,
     public String getDescription() {
 
         return m_description;
+    }
+
+    /**
+     * Returns the dimension.<p>
+     *
+     * @return the dimension
+     */
+    public String getDimension() {
+
+        return m_dimension;
     }
 
     /**
@@ -104,18 +146,71 @@ public class CmsResultItemBean extends CmsListInfoBean implements I_CmsHasTitle,
     }
 
     /**
-     * Returns the resource type name.<p>
+     * Gets the raw title, without status information attached.<p>
      *
-     * @return the resource type name
+     * @return the raw title
      */
-    public String getType() {
+    public String getRawTitle() {
 
-        return m_type;
+        return m_rawTitle;
+    }
+
+    /**
+     * @see org.opencms.gwt.shared.CmsListInfoBean#getSubTitle()
+     */
+    @Override
+    public String getSubTitle() {
+
+        String fieldSubTitle = super.getSubTitle();
+        if (fieldSubTitle != null) {
+            return fieldSubTitle;
+        }
+        return m_userLastModified + " / " + m_dateLastModified;
+    }
+
+    /**
+     * Gets the name of the user who last modified the resource.<p>
+     *
+     * @return the name of the user who last modified the resource
+     */
+    public String getUserLastModified() {
+
+        return m_userLastModified;
+    }
+
+    /**
+     * Gets the link for displaying the resource.<p>
+     *
+     * @return the link for displaying the resource
+     */
+    public String getViewLink() {
+
+        return m_viewLink;
+    }
+
+    /**
+     * Returns true if the result resource is a copy model.<p>
+     *
+     * @return true if the resource is a copy model
+     */
+    public boolean isCopyModel() {
+
+        return m_isCopyModel;
+    }
+
+    /**
+     * Checks if the result is deactivated.
+     *
+     * @return true if the result is deactivated
+     */
+    public boolean isDeactivated() {
+
+        return m_deactivated;
     }
 
     /**
      * Returns if the represented resource is editable by the current user.<p>
-     * 
+     *
      * @return <code>true</code> if editable
      */
     public boolean isEditable() {
@@ -125,8 +220,8 @@ public class CmsResultItemBean extends CmsListInfoBean implements I_CmsHasTitle,
 
     /**
      * True if this is result item corresponds to a preset value in the editor.<p>
-     * 
-     * @return true if this corresponds to a preset value 
+     *
+     * @return true if this corresponds to a preset value
      */
     public boolean isPreset() {
 
@@ -154,16 +249,55 @@ public class CmsResultItemBean extends CmsListInfoBean implements I_CmsHasTitle,
     }
 
     /**
+     * Sets the formatted last modification date.<p>
+     *
+     * @param formattedDate the formatted last modification date
+     */
+    public void setDateLastModified(String formattedDate) {
+
+        m_dateLastModified = formattedDate;
+    }
+
+    /**
+     * Sets the 'deactivated' state.
+     *
+     * @param deactivated the 'deactivated' state
+     */
+    public void setDeactivated(boolean deactivated) {
+
+        m_deactivated = deactivated;
+    }
+
+    /**
      * Sets the description.<p>
-     * 
+     *
      * Also used as sub-title.<p>
      *
      * @param description the description to set
      */
     public void setDescription(String description) {
 
-        super.setSubTitle(description);
         m_description = description;
+    }
+
+    /**
+     * Sets the dimension.<p>
+     *
+     * @param dimension the dimension to set
+     */
+    public void setDimension(String dimension) {
+
+        m_dimension = dimension;
+    }
+
+    /**
+     * Sets the "copy model" status of this result bean.<p>
+     *
+     * @param isCopyModel true if this result should be marked as a copy model
+     */
+    public void setIsCopyModel(boolean isCopyModel) {
+
+        m_isCopyModel = isCopyModel;
     }
 
     /**
@@ -188,12 +322,22 @@ public class CmsResultItemBean extends CmsListInfoBean implements I_CmsHasTitle,
 
     /**
      * Sets the "is preset" flag.<p>
-     * 
-     * @param preset the "is preset" flag 
+     *
+     * @param preset the "is preset" flag
      */
     public void setPreset(boolean preset) {
 
         m_isPreset = preset;
+    }
+
+    /**
+     * Sets the raw title.<p>
+     *
+     * @param rawTitle the raw title
+     */
+    public void setRawTitle(String rawTitle) {
+
+        m_rawTitle = rawTitle;
     }
 
     /**
@@ -207,21 +351,33 @@ public class CmsResultItemBean extends CmsListInfoBean implements I_CmsHasTitle,
     }
 
     /**
-     * @see org.opencms.gwt.shared.CmsListInfoBean#setSubTitle(java.lang.String)
-     */
-    @Override
-    public void setSubTitle(String subTitle) {
-
-        setDescription(subTitle);
-    }
-
-    /**
      * Sets the resource type name.<p>
-     * 
+     *
      * @param type the resource type name to set
      */
     public void setType(String type) {
 
-        m_type = type;
+        setResourceType(type);
     }
+
+    /**
+     * Sets the name of the user who last modified the resource.<p>
+     *
+     * @param userLastModified a user name
+     */
+    public void setUserLastModified(String userLastModified) {
+
+        m_userLastModified = userLastModified;
+    }
+
+    /**
+     * Sets the link for displaying the resource.<p>
+     *
+     * @param viewLink the link for displaying the
+     */
+    public void setViewLink(String viewLink) {
+
+        m_viewLink = viewLink;
+    }
+
 }

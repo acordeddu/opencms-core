@@ -1,0 +1,153 @@
+@external cmsState;
+
+div>div.fader{
+	right: 20px;
+	cursor: text;
+	top: 0px;
+}
+div.hasUpload > div.fader{
+	right: 40px;
+}
+.fieldBox{
+	border: 1px solid #bbbbbb;
+	position:relative;
+
+}
+
+div.galleryField {
+	display: flex;
+	gap: 3px;
+}
+
+div.galleryField input[type="text"]{
+	border: none;
+    box-shadow: none;
+    outline: none;
+    color: value("constants.css.textColor");
+    height: value("constants.css.inputInnerHeight");
+    padding: 0;
+    width:100%;
+    margin:0px;
+}
+
+div.galleryField .rightBlock {
+	flex: 1;
+	display: flex;
+	gap: 3px;
+	flex-direction: column;
+}
+
+.galleryField.hasImage{
+	height: 140px;
+	position: relative;
+}
+div.inputContainer{
+	margin: 0px 21px 0px 4px;
+	padding: 0px;
+}
+.hasUpload > div.inputContainer{
+	margin-right: 41px;	
+}
+
+div.galleryField input[type="text"]:focus{
+	box-shadow: none;
+    outline: none;
+}
+div.opener{
+	position: absolute;
+	right: 6px;
+	top: 6px;
+}
+div.uploadButton{
+	display:none;
+}
+div.hasUpload > div.uploadButton{
+	display: inline-block;
+	height: auto;
+	width: auto;
+	position: absolute;
+	top: 6px;
+	right: 26px;
+}
+
+div.fieldBox > div.uploadButton  input {
+	height: auto;
+	width: auto;
+	font-size: 200px;
+	line-height: 200px;	
+}
+.resourceInfo{
+	min-height: 40px;
+	flex: 1;
+}
+
+.resourceInfo > *, .resourceInfo > * > * {
+	height: 100%;
+}
+
+.resourceInfo:empty{
+	display:none;
+}
+
+.hasImage .fieldBox{
+
+}
+
+.hasImage .resourceInfo > div{
+}
+
+div.imagePreview {
+	border: 1px solid #bbbbbb;
+	width: auto;
+	text-align: center;
+	display: none;
+	overflow: hidden;
+	position: relative;
+}
+
+@def BG eval("\"repeating-conic-gradient(#ddd 0% 25%, #fff 0% 50%)\"");
+
+.rightBlock {}
+div.imagePreview > div{ 
+
+	width: 165px;
+	height: 140px;
+	background-image: BG;
+	background-size: 10px 10px;
+    background-position: 0 0, 5px 5px;
+
+	text-align: center;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+}
+
+
+
+div.imagePreview img {
+	margin: auto;
+	width: 100%;
+	height: 100%;
+	object-fit: scale-down;
+}
+
+div.imagePreview img[src*=".svg"] {
+	object-fit: contain;
+}
+
+.hasImage div.imagePreview {
+	display: block;	
+}
+
+div.uploadDropZone.dropZoneHover{
+	background-image: linear-gradient(to right, #ffa0ae 0%, #ffb2bc 81%, #e8d5d8 100%) !important;
+}
+
+div.formats{
+	height: auto;
+	width: auto;
+	position: relative;
+}
+	
+div.descriptionField{
+}

@@ -23,8 +23,13 @@
 	nicename?,
 	group?, 
 	class?, 
+	import-script?,
+	(site|import-site)?,
+	export-mode?,
 	description?,
 	version,
+	autoincrement?,
+	checkpoint-time?,
 	authorname?,
 	authoremail?,
 	datecreated?,
@@ -33,6 +38,7 @@
 	dependencies?,
 	exportpoints?,
 	resources?,
+	excluderesources?,
 	parameters?,
 	resourcetypes?,
 	explorertypes?
@@ -61,6 +67,34 @@
 # code on certain system events, like startup or shutdown.
 -->
 <!ELEMENT class (#PCDATA)>
+
+<!--
+# The optional import script.
+# This is a script for the CMSShell which will be executed when the module is imported.
+-->
+<!ELEMENT import-script (#PCDATA)>
+
+<!--
+# The optional import site.
+# This is set as the site root when exporting/importing the module, and thus is only useful 
+# for modules which don't keep all their files under /system/ (e.g. content modules). 
+-->
+<!ELEMENT import-site (#PCDATA)>
+
+<!ELEMENT site (#PCDATA)>
+
+<!--
+# The optional export mode.
+# This specifies how the module is exported. If not specified, the default mode is used. 
+# Additionally the "reduced" mode is available. It does not export all meta-data. I.e., it omits 
+# information on users and last modified information.
+# This may help to reduce merge conflicts when you use a version control system for your modules
+# (e.g. git).
+-->
+<!ELEMENT export-mode EMPTY>
+<!ATTLIST export-mode
+ 	name (reduced|REDUCED|default|DEFAULT) #REQUIRED
+>
 
 <!--
 # The (optional) description of the module.
@@ -117,6 +151,19 @@
 <!ATTLIST dependency 
 	name CDATA #REQUIRED
 	version CDATA #IMPLIED>
+	
+	
+<!-- 
+# Value for the auto-increment mode: true or false.
+# If set to true, the module's version will be incremented on export if any of the current module resources
+# have been changed since the checkpoint time. 
+-->  	
+<!ELEMENT autoincrement (#PCDATA)>
+
+<!--
+# The timestamp (string representation of a Java long) used for comparison by the auto-increment mode. 
+-->
+<!ELEMENT checkpoint-time (#PCDATA)>	
 
 <!--
 # The (optional) export points of the module.
@@ -144,6 +191,20 @@
 <!ATTLIST resource uri CDATA #REQUIRED>
 
 <!--
+# The (optional) resources that should be excluded by the module.
+# Excluding resources can be used to exclude specific files or subfolders from the module
+# resources.
+# Any VFS resource configured here with it's uri is considered to be not part of the module,
+# even if it would be part of it concerning the resources nodes.
+# If a folder name is given all resources in the folder are also excluded.
+# If a module is exported, only resources that belong to the module resources and NOT to the
+# excluded resources are exported together with the module,
+# the same goes for importing.
+# If a module is deleted, the excluded resources will remain.
+-->	
+<!ELEMENT excluderesources (resource*)>
+
+<!--
 # The (optional) module parameters.
 # A module parameter is a simple key / value pair.
 # The information provided in the parameters can be used for example to
@@ -154,9 +215,7 @@
 <!ATTLIST param name CDATA #REQUIRED>
 
 <!--
-# Settings for the new resource dialog and the contextmenus in the explorer view.
-# Configure which options are shown in the new resource dialog and if resources are 
-# visible and editable depending on the current users group(s). The defaultaccesscontrol
+# The accesscontrol
 # describes the default access control settings for all resourcestypes
 -->
 <!ELEMENT explorertypes (explorertype+)>	

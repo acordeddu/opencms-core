@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -14,12 +14,12 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * Lesser General Public License for more details.
  *
- * For further information about Alkacon Software GmbH, please see the
- * company website: http://www.alkacon.com
+ * For further information about Alkacon Software GmbH & Co. KG, please see the
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -35,6 +35,7 @@ import org.opencms.i18n.CmsLocaleManager;
 import org.opencms.jsp.util.CmsJspContentAccessBean;
 import org.opencms.main.CmsException;
 import org.opencms.main.CmsIllegalArgumentException;
+import org.opencms.main.CmsLog;
 import org.opencms.main.OpenCms;
 import org.opencms.util.CmsStringUtil;
 import org.opencms.xml.I_CmsXmlDocument;
@@ -46,13 +47,18 @@ import java.util.Locale;
 import javax.servlet.jsp.JspException;
 import javax.servlet.jsp.PageContext;
 
+import org.apache.commons.logging.Log;
+
 /**
- * Implementation of the <code>&lt;cms:formatter var="..." val="..." /&gt;</code> tag, 
+ * Implementation of the <code>&lt;cms:formatter var="..." val="..." /&gt;</code> tag,
  * used to access and display XML content item information in a formatter.<p>
- * 
- * @since 8.0.0 
+ *
+ * @since 8.0.0
  */
 public class CmsJspTagFormatter extends CmsJspScopedVarBodyTagSuport {
+
+    /** The log object for this class. */
+    private static final Log LOG = CmsLog.getLog(CmsJspTagFormatter.class);
 
     /** Serial version UID required for safe serialization. */
     private static final long serialVersionUID = -8232834808735187624L;
@@ -72,11 +78,14 @@ public class CmsJspTagFormatter extends CmsJspScopedVarBodyTagSuport {
     /** Reference to the currently selected locale. */
     private Locale m_locale;
 
+    /** Optional name for the attribute that provides direct access to the RDFA map. */
+    private String m_rdfa;
+
     /** Optional name for the attribute that provides direct access to the content value map. */
     private String m_value;
 
     /**
-     * Empty constructor, required for JSP tags.<p> 
+     * Empty constructor, required for JSP tags.<p>
      */
     public CmsJspTagFormatter() {
 
@@ -84,11 +93,11 @@ public class CmsJspTagFormatter extends CmsJspScopedVarBodyTagSuport {
     }
 
     /**
-     * Constructor used when using <code>formatter</code> from scriptlet code.<p> 
-     * 
+     * Constructor used when using <code>formatter</code> from scriptlet code.<p>
+     *
      * @param context the JSP page context
-     * @param locale the locale to use 
-     * 
+     * @param locale the locale to use
+     *
      * @throws JspException in case something goes wrong
      */
     public CmsJspTagFormatter(PageContext context, Locale locale)
@@ -131,8 +140,18 @@ public class CmsJspTagFormatter extends CmsJspScopedVarBodyTagSuport {
     }
 
     /**
+     * Returns the name for the optional attribute that provides direct access to the RDFA map.<p>
+     *
+     * @return the name for the optional attribute that provides direct access to the RDFA map
+     */
+    public String getRdfa() {
+
+        return m_rdfa;
+    }
+
+    /**
      * Returns the name for the optional attribute that provides direct access to the content value map.<p>
-     * 
+     *
      * @return the name for the optional attribute that provides direct access to the content value map
      */
     public String getVal() {
@@ -168,8 +187,22 @@ public class CmsJspTagFormatter extends CmsJspScopedVarBodyTagSuport {
     }
 
     /**
+     * Sets the name for the optional attribute that provides direct access to the RDFA map.<p>
+     *
+     * @param rdfa the name for the optional attribute that provides direct access to the RDFA map
+     */
+    public void setRdfa(String rdfa) {
+
+        if (CmsStringUtil.isNotEmptyOrWhitespaceOnly(rdfa)) {
+            m_rdfa = rdfa.trim();
+        } else {
+            m_rdfa = rdfa;
+        }
+    }
+
+    /**
      * Sets the name for the optional attribute that provides direct access to the content value map.<p>
-     * 
+     *
      * @param val the name for the optional attribute that provides direct access to the content value map
      */
     public void setVal(String val) {
@@ -182,8 +215,8 @@ public class CmsJspTagFormatter extends CmsJspScopedVarBodyTagSuport {
     }
 
     /**
-     * Initializes this formatter tag.<p> 
-     * 
+     * Initializes this formatter tag.<p>
+     *
      * @throws JspException in case something goes wrong
      */
     protected void init() throws JspException {
@@ -196,6 +229,13 @@ public class CmsJspTagFormatter extends CmsJspScopedVarBodyTagSuport {
             // get the resource name from the selected container
             m_element = OpenCms.getADEManager().getCurrentElement(pageContext.getRequest());
             m_element.initResource(m_cms);
+            if (m_cms.getRequestContext().getCurrentProject().isOnlineProject()
+                && !m_element.isReleasedAndNotExpired()) {
+                throw new CmsException(
+                    Messages.get().container(
+                        Messages.ERR_RESOURCE_IS_NOT_RELEASE_OR_EXPIRED_1,
+                        m_element.getResource().getRootPath()));
+            }
             if (m_locale == null) {
                 // no locale set, use locale from users request context
                 m_locale = m_cms.getRequestContext().getLocale();
@@ -203,8 +243,12 @@ public class CmsJspTagFormatter extends CmsJspScopedVarBodyTagSuport {
 
             // load content and store it
             CmsJspContentAccessBean bean;
-            if (m_element.isInMemoryOnly() && (m_element.getResource() instanceof CmsFile)) {
-                I_CmsXmlDocument xmlContent = CmsXmlContentFactory.unmarshal(m_cms, (CmsFile)m_element.getResource());
+            if ((m_element.isInMemoryOnly() || m_element.isTemporaryContent())
+                && (m_element.getResource() instanceof CmsFile)) {
+                I_CmsXmlDocument xmlContent = CmsXmlContentFactory.unmarshal(
+                    m_cms,
+                    m_element.getResource(),
+                    pageContext.getRequest());
                 bean = new CmsJspContentAccessBean(m_cms, m_locale, xmlContent);
             } else {
                 bean = new CmsJspContentAccessBean(m_cms, m_locale, m_element.getResource());
@@ -216,7 +260,13 @@ public class CmsJspTagFormatter extends CmsJspScopedVarBodyTagSuport {
                 storeAttribute(getVal(), bean.getValue());
             }
 
+            if (m_rdfa != null) {
+                // if the optional "rdfa" parameter has been set, store the rdfa map of the content in the page context scope
+                storeAttribute(getRdfa(), bean.getRdfa());
+            }
+
         } catch (CmsException e) {
+            LOG.error(e.getLocalizedMessage(), e);
             m_controller.setThrowable(e, m_cms.getRequestContext().getUri());
             throw new JspException(e);
         }

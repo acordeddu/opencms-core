@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -14,12 +14,12 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * Lesser General Public License for more details.
  *
- * For further information about Alkacon Software GmbH, please see the
- * company website: http://www.alkacon.com
+ * For further information about Alkacon Software GmbH & Co. KG, please see the
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -36,8 +36,8 @@ import org.opencms.workplace.tools.A_CmsHtmlIconButton;
 
 /**
  * Displays an icon action for dependency lists.<p>
- * 
- * @since 6.0.0 
+ *
+ * @since 6.0.0
  */
 public class CmsDependencyIconAction extends CmsListResourceIconAction {
 
@@ -49,20 +49,21 @@ public class CmsDependencyIconAction extends CmsListResourceIconAction {
 
     /**
      * Default Constructor.<p>
-     * 
+     *
      * @param id the unique id
      * @param type the type of the icon
      * @param cms the cms context
      */
     public CmsDependencyIconAction(String id, CmsDependencyIconActionType type, CmsObject cms) {
 
-        super(id + type.getId(), CmsGroupDependenciesList.LIST_COLUMN_TYPE, cms);
+        super(id + type.getId(), CmsGroupPrincipalDependenciesList.LIST_COLUMN_TYPE, cms);
         m_type = type;
     }
 
     /**
      * @see org.opencms.workplace.list.CmsListDirectAction#buttonHtml(org.opencms.workplace.CmsWorkplace)
      */
+    @Override
     public String buttonHtml(CmsWorkplace wp) {
 
         if (!isVisible()) {
@@ -89,6 +90,7 @@ public class CmsDependencyIconAction extends CmsListResourceIconAction {
     /**
      * @see org.opencms.workplace.tools.A_CmsHtmlIconButton#getIconPath()
      */
+    @Override
     public String getIconPath() {
 
         if (m_type == CmsDependencyIconActionType.USER) {
@@ -113,6 +115,7 @@ public class CmsDependencyIconAction extends CmsListResourceIconAction {
     /**
      * @see org.opencms.workplace.tools.A_CmsHtmlIconButton#isVisible()
      */
+    @Override
     public boolean isVisible() {
 
         boolean visible = false;

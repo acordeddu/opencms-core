@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -15,11 +15,11 @@
  * Lesser General Public License for more details.
  *
  * For further information about Alkacon Software, please see the
- * company website: http://www.alkacon.com
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -41,7 +41,7 @@ import com.google.gwt.user.client.ui.Label;
 
 /**
  * Single line label with text truncation and tool tip.<p>
- * 
+ *
  * @since 8.0.0
  */
 public class CmsLabel extends Label implements I_CmsTruncable {
@@ -53,10 +53,10 @@ public class CmsLabel extends Label implements I_CmsTruncable {
 
         /**
          * Should return the title, or null if no title should be displayed.<p>
-         * 
-         * @param originalText the original untruncated text stored in the label 
-         *  
-         * @return the title to display, or null if no title should be displayed 
+         *
+         * @param originalText the original untruncated text stored in the label
+         *
+         * @return the title to display, or null if no title should be displayed
          */
         String getTitle(String originalText);
     }
@@ -78,29 +78,29 @@ public class CmsLabel extends Label implements I_CmsTruncable {
      */
     public CmsLabel() {
 
-        addStyleName(I_CmsLayoutBundle.INSTANCE.generalCss().truncatingLabel());
+        setStyleName(I_CmsLayoutBundle.INSTANCE.generalCss().truncatingLabel());
     }
 
     /**
      * Creates an empty label using the given element.<p>
-     * 
-     * @param element the element to use 
+     *
+     * @param element the element to use
      */
     public CmsLabel(Element element) {
 
         super(element);
-        addStyleName(I_CmsLayoutBundle.INSTANCE.generalCss().truncatingLabel());
+        setStyleName(I_CmsLayoutBundle.INSTANCE.generalCss().truncatingLabel());
     }
 
     /**
      * Creates a label with the specified text.<p>
-     * 
+     *
      * @param text the new label's text
      */
     public CmsLabel(String text) {
 
         super(text);
-        addStyleName(I_CmsLayoutBundle.INSTANCE.generalCss().truncatingLabel());
+        setStyleName(I_CmsLayoutBundle.INSTANCE.generalCss().truncatingLabel());
     }
 
     /**
@@ -115,9 +115,9 @@ public class CmsLabel extends Label implements I_CmsTruncable {
 
     /**
      * Sets the inner HTML of the label.<p>
-     * 
+     *
      * Avoid using this, better use {@link #setText(String)}<p>
-     * 
+     *
      * @param html the HTML to set
      */
     public void setHTML(String html) {
@@ -133,13 +133,13 @@ public class CmsLabel extends Label implements I_CmsTruncable {
 
         super.setText(text);
         m_originalText = text;
-        setTitle(getTitle());
+        setTitle(getTitle(true));
     }
 
     /**
      * Sets the title generator.<p>
-     * 
-     * @param titleGen the new title generator 
+     *
+     * @param titleGen the new title generator
      */
     public void setTitleGenerator(I_TitleGenerator titleGen) {
 
@@ -158,8 +158,8 @@ public class CmsLabel extends Label implements I_CmsTruncable {
 
     /**
      * Updates the title.<p>
-     * 
-     * @param truncating true if the label is being truncated 
+     *
+     * @param truncating true if the label is being truncated
      */
     public void updateTitle(boolean truncating) {
 
@@ -174,18 +174,22 @@ public class CmsLabel extends Label implements I_CmsTruncable {
 
     /**
      * Returns the title to be displayed, which is either produced by a title generator,
-     * or is equal to the original text if no title generator is set and the label is being 
+     * or is equal to the original text if no title generator is set and the label is being
      * truncated.<p>
-     * 
-     * @param truncating true if the label is being truncated 
-     * 
-     * @return the title to display 
+     *
+     * @param truncating true if the label is being truncated
+     *
+     * @return the title to display
      */
     protected String getTitle(boolean truncating) {
 
         if (m_titleGenerator != null) {
             return m_titleGenerator.getTitle(m_originalText);
         }
-        return m_originalText;
+        if (truncating) {
+            return getText();
+        } else {
+            return super.getTitle();
+        }
     }
 }

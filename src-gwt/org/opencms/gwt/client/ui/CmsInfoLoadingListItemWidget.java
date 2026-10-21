@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -15,11 +15,11 @@
  * Lesser General Public License for more details.
  *
  * For further information about Alkacon Software, please see the
- * company website: http://www.alkacon.com
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -29,7 +29,7 @@ package org.opencms.gwt.client.ui;
 
 import org.opencms.gwt.client.Messages;
 import org.opencms.gwt.client.ui.I_CmsButton.ButtonStyle;
-import org.opencms.gwt.client.ui.css.I_CmsImageBundle;
+import org.opencms.gwt.client.ui.I_CmsButton.Size;
 import org.opencms.gwt.client.util.I_CmsAdditionalInfoLoader;
 import org.opencms.gwt.shared.CmsAdditionalInfoBean;
 import org.opencms.gwt.shared.CmsListInfoBean;
@@ -45,42 +45,13 @@ import com.google.gwt.user.client.rpc.AsyncCallback;
 /**
  * This class extends the basic list item widget with the ability to load additional info items
  * asnchronously via RPC.<p>
- * 
- * The loaded additional info items will be displayed after the additional info items contained in the 
- * bean which is passed into the constructor.<p>  
- * 
+ *
+ * The loaded additional info items will be displayed after the additional info items contained in the
+ * bean which is passed into the constructor.<p>
+ *
  * @since 8.0.0
  */
 public class CmsInfoLoadingListItemWidget extends CmsListItemWidget {
-
-    /**
-     * Creates a new list item widget from an info bean.<p>
-     * 
-     * @param infoBean the bean containing the information to display 
-     */
-    public CmsInfoLoadingListItemWidget(CmsListInfoBean infoBean) {
-
-        super(infoBean);
-    }
-
-    /** Flag which keeps track of whether the additional info panel is shown. */
-    protected boolean m_additionalInfoOpen;
-
-    /** Flag which keeps track of whether additional info items are currently being loaded. */
-    protected boolean m_loading;
-
-    /**
-     * Sets the loader for additional info items.<p>
-     * 
-     * @param loader the loader for additional info items 
-     */
-    public void setAdditionalInfoLoader(I_CmsAdditionalInfoLoader loader) {
-
-        m_additionalInfoLoader = loader;
-    }
-
-    /** The loader for additional info items. */
-    protected I_CmsAdditionalInfoLoader m_additionalInfoLoader = new DummyAdditionalInfoLoader();
 
     /**
      * The default loader for additional info items, which does nothing.
@@ -96,23 +67,36 @@ public class CmsInfoLoadingListItemWidget extends CmsListItemWidget {
         }
     }
 
+    /** Flag which keeps track of whether the additional info panel is shown. */
+    protected boolean m_additionalInfoOpen;
+
+    /** Flag which keeps track of whether additional info items are currently being loaded. */
+    protected boolean m_loading;
+
+    /** The loader for additional info items. */
+    protected I_CmsAdditionalInfoLoader m_additionalInfoLoader = new DummyAdditionalInfoLoader();
+
     /** The dynamically loaded additional info items. */
     private List<AdditionalInfoItem> m_dynamicInfo = new ArrayList<AdditionalInfoItem>();
 
     /**
-     * Sets the dynamically loaded additional info items.<p>
-     * 
-     * @param info the dynamically loaded additional info items 
+     * Creates a new list item widget from an info bean.<p>
+     *
+     * @param infoBean the bean containing the information to display
      */
-    protected void setDynamicInfo(List<AdditionalInfoItem> info) {
+    public CmsInfoLoadingListItemWidget(CmsListInfoBean infoBean) {
 
-        for (AdditionalInfoItem item : m_dynamicInfo) {
-            item.removeFromParent();
-        }
-        for (AdditionalInfoItem item : info) {
-            m_dynamicInfo.add(item);
-            m_additionalInfo.add(item);
-        }
+        super(infoBean);
+    }
+
+    /**
+     * Sets the loader for additional info items.<p>
+     *
+     * @param loader the loader for additional info items
+     */
+    public void setAdditionalInfoLoader(I_CmsAdditionalInfoLoader loader) {
+
+        m_additionalInfoLoader = loader;
     }
 
     /**
@@ -122,10 +106,9 @@ public class CmsInfoLoadingListItemWidget extends CmsListItemWidget {
     protected void initAdditionalInfo(final CmsListInfoBean infoBean) {
 
         if (infoBean.hasAdditionalInfo()) {
-            m_openClose = new CmsPushButton(
-                I_CmsImageBundle.INSTANCE.style().triangleRight(),
-                I_CmsImageBundle.INSTANCE.style().triangleDown());
-            m_openClose.setButtonStyle(ButtonStyle.TRANSPARENT, null);
+            m_openClose = new CmsPushButton(I_CmsButton.TRIANGLE_RIGHT, I_CmsButton.TRIANGLE_DOWN);
+            m_openClose.setButtonStyle(ButtonStyle.FONT_ICON, null);
+            m_openClose.setSize(Size.small);
             m_titleRow.insert(m_openClose, 0);
             m_openClose.addClickHandler(new ClickHandler() {
 
@@ -160,7 +143,6 @@ public class CmsInfoLoadingListItemWidget extends CmsListItemWidget {
                                 public void onSuccess(List<AdditionalInfoItem> result) {
 
                                     m_openClose.enable();
-                                    setDynamicInfo(result);
                                     m_loading = false;
                                     m_additionalInfoOpen = true;
                                     setDynamicInfo(result);
@@ -176,6 +158,23 @@ public class CmsInfoLoadingListItemWidget extends CmsListItemWidget {
                 m_additionalInfo.add(new AdditionalInfoItem(additionalInfo));
             }
         }
+    }
+
+    /**
+     * Sets the dynamically loaded additional info items.<p>
+     *
+     * @param info the dynamically loaded additional info items
+     */
+    protected void setDynamicInfo(List<AdditionalInfoItem> info) {
+
+        for (AdditionalInfoItem item : m_dynamicInfo) {
+            item.removeFromParent();
+        }
+        for (AdditionalInfoItem item : info) {
+            m_dynamicInfo.add(item);
+            m_additionalInfo.add(item);
+        }
+        updateTruncation();
     }
 
 }

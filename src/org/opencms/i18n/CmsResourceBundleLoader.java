@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -15,11 +15,11 @@
  * Lesser General Public License for more details.
  *
  * For further information about Alkacon Software, please see the
- * company website: http://www.alkacon.com
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -34,56 +34,55 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
-import java.security.AccessControlException;
-import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.MissingResourceException;
 import java.util.ResourceBundle;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Resource bundle loader for property based resource bundles from OpenCms that has a flushable cache.<p>
- * 
- * The main reason for implementing this is that the Java default resource bundle loading mechanism 
- * provided by {@link java.util.ResourceBundle#getBundle(java.lang.String, java.util.Locale)} uses a 
- * cache that can NOT be flushed by any standard means. This means for every simple change in a resource 
- * bundle, the Java VM (and the webapp container that runs OpenCms) must be restarted. 
+ *
+ * The main reason for implementing this is that the Java default resource bundle loading mechanism
+ * provided by {@link java.util.ResourceBundle#getBundle(java.lang.String, java.util.Locale)} uses a
+ * cache that can NOT be flushed by any standard means. This means for every simple change in a resource
+ * bundle, the Java VM (and the webapp container that runs OpenCms) must be restarted.
  * This non-standard resource bundle loader avoids this by providing a flushable cache.<p>
- * 
- * In case the requested bundle can not be found, a fallback mechanism to 
- * {@link java.util.ResourceBundle#getBundle(java.lang.String, java.util.Locale)} is used to look up 
+ *
+ * In case the requested bundle can not be found, a fallback mechanism to
+ * {@link java.util.ResourceBundle#getBundle(java.lang.String, java.util.Locale)} is used to look up
  * the resource bundle with the Java default resource bundle loading mechanism.<p>
- * 
+ *
  * @see java.util.ResourceBundle
  * @see java.util.PropertyResourceBundle
  * @see org.opencms.i18n.CmsPropertyResourceBundle
- * 
- * @since 6.2.0 
+ *
+ * @since 6.2.0
  */
 public final class CmsResourceBundleLoader {
 
-    /** 
+    /**
      * Cache key for the ResourceBundle cache.<p>
-     * 
-     * Resource bundles are keyed by the combination of bundle name, locale, and class loader. 
+     *
+     * Resource bundles are keyed by the combination of bundle name, locale, and class loader.
      */
     private static class BundleKey {
 
+        /** The base bundle name. */
         private String m_baseName;
+
+        /** The hash code. */
         private int m_hashcode;
+
+        /** The locale. */
         private Locale m_locale;
 
         /**
-         * Create an ampty bundly key.<p>
-         */
-        BundleKey() {
-
-            // noop
-        }
-
-        /**
          * Create an initialized bundle key.<p>
-         * 
+         *
          * @param s the base name
          * @param l the locale
          */
@@ -116,9 +115,9 @@ public final class CmsResourceBundleLoader {
 
         /**
          * Checks if the given base name is identical to the base name of this bundle key.<p>
-         * 
+         *
          * @param baseName the base name to compare
-         * 
+         *
          * @return <code>true</code> if the given base name is identical to the base name of this bundle key
          */
         public boolean isSameBase(String baseName) {
@@ -137,7 +136,7 @@ public final class CmsResourceBundleLoader {
 
         /**
          * Initialize this bundle key.<p>
-         * 
+         *
          * @param s the base name
          * @param l the locale
          */
@@ -156,13 +155,19 @@ public final class CmsResourceBundleLoader {
     private static Locale m_lastDefaultLocale;
 
     /** Cache lookup key to avoid having to a new one for every getBundle() call. */
-    private static BundleKey m_lookupKey = new BundleKey();
+    // private static BundleKey m_lookupKey = new BundleKey();
 
     /**  The permanent list resource bundle cache. */
-    private static Map<String, CmsListResourceBundle> m_permanentCache;
+    private static Map<String, I_CmsResourceBundle> m_permanentCache;
 
     /** Singleton cache entry to represent previous failed lookups. */
     private static final ResourceBundle NULL_ENTRY = new CmsListResourceBundle();
+
+    static {
+        m_bundleCache = new ConcurrentHashMap<BundleKey, ResourceBundle>();
+        m_lastDefaultLocale = Locale.getDefault();
+        m_permanentCache = new ConcurrentHashMap<String, I_CmsResourceBundle>();
+    }
 
     /**
      * Hides the public constructor.<p>
@@ -174,12 +179,12 @@ public final class CmsResourceBundleLoader {
 
     /**
      * Adds the specified resource bundle to the permanent cache.<p>
-     * 
+     *
      * @param baseName the raw bundle name, without locale qualifiers
      * @param locale the locale
      * @param bundle the bundle to cache
      */
-    public static synchronized void addBundleToCache(String baseName, Locale locale, CmsListResourceBundle bundle) {
+    public static void addBundleToCache(String baseName, Locale locale, I_CmsResourceBundle bundle) {
 
         String key = baseName;
         if (locale != null) {
@@ -191,56 +196,67 @@ public final class CmsResourceBundleLoader {
     /**
      * Flushes the complete resource bundle cache.<p>
      */
-    public static synchronized void flushBundleCache() {
+    public static void flushBundleCache() {
 
-        m_bundleCache.clear();
-
+        synchronized (m_bundleCache) {
+            m_bundleCache.clear();
+        }
         // We are not flushing the permanent cache on clear!
         // Reason: It's not 100% clear if the cache would be filled correctly from the XML after a flush.
-        // For example if a reference to an XML content object is held, than after a clear cache, this 
+        // For example if a reference to an XML content object is held, than after a clear cache, this
         // object would not have a working localization since the schema and handler would not be initialized again.
         // For XML contents that are unmarshalled after the clear cache the localization would work, but it
         // seems likely that old references are held.
-        // On the other hand, if something is changed in the XML, the cache is updated anyway, so we won't be 
-        // stuck with "old" resource bundles that require a server restart. 
+        // On the other hand, if something is changed in the XML, the cache is updated anyway, so we won't be
+        // stuck with "old" resource bundles that require a server restart.
 
         // m_permanentCache.clear();
     }
 
     /**
      * Flushes all variations for the provided bundle from the cache.<p>
-     * 
+     *
      * @param baseName the bundle base name to flush the variations for
+     * @param flushPermanent if true, the cache for additional message bundles will be flushed, too
      */
-    public static synchronized void flushBundleCache(String baseName) {
+    public static void flushBundleCache(String baseName, boolean flushPermanent) {
 
         if (baseName != null) {
-            // first check and clear the bundle cache
-            HashMap<BundleKey, ResourceBundle> bundleCacheNew = new HashMap<BundleKey, ResourceBundle>(
-                m_bundleCache.size());
-            for (Map.Entry<BundleKey, ResourceBundle> entry : m_bundleCache.entrySet()) {
-                if (!entry.getKey().isSameBase(baseName)) {
-                    // entry has a different base name, keep it
-                    bundleCacheNew.put(entry.getKey(), entry.getValue());
+            synchronized (m_bundleCache) {
+
+                // first check and clear the bundle cache
+                Map<BundleKey, ResourceBundle> bundleCacheNew = new ConcurrentHashMap<BundleKey, ResourceBundle>(
+                    m_bundleCache.size());
+                for (Map.Entry<BundleKey, ResourceBundle> entry : m_bundleCache.entrySet()) {
+                    if (!entry.getKey().isSameBase(baseName)) {
+                        // entry has a different base name, keep it
+                        bundleCacheNew.put(entry.getKey(), entry.getValue());
+                    }
+                }
+                if (bundleCacheNew.size() < m_bundleCache.size()) {
+                    // switch caches if only if at least one entry was removed
+                    m_bundleCache = bundleCacheNew;
+                }
+                if (flushPermanent) {
+                    flushPermanentCache(baseName);
                 }
             }
-            if (bundleCacheNew.size() < m_bundleCache.size()) {
-                // switch caches if only if at least one entry was removed
-                m_bundleCache = bundleCacheNew;
-            }
-            // now check and clear the permanent cache
-            HashMap<String, CmsListResourceBundle> permanentCacheNew = new HashMap<String, CmsListResourceBundle>(
-                m_permanentCache.size());
-            for (Map.Entry<String, CmsListResourceBundle> entry : m_permanentCache.entrySet()) {
-                String key = entry.getKey();
-                if (!(key.startsWith(baseName) && ((key.length() == baseName.length()) || (key.charAt(baseName.length()) == '_')))) {
-                    // entry has a different base name, keep it
-                    permanentCacheNew.put(entry.getKey(), entry.getValue());
-                }
-            }
-            if (permanentCacheNew.size() < m_permanentCache.size()) {
-                // switch caches if only if at least one entry was removed
-                m_permanentCache = permanentCacheNew;
+        }
+    }
+
+    /**
+     * Removes bundles with the given base name from the permanent cache.<p>
+     *
+     * @param baseName the bundle base name
+     */
+    public static void flushPermanentCache(String baseName) {
+
+        Set<String> keys = new HashSet<String>(m_permanentCache.keySet());
+        for (String key : keys) {
+            if ((key.startsWith(baseName)
+                && ((key.length() == baseName.length()) || (key.charAt(baseName.length()) == '_')))) {
+                // entry has a the same base name, remove it
+                m_permanentCache.remove(key);
             }
         }
     }
@@ -274,7 +290,7 @@ public final class CmsResourceBundleLoader {
      * ClassLoader.getResource(). If a file is found, then a
      * PropertyResourceBundle is created from the file's contents.</li>
      * </ul>
-     * 
+     *
      * <p>If no resource bundle was found, the default resource bundle loader
      * is used to look for the resource bundle. Class based resource bundles
      * will be found now.<p>
@@ -285,22 +301,22 @@ public final class CmsResourceBundleLoader {
      */
     // This method is synchronized so that the cache is properly
     // handled.
-    public static synchronized ResourceBundle getBundle(String baseName, Locale locale) {
+    public static ResourceBundle getBundle(String baseName, Locale locale) {
 
         // If the default locale changed since the last time we were called,
         // all cache entries are invalidated.
         Locale defaultLocale = Locale.getDefault();
         if (defaultLocale != m_lastDefaultLocale) {
-            m_bundleCache = new HashMap<BundleKey, ResourceBundle>();
-            m_lastDefaultLocale = defaultLocale;
-            if (m_permanentCache == null) {
-                // the permanent cache is not cleared after the default locale changes
-                m_permanentCache = new HashMap<String, CmsListResourceBundle>();
+            synchronized (m_bundleCache) {
+                if (defaultLocale != m_lastDefaultLocale) {
+                    m_bundleCache = new ConcurrentHashMap<BundleKey, ResourceBundle>();
+                    m_lastDefaultLocale = defaultLocale;
+                }
             }
         }
 
         // This will throw NullPointerException if any arguments are null.
-        m_lookupKey.set(baseName, locale);
+        BundleKey m_lookupKey = new BundleKey(baseName, locale);
 
         Object obj = m_bundleCache.get(m_lookupKey);
 
@@ -309,24 +325,28 @@ public final class CmsResourceBundleLoader {
         } else if (obj == NULL_ENTRY) {
             // Lookup has failed previously. Fall through.
         } else {
-            // First, look for a bundle for the specified locale. We don't want
-            // the base bundle this time.
-            boolean wantBase = locale.equals(defaultLocale);
-            ResourceBundle bundle = tryBundle(baseName, locale, wantBase);
+            synchronized (m_bundleCache) {
+                obj = m_bundleCache.get(m_lookupKey);
+                if (obj instanceof ResourceBundle) {
+                    // check the bundle again
+                    return (ResourceBundle)obj;
+                }
+                // First, look for a bundle for the specified locale. We don't want
+                // the base bundle this time.
+                boolean wantBase = locale.equals(m_lastDefaultLocale);
+                ResourceBundle bundle = tryBundle(baseName, locale, wantBase);
 
-            // Try the default locale if necessary
-            if ((bundle == null) && !locale.equals(defaultLocale)) {
-                bundle = tryBundle(baseName, defaultLocale, true);
-            }
+                // Try the default locale if necessary
+                if ((bundle == null) && !locale.equals(m_lastDefaultLocale)) {
+                    bundle = tryBundle(baseName, m_lastDefaultLocale, true);
+                }
 
-            BundleKey key = new BundleKey(baseName, locale);
-            if (bundle == null) {
-                // Cache the fact that this lookup has previously failed.
-                m_bundleCache.put(key, NULL_ENTRY);
-            } else {
-                // Cache the result and return it.
-                m_bundleCache.put(key, bundle);
-                return bundle;
+                BundleKey key = new BundleKey(baseName, locale);
+                if (bundle != null) {
+                    // Cache the result and return it.
+                    m_bundleCache.put(key, bundle);
+                    return bundle;
+                }
             }
         }
 
@@ -350,7 +370,10 @@ public final class CmsResourceBundleLoader {
             String resourceName = localizedName.replace('.', '/') + ".properties";
             URL url = CmsResourceBundleLoader.class.getClassLoader().getResource(resourceName);
 
-            if (url != null) {
+            I_CmsResourceBundle additionalBundle = m_permanentCache.get(localizedName);
+            if (additionalBundle != null) {
+                result = additionalBundle.getClone();
+            } else if (url != null) {
                 // the resource was found on the file system
                 InputStream is = null;
                 String path = CmsFileUtil.normalizePath(url);
@@ -359,12 +382,12 @@ public final class CmsResourceBundleLoader {
                     // try to load the resource bundle from a file, NOT with the resource loader first
                     // this is important since using #getResourceAsStream() may return cached results,
                     // for example Tomcat by default does cache all resources loaded by the class loader
-                    // this means a changed resource bundle file is not loaded 
+                    // this means a changed resource bundle file is not loaded
                     is = new FileInputStream(file);
                 } catch (IOException ex) {
                     // this will happen if the resource is contained for example in a .jar file
                     is = CmsResourceBundleLoader.class.getClassLoader().getResourceAsStream(resourceName);
-                } catch (AccessControlException acex) {
+                } catch (SecurityException acex) {
                     // fixed bug #1550
                     // this will happen if the resource is contained for example in a .jar file
                     // and security manager is turned on.
@@ -372,12 +395,6 @@ public final class CmsResourceBundleLoader {
                 }
                 if (is != null) {
                     result = new CmsPropertyResourceBundle(is);
-                }
-            } else {
-                // no found with class loader, so try the injected list cache
-                CmsListResourceBundle listBundle = m_permanentCache.get(localizedName);
-                if (listBundle != null) {
-                    result = listBundle.getClone();
                 }
             }
         } catch (IOException ex) {
@@ -405,40 +422,15 @@ public final class CmsResourceBundleLoader {
      */
     private static ResourceBundle tryBundle(String baseName, Locale locale, boolean wantBase) {
 
-        String language = locale.getLanguage();
-        String country = locale.getCountry();
-        String variant = locale.getVariant();
-
-        int baseLen = baseName.length();
-
-        // Build up a StringBuffer containing the complete bundle name, fully
-        // qualified by locale.
-        StringBuffer sb = new StringBuffer(baseLen + variant.length() + 7);
-
-        sb.append(baseName);
-
-        if (language.length() > 0) {
-            sb.append('_');
-            sb.append(language);
-
-            if (country.length() > 0) {
-                sb.append('_');
-                sb.append(country);
-
-                if (variant.length() > 0) {
-                    sb.append('_');
-                    sb.append(variant);
-                }
-            }
-        }
-
-        // Now try to load bundles, starting with the most specialized name.
-        // Build up the parent chain as we go.
-        String bundleName = sb.toString();
         I_CmsResourceBundle first = null; // The most specialized bundle.
         I_CmsResourceBundle last = null; // The least specialized bundle.
 
-        while (true) {
+        List<String> bundleNames = CmsLocaleManager.getLocaleVariants(baseName, locale, true, true);
+        for (String bundleName : bundleNames) {
+            // break if we would try the base bundle, but we do not want it directly
+            if (bundleName.equals(baseName) && !wantBase && (first == null)) {
+                break;
+            }
             I_CmsResourceBundle foundBundle = tryBundle(bundleName);
             if (foundBundle != null) {
                 if (first == null) {
@@ -452,16 +444,7 @@ public final class CmsResourceBundleLoader {
 
                 last = foundBundle;
             }
-            int idx = bundleName.lastIndexOf('_');
-            // Try the non-localized base name only if we already have a
-            // localized child bundle, or wantBase is true.
-            if ((idx > baseLen) || ((idx == baseLen) && ((first != null) || wantBase))) {
-                bundleName = bundleName.substring(0, idx);
-            } else {
-                break;
-            }
         }
-
         return (ResourceBundle)first;
     }
 }

@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -14,12 +14,12 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * Lesser General Public License for more details.
  *
- * For further information about Alkacon Software GmbH, please see the
- * company website: http://www.alkacon.com
+ * For further information about Alkacon Software GmbH & Co. KG, please see the
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -36,12 +36,12 @@ import org.apache.commons.logging.Log;
 
 /**
  * Abstract implementation for the <code>{@link I_CmsStaticExportHandler}</code> interface.<p>
- * 
- * This handler is most suitable for dynamic sites that use the static export 
+ *
+ * This handler is most suitable for dynamic sites that use the static export
  * as optimization for non-dynamic content.<p>
- * 
- * @since 6.0.0 
- * 
+ *
+ * @since 6.0.0
+ *
  * @see I_CmsStaticExportHandler
  */
 public abstract class A_CmsOnDemandStaticExportHandler extends A_CmsStaticExportHandler {
@@ -61,15 +61,16 @@ public abstract class A_CmsOnDemandStaticExportHandler extends A_CmsStaticExport
             count++;
             try {
                 if (LOG.isInfoEnabled()) {
-                    LOG.info(Messages.get().getBundle().key(
-                        Messages.LOG_WAITING_STATIC_EXPORT_3,
-                        getClass().getName(),
-                        new Integer(count),
-                        new Integer(CmsStaticExportManager.HANDLER_FINISH_TIME)));
+                    LOG.info(
+                        Messages.get().getBundle().key(
+                            Messages.LOG_WAITING_STATIC_EXPORT_3,
+                            getClass().getName(),
+                            Integer.valueOf(count),
+                            Integer.valueOf(CmsStaticExportManager.HANDLER_FINISH_TIME)));
                 }
                 Thread.sleep(1000);
             } catch (InterruptedException e) {
-                // if interrupted we ignore the handler, this will produce some log messages but should be ok 
+                // if interrupted we ignore the handler, this will produce some log messages but should be ok
                 count = CmsStaticExportManager.HANDLER_FINISH_TIME;
             }
         }
@@ -78,7 +79,7 @@ public abstract class A_CmsOnDemandStaticExportHandler extends A_CmsStaticExport
             // if the handler is still busy write a warning to the log and exit
             Object[] arguments = new Object[] {
                 publishHistoryId,
-                new Integer(CmsStaticExportManager.HANDLER_FINISH_TIME)};
+                Integer.valueOf(CmsStaticExportManager.HANDLER_FINISH_TIME)};
             LOG.error(Messages.get().getBundle().key(Messages.LOG_SCRUBBING_FOLDER_FAILED_2, arguments));
 
             return;

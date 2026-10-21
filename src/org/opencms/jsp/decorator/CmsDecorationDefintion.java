@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -14,12 +14,12 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * Lesser General Public License for more details.
  *
- * For further information about Alkacon Software GmbH, please see the
- * company website: http://www.alkacon.com
+ * For further information about Alkacon Software GmbH & Co. KG, please see the
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -49,8 +49,8 @@ import org.apache.commons.logging.Log;
 
 /**
  * This class defines text decoration to be made by the postprocessor.<p>
- * 
- * @since 6.1.3 
+ *
+ * @since 6.1.3
  */
 public class CmsDecorationDefintion {
 
@@ -94,7 +94,7 @@ public class CmsDecorationDefintion {
 
     /**
      * Constructor, creates a new CmsDecorationDefintion with given values.<p>
-     * 
+     *
      * @param name the name of the decoration defintinion
      * @param preText the preText to be used
      * @param postText the postText to be used
@@ -122,30 +122,30 @@ public class CmsDecorationDefintion {
     }
 
     /**
-     * Returns all different decoration configuration names (like "abbr" or "acronym") that 
+     * Returns all different decoration configuration names (like "abbr" or "acronym") that
      * are in the config file pointed to by module parameter "configfile".<p>
-     * 
+     *
      * @param cms needed to access the decoration definition XML content
-     * 
-     * @return  all different decoration configuration names (like "abbr" or "acronym") that 
+     *
+     * @return  all different decoration configuration names (like "abbr" or "acronym") that
      *      are in the config file pointed to by module parameter "configfile"
-     *      
+     *
      * @throws CmsException if sth goes wrong
      */
-    public static List getDecorationDefinitionNames(CmsObject cms) throws CmsException {
+    public static List<String> getDecorationDefinitionNames(CmsObject cms) throws CmsException {
 
-        List result = new ArrayList();
+        List<String> result = new ArrayList<String>();
         CmsModule module = OpenCms.getModuleManager().getModule("com.alkacon.opencms.extendeddecorator");
         String configFile = module.getParameter("configfile");
         if (CmsStringUtil.isEmpty(configFile)) {
             LOG.error(Messages.get().getBundle().key(Messages.LOG_ERROR_CONFIG_MISSING_0));
         } else {
             CmsDecoratorConfiguration config = new CmsDecoratorConfiguration(cms, configFile);
-            List decorationDefinitions = config.getDecorationDefinitions();
-            Iterator it = decorationDefinitions.iterator();
+            List<CmsDecorationDefintion> decorationDefinitions = config.getDecorationDefinitions();
+            Iterator<CmsDecorationDefintion> it = decorationDefinitions.iterator();
             CmsDecorationDefintion decDef;
             while (it.hasNext()) {
-                decDef = (CmsDecorationDefintion)it.next();
+                decDef = it.next();
                 result.add(decDef.getName());
             }
 
@@ -156,7 +156,7 @@ public class CmsDecorationDefintion {
 
     /**
      * Creates a CmsDecorationBundle of text decoration to be used by the decorator.<p>
-     * 
+     *
      * @param cms the CmsObject
      * @param locale the locale to build the decoration bundle for. If no locale is given, a bundle of all locales is build
      * @return CmsDecorationBundle including all decoration lists that match the locale
@@ -165,43 +165,45 @@ public class CmsDecorationDefintion {
     public CmsDecorationBundle createDecorationBundle(CmsObject cms, Locale locale) throws CmsException {
 
         // get configfile basename and the list of all decoration map files
-        List decorationMapFiles = getDecorationMapFiles(cms);
+        List<CmsResource> decorationMapFiles = getDecorationMapFiles(cms);
         if (LOG.isDebugEnabled()) {
-            LOG.debug(Messages.get().getBundle().key(
-                Messages.LOG_DECORATION_DEFINITION_MAP_FILES_2,
-                decorationMapFiles,
-                locale));
+            LOG.debug(
+                Messages.get().getBundle().key(
+                    Messages.LOG_DECORATION_DEFINITION_MAP_FILES_2,
+                    decorationMapFiles,
+                    locale));
         }
 
         // create decoration maps
-        List decorationMaps = getDecorationMaps(cms, decorationMapFiles);
+        List<CmsDecorationMap> decorationMaps = getDecorationMaps(cms, decorationMapFiles);
         if (LOG.isDebugEnabled()) {
-            LOG.debug(Messages.get().getBundle().key(Messages.LOG_DECORATION_DEFINITION_MAPS_2, decorationMaps, locale));
+            LOG.debug(
+                Messages.get().getBundle().key(Messages.LOG_DECORATION_DEFINITION_MAPS_2, decorationMaps, locale));
         }
 
         // now that we have all decoration maps we can build the decoration bundle
         // the bundele is depending on the locale, if a locale is given, only those decoration maps that contain the
-        // locale (or no locale at all) must be used. If no locale is given, all decoration maps are 
-        // put into the decoration bundle        
+        // locale (or no locale at all) must be used. If no locale is given, all decoration maps are
+        // put into the decoration bundle
         return createDecorationBundle(decorationMaps, locale);
     }
 
     /**
      * Creates a CmsDecorationBundle of text decoration to be used by the decorator based on a list of decoration maps.<p>
-     * 
+     *
      * @param decorationMaps the decoration maps to build the bundle from
      * @param locale the locale to build the decoration bundle for. If no locale is given, a bundle of all locales is build
      * @return CmsDecorationBundle including all decoration lists that match the locale
      */
-    public CmsDecorationBundle createDecorationBundle(List decorationMaps, Locale locale) {
+    public CmsDecorationBundle createDecorationBundle(List<CmsDecorationMap> decorationMaps, Locale locale) {
 
         CmsDecorationBundle decorationBundle = new CmsDecorationBundle(locale);
         // sort the bundles
         Collections.sort(decorationMaps);
         // now process the decoration maps to see which of those must be added to the bundle
-        Iterator i = decorationMaps.iterator();
+        Iterator<CmsDecorationMap> i = decorationMaps.iterator();
         while (i.hasNext()) {
-            CmsDecorationMap decMap = (CmsDecorationMap)i.next();
+            CmsDecorationMap decMap = i.next();
             // a decoration map must be added to the bundle if one of the following conditions match:
             // 1) the bundle has no locale
             // 2) the bundle has a locale and the locale of the map is equal or a sublocale
@@ -211,10 +213,11 @@ public class CmsDecorationDefintion {
                 || (locale.getDisplayLanguage().equals(decMap.getLocale().getDisplayLanguage()))) {
                 decorationBundle.putAll(decMap.getDecorationMap());
                 if (LOG.isDebugEnabled()) {
-                    LOG.debug(Messages.get().getBundle().key(
-                        Messages.LOG_DECORATION_DEFINITION_CREATE_BUNDLE_2,
-                        decMap.getName(),
-                        locale));
+                    LOG.debug(
+                        Messages.get().getBundle().key(
+                            Messages.LOG_DECORATION_DEFINITION_CREATE_BUNDLE_2,
+                            decMap.getName(),
+                            locale));
                 }
             }
         }
@@ -223,7 +226,7 @@ public class CmsDecorationDefintion {
 
     /**
      * Returns the configurationFile.<p>
-     * 
+     *
      *
      * @return the configurationFile
      */
@@ -365,6 +368,7 @@ public class CmsDecorationDefintion {
     /**
      * @see java.lang.Object#toString()
      */
+    @Override
     public String toString() {
 
         StringBuffer buf = new StringBuffer();
@@ -389,14 +393,14 @@ public class CmsDecorationDefintion {
 
     /**
      * Gets the list of all decoartion map files that match to the current basename.<p>
-     * 
+     *
      * @param cms the CmsObject
      * @return list of CmsResources of the decoration map files
      * @throws CmsException if something goes wrong.
      */
-    private List getDecorationMapFiles(CmsObject cms) throws CmsException {
+    private List<CmsResource> getDecorationMapFiles(CmsObject cms) throws CmsException {
 
-        List files = new ArrayList();
+        List<CmsResource> files = new ArrayList<CmsResource>();
 
         // calcualte the basename for the decoration map files
         // the basename is the filename without the fileextension and any "_locale" postfixes
@@ -418,15 +422,18 @@ public class CmsDecorationDefintion {
         // get all config files which belong to this basename
         int plainId;
         try {
-            plainId = OpenCms.getResourceManager().getResourceType(CmsResourceTypePlain.getStaticTypeName()).getTypeId();
+            plainId = OpenCms.getResourceManager().getResourceType(
+                CmsResourceTypePlain.getStaticTypeName()).getTypeId();
         } catch (CmsLoaderException e) {
             // this should really never happen
             plainId = CmsResourceTypePlain.getStaticTypeId();
         }
-        List resources = cms.readResources(CmsResource.getParentFolder(m_configurationFile), CmsResourceFilter.DEFAULT);
-        Iterator i = resources.iterator();
+        List<CmsResource> resources = cms.readResources(
+            CmsResource.getParentFolder(m_configurationFile),
+            CmsResourceFilter.DEFAULT);
+        Iterator<CmsResource> i = resources.iterator();
         while (i.hasNext()) {
-            CmsResource res = (CmsResource)i.next();
+            CmsResource res = i.next();
             if (cms.getSitePath(res).startsWith(basename) && (res.getTypeId() == plainId)) {
                 files.add(res);
             }
@@ -437,17 +444,17 @@ public class CmsDecorationDefintion {
 
     /**
      * Creates a list of decoration map objects from a given list of decoration files.<p>
-     * 
+     *
      * @param cms the CmsObject
      * @param decorationListFiles the list of decoration files
      * @return list of decoration map objects
      */
-    private List getDecorationMaps(CmsObject cms, List decorationListFiles) {
+    private List<CmsDecorationMap> getDecorationMaps(CmsObject cms, List<CmsResource> decorationListFiles) {
 
-        List decorationMaps = new ArrayList();
-        Iterator i = decorationListFiles.iterator();
+        List<CmsDecorationMap> decorationMaps = new ArrayList<CmsDecorationMap>();
+        Iterator<CmsResource> i = decorationListFiles.iterator();
         while (i.hasNext()) {
-            CmsResource res = (CmsResource)i.next();
+            CmsResource res = i.next();
             try {
                 CmsDecorationMap decMap = (CmsDecorationMap)CmsVfsMemoryObjectCache.getVfsMemoryObjectCache().getCachedObject(
                     cms,
@@ -460,10 +467,11 @@ public class CmsDecorationDefintion {
                 decorationMaps.add(decMap);
             } catch (CmsException e) {
                 if (LOG.isErrorEnabled()) {
-                    LOG.error(Messages.get().getBundle().key(
-                        Messages.LOG_DECORATION_DEFINITION_CREATE_MAP_2,
-                        res.getName(),
-                        e));
+                    LOG.error(
+                        Messages.get().getBundle().key(
+                            Messages.LOG_DECORATION_DEFINITION_CREATE_MAP_2,
+                            res.getName(),
+                            e));
                 }
             }
         }

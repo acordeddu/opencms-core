@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -15,11 +15,11 @@
  * Lesser General Public License for more details.
  *
  * For further information about Alkacon Software, please see the
- * company website: http://www.alkacon.com
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -27,15 +27,15 @@
 
 package org.opencms.ade.sitemap.client.control;
 
-import org.opencms.ade.sitemap.client.model.I_CmsClientSitemapChange;
+import org.opencms.ade.sitemap.shared.CmsSitemapChange;
 
 import com.google.gwt.event.shared.GwtEvent;
 
 /**
  * Sitemap change event.<p>
- * 
+ *
  * @since 8.0.0
- * 
+ *
  * @see org.opencms.ade.sitemap.client.control.CmsSitemapController
  */
 public class CmsSitemapChangeEvent extends GwtEvent<I_CmsSitemapChangeHandler> {
@@ -44,21 +44,21 @@ public class CmsSitemapChangeEvent extends GwtEvent<I_CmsSitemapChangeHandler> {
     private static final Type<I_CmsSitemapChangeHandler> TYPE = new Type<I_CmsSitemapChangeHandler>();
 
     /** The change. */
-    private I_CmsClientSitemapChange m_change;
+    private CmsSitemapChange m_change;
 
     /**
      * Constructor.<p>
-     * 
+     *
      * @param change the change
      */
-    public CmsSitemapChangeEvent(I_CmsClientSitemapChange change) {
+    public CmsSitemapChangeEvent(CmsSitemapChange change) {
 
         m_change = change;
     }
 
     /**
      * Gets the event type associated with change events.<p>
-     * 
+     *
      * @return the handler type
      */
     public static Type<I_CmsSitemapChangeHandler> getType() {
@@ -80,7 +80,7 @@ public class CmsSitemapChangeEvent extends GwtEvent<I_CmsSitemapChangeHandler> {
      *
      * @return the change
      */
-    public I_CmsClientSitemapChange getChange() {
+    public CmsSitemapChange getChange() {
 
         return m_change;
     }

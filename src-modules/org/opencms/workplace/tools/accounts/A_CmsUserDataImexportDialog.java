@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -14,12 +14,12 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * Lesser General Public License for more details.
  *
- * For further information about Alkacon Software GmbH, please see the
- * company website: http://www.alkacon.com
+ * For further information about Alkacon Software GmbH & Co. KG, please see the
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -27,6 +27,7 @@
 
 package org.opencms.workplace.tools.accounts;
 
+import org.opencms.file.CmsGroup;
 import org.opencms.jsp.CmsJspActionElement;
 import org.opencms.main.CmsException;
 import org.opencms.main.OpenCms;
@@ -50,7 +51,7 @@ import javax.servlet.jsp.PageContext;
 
 /**
  * Abstract dialog class to import and export user data.<p>
- * 
+ *
  * @since 6.7.1
  */
 public abstract class A_CmsUserDataImexportDialog extends CmsWidgetDialog {
@@ -59,17 +60,17 @@ public abstract class A_CmsUserDataImexportDialog extends CmsWidgetDialog {
     public static final String[] PAGES = {"page1"};
 
     /** List of groups. */
-    private List m_groups;
+    private List<CmsGroup> m_groups;
 
     /** Stores the value of the request parameter for the organizational unit fqn. */
     private String m_paramOufqn;
 
     /** List of roles. */
-    private List m_roles;
+    private List<CmsRole> m_roles;
 
     /**
      * Public constructor with JSP action element.<p>
-     * 
+     *
      * @param jsp an initialized JSP action element
      */
     public A_CmsUserDataImexportDialog(CmsJspActionElement jsp) {
@@ -79,7 +80,7 @@ public abstract class A_CmsUserDataImexportDialog extends CmsWidgetDialog {
 
     /**
      * Public constructor with JSP variables.<p>
-     * 
+     *
      * @param context the JSP page context
      * @param req the JSP request
      * @param res the JSP response
@@ -92,21 +93,22 @@ public abstract class A_CmsUserDataImexportDialog extends CmsWidgetDialog {
     /**
      * @see org.opencms.workplace.CmsWidgetDialog#actionCommit()
      */
+    @Override
     public abstract void actionCommit() throws IOException, ServletException;
 
     /**
      * Returns the list of groups.<p>
-     * 
+     *
      * @return the list of groups
      */
-    public List getGroups() {
+    public List<CmsGroup> getGroups() {
 
         return m_groups;
     }
 
     /**
      * Returns the organizational unit fqn parameter value.<p>
-     * 
+     *
      * @return the organizational unit fqn parameter value
      */
     public String getParamOufqn() {
@@ -116,27 +118,27 @@ public abstract class A_CmsUserDataImexportDialog extends CmsWidgetDialog {
 
     /**
      * Returns the list of roles to export.<p>
-     *  
+     *
      * @return the list of roles to export
      */
-    public List getRoles() {
+    public List<CmsRole> getRoles() {
 
         return m_roles;
     }
 
     /**
      * Sets the groups list.<p>
-     * 
+     *
      * @param groups the groups list
      */
-    public void setGroups(List groups) {
+    public void setGroups(List<CmsGroup> groups) {
 
         m_groups = groups;
     }
 
     /**
      * Sets the organizational unit fqn parameter value.<p>
-     * 
+     *
      * @param ouFqn the organizational unit fqn parameter value
      */
     public void setParamOufqn(String ouFqn) {
@@ -149,10 +151,10 @@ public abstract class A_CmsUserDataImexportDialog extends CmsWidgetDialog {
 
     /**
      * Sets the roles list.<p>
-     * 
+     *
      * @param roles the roles list
      */
-    public void setRoles(List roles) {
+    public void setRoles(List<CmsRole> roles) {
 
         m_roles = roles;
     }
@@ -160,11 +162,13 @@ public abstract class A_CmsUserDataImexportDialog extends CmsWidgetDialog {
     /**
      * @see org.opencms.workplace.CmsWidgetDialog#defineWidgets()
      */
+    @Override
     protected abstract void defineWidgets();
 
     /**
      * @see org.opencms.workplace.CmsWidgetDialog#getPageArray()
      */
+    @Override
     protected String[] getPageArray() {
 
         return PAGES;
@@ -172,26 +176,26 @@ public abstract class A_CmsUserDataImexportDialog extends CmsWidgetDialog {
 
     /**
      * Returns the role names to show in the select box.<p>
-     * 
+     *
      * @return the role names to show in the select box
      */
-    protected List getSelectRoles() {
+    protected List<CmsSelectWidgetOption> getSelectRoles() {
 
-        List retVal = new ArrayList();
+        List<CmsSelectWidgetOption> retVal = new ArrayList<CmsSelectWidgetOption>();
 
         try {
             boolean inRootOu = CmsStringUtil.isEmptyOrWhitespaceOnly(getParamOufqn())
                 || CmsOrganizationalUnit.SEPARATOR.equals(getParamOufqn());
-            List roles = OpenCms.getRoleManager().getRolesOfUser(
+            List<CmsRole> roles = OpenCms.getRoleManager().getRolesOfUser(
                 getCms(),
                 getCms().getRequestContext().getCurrentUser().getName(),
                 getParamOufqn(),
                 false,
                 false,
                 false);
-            Iterator itRoles = roles.iterator();
+            Iterator<CmsRole> itRoles = roles.iterator();
             while (itRoles.hasNext()) {
-                CmsRole role = (CmsRole)itRoles.next();
+                CmsRole role = itRoles.next();
                 if (role.isOrganizationalUnitIndependent() && !inRootOu) {
                     continue;
                 }
@@ -200,16 +204,11 @@ public abstract class A_CmsUserDataImexportDialog extends CmsWidgetDialog {
         } catch (CmsException e) {
             // noop
         }
-        Collections.sort(retVal, new Comparator() {
+        Collections.sort(retVal, new Comparator<CmsSelectWidgetOption>() {
 
-            public int compare(Object arg0, Object arg1) {
+            public int compare(CmsSelectWidgetOption arg0, CmsSelectWidgetOption arg1) {
 
-                if (!(arg0 instanceof CmsSelectWidgetOption) || !(arg1 instanceof CmsSelectWidgetOption)) {
-                    return 0;
-                }
-                CmsSelectWidgetOption opt0 = (CmsSelectWidgetOption)arg0;
-                CmsSelectWidgetOption opt1 = (CmsSelectWidgetOption)arg1;
-                return opt0.getOption().compareTo(opt1.getOption());
+                return arg0.getOption().compareTo(arg1.getOption());
             }
 
         });

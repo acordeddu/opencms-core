@@ -1,0 +1,24 @@
+.inputRow{
+	margin: 2px 0;
+	height: 30px;
+	overflow: hidden;
+}
+.inputLabel{
+	font-weight: bold;
+	vertical-align: middle;
+	width: 150px;
+}
+.inputBox{
+	vertical-align: middle;
+	width: 438px;
+}
+.containerMarker{
+	background: value("constants.css.backgroundColorDialog");
+	border: 1px solid value("constants.css.borderColor");
+	position: absolute;
+	z-index: value("constants.css.zIndexHighlighting");
+}
+
+.inputBox, .inputLabel{
+	display: inline-block;
+}

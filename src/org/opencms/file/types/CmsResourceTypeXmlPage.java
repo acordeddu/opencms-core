@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -14,12 +14,12 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * Lesser General Public License for more details.
  *
- * For further information about Alkacon Software GmbH, please see the
- * company website: http://www.alkacon.com
+ * For further information about Alkacon Software GmbH & Co. KG, please see the
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -31,12 +31,13 @@ import org.opencms.configuration.CmsConfigurationException;
 import org.opencms.db.CmsSecurityManager;
 import org.opencms.file.CmsFile;
 import org.opencms.file.CmsObject;
+import org.opencms.file.CmsProperty;
 import org.opencms.file.CmsResource;
 import org.opencms.file.CmsResourceFilter;
+import org.opencms.i18n.CmsLocaleManager;
 import org.opencms.loader.CmsXmlPageLoader;
 import org.opencms.main.CmsException;
 import org.opencms.main.CmsLog;
-import org.opencms.main.OpenCms;
 import org.opencms.relations.CmsLink;
 import org.opencms.security.CmsPermissionSet;
 import org.opencms.staticexport.CmsLinkTable;
@@ -48,8 +49,8 @@ import org.opencms.xml.page.CmsXmlPageFactory;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.Iterator;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Set;
@@ -58,25 +59,31 @@ import org.apache.commons.logging.Log;
 
 /**
  * Resource type descriptor for the type "xmlpage".<p>
- * 
- * @since 6.0.0 
+ *
+ * @since 6.0.0
  */
 public class CmsResourceTypeXmlPage extends A_CmsResourceTypeLinkParseable {
+
+    /** The type id of this resource type. */
+    public static final int RESOURCE_TYPE_ID = 6;
+
+    /** The name of this resource type. */
+    public static final String RESOURCE_TYPE_NAME = "xmlpage";
+
+    /** The default XML page body. */
+    private static final String DEFAULT_BODY = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
+        + "\n"
+        + "<pages xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xsi:noNamespaceSchemaLocation=\"http://www.opencms.org/dtd/6.0/xmlpage.xsd\">\n"
+        + "</pages>";
 
     /** The log object for this class. */
     private static final Log LOG = CmsLog.getLog(CmsResourceTypeXmlPage.class);
 
-    /** Indicates that the static configuration of the resource type has been frozen. */
-    private static boolean m_staticFrozen;
-
     /** The static type id of this resource type. */
     private static int m_staticTypeId;
 
-    /** The type id of this resource type. */
-    private static final int RESOURCE_TYPE_ID = 6;
-
-    /** The name of this resource type. */
-    private static final String RESOURCE_TYPE_NAME = "xmlpage";
+    /** The serial version id. */
+    private static final long serialVersionUID = 4218077530657122699L;
 
     /**
      * Default constructor, used to initialize member variables.<p>
@@ -90,7 +97,7 @@ public class CmsResourceTypeXmlPage extends A_CmsResourceTypeLinkParseable {
 
     /**
      * Returns the static type id of this (default) resource type.<p>
-     * 
+     *
      * @return the static type id of this (default) resource type
      */
     public static int getStaticTypeId() {
@@ -100,7 +107,7 @@ public class CmsResourceTypeXmlPage extends A_CmsResourceTypeLinkParseable {
 
     /**
      * Returns the static type name of this (default) resource type.<p>
-     * 
+     *
      * @return the static type name of this (default) resource type
      */
     public static String getStaticTypeName() {
@@ -110,14 +117,14 @@ public class CmsResourceTypeXmlPage extends A_CmsResourceTypeLinkParseable {
 
     /**
      * Returns <code>true</code> in case the given resource is an XML page.<p>
-     * 
-     * Internally this checks if the type id for the given resource is 
+     *
+     * Internally this checks if the type id for the given resource is
      * identical type id of the XML page.<p>
-     * 
+     *
      * @param resource the resource to check
-     * 
+     *
      * @return <code>true</code> in case the given resource is an XML page
-     * 
+     *
      * @since 7.0.2
      */
     public static boolean isXmlPage(CmsResource resource) {
@@ -127,6 +134,31 @@ public class CmsResourceTypeXmlPage extends A_CmsResourceTypeLinkParseable {
             result = resource.getTypeId() == m_staticTypeId;
         }
         return result;
+    }
+
+    /**
+     * @see org.opencms.file.types.A_CmsResourceType#createResource(org.opencms.file.CmsObject, org.opencms.db.CmsSecurityManager, java.lang.String, byte[], java.util.List)
+     */
+    @Override
+    public CmsResource createResource(
+        CmsObject cms,
+        CmsSecurityManager securityManager,
+        String resourcename,
+        byte[] content,
+        List<CmsProperty> properties)
+    throws CmsException {
+
+        if (content == null) {
+            try {
+                String encoding = CmsLocaleManager.getResourceEncoding(
+                    cms,
+                    cms.readResource(CmsResource.getParentFolder(resourcename)));
+                content = DEFAULT_BODY.getBytes(encoding);
+            } catch (Exception e) {
+                LOG.error(e.getLocalizedMessage(), e);
+            }
+        }
+        return super.createResource(cms, securityManager, resourcename, content, properties);
     }
 
     /**
@@ -153,29 +185,7 @@ public class CmsResourceTypeXmlPage extends A_CmsResourceTypeLinkParseable {
     @Override
     public void initConfiguration(String name, String id, String className) throws CmsConfigurationException {
 
-        if ((OpenCms.getRunLevel() > OpenCms.RUNLEVEL_2_INITIALIZING) && m_staticFrozen) {
-            // configuration already frozen
-            throw new CmsConfigurationException(Messages.get().container(
-                Messages.ERR_CONFIG_FROZEN_3,
-                this.getClass().getName(),
-                getStaticTypeName(),
-                new Integer(getStaticTypeId())));
-        }
-
-        if (!RESOURCE_TYPE_NAME.equals(name)) {
-            // default resource type MUST have default name
-            throw new CmsConfigurationException(Messages.get().container(
-                Messages.ERR_INVALID_RESTYPE_CONFIG_NAME_3,
-                this.getClass().getName(),
-                RESOURCE_TYPE_NAME,
-                name));
-        }
-
-        // freeze the configuration
-        m_staticFrozen = true;
-
-        super.initConfiguration(RESOURCE_TYPE_NAME, id, className);
-        // set static members with values from the configuration        
+        super.initConfiguration(name, id, className);
         m_staticTypeId = m_typeId;
     }
 
@@ -184,7 +194,8 @@ public class CmsResourceTypeXmlPage extends A_CmsResourceTypeLinkParseable {
      */
     public List<CmsLink> parseLinks(CmsObject cms, CmsFile file) {
 
-        Set<CmsLink> links = new HashSet<CmsLink>();
+        // use a linked set to keep the link order
+        Set<CmsLink> links = new LinkedHashSet<CmsLink>();
         try {
             CmsXmlPage xmlPage = CmsXmlPageFactory.unmarshal(cms, file);
             List<Locale> locales = xmlPage.getLocales();
@@ -214,7 +225,9 @@ public class CmsResourceTypeXmlPage extends A_CmsResourceTypeLinkParseable {
             }
         } catch (CmsXmlException e) {
             if (LOG.isErrorEnabled()) {
-                LOG.error(Messages.get().getBundle().key(Messages.ERR_PROCESS_HTML_CONTENT_1, cms.getSitePath(file)), e);
+                LOG.error(
+                    Messages.get().getBundle().key(Messages.ERR_PROCESS_HTML_CONTENT_1, cms.getSitePath(file)),
+                    e);
             }
 
             return Collections.emptyList();
@@ -239,15 +252,15 @@ public class CmsResourceTypeXmlPage extends A_CmsResourceTypeLinkParseable {
 
         // empty file content is allowed
         if (resource.getLength() > 0) {
-            // read the xml page, use the encoding set in the property       
+            // read the xml page, use the encoding set in the property
             CmsXmlPage xmlPage = CmsXmlPageFactory.unmarshal(cms, resource, false);
-            // validate the xml structure before writing the file         
+            // validate the xml structure before writing the file
             // an exception will be thrown if the structure is invalid
             xmlPage.validateXmlStructure(new CmsXmlEntityResolver(cms));
             // read the content-conversion property
             String contentConversion = CmsHtmlConverter.getConversionSettings(cms, resource);
             xmlPage.setConversion(contentConversion);
-            // correct the HTML structure 
+            // correct the HTML structure
             resource = xmlPage.correctXmlStructure(cms);
         }
 

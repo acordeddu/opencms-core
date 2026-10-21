@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -14,20 +14,20 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * Lesser General Public License for more details.
  *
- * For further information about Alkacon Software GmbH, please see the
- * company website: http://www.alkacon.com
+ * For further information about Alkacon Software GmbH & Co. KG, please see the
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
- * 
+ *
  * This file is based on:
  * org.apache.fulcrum.localization.LocaleTokenizer
  * from the Apache Fulcrum/Turbine project.
- * 
+ *
  * The Apache Software License, Version 1.1
  *
  * Copyright (c) 2001 The Apache Software Foundation.  All rights
@@ -95,10 +95,10 @@ import java.util.Locale;
 import javax.servlet.http.HttpServletRequest;
 
 /**
- * Parses the HTTP <code>Accept-Language</code> header as per section 14.4 of RFC 2068 
+ * Parses the HTTP <code>Accept-Language</code> header as per section 14.4 of RFC 2068
  * (HTTP 1.1 header field definitions) and creates a sorted list of Locales from it.
- * 
- * @since 6.0.0 
+ *
+ * @since 6.0.0
  */
 public class CmsAcceptLanguageHeaderParser {
 
@@ -151,7 +151,7 @@ public class CmsAcceptLanguageHeaderParser {
     public static final String ACCEPT_LANGUAGE = "Accept-Language";
 
     /** The default m_quality value for an <code>AcceptLanguage</code> object. */
-    protected static final Float DEFAULT_QUALITY = new Float(1.0f);
+    protected static final Float DEFAULT_QUALITY = Float.valueOf(1.0f);
 
     /** Separates elements of the <code>Accept-Language</code> HTTP header. */
     private static final char LOCALE_SEPARATOR = ',';
@@ -167,7 +167,7 @@ public class CmsAcceptLanguageHeaderParser {
 
     /**
      * Parses the <code>Accept-Language</code> header from the provided request.<p>
-     * 
+     *
      * @param req the request to parse
      * @param defaultLocale the default locale to use
      */
@@ -178,7 +178,7 @@ public class CmsAcceptLanguageHeaderParser {
 
     /**
      * Parses the <code>Accept-Language</code> header.<p>
-     * 
+     *
      * @param header the <code>Accept-Language</code> header (i.e. <code>en, es;q=0.8, zh-TW;q=0.1</code>)
      * @param defaultLocale the default locale to use
      */
@@ -242,7 +242,7 @@ public class CmsAcceptLanguageHeaderParser {
 
     /**
      * Creates a value string for the HTTP Accept-Language header based on the default localed.<p>
-     * 
+     *
      * @return value string for the HTTP Accept-Language
      */
     public static String createLanguageHeader() {
@@ -263,7 +263,7 @@ public class CmsAcceptLanguageHeaderParser {
 
     /**
      * Returns the sorted list of accepted Locales.<p>
-     * 
+     *
      * @return the sorted list of accepted Locales
      */
     public List<Locale> getAcceptedLocales() {

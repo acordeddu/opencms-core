@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -15,11 +15,11 @@
  * Lesser General Public License for more details.
  *
  * For further information about Alkacon Software, please see the
- * company website: http://www.alkacon.com
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -31,41 +31,44 @@ import org.opencms.file.CmsObject;
 import org.opencms.file.CmsProperty;
 import org.opencms.file.CmsPropertyDefinition;
 import org.opencms.file.CmsResource;
+import org.opencms.file.CmsResourceFilter;
+import org.opencms.file.types.CmsResourceTypeFunctionConfig;
+import org.opencms.file.types.CmsResourceTypeXmlContainerPage;
 import org.opencms.i18n.CmsLocaleManager;
 import org.opencms.loader.CmsLoaderException;
 import org.opencms.main.CmsException;
 import org.opencms.main.CmsLog;
 import org.opencms.main.OpenCms;
+import org.opencms.search.I_CmsSearchDocument;
 import org.opencms.search.fields.CmsSearchField;
+import org.opencms.search.fields.CmsSearchFieldConfiguration;
 import org.opencms.util.CmsStringUtil;
 import org.opencms.util.CmsUUID;
 
-import java.text.ParseException;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
 import org.apache.commons.logging.Log;
-import org.apache.lucene.document.DateTools;
-import org.apache.lucene.document.Document;
-import org.apache.lucene.document.Fieldable;
 
 /**
  * Contains a single search result from the gallery search index.<p>
- * 
- * @since 8.0.0 
+ *
+ * @since 8.0.0
  */
 /**
  *
  */
-public class CmsGallerySearchResult implements Comparable<CmsGallerySearchResult> {
+public class CmsGallerySearchResult implements Comparable<CmsGallerySearchResult>, Cloneable {
 
     /** The logger instance for this class. */
     public static final Log LOG = CmsLog.getLog(CmsGallerySearchResult.class);
 
-    /** The additional information for the gallery search index. */
-    protected String m_additonalInfo;
+    /** List of Solr fields that are read during the initialization of the search result. */
+    private static String[] m_requiredSolrFields;
 
     /** The supported container types of this search result. */
     protected List<String> m_containerTypes;
@@ -120,15 +123,20 @@ public class CmsGallerySearchResult implements Comparable<CmsGallerySearchResult
 
     /**
      * Creates a fake gallery search result by reading the necessary data from a VFS resource.<p>
-     * 
-     * @param cms the current CMS context 
-     * @param res the resource from which the data should be read 
+     *
+     * @param cms the current CMS context
+     * @param res the resource from which the data should be read
+     * @param title optional value that can be used to override the title (if null, the title is not overridden)
      */
-    public CmsGallerySearchResult(CmsObject cms, CmsResource res) {
+    public CmsGallerySearchResult(CmsObject cms, CmsResource res, String title) {
 
+        m_title = title;
         try {
-            Map<String, String> props = CmsProperty.toMap(cms.readPropertyObjects(res, true));
-            m_title = props.get(CmsPropertyDefinition.PROPERTY_TITLE);
+            Map<String, String> props = CmsProperty.toMap(
+                cms.readPropertyObjects(res, CmsResourceTypeXmlContainerPage.isContainerPage(res)));
+            if (m_title == null) {
+                m_title = props.get(CmsPropertyDefinition.PROPERTY_TITLE);
+            }
             m_description = props.get(CmsPropertyDefinition.PROPERTY_DESCRIPTION);
         } catch (CmsException e) {
             LOG.error(e.getLocalizedMessage(), e);
@@ -137,7 +145,7 @@ public class CmsGallerySearchResult implements Comparable<CmsGallerySearchResult
             m_description = "";
         }
         if (m_title == null) {
-            m_title = "";
+            m_title = res.getName();
         }
         m_dateCreated = new Date(res.getDateCreated());
         m_dateExpired = new Date(res.getDateExpired());
@@ -150,194 +158,184 @@ public class CmsGallerySearchResult implements Comparable<CmsGallerySearchResult
             m_resourceType = OpenCms.getResourceManager().getResourceType(res.getTypeId()).getTypeName();
         } catch (CmsLoaderException e) {
             LOG.warn(e.getLocalizedMessage(), e);
-
         }
         m_state = res.getState().getState();
         m_structureId = res.getStructureId().toString();
-        m_userCreated = res.getUserCreated().toString();
-        m_userLastModified = res.getUserLastModified().toString();
+        try {
+            m_userCreated = cms.readUser(res.getUserCreated()).getFullName();
+        } catch (CmsException e) {
+            LOG.warn(e.getLocalizedMessage(), e);
+        }
+        try {
+            m_userLastModified = cms.readUser(res.getUserLastModified()).getFullName();
+        } catch (CmsException e) {
+            LOG.warn(e.getLocalizedMessage(), e);
+        }
     }
 
     /**
-     * Creates a new gallery search result.<p>
-     * 
+     * Creates a new gallery search result.
+     *
      * @param cms the current CMS context (used for reading information missing from the index)
+     * @param doc the I_CmsSearchResult document to extract information from.
      * @param score the score of this search result
-     * @param doc the Lucene document to extract fields from such as description, title, key words etc. pp.
-     * @param excerpt the excerpt of the search result's content
      * @param locale the locale to create the result for
      */
-    public CmsGallerySearchResult(CmsObject cms, int score, Document doc, String excerpt, Locale locale) {
+    public CmsGallerySearchResult(I_CmsSearchDocument doc, CmsObject cms, int score, Locale locale) {
 
-        m_score = score;
-        m_excerpt = excerpt;
-
-        m_path = null;
-        Fieldable f = doc.getFieldable(CmsSearchField.FIELD_PATH);
-        if (f != null) {
-            m_path = f.stringValue();
+        if (null == doc) {
+            throw new IllegalArgumentException();
         }
 
-        if (locale == null) {
+        if (doc.getType().equals(CmsResourceTypeFunctionConfig.TYPE_NAME)) {
+            locale = OpenCms.getWorkplaceManager().getWorkplaceLocale(cms);
+        }
+
+        m_score = score; //(int)doc.getScore();
+
+        m_path = doc.getFieldValueAsString(CmsSearchField.FIELD_PATH);
+
+        if (null == locale) {
             OpenCms.getLocaleManager();
             locale = CmsLocaleManager.getDefaultLocale();
         }
 
-        m_title = null;
-        f = doc.getFieldable(CmsSearchField.FIELD_TITLE);
-        if (f != null) {
-            m_title = f.stringValue();
-        }
-        if (m_title == null) {
-            f = doc.getFieldable(CmsGallerySearchFieldConfiguration.getLocaleExtendedName(
-                CmsSearchField.FIELD_TITLE,
-                locale));
-            if (f != null) {
-                m_title = f.stringValue();
+        // For title and description, try various fields and use the first which is not empty
+
+        String mainTitleField = CmsSearchFieldConfiguration.getLocaleExtendedName(
+            CmsSearchField.FIELD_TITLE_UNSTORED,
+            locale.toString()) + "_s";
+        String localizedTitlePropertyField = CmsSearchFieldConfiguration.getLocaleExtendedName(
+            CmsPropertyDefinition.PROPERTY_TITLE,
+            locale.toString()) + CmsSearchField.FIELD_DYNAMIC_PROPERTIES_DIRECT + "_s";
+        String titlePropertyField = CmsPropertyDefinition.PROPERTY_TITLE
+            + CmsSearchField.FIELD_DYNAMIC_PROPERTIES_DIRECT
+            + "_s";
+
+        for (String fieldName : Arrays.asList(mainTitleField, localizedTitlePropertyField, titlePropertyField)) {
+            m_title = doc.getFieldValueAsString(fieldName);
+            if (!CmsStringUtil.isEmptyOrWhitespaceOnly(m_title)) {
+                break;
             }
         }
 
-        m_description = null;
-        f = doc.getFieldable(CmsSearchField.FIELD_DESCRIPTION);
-        if (f != null) {
-            m_description = f.stringValue();
-        }
-        if (m_description == null) {
-            f = doc.getFieldable(CmsGallerySearchFieldConfiguration.getLocaleExtendedName(
-                CmsSearchField.FIELD_DESCRIPTION,
-                locale));
-            if (f != null) {
-                m_description = f.stringValue();
+        String mainDescField = CmsSearchFieldConfiguration.getLocaleExtendedName(
+            CmsSearchField.FIELD_DESCRIPTION,
+            locale.toString()) + "_s";
+        String localizedDescPropertyField = CmsSearchFieldConfiguration.getLocaleExtendedName(
+            CmsPropertyDefinition.PROPERTY_DESCRIPTION,
+            locale.toString()) + CmsSearchField.FIELD_DYNAMIC_PROPERTIES + "_s";
+        String descPropertyField = CmsPropertyDefinition.PROPERTY_DESCRIPTION
+            + CmsSearchField.FIELD_DYNAMIC_PROPERTIES
+            + "_s";
+
+        for (String fieldName : Arrays.asList(mainDescField, localizedDescPropertyField, descPropertyField)) {
+            m_description = doc.getFieldValueAsString(fieldName);
+            if (!CmsStringUtil.isEmptyOrWhitespaceOnly(m_description)) {
+                break;
             }
         }
 
-        m_resourceType = null;
-        f = doc.getFieldable(CmsSearchField.FIELD_TYPE);
-        if (f != null) {
-            m_resourceType = f.stringValue();
-        }
+        m_resourceType = doc.getFieldValueAsString(CmsSearchField.FIELD_TYPE);
 
-        m_dateCreated = null;
-        f = doc.getFieldable(CmsSearchField.FIELD_DATE_CREATED);
-        if (f != null) {
-            try {
-                m_dateCreated = DateTools.stringToDate(f.stringValue());
-            } catch (ParseException exc) {
-                // NOOP, date is null
-            }
-        }
+        m_dateCreated = doc.getFieldValueAsDate(CmsSearchField.FIELD_DATE_CREATED);
 
-        m_dateLastModified = null;
-        f = doc.getFieldable(CmsSearchField.FIELD_DATE_LASTMODIFIED);
-        if (f != null) {
-            try {
-                m_dateLastModified = DateTools.stringToDate(f.stringValue());
-            } catch (ParseException exc) {
-                // NOOP, date is null
-            }
-        }
+        m_dateLastModified = doc.getFieldValueAsDate(CmsSearchField.FIELD_DATE_LASTMODIFIED);
 
-        m_dateExpired = null;
-        f = doc.getFieldable(CmsGallerySearchFieldMapping.FIELD_RESOURCE_DATE_EXPIRED);
-        if (f != null) {
-            try {
-                m_dateExpired = DateTools.stringToDate(f.stringValue());
-            } catch (ParseException exc) {
-                // NOOP, date is null
-            }
-        }
+        m_dateExpired = doc.getFieldValueAsDate(CmsSearchField.FIELD_DATE_EXPIRED);
 
-        m_dateReleased = null;
-        f = doc.getFieldable(CmsGallerySearchFieldMapping.FIELD_RESOURCE_DATE_RELEASED);
-        if (f != null) {
-            try {
-                m_dateReleased = DateTools.stringToDate(f.stringValue());
-            } catch (ParseException exc) {
-                // NOOP, date is null
-            }
-        }
+        m_dateReleased = doc.getFieldValueAsDate(CmsSearchField.FIELD_DATE_RELEASED);
 
         m_length = 0;
-        f = doc.getFieldable(CmsGallerySearchFieldMapping.FIELD_RESOURCE_LENGTH);
-        if (f != null) {
+        final String s_length = doc.getFieldValueAsString(CmsSearchField.FIELD_SIZE);
+        if (null != s_length) {
             try {
-                m_length = Integer.parseInt(f.stringValue());
+                m_length = Integer.parseInt(s_length);
             } catch (NumberFormatException exc) {
                 // NOOP, default is 0
             }
         }
 
         m_state = 0;
-        f = doc.getFieldable(CmsGallerySearchFieldMapping.FIELD_RESOURCE_STATE);
-        if (f != null) {
+        final String s_state = doc.getFieldValueAsString(CmsSearchField.FIELD_STATE);
+        if (s_state != null) {
             try {
-                m_state = Integer.parseInt(f.stringValue());
+                m_state = Integer.parseInt(s_state);
             } catch (NumberFormatException exc) {
                 // NOOP, default is 0
             }
         }
 
-        m_userCreated = null;
-        f = doc.getFieldable(CmsGallerySearchFieldMapping.FIELD_RESOURCE_USER_CREATED);
-        if (f != null) {
-            m_userCreated = f.stringValue();
+        m_userCreated = doc.getFieldValueAsString(CmsSearchField.FIELD_USER_CREATED);
+
+        m_structureId = doc.getFieldValueAsString(CmsSearchField.FIELD_ID);
+
+        m_userLastModified = doc.getFieldValueAsString(CmsSearchField.FIELD_USER_LAST_MODIFIED);
+
+        final String s_locales = doc.getFieldValueAsString(CmsSearchField.FIELD_RESOURCE_LOCALES);
+        if (null != s_locales) {
+            m_locales = CmsStringUtil.splitAsList(s_locales, ' ');
+        } else {
+            m_locales = new ArrayList<String>(0);
         }
 
-        m_structureId = null;
-        f = doc.getFieldable(CmsGallerySearchFieldMapping.FIELD_RESOURCE_STRUCTURE_ID);
-        if (f != null) {
-            m_structureId = f.stringValue();
-        }
-
-        m_userLastModified = null;
-        f = doc.getFieldable(CmsGallerySearchFieldMapping.FIELD_RESOURCE_USER_LASTMODIFIED);
-        if (f != null) {
-            m_userLastModified = f.stringValue();
-        }
-
-        m_additonalInfo = null;
-        f = doc.getFieldable(CmsGallerySearchFieldMapping.FIELD_ADDITIONAL_INFO);
-        if (f != null) {
-            m_additonalInfo = f.stringValue();
-        }
-
-        m_containerTypes = null;
-        f = doc.getFieldable(CmsGallerySearchFieldMapping.FIELD_CONTAINER_TYPES);
-        if (f != null) {
-            String containers = f.stringValue();
-            m_containerTypes = CmsStringUtil.splitAsList(containers, ' ');
-        }
-
-        m_locales = null;
-        f = doc.getFieldable(CmsGallerySearchFieldMapping.FIELD_RESOURCE_LOCALES);
-        if (f != null) {
-            String locales = f.stringValue();
-            m_locales = CmsStringUtil.splitAsList(locales, ' ');
-        }
-        if (cms != null) {
+        if ((null != cms) && (null != m_structureId)) {
             initializeMissingFieldsFromVfs(cms, new CmsUUID(m_structureId));
         }
     }
 
     /**
-     * Creates a new gallery search result.<p>
-     * 
-     * @param score the score of this search result
-     * @param doc the Lucene document to extract fields from such as description, title, key words etc. pp.
-     * @param excerpt the excerpt of the search result's content
-     * @param locale the locale to create the result for
+     * Returns the list of Solr fields a search result must have to initialize the gallery search result correctly.
+     * @return the list of Solr fields.
      */
-    public CmsGallerySearchResult(int score, Document doc, String excerpt, Locale locale) {
+    public static final String[] getRequiredSolrFields() {
 
-        this(null, score, doc, excerpt, locale);
+        if (null == m_requiredSolrFields) {
+            List<Locale> locales = OpenCms.getLocaleManager().getAvailableLocales();
+            m_requiredSolrFields = new String[14 + (locales.size() * 6)];
+            int count = 0;
+            m_requiredSolrFields[count++] = CmsSearchField.FIELD_PATH;
+            m_requiredSolrFields[count++] = CmsSearchField.FIELD_TYPE;
+            m_requiredSolrFields[count++] = CmsSearchField.FIELD_DATE_CREATED;
+            m_requiredSolrFields[count++] = CmsSearchField.FIELD_DATE_LASTMODIFIED;
+            m_requiredSolrFields[count++] = CmsSearchField.FIELD_DATE_EXPIRED;
+            m_requiredSolrFields[count++] = CmsSearchField.FIELD_DATE_RELEASED;
+            m_requiredSolrFields[count++] = CmsSearchField.FIELD_SIZE;
+            m_requiredSolrFields[count++] = CmsSearchField.FIELD_STATE;
+            m_requiredSolrFields[count++] = CmsSearchField.FIELD_USER_CREATED;
+            m_requiredSolrFields[count++] = CmsSearchField.FIELD_ID;
+            m_requiredSolrFields[count++] = CmsSearchField.FIELD_USER_LAST_MODIFIED;
+            m_requiredSolrFields[count++] = CmsSearchField.FIELD_RESOURCE_LOCALES;
+            for (Locale locale : locales) {
+                m_requiredSolrFields[count++] = CmsSearchFieldConfiguration.getLocaleExtendedName(
+                    CmsSearchField.FIELD_TITLE_UNSTORED,
+                    locale.toString()) + "_s";
+                m_requiredSolrFields[count++] = CmsSearchFieldConfiguration.getLocaleExtendedName(
+                    CmsPropertyDefinition.PROPERTY_TITLE,
+                    locale.toString()) + CmsSearchField.FIELD_DYNAMIC_PROPERTIES_DIRECT + "_s";
+                m_requiredSolrFields[count++] = CmsPropertyDefinition.PROPERTY_TITLE
+                    + CmsSearchField.FIELD_DYNAMIC_PROPERTIES_DIRECT
+                    + "_s";
+                m_requiredSolrFields[count++] = CmsSearchFieldConfiguration.getLocaleExtendedName(
+                    CmsSearchField.FIELD_DESCRIPTION,
+                    locale.toString()) + "_s";
+                m_requiredSolrFields[count++] = CmsSearchFieldConfiguration.getLocaleExtendedName(
+                    CmsPropertyDefinition.PROPERTY_DESCRIPTION,
+                    locale.toString()) + CmsSearchField.FIELD_DYNAMIC_PROPERTIES + "_s";
+                m_requiredSolrFields[count++] = CmsPropertyDefinition.PROPERTY_DESCRIPTION
+                    + CmsSearchField.FIELD_DYNAMIC_PROPERTIES
+                    + "_s";
+            }
+        }
+        return m_requiredSolrFields;
     }
 
     /**
      * Compares two search results based on the score of the result.<p>
-     * 
+     *
      * @param other the result to compare this result with
      * @return the comparison result
-     * 
+     *
      * @see java.lang.Comparable#compareTo(java.lang.Object)
      */
     public int compareTo(CmsGallerySearchResult other) {
@@ -365,18 +363,8 @@ public class CmsGallerySearchResult implements Comparable<CmsGallerySearchResult
     }
 
     /**
-     * Returns the additional information stored for this search result in the gallery search index.<p>
-     * 
-     * @return the additional information stored for this search result in the gallery search index
-     */
-    public String getAdditonalInfo() {
-
-        return m_additonalInfo;
-    }
-
-    /**
      * Returns the containers supported by this resource.<p>
-     * 
+     *
      * @return the containers supported by this resource
      */
     public List<String> getContainerTypes() {
@@ -396,9 +384,9 @@ public class CmsGallerySearchResult implements Comparable<CmsGallerySearchResult
 
     /**
      * Returns the date the resource expires.<p>
-     * 
+     *
      * @return the date the resource expires
-     * 
+     *
      * @see org.opencms.file.CmsResource#getDateExpired()
      */
     public Date getDateExpired() {
@@ -418,9 +406,9 @@ public class CmsGallerySearchResult implements Comparable<CmsGallerySearchResult
 
     /**
      * Returns the date the resource is released.<p>
-     * 
+     *
      * @return the date the resource is released
-     * 
+     *
      * @see  org.opencms.file.CmsResource#getDateReleased()
      */
     public Date getDateReleased() {
@@ -450,9 +438,9 @@ public class CmsGallerySearchResult implements Comparable<CmsGallerySearchResult
 
     /**
      * Returns the length of the resource.<p>
-     * 
+     *
      * @return the length of the resource
-     * 
+     *
      * @see org.opencms.file.CmsResource#getLength()
      */
     public int getLength() {
@@ -462,7 +450,7 @@ public class CmsGallerySearchResult implements Comparable<CmsGallerySearchResult
 
     /**
      * Returns the list of locales this search result is available for.<p>
-     * 
+     *
      * @return the list of locales this search result is available for
      */
     public List<String> getLocales() {
@@ -474,7 +462,7 @@ public class CmsGallerySearchResult implements Comparable<CmsGallerySearchResult
      * Returns the resource root path.<p>
      *
      * @return the resource root path
-     * 
+     *
      * @see org.opencms.file.CmsResource#getRootPath()
      */
     public String getPath() {
@@ -484,9 +472,9 @@ public class CmsGallerySearchResult implements Comparable<CmsGallerySearchResult
 
     /**
      * Returns the resource type of the search result document.<p>
-     * 
+     *
      * @return the resource type of the search result document
-     * 
+     *
      * @see org.opencms.loader.CmsResourceManager#getResourceType(String)
      */
     public String getResourceType() {
@@ -506,9 +494,9 @@ public class CmsGallerySearchResult implements Comparable<CmsGallerySearchResult
 
     /**
      * Returns the state of the resource.<p>
-     * 
+     *
      * @return the state of the resource
-     * 
+     *
      * @see org.opencms.file.CmsResource#getState()
      */
     public int getState() {
@@ -518,7 +506,7 @@ public class CmsGallerySearchResult implements Comparable<CmsGallerySearchResult
 
     /**
      * Returns the structure id of the resource.<p>
-     * 
+     *
      * @return the structure id of the resource
      */
     public String getStructureId() {
@@ -538,9 +526,9 @@ public class CmsGallerySearchResult implements Comparable<CmsGallerySearchResult
 
     /**
      * Returns the name of the user who created the resource.<p>
-     * 
+     *
      * @return the name of the user who created the resource
-     * 
+     *
      * @see org.opencms.file.CmsResource#getUserCreated()
      */
     public String getUserCreated() {
@@ -550,9 +538,9 @@ public class CmsGallerySearchResult implements Comparable<CmsGallerySearchResult
 
     /**
      * Returns the name of the user who last modified the resource.<p>
-     * 
+     *
      * @return the name of the user who last modified the resource
-     * 
+     *
      * @see org.opencms.file.CmsResource#getUserLastModified()
      */
     public String getUserLastModified() {
@@ -571,9 +559,9 @@ public class CmsGallerySearchResult implements Comparable<CmsGallerySearchResult
 
     /**
      * Returns if the related resource is released and not expired.<p>
-     * 
+     *
      * @param cms the cms context
-     * 
+     *
      * @return <code>true</code> if the related resource is released and not expired
      */
     public boolean isReleaseAndNotExpired(CmsObject cms) {
@@ -584,10 +572,30 @@ public class CmsGallerySearchResult implements Comparable<CmsGallerySearchResult
     }
 
     /**
+     * Returns a shallow copy of this result, with a changed title.
+     *
+     * @param title the new title
+     *
+     * @return the shallow copy with the changed title
+     */
+    public CmsGallerySearchResult withTitle(String title) {
+
+        try {
+            CmsGallerySearchResult res = (CmsGallerySearchResult)clone();
+            res.m_title = title;
+            return res;
+        } catch (CloneNotSupportedException e) {
+            // shouldn't happen
+            LOG.error(e.getLocalizedMessage(), e);
+            return null;
+        }
+    }
+
+    /**
      * Initializes missing fields by reading the information from the VFS.<p>
-     * 
-     * @param cms the current CMS context 
-     * @param structureId the current structure id 
+     *
+     * @param cms the current CMS context
+     * @param structureId the current structure id
      */
     protected void initializeMissingFieldsFromVfs(CmsObject cms, CmsUUID structureId) {
 
@@ -599,15 +607,27 @@ public class CmsGallerySearchResult implements Comparable<CmsGallerySearchResult
         }
 
         try {
-            CmsResource res = cms.readResource(structureId);
+            CmsResource res = cms.readResource(structureId, CmsResourceFilter.ALL);
             if (m_description == null) {
-                CmsProperty descProp = cms.readPropertyObject(res, CmsPropertyDefinition.PROPERTY_DESCRIPTION, true);
+                CmsProperty descProp = cms.readPropertyObject(
+                    res,
+                    CmsPropertyDefinition.PROPERTY_DESCRIPTION,
+                    CmsResourceTypeXmlContainerPage.isContainerPage(res));
                 m_description = descProp.getValue();
+                if (m_description == null) {
+                    m_description = "";
+                }
             }
 
             if (m_title == null) {
-                CmsProperty titleProp = cms.readPropertyObject(res, CmsPropertyDefinition.PROPERTY_TITLE, true);
+                CmsProperty titleProp = cms.readPropertyObject(
+                    res,
+                    CmsPropertyDefinition.PROPERTY_TITLE,
+                    CmsResourceTypeXmlContainerPage.isContainerPage(res));
                 m_title = titleProp.getValue();
+                if (CmsStringUtil.isEmptyOrWhitespaceOnly(m_title)) {
+                    m_title = res.getName();
+                }
             }
         } catch (CmsException e) {
             LOG.error(e.getLocalizedMessage(), e);

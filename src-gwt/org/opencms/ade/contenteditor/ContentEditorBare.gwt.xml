@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module>
+<!-- Content editor module combining all required sources, but without any references to external CSS and JavaScripts.
+	 This module does not have an entry point.
+	 Inherit this module for external custom widgets. --> 
+	<inherits name="org.opencms.ade.galleries.Gallery" />
+	<inherits name="org.opencms.ade.publish.PublishDialog" />
+	<inherits name="org.opencms.ade.containerpage.ContainerpageEditorBare" />
+	<inherits name="org.opencms.ade.contenteditor.WidgetRegistry" />
+	
+	<!--  Using a special linker to enable dynamic module injection. -->
+	<define-linker name="crossSite" class="com.google.gwt.core.linker.CrossSiteIframeLinker" />
+   	<add-linker name="crossSite" />
+	<source path="client" />
+	<source path="shared" />
+</module>

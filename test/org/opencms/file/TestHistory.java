@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -14,12 +14,12 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * Lesser General Public License for more details.
  *
- * For further information about Alkacon Software GmbH, please see the
- * company website: http://www.alkacon.com
+ * For further information about Alkacon Software GmbH & Co. KG, please see the
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -33,94 +33,52 @@ import org.opencms.file.history.I_CmsHistoryResource;
 import org.opencms.file.types.CmsResourceTypeFolder;
 import org.opencms.file.types.CmsResourceTypePlain;
 import org.opencms.main.OpenCms;
+import org.opencms.publish.CmsPublishManager;
 import org.opencms.relations.CmsRelation;
 import org.opencms.relations.CmsRelationFilter;
 import org.opencms.relations.CmsRelationType;
 import org.opencms.report.CmsShellReport;
-import org.opencms.test.OpenCmsTestCase;
-import org.opencms.test.OpenCmsTestProperties;
 import org.opencms.test.OpenCmsTestResourceConfigurableFilter;
+import org.opencms.test.OpenCmsTestRunner;
+import org.opencms.util.CmsUUID;
 
 import java.io.UnsupportedEncodingException;
 import java.util.List;
 import java.util.Locale;
 
-import junit.extensions.TestSetup;
-import junit.framework.Test;
-import junit.framework.TestSuite;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.MethodOrderer;
+import org.junit.jupiter.api.Order;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInfo;
+import org.junit.jupiter.api.TestMethodOrder;
 
 /**
  * Unit tests for history operation.<p>
- * 
+ *
  * @since 6.9.1
  */
-public class TestHistory extends OpenCmsTestCase {
+@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
+public class TestHistory extends OpenCmsTestRunner {
 
     /**
-     * Default JUnit constructor.<p>
-     * 
-     * @param arg0 JUnit parameters
+     * @see org.opencms.test.OpenCmsTestRunner#$openCmsSetUp(org.junit.jupiter.api.TestInfo)
      */
-    public TestHistory(String arg0) {
+    @Override
+    @BeforeAll
+    public void $openCmsSetUp(TestInfo testInfo) {
 
-        super(arg0);
-    }
-
-    /**
-     * Test suite for this test class.<p>
-     * 
-     * @return the test suite
-     */
-    public static Test suite() {
-
-        OpenCmsTestProperties.initialize(org.opencms.test.AllTests.TEST_PROPERTIES_PATH);
-
-        TestSuite suite = new TestSuite();
-        suite.setName(TestHistory.class.getName());
-
-        suite.addTest(new TestHistory("testFileRestore"));
-        suite.addTest(new TestHistory("testReadDeleted"));
-        suite.addTest(new TestHistory("testDeleteDate"));
-        suite.addTest(new TestHistory("testFileRestoreIteration"));
-        suite.addTest(new TestHistory("testSiblingsRestoration"));
-        suite.addTest(new TestHistory("testSiblingsEdition"));
-        suite.addTest(new TestHistory("testSiblingsV7HistoryIssue2"));
-        suite.addTest(new TestHistory("testSiblingVersions"));
-        suite.addTest(new TestHistory("testSiblingRestoreIteration"));
-        suite.addTest(new TestHistory("testCreateAndDeleteFile"));
-        suite.addTest(new TestHistory("testCreateAndDeleteFolder"));
-        suite.addTest(new TestHistory("testMoveFile"));
-        suite.addTest(new TestHistory("testPathHistory"));
-        suite.addTest(new TestHistory("testFileHistory"));
-        suite.addTest(new TestHistory("testFileHistoryFileWithSibling"));
-        suite.addTest(new TestHistory("testFileVersions"));
-        suite.addTest(new TestHistory("testVersioningLimit"));
-        suite.addTest(new TestHistory("testSiblingsV7HistoryIssue"));
-
-        TestSetup wrapper = new TestSetup(suite) {
-
-            @Override
-            protected void setUp() {
-
-                setupOpenCms("simpletest", "/");
-            }
-
-            @Override
-            protected void tearDown() {
-
-                removeOpenCms();
-            }
-        };
-
-        return wrapper;
+        setupOpenCms(testInfo, "simpletest", "/");
     }
 
     /**
      * Creates and deletes a file n-times and tests if the historical data
      * are correct and if the content can be properly restored.<p>
-     * 
+     *
      * @throws Throwable if something goes wrong
      */
+    @Test
+    @Order(10)
     public void testCreateAndDeleteFile() throws Throwable {
 
         CmsObject cms = getCmsObject();
@@ -172,10 +130,10 @@ public class TestHistory extends OpenCmsTestCase {
         historyResources = cms.readAllAvailableVersions(importFile);
         assertEquals(counter + 2, historyResources.size()); // counter + created + deleted
 
-        for (int i = 0; i < counter + 2; i++) {
-            // the list of historical resources contains at index 0 the 
+        for (int i = 0; i < (counter + 2); i++) {
+            // the list of historical resources contains at index 0 the
             // resource with the highest version and tag ID
-            int version = counter + 2 - i;
+            int version = (counter + 2) - i;
             String contentStr = "content version " + (version - 1);
 
             // assert that the historical resource has the correct version
@@ -194,9 +152,11 @@ public class TestHistory extends OpenCmsTestCase {
     /**
      * Creates and deletes a folder n-times and tests if the historical data
      * are correct and if the properties can be properly restored.<p>
-     * 
+     *
      * @throws Throwable if something goes wrong
      */
+    @Test
+    @Order(11)
     public void testCreateAndDeleteFolder() throws Throwable {
 
         CmsObject cms = getCmsObject();
@@ -207,10 +167,9 @@ public class TestHistory extends OpenCmsTestCase {
 
         // create a folder
         CmsResource res = cms.createResource(folderName, CmsResourceTypeFolder.getStaticTypeId(), null, null);
-        cms.writePropertyObject(folderName, new CmsProperty(
-            CmsPropertyDefinition.PROPERTY_TITLE,
-            "title version äöß€ 0",
-            null));
+        cms.writePropertyObject(
+            folderName,
+            new CmsProperty(CmsPropertyDefinition.PROPERTY_TITLE, "title version \u00E4\u00F6\u00DF\u20AC 0", null));
         cms.unlockResource(folderName);
         OpenCms.getPublishManager().publishResource(cms, folderName);
         OpenCms.getPublishManager().waitWhileRunning();
@@ -219,10 +178,12 @@ public class TestHistory extends OpenCmsTestCase {
 
         for (int i = 1; i <= counter; i++) {
             cms.lockResource(folderName);
-            cms.writePropertyObject(folderName, new CmsProperty(
-                CmsPropertyDefinition.PROPERTY_TITLE,
-                "title version äöß€ " + i,
-                null));
+            cms.writePropertyObject(
+                folderName,
+                new CmsProperty(
+                    CmsPropertyDefinition.PROPERTY_TITLE,
+                    "title version \u00E4\u00F6\u00DF\u20AC " + i,
+                    null));
             // check
             assertHistory(cms, folderName, 1 + i);
             OpenCms.getPublishManager().publishResource(cms, folderName);
@@ -231,8 +192,12 @@ public class TestHistory extends OpenCmsTestCase {
             assertHistory(cms, folderName, 1 + i);
         }
         cms.lockResource(folderName);
-        cms.writePropertyObject(folderName, new CmsProperty(CmsPropertyDefinition.PROPERTY_TITLE, "title version äöß€ "
-            + (counter + 1), null));
+        cms.writePropertyObject(
+            folderName,
+            new CmsProperty(
+                CmsPropertyDefinition.PROPERTY_TITLE,
+                "title version \u00E4\u00F6\u00DF\u20AC " + (counter + 1),
+                null));
         // delete the folder
         cms.deleteResource(folderName, CmsResource.DELETE_PRESERVE_SIBLINGS);
         cms.unlockResource(folderName);
@@ -251,11 +216,11 @@ public class TestHistory extends OpenCmsTestCase {
         historyResources = cms.readAllAvailableVersions(importFolder);
         assertEquals(counter + 2, historyResources.size()); // counter + created + deleted
 
-        for (int i = 0; i < counter + 2; i++) {
-            // the list of historical resources contains at index 0 the 
+        for (int i = 0; i < (counter + 2); i++) {
+            // the list of historical resources contains at index 0 the
             // folder with the highest version and tag ID
-            int version = counter + 2 - i;
-            String title = "title version äöß€ " + (version - 1);
+            int version = (counter + 2) - i;
+            String title = "title version \u00E4\u00F6\u00DF\u20AC " + (version - 1);
 
             // assert that the historical resource has the correct version
             I_CmsHistoryResource historyResource = (I_CmsHistoryResource)historyResources.get(i);
@@ -274,9 +239,11 @@ public class TestHistory extends OpenCmsTestCase {
 
     /**
      * Tests the delete date of deleted resources.<p>
-     * 
+     *
      * @throws Throwable if something goes wrong
      */
+    @Test
+    @Order(3)
     public void testDeleteDate() throws Throwable {
 
         CmsObject cms = getCmsObject();
@@ -309,11 +276,13 @@ public class TestHistory extends OpenCmsTestCase {
     }
 
     /**
-     * Creates a file, modifies and publishes it n-times, create a sibling, 
+     * Creates a file, modifies and publishes it n-times, create a sibling,
      * publishes both and compares the histories.<p>
-     * 
+     *
      * @throws Throwable if something goes wrong
      */
+    @Test
+    @Order(14)
     public void testFileHistory() throws Throwable {
 
         CmsObject cms = getCmsObject();
@@ -375,12 +344,14 @@ public class TestHistory extends OpenCmsTestCase {
     }
 
     /**
-     * creates a file, modifies and publishes it n-times, create 2 siblings, 
-     * delete file and sibling N2, delete some versions from history, restore 
+     * creates a file, modifies and publishes it n-times, create 2 siblings,
+     * delete file and sibling N2, delete some versions from history, restore
      * file and sibling from history and compare contents.<p>
-     * 
+     *
      * @throws Throwable if something goes wrong
      */
+    @Test
+    @Order(15)
     public void testFileHistoryFileWithSibling() throws Throwable {
 
         CmsObject cms = getCmsObject();
@@ -459,7 +430,7 @@ public class TestHistory extends OpenCmsTestCase {
         OpenCms.getPublishManager().publishResource(cms, filename);
         OpenCms.getPublishManager().waitWhileRunning();
 
-        // now delete and publish second sibling     
+        // now delete and publish second sibling
         cms.lockResource(siblingname2);
         cms.deleteResource(siblingname2, CmsResource.DELETE_PRESERVE_SIBLINGS);
         cms.unlockResource(siblingname2);
@@ -476,9 +447,9 @@ public class TestHistory extends OpenCmsTestCase {
         // '0' original file deletion, affects just the given sibling
         // '0' second sibling deletion, affects just the given sibling
         // -3 versions deleted due to history overflow, while deleting original file
-        assertEquals(0 + counter + 1 + counterSibl + 0 + counterSibl2 + 0 + 0 - 3, allFiles.size());
+        assertEquals((0 + counter + 1 + counterSibl + 0 + counterSibl2 + 0 + 0) - 3, allFiles.size());
 
-        //Delete historical entries, keep only 3 latest versions. 
+        //Delete historical entries, keep only 3 latest versions.
         cms.deleteHistoricalVersions(3, 3, -1, new CmsShellReport(cms.getRequestContext().getLocale()));
 
         allFiles = cms.readAllAvailableVersions(siblingname);
@@ -512,9 +483,11 @@ public class TestHistory extends OpenCmsTestCase {
 
     /**
      * Test restoring a file also possible missing folders are restored.<p>
-     * 
+     *
      * @throws Throwable if something goes wrong
      */
+    @Test
+    @Order(1)
     public void testFileRestore() throws Throwable {
 
         CmsObject cms = getCmsObject();
@@ -530,10 +503,9 @@ public class TestHistory extends OpenCmsTestCase {
         cms.lockResource("index.html");
         cms.addRelationToResource("index.html", "testFolder", CmsRelationType.CATEGORY.getName());
         // write props
-        cms.writePropertyObject("testFolder", new CmsProperty(
-            CmsPropertyDefinition.PROPERTY_TITLE,
-            "strFolder",
-            "resFolder"));
+        cms.writePropertyObject(
+            "testFolder",
+            new CmsProperty(CmsPropertyDefinition.PROPERTY_TITLE, "strFolder", "resFolder"));
         CmsResource res = cms.createResource(
             "testFolder/test.txt",
             CmsResourceTypePlain.getStaticTypeId(),
@@ -542,10 +514,9 @@ public class TestHistory extends OpenCmsTestCase {
         // create a relation
         cms.addRelationToResource("index.html", "testFolder/test.txt", CmsRelationType.CATEGORY.getName());
         // write props
-        cms.writePropertyObject("testFolder/test.txt", new CmsProperty(
-            CmsPropertyDefinition.PROPERTY_TITLE,
-            "strFile",
-            "resFile"));
+        cms.writePropertyObject(
+            "testFolder/test.txt",
+            new CmsProperty(CmsPropertyDefinition.PROPERTY_TITLE, "strFile", "resFile"));
 
         storeResources(cms, "testFolder", true);
 
@@ -645,9 +616,11 @@ public class TestHistory extends OpenCmsTestCase {
 
     /**
      * Test restoring and deleting a file several times.<p>
-     * 
+     *
      * @throws Throwable if something goes wrong
      */
+    @Test
+    @Order(4)
     public void testFileRestoreIteration() throws Throwable {
 
         CmsObject cms = getCmsObject();
@@ -696,9 +669,11 @@ public class TestHistory extends OpenCmsTestCase {
 
     /**
      * Test the version numbers of a file after several modifications.<p>
-     *  
+     *
      * @throws Throwable if something goes wrong
      */
+    @Test
+    @Order(16)
     public void testFileVersions() throws Throwable {
 
         CmsObject cms = getCmsObject();
@@ -802,10 +777,9 @@ public class TestHistory extends OpenCmsTestCase {
         // 5. modify sibling resource
         cms.getRequestContext().setCurrentProject(offline);
         cms.lockResource(sibName);
-        cms.writePropertyObject(sibName, new CmsProperty(
-            CmsPropertyDefinition.PROPERTY_DESCRIPTION,
-            null,
-            "test description"));
+        cms.writePropertyObject(
+            sibName,
+            new CmsProperty(CmsPropertyDefinition.PROPERTY_DESCRIPTION, null, "test description"));
 
         // check offline
         assertHistory(cms, resName, 4);
@@ -921,16 +895,49 @@ public class TestHistory extends OpenCmsTestCase {
          assert sib version == 6 (res = 4, sib = 2)
 
          move
-         
+
          */
+    }
+
+    /**
+     * Tests that that the history.removedeleted property works.
+     *
+     * @throws Exception
+     */
+    @Test
+    @Order(19)
+    public void testHistoryRemoveDeleted() throws Exception {
+
+        CmsObject cms = getCmsObject();
+        String folder = "/testHistoryRemoveDeleted";
+        String path = folder + "/cant-undelete.txt";
+
+        cms.createResource(folder, 0);
+        CmsUUID structureId = cms.createResource(path, 1).getStructureId();
+        cms.writePropertyObject(
+            folder,
+            new CmsProperty(CmsPropertyDefinition.PROPERTY_HISTORY_REMOVE_DELETED, "true", "true"));
+
+        OpenCms.getPublishManager().publishProject(cms);
+        OpenCms.getPublishManager().waitWhileRunning();
+        cms.lockResourceTemporary(path);
+        cms.deleteResource(path, CmsResource.DELETE_PRESERVE_SIBLINGS);
+        OpenCms.getPublishManager().publishProject(cms);
+        OpenCms.getPublishManager().waitWhileRunning();
+        assertThrows(
+            "Should not be able to restore a resource in a folder with history.removedeleted=true",
+            () -> cms.restoreDeletedResource(structureId));
+
     }
 
     /**
      * Moves a resource n-times and tests if the version ID of the history resources
      * are correct and if the content could be restored for a specified version ID.<p>
-     * 
+     *
      * @throws Throwable if something goes wrong
      */
+    @Test
+    @Order(12)
     public void testMoveFile() throws Throwable {
 
         CmsObject cms = getCmsObject();
@@ -986,10 +993,10 @@ public class TestHistory extends OpenCmsTestCase {
         historyResources = cms.readAllAvailableVersions(importFile);
         assertEquals(counter + 2, historyResources.size()); // counter + created + deleted
 
-        for (int i = 0; i < counter + 2; i++) {
-            // the list of historical resources contains at index 0 the 
+        for (int i = 0; i < (counter + 2); i++) {
+            // the list of historical resources contains at index 0 the
             // resource with the highest version and tag ID
-            int version = counter + 2 - i;
+            int version = (counter + 2) - i;
             String contentStr = "content version " + (version - 1);
 
             // assert that the historical resource has the correct version
@@ -1007,9 +1014,11 @@ public class TestHistory extends OpenCmsTestCase {
 
     /**
      * Tests reconstructing the resource path for the history.<p>
-     * 
+     *
      * @throws Throwable if something goes wrong
      */
+    @Test
+    @Order(13)
     public void testPathHistory() throws Throwable {
 
         CmsObject cms = getCmsObject();
@@ -1089,10 +1098,10 @@ public class TestHistory extends OpenCmsTestCase {
         historyResources = cms.readAllAvailableVersions(importFile);
         assertEquals(counter + 2, historyResources.size()); // 1 (created) + counter (modified/moved) + 1 (deleted)
 
-        for (int i = 0; i < counter + 2; i++) {
-            // the list of historical resources contains at index 0 the 
+        for (int i = 0; i < (counter + 2); i++) {
+            // the list of historical resources contains at index 0 the
             // resource with the highest version and tag ID
-            int version = counter + 2 - i;
+            int version = (counter + 2) - i;
             String contentStr = "content version " + (version - 1);
             String histResName = foldername + (version - 1) + filename + (version - 1) + ext;
 
@@ -1110,7 +1119,7 @@ public class TestHistory extends OpenCmsTestCase {
             assertEquals(contentStr, restoredContent);
         }
 
-        // now recreate the folder 
+        // now recreate the folder
         String importFolder = "/import";
         cms.importResource(importFolder, folder, null, null);
         historyResources = cms.readAllAvailableVersions(importFile);
@@ -1118,10 +1127,10 @@ public class TestHistory extends OpenCmsTestCase {
 
         cms.lockResource(importFile);
 
-        for (int i = 0; i < counter + 2; i++) {
-            // the list of historical resources contains at index 0 the 
+        for (int i = 0; i < (counter + 2); i++) {
+            // the list of historical resources contains at index 0 the
             // resource with the highest version and tag ID
-            int version = counter + 2 - i;
+            int version = (counter + 2) - i;
             String contentStr = "content version " + (version - 1);
             String histResName = foldername + (version - 1) + filename + (version - 1) + ext;
 
@@ -1142,9 +1151,11 @@ public class TestHistory extends OpenCmsTestCase {
 
     /**
      * Tests the retrieval of deleted resources by name in a folder.<p>
-     * 
+     *
      * @throws Throwable if something goes wrong
      */
+    @Test
+    @Order(2)
     public void testReadDeleted() throws Throwable {
 
         CmsObject cms = getCmsObject();
@@ -1181,10 +1192,44 @@ public class TestHistory extends OpenCmsTestCase {
     }
 
     /**
+     * Test restoring a deleted file in a renamed folder.
+     *
+     * @throws Exception if something goes wrong
+     */
+    @Test
+    @Order(20)
+    public void testRestoreFileInRenamedFolder() throws Exception {
+
+        CmsObject cms = getCmsObject();
+        String base = "/testRestoreInRenamedFolder";
+        cms.createResource(base, 0);
+        cms.createResource(base + "/a", 0);
+        CmsResource fileToDelete = cms.createResource(base + "/a/1.txt", 1);
+        CmsPublishManager pm = OpenCms.getPublishManager();
+        pm.publishProject(cms);
+        pm.waitWhileRunning();
+
+        cms.lockResourceTemporary(base + "/a/1.txt");
+        cms.deleteResource(base + "/a/1.txt", CmsResource.DELETE_PRESERVE_SIBLINGS);
+        pm.publishProject(cms);
+        pm.waitWhileRunning();
+
+        cms.lockResourceTemporary(base + "/a");
+        cms.moveResource(base + "/a", base + "/b");
+        pm.publishProject(cms);
+        pm.waitWhileRunning();
+
+        cms.restoreDeletedResource(fileToDelete.getStructureId());
+        assertEquals(fileToDelete.getStructureId(), cms.readResource(base + "/b/1.txt").getStructureId());
+    }
+
+    /**
      * Test restoring and deleting a sibling several times.<p>
-     * 
+     *
      * @throws Throwable if something goes wrong
      */
+    @Test
+    @Order(9)
     public void testSiblingRestoreIteration() throws Throwable {
 
         CmsObject cms = getCmsObject();
@@ -1255,9 +1300,11 @@ public class TestHistory extends OpenCmsTestCase {
 
     /**
      * Test a create and edit siblings scenario.<p>
-     * 
+     *
      * @throws Throwable if something goes wrong
      */
+    @Test
+    @Order(6)
     public void testSiblingsEdition() throws Throwable {
 
         CmsObject cms = getCmsObject();
@@ -1333,10 +1380,9 @@ public class TestHistory extends OpenCmsTestCase {
 
         // 6. make a structure change on s2
         cms.changeLock(s2name);
-        cms.writePropertyObject(s2name, new CmsProperty(
-            CmsPropertyDefinition.PROPERTY_NAVTEXT,
-            "structure change",
-            null));
+        cms.writePropertyObject(
+            s2name,
+            new CmsProperty(CmsPropertyDefinition.PROPERTY_NAVTEXT, "structure change", null));
 
         // check history
         assertHistory(cms, s1name, 2);
@@ -1476,7 +1522,9 @@ public class TestHistory extends OpenCmsTestCase {
 
         // 13. make a structure change
         cms.changeLock(s2name);
-        cms.writePropertyObject(s2name, new CmsProperty(CmsPropertyDefinition.PROPERTY_TITLE, "structure change", null));
+        cms.writePropertyObject(
+            s2name,
+            new CmsProperty(CmsPropertyDefinition.PROPERTY_TITLE, "structure change", null));
 
         // check history
         assertHistory(cms, s1name, 4);
@@ -1534,20 +1582,18 @@ public class TestHistory extends OpenCmsTestCase {
 
         // 15. make a resource change
         cms.lockResource(s1name);
-        cms.writePropertyObject(s1name, new CmsProperty(
-            CmsPropertyDefinition.PROPERTY_TITLE,
-            null,
-            "new resource change"));
+        cms.writePropertyObject(
+            s1name,
+            new CmsProperty(CmsPropertyDefinition.PROPERTY_TITLE, null, "new resource change"));
 
         // check history
         assertHistory(cms, s1name, 5);
         assertHistory(cms, s2name, 7);
 
         // 16. make a structure change on s1
-        cms.writePropertyObject(s1name, new CmsProperty(
-            CmsPropertyDefinition.PROPERTY_NAVTEXT,
-            "new structure change",
-            null));
+        cms.writePropertyObject(
+            s1name,
+            new CmsProperty(CmsPropertyDefinition.PROPERTY_NAVTEXT, "new structure change", null));
 
         // check history
         assertHistory(cms, s1name, 5);
@@ -1555,10 +1601,9 @@ public class TestHistory extends OpenCmsTestCase {
 
         // 17. make a structure change on s2
         cms.changeLock(s2name);
-        cms.writePropertyObject(s2name, new CmsProperty(
-            CmsPropertyDefinition.PROPERTY_TITLE,
-            "new structure change",
-            null));
+        cms.writePropertyObject(
+            s2name,
+            new CmsProperty(CmsPropertyDefinition.PROPERTY_TITLE, "new structure change", null));
 
         // check history
         assertHistory(cms, s1name, 5);
@@ -1781,9 +1826,11 @@ public class TestHistory extends OpenCmsTestCase {
 
     /**
      * Test a sibling restoration scenario.<p>
-     * 
+     *
      * @throws Throwable if something goes wrong
      */
+    @Test
+    @Order(5)
     public void testSiblingsRestoration() throws Throwable {
 
         CmsObject cms = getCmsObject();
@@ -2119,9 +2166,11 @@ public class TestHistory extends OpenCmsTestCase {
 
     /**
      * Tests an issue present in OpenCms 7 siblings have a wrong history.<p>
-     * 
+     *
      * @throws Exception if the test fails
      */
+    @Test
+    @Order(18)
     public void testSiblingsV7HistoryIssue() throws Exception {
 
         echo("Tests OpenCms v7 history issue with siblings");
@@ -2182,9 +2231,11 @@ public class TestHistory extends OpenCmsTestCase {
 
     /**
      * Tests an issue present in OpenCms 7 siblings have a wrong history.<p>
-     * 
+     *
      * @throws Exception if the test fails
      */
+    @Test
+    @Order(7)
     public void testSiblingsV7HistoryIssue2() throws Exception {
 
         echo("Tests OpenCms v7 history issue with siblings");
@@ -2256,9 +2307,11 @@ public class TestHistory extends OpenCmsTestCase {
 
     /**
      * Test the version number of siblings after different operations.<p>
-     * 
+     *
      * @throws Throwable if something goes wrong
      */
+    @Test
+    @Order(8)
     public void testSiblingVersions() throws Throwable {
 
         CmsObject cms = getCmsObject();
@@ -2316,11 +2369,13 @@ public class TestHistory extends OpenCmsTestCase {
     }
 
     /**
-     * Test that the versions are properly updated 
+     * Test that the versions are properly updated
      * after reaching the limit of stored versions.<p>
-     * 
+     *
      * @throws Throwable if something goes wrong
      */
+    @Test
+    @Order(17)
     public void testVersioningLimit() throws Throwable {
 
         CmsObject cms = getCmsObject();
@@ -2351,7 +2406,7 @@ public class TestHistory extends OpenCmsTestCase {
 
     /**
      * Turns the byte content of a resource into a string.<p>
-     * 
+     *
      * @param cms the current user's Cms object
      * @param content the byte content of a resource
      * @return the content as a string

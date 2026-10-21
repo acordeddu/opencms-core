@@ -22,6 +22,7 @@ import com.google.gwt.core.client.JavaScriptException;
 import com.google.gwt.xhr.client.ReadyStateChangeHandler;
 import com.google.gwt.xhr.client.XMLHttpRequest;
 
+
 /**
  * Builder for constructing {@link com.google.gwt.http.client.Request} objects.
  * 
@@ -351,6 +352,19 @@ public class RequestBuilder {
 
         this.user = user;
     }
+    
+    
+    /**
+     * Returns the RPC context JSON data. 
+     * 
+     * @return the RPC context data, or null if none was set 
+     */
+    private native String getRpcContext() /*-{
+		if ($wnd.ocmsRpcContext) {
+			return JSON.stringify($wnd.ocmsRpcContext);
+		}
+		return null;
+    }-*/;
 
     /**
      * Sends an HTTP request based on the current builder configuration. If no
@@ -365,7 +379,7 @@ public class RequestBuilder {
     private Request doSend(String requestData, final RequestCallback callback) 
         throws RequestException {
         XMLHttpRequest xmlHttpRequest = XMLHttpRequest.create();
-
+        evaluateSync(requestData);
         try {
             if ((user != null) && (password != null)) {
                 if (m_sync) {
@@ -391,7 +405,11 @@ public class RequestBuilder {
             requestPermissionException.initCause(new RequestException(e.getMessage()));
             throw requestPermissionException;
         }
-
+        String rpcContext = getRpcContext();
+        if (rpcContext != null) {
+            setHeader("X-OcmsRpcContext", rpcContext); 
+            
+        }
         setHeaders(xmlHttpRequest);
 
         final Request request = new Request(xmlHttpRequest, timeoutMillis, callback);
@@ -422,6 +440,19 @@ public class RequestBuilder {
         }
 
         return request;
+    }
+    
+    /**
+     * Checks whether the request data contains the sync RPC token.<p>
+     * 
+     * This method was introduced to allow synchronised RPC calls within vaadin.
+     *   
+     * @param data the request data
+     */
+    private void evaluateSync(String data){
+        if (!m_sync && data!=null && data.contains(org.opencms.gwt.client.rpc.CmsRpcAction.SYNC_TOKEN)){
+            m_sync=true;
+        }
     }
 
     /*

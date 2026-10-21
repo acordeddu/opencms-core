@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -15,11 +15,11 @@
  * Lesser General Public License for more details.
  *
  * For further information about Alkacon Software, please see the
- * company website: http://www.alkacon.com
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -27,20 +27,18 @@
 
 package org.opencms.ade.galleries.shared;
 
+import org.opencms.gwt.shared.CmsListInfoBean;
 import org.opencms.gwt.shared.sort.I_CmsHasPath;
-import org.opencms.gwt.shared.sort.I_CmsHasTitle;
-import org.opencms.gwt.shared.sort.I_CmsHasType;
+import org.opencms.util.CmsUUID;
 
 import java.util.ArrayList;
 
-import com.google.gwt.user.client.rpc.IsSerializable;
-
 /**
  * Represents a gallery folder.<p>
- * 
+ *
  * @since 8.0.0
  */
-public class CmsGalleryFolderBean implements I_CmsHasTitle, I_CmsHasPath, I_CmsHasType, IsSerializable {
+public class CmsGalleryFolderBean extends CmsListInfoBean implements I_CmsHasPath {
 
     /** A list with content types corresponding to this gallery type. */
     private ArrayList<String> m_contentTypes;
@@ -48,14 +46,23 @@ public class CmsGalleryFolderBean implements I_CmsHasTitle, I_CmsHasPath, I_CmsH
     /** Flag to indicate if the user has write permissions to the gallery folder. */
     private boolean m_editable;
 
+    /** The gallery group. */
+    private CmsGalleryGroup m_group;
+
+    /** The label for the gallery group. */
+    private String m_groupLabel;
+
+    /** The structure id of the gallery. */
+    private CmsUUID m_id;
+
+    /** Can use the 'optimize gallery' dialog. */
+    private boolean m_optimizable;
+
     /** The folder site-path. */
     private String m_path;
 
-    /** The gallery folder title. */
-    private String m_title;
-
-    /** The gallery type name. */
-    private String m_type;
+    /** The name of the JavaScript method to get an upload button provider object. */
+    private String m_uploadAction;
 
     /**
      * Returns the content types which can be used within this gallery type.<p>
@@ -65,6 +72,36 @@ public class CmsGalleryFolderBean implements I_CmsHasTitle, I_CmsHasPath, I_CmsH
     public ArrayList<String> getContentTypes() {
 
         return m_contentTypes;
+    }
+
+    /**
+     * Gets the gallery group.
+     *
+     * @return the gallery group
+     */
+    public CmsGalleryGroup getGroup() {
+
+        return m_group;
+    }
+
+    /**
+     * Gets the label for the gallery group.
+     *
+     * @return the label for the gallery group
+     */
+    public String getGroupLabel() {
+
+        return m_groupLabel;
+    }
+
+    /**
+     * Gets the structure id.
+     *
+     * @return the structure id
+     */
+    public CmsUUID getId() {
+
+        return m_id;
     }
 
     /**
@@ -78,23 +115,22 @@ public class CmsGalleryFolderBean implements I_CmsHasTitle, I_CmsHasPath, I_CmsH
     }
 
     /**
-     * Returns the title.<p>
-     *
-     * @return the title
+     * @see org.opencms.gwt.shared.CmsListInfoBean#getSubTitle()
      */
-    public String getTitle() {
+    @Override
+    public String getSubTitle() {
 
-        return m_title;
+        return getPath();
     }
 
     /**
-     * Returns the gallery type name.<p>
+     * Gets the upload action.
      *
-     * @return the gallery type name
+     * @return the upload action
      */
-    public String getType() {
+    public String getUploadAction() {
 
-        return m_type;
+        return m_uploadAction;
     }
 
     /**
@@ -108,16 +144,28 @@ public class CmsGalleryFolderBean implements I_CmsHasTitle, I_CmsHasPath, I_CmsH
     }
 
     /**
+     * User can use the 'optimize gallery' dialog.
+     *
+     * <p>This does not necessarily mean the user has write permissions on the gallery.
+     *
+     * @return true if the user can use the 'optimize gallery' dialog
+     */
+    public boolean isOptimizable() {
+
+        return m_optimizable;
+    }
+
+    /**
      * Returns if the gallery matches the given filter.<p>
-     * 
+     *
      * @param filter the filter to match
-     * 
+     *
      * @return <code>true</code> if the gallery matches the given filter.<p>
      */
     public boolean matchesFilter(String filter) {
 
         filter = filter.toLowerCase();
-        return m_title.toLowerCase().contains(filter) || m_path.toLowerCase().contains(filter);
+        return getTitle().toLowerCase().contains(filter) || m_path.toLowerCase().contains(filter);
     }
 
     /**
@@ -141,6 +189,48 @@ public class CmsGalleryFolderBean implements I_CmsHasTitle, I_CmsHasPath, I_CmsH
     }
 
     /**
+     * Sets the gallery group.
+     *
+     * @param group the gallery group
+     */
+    public void setGroup(CmsGalleryGroup group) {
+
+        m_group = group;
+    }
+
+    /**
+     * Sets the gallery group label.
+     *
+     * @param groupLabel the gallery group label
+     */
+    public void setGroupLabel(String groupLabel) {
+
+        m_groupLabel = groupLabel;
+    }
+
+    /**
+     * Sets the structure id.
+     *
+     * @param structureId the structure id
+     */
+    public void setId(CmsUUID structureId) {
+
+        m_id = structureId;
+
+    }
+
+    /**
+     * Enables / disables 'optimize gallery' dialog.
+     *
+     * @param optimizable true if the 'optimize gallery' dialog should be enabled
+     */
+    public void setOptimizable(boolean optimizable) {
+
+        m_optimizable = optimizable;
+
+    }
+
+    /**
      * Sets the description.<p>
      *
      * @param path the description to set
@@ -151,22 +241,13 @@ public class CmsGalleryFolderBean implements I_CmsHasTitle, I_CmsHasPath, I_CmsH
     }
 
     /**
-     * Sets the title.<p>
+     * Sets the upload action.<p>
      *
-     * @param title the title to set
+     * @param jsFunctionName the name of the JavaScript function to call when the upload button is pressed.
      */
-    public void setTitle(String title) {
+    public void setUploadAction(String jsFunctionName) {
 
-        m_title = title;
+        m_uploadAction = jsFunctionName;
     }
 
-    /**
-     * Sets the gallery type name.<p>
-     *
-     * @param type the type name of this gallery
-     */
-    public void setType(String type) {
-
-        m_type = type;
-    }
 }

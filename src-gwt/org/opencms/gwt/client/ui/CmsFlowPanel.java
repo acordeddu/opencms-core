@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -15,11 +15,11 @@
  * Lesser General Public License for more details.
  *
  * For further information about Alkacon Software, please see the
- * company website: http://www.alkacon.com
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -53,7 +53,7 @@ import com.google.gwt.user.client.ui.Widget;
  * A basic panel which is like GWT's FlowPanel, except it allows you to choose the HTML tag
  * to use.<p>
  * Implements {@link com.google.gwt.event.dom.client.HasAllMouseHandlers}.<p>
- * 
+ *
  * @since 8.0.0
  */
 public class CmsFlowPanel extends ComplexPanel implements HasAllMouseHandlers {
@@ -66,10 +66,10 @@ public class CmsFlowPanel extends ComplexPanel implements HasAllMouseHandlers {
         this(CmsDomUtil.Tag.div.name());
     }
 
-    /** 
+    /**
      * Wrapping constructor.<p>
-     * 
-     * @param element the element to wrap 
+     *
+     * @param element the element to wrap
      */
     public CmsFlowPanel(Element element) {
 
@@ -79,24 +79,24 @@ public class CmsFlowPanel extends ComplexPanel implements HasAllMouseHandlers {
 
     /**
      * Creates an empty flow panel with a given tag name.
-     * 
+     *
      * @param tag the HTML tag name to use
      */
     @UiConstructor
     public CmsFlowPanel(String tag) {
 
-        setElement(DOM.createElement(tag));
+        setElement((Element)DOM.createElement(tag));
     }
 
     /**
      * Adds a new child widget to the panel.
-     * 
+     *
      * @param w the widget to be added
      */
     @Override
     public void add(Widget w) {
 
-        super.add(w, getElement());
+        super.add(w, (Element)getElement());
     }
 
     /**
@@ -149,13 +149,13 @@ public class CmsFlowPanel extends ComplexPanel implements HasAllMouseHandlers {
 
     /**
      * Inserts a widget at a given position.<p>
-     * 
+     *
      * @param w the widget to insert
-     * @param beforeIndex the position before which the widget should be inserted 
+     * @param beforeIndex the position before which the widget should be inserted
      */
     public void insert(Widget w, int beforeIndex) {
 
-        insert(w, getElement(), beforeIndex, true);
+        insert(w, (Element)getElement(), beforeIndex, true);
     }
 
 }

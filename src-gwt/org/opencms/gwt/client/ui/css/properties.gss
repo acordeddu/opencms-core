@@ -1,0 +1,41 @@
+@external isRenderingFields, propertyTab;
+
+.vfsModeSimplePropertiesBox, .navModePropertiesBox {
+	border: solid 1px value("constants.css.borderColor");
+	background: value("constants.css.backgroundColorDialog");
+	margin-top: 4px;
+	padding-left: 6px;
+	padding-right: 6px;
+	padding-top: 4px;
+}
+
+.noPaddingTop .navModePropertiesBox,  .noPaddingTop .vfsModeSimplePropertiesBox  {
+	padding-top: 0px !important;
+}
+
+@external  cmsState cmsState-up-hovering; 
+
+.cmsState.propertyDefinitionButton {
+	color: gray;
+}
+
+.cmsState.cmsState-up-hovering .propertyDefinitionButton {
+	color: blue;
+}
+
+.propertyParentLoading { 
+	background: linear-gradient(to bottom, rgba(255,255,255,1) 0%,rgba(255,255,255,1) 100%) no-repeat 0px 35px;
+}
+
+
+.propertyPanel {
+	
+}
+
+.isRenderingFields .propertyTab {
+	visibility: hidden;
+}
+
+.propertyTab {
+	width: 100%;
+}

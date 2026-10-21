@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -14,12 +14,12 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * Lesser General Public License for more details.
  *
- * For further information about Alkacon Software GmbH, please see the
- * company website: http://www.alkacon.com
+ * For further information about Alkacon Software GmbH & Co. KG, please see the
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -36,19 +36,37 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 import org.apache.commons.logging.Log;
 
+import com.google.common.base.Optional;
+
 /**
  * Provides access to the localized messages for several resource bundles simultaneously.<p>
- * 
+ *
  * Messages are cached for faster lookup. If a localized key is contained in more then one resource bundle,
- * it will be used only from the resource bundle where it was first found in. The resource bundle order is undefined. It is therefore 
+ * it will be used only from the resource bundle where it was first found in. The resource bundle order is undefined. It is therefore
  * recommended to ensure the uniqueness of all module keys by placing a special prefix in front of all keys of a resource bundle.<p>
- * 
- * @since 6.0.0 
+ *
+ * @since 6.0.0
  */
 public class CmsMultiMessages extends CmsMessages {
+
+    /**
+     * Interface to provide fallback keys to be used when the message for a key is not found.<p>
+     */
+    public interface I_KeyFallbackHandler {
+
+        /**
+         * Gets the fallback key for the given key, or the absent value if there is no fallback key.<p>
+         *
+         * @param key the original key
+         *
+         * @return the fallback key
+         */
+        Optional<String> getFallbackKey(String key);
+    }
 
     /** Constant for the multi bundle name. */
     public static final String MULTI_BUNDLE_NAME = CmsMultiMessages.class.getName();
@@ -59,6 +77,12 @@ public class CmsMultiMessages extends CmsMessages {
     /** Static reference to the log. */
     private static final Log LOG = CmsLog.getLog(CmsMultiMessages.class);
 
+    /** The key fallback handler. */
+    private I_KeyFallbackHandler m_keyFallbackHandler;
+
+    /** For successfully found message keys, indicates the position in the bundle list where they were last found. */
+    private Map<String, Integer> m_lastBundleIndexForKey = new ConcurrentHashMap<>();
+
     /** A cache for the messages to prevent multiple lookups in many bundles. */
     private Map<String, String> m_messageCache;
 
@@ -67,7 +91,7 @@ public class CmsMultiMessages extends CmsMessages {
 
     /**
      * Constructor for creating a new messages object initialized with the given locale.<p>
-     * 
+     *
      * @param locale the locale to use for localization of the messages
      */
     public CmsMultiMessages(Locale locale) {
@@ -76,7 +100,7 @@ public class CmsMultiMessages extends CmsMessages {
         // set the bundle name and the locale
         setBundleName(CmsMultiMessages.MULTI_BUNDLE_NAME);
         setLocale(locale);
-        // generate array for the messages        
+        // generate array for the messages
         m_messages = new ArrayList<CmsMessages>();
         // use "old" Hashtable since it is the most efficient synchronized HashMap implementation
         m_messageCache = new Hashtable<String, String>();
@@ -84,9 +108,9 @@ public class CmsMultiMessages extends CmsMessages {
 
     /**
      * Adds a bundle instance to this multi message bundle.<p>
-     * 
+     *
      * The added bundle will be localized with the locale of this multi message bundle.<p>
-     * 
+     *
      * @param bundle the bundle instance to add
      */
     public void addBundle(I_CmsMessageBundle bundle) {
@@ -96,14 +120,14 @@ public class CmsMultiMessages extends CmsMessages {
     }
 
     /**
-     * Adds a messages instance to this multi message bundle.<p> 
-     * 
+     * Adds a messages instance to this multi message bundle.<p>
+     *
      * The messages instance should have been initialized with the same locale as this multi bundle,
-     * if not, the locale of the messages instance is automatically replaced. However, this will not work 
+     * if not, the locale of the messages instance is automatically replaced. However, this will not work
      * if the added messages instance is in face also of type <code>{@link CmsMultiMessages}</code>.<p>
-     * 
+     *
      * @param messages the messages instance to add
-     * 
+     *
      * @throws CmsIllegalArgumentException if the locale of the given <code>{@link CmsMultiMessages}</code> does not match the locale of this multi messages
      */
     public void addMessages(CmsMessages messages) throws CmsIllegalArgumentException {
@@ -117,10 +141,11 @@ public class CmsMultiMessages extends CmsMessages {
                 messages = new CmsMessages(bundleName, getLocale());
             } else {
                 // multi bundles with wrong locales can't be added this way
-                throw new CmsIllegalArgumentException(Messages.get().container(
-                    Messages.ERR_MULTIMSG_LOCALE_DOES_NOT_MATCH_2,
-                    messages.getLocale(),
-                    getLocale()));
+                throw new CmsIllegalArgumentException(
+                    Messages.get().container(
+                        Messages.ERR_MULTIMSG_LOCALE_DOES_NOT_MATCH_2,
+                        messages.getLocale(),
+                        getLocale()));
             }
         }
         if (!m_messages.contains(messages)) {
@@ -133,8 +158,8 @@ public class CmsMultiMessages extends CmsMessages {
     }
 
     /**
-     * Adds a list a messages instances to this multi message bundle.<p> 
-     * 
+     * Adds a list a messages instances to this multi message bundle.<p>
+     *
      * @param messages the messages instance to add
      */
     public void addMessages(List<CmsMessages> messages) {
@@ -151,7 +176,7 @@ public class CmsMultiMessages extends CmsMessages {
 
     /**
      * Returns the list of all individual message objects in this multi message instance.<p>
-     * 
+     *
      * @return the list of all individual message objects in this multi message instance
      */
     public List<CmsMessages> getMessages() {
@@ -165,7 +190,7 @@ public class CmsMultiMessages extends CmsMessages {
     @Override
     public String getString(String keyName) {
 
-        return resolveKey(keyName);
+        return resolveKeyWithFallback(keyName);
     }
 
     /**
@@ -184,7 +209,7 @@ public class CmsMultiMessages extends CmsMessages {
     public String key(String keyName, boolean allowNull) {
 
         // special implementation since we uses several bundles for the messages
-        String result = resolveKey(keyName);
+        String result = resolveKeyWithFallback(keyName);
         if ((result == null) && !allowNull) {
             result = formatUnknownKey(keyName);
         }
@@ -192,12 +217,22 @@ public class CmsMultiMessages extends CmsMessages {
     }
 
     /**
+     * Sets the key fallback handler.<p>
+     *
+     * @param fallbackHandler the new key fallback handler
+     */
+    public void setFallbackHandler(I_KeyFallbackHandler fallbackHandler) {
+
+        m_keyFallbackHandler = fallbackHandler;
+    }
+
+    /**
      * Returns the localized resource string for a given message key,
      * checking the workplace default resources and all module bundles.<p>
-     * 
+     *
      * If the key was not found, <code>null</code> is returned.<p>
-     * 
-     * @param keyName the key for the desired string 
+     *
+     * @param keyName the key for the desired string
      * @return the resource string for the given key or null if not found
      */
     private String resolveKey(String keyName) {
@@ -208,15 +243,34 @@ public class CmsMultiMessages extends CmsMessages {
 
         String result = m_messageCache.get(keyName);
         if (result == NULL_STRING) {
-            // key was already checked and not found   
+            // key was already checked and not found
             return null;
+        }
+        boolean noCache = false;
+        Integer indexHint = m_lastBundleIndexForKey.get(keyName);
+        // Look at the position where the key was last found.
+        // This may not be successful, because VFS-based bundles are mutable and keys could have been removed.
+        if (indexHint != null) {
+            int i = indexHint.intValue();
+            if (i < m_messages.size()) {
+                try {
+                    result = m_messages.get(i).getString(keyName);
+                    noCache = true;
+                } catch (CmsMessageException e) {
+                    if (LOG.isDebugEnabled()) {
+                        LOG.debug(e.getMessage(), e);
+                    }
+                }
+            }
         }
         if (result == null) {
             // so far not in the cache
             for (int i = 0; (result == null) && (i < m_messages.size()); i++) {
                 try {
                     result = (m_messages.get(i)).getString(keyName);
+                    m_lastBundleIndexForKey.put(keyName, Integer.valueOf(i));
                     // if no exception is thrown here we have found the result
+                    noCache |= m_messages.get(i).isUncacheable();
                 } catch (CmsMessageException e) {
                     // can usually be ignored
                     if (LOG.isDebugEnabled()) {
@@ -243,10 +297,31 @@ public class CmsMultiMessages extends CmsMessages {
             if (LOG.isDebugEnabled()) {
                 LOG.debug(Messages.get().getBundle().key(Messages.LOG_MESSAGE_KEY_FOUND_2, keyName, result));
             }
-            // cache the result
-            m_messageCache.put(keyName, result);
+            if (!noCache) {
+                // cache the result
+                m_messageCache.put(keyName, result);
+            }
         }
-        // return the result        
+        // return the result
+        return result;
+    }
+
+    /**
+     * Resolves a message key, using the key fallback handler if it is set.<p>
+     *
+     * @param keyName the key to resolve
+     *
+     * @return the resolved key
+     */
+    private String resolveKeyWithFallback(String keyName) {
+
+        String result = resolveKey(keyName);
+        if ((result == null) && (m_keyFallbackHandler != null)) {
+            Optional<String> fallback = m_keyFallbackHandler.getFallbackKey(keyName);
+            if (fallback.isPresent()) {
+                result = resolveKey(fallback.get());
+            }
+        }
         return result;
     }
 }

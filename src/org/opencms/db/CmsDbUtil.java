@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -15,11 +15,11 @@
  * Lesser General Public License for more details.
  *
  * For further information about Alkacon Software, please see the
- * company website: http://www.alkacon.com
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -33,7 +33,7 @@ import java.util.List;
 
 /**
  * Generic database utility functions.<p>
- * 
+ *
  * @since 8.0.0
  */
 public final class CmsDbUtil {
@@ -43,17 +43,43 @@ public final class CmsDbUtil {
      */
     private CmsDbUtil() {
 
-        // do nothing 
+        // do nothing
 
     }
 
     /**
+     * Creates an expression for comparing a column with a constant.<p>
+     *
+     * @param column the column name
+     * @param o the constant
+     *
+     * @return the query expression
+     */
+    public static CmsSimpleQueryFragment columnEquals(String column, Object o) {
+
+        return new CmsSimpleQueryFragment(column + " = ?", o);
+    }
+
+    /**
+     * Creates an expression for matching a column with a constant pattern.<p>
+     *
+     * @param column the column name
+     * @param str the pattern string
+     *
+     * @return the query expression
+     */
+    public static CmsSimpleQueryFragment columnLike(String column, String str) {
+
+        return new CmsSimpleQueryFragment(column + " LIKE ? ", str);
+    }
+
+    /**
      * Fills a given prepared statement with parameters from a list of objects.<p>
-     * 
-     * @param stmt the prepared statement 
-     * @param params the parameter objects 
-     * 
-     * @throws SQLException if something goes wrong 
+     *
+     * @param stmt the prepared statement
+     * @param params the parameter objects
+     *
+     * @throws SQLException if something goes wrong
      */
     public static void fillParameters(PreparedStatement stmt, List<Object> params) throws SQLException {
 
@@ -70,31 +96,5 @@ public final class CmsDbUtil {
             }
             i += 1;
         }
-    }
-
-    /**
-     * Creates an expression for comparing a column with a constant.<p>
-     * 
-     * @param column the column name 
-     * @param o the constant
-     *  
-     * @return the query expression 
-     */
-    public static CmsSimpleQueryFragment columnEquals(String column, Object o) {
-
-        return new CmsSimpleQueryFragment(column + " = ?", o);
-    }
-
-    /**
-     * Creates an expression for matching a column with a constant pattern.<p>
-     * 
-     * @param column the column name 
-     * @param str the pattern string 
-     * 
-     * @return the query expression 
-     */
-    public static CmsSimpleQueryFragment columnLike(String column, String str) {
-
-        return new CmsSimpleQueryFragment(column + " LIKE ? ", str);
     }
 }

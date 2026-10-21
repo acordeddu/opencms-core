@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -14,12 +14,12 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * Lesser General Public License for more details.
  *
- * For further information about Alkacon Software GmbH, please see the
- * company website: http://www.alkacon.com
+ * For further information about Alkacon Software GmbH & Co. KG, please see the
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -36,6 +36,7 @@ import org.opencms.main.CmsException;
 import org.opencms.main.CmsRuntimeException;
 import org.opencms.main.OpenCms;
 import org.opencms.security.CmsOrganizationalUnit;
+import org.opencms.util.CmsUUID;
 import org.opencms.workplace.CmsDialog;
 import org.opencms.workplace.list.CmsListColumnDefinition;
 import org.opencms.workplace.list.CmsListDefaultAction;
@@ -59,8 +60,8 @@ import com.google.common.collect.Lists;
 
 /**
  * User groups overview view.<p>
- * 
- * @since 6.0.0 
+ *
+ * @since 6.0.0
  */
 public class CmsShowGroupUsersList extends A_CmsGroupUsersList {
 
@@ -75,7 +76,7 @@ public class CmsShowGroupUsersList extends A_CmsGroupUsersList {
 
     /**
      * Public constructor.<p>
-     * 
+     *
      * @param jsp an initialized JSP action element
      */
     public CmsShowGroupUsersList(CmsJspActionElement jsp) {
@@ -84,8 +85,19 @@ public class CmsShowGroupUsersList extends A_CmsGroupUsersList {
     }
 
     /**
+     * Public constructor.<p>
+     *
+     * @param jsp an initialized JSP action element
+     * @param lazy <code>true</code> for lazy initialization
+     */
+    public CmsShowGroupUsersList(CmsJspActionElement jsp, boolean lazy) {
+
+        this(jsp, LIST_ID, lazy);
+    }
+
+    /**
      * Public constructor with JSP variables.<p>
-     * 
+     *
      * @param context the JSP page context
      * @param req the JSP request
      * @param res the JSP response
@@ -93,6 +105,19 @@ public class CmsShowGroupUsersList extends A_CmsGroupUsersList {
     public CmsShowGroupUsersList(PageContext context, HttpServletRequest req, HttpServletResponse res) {
 
         this(new CmsJspActionElement(context, req, res));
+    }
+
+    /**
+     * Public constructor with JSP variables.<p>
+     *
+     * @param context the JSP page context
+     * @param req the JSP request
+     * @param res the JSP response
+     * @param lazy the lazy flag
+     */
+    public CmsShowGroupUsersList(PageContext context, HttpServletRequest req, HttpServletResponse res, boolean lazy) {
+
+        this(new CmsJspActionElement(context, req, res), lazy);
     }
 
     /**
@@ -106,33 +131,10 @@ public class CmsShowGroupUsersList extends A_CmsGroupUsersList {
     }
 
     /**
-     * Public constructor.<p>
-     * 
-     * @param jsp an initialized JSP action element
-     */
-    public CmsShowGroupUsersList(CmsJspActionElement jsp, boolean lazy) {
-
-        this(jsp, LIST_ID, lazy);
-    }
-
-    /**
-     * Public constructor with JSP variables.<p>
-     * 
-     * @param context the JSP page context
-     * @param req the JSP request
-     * @param res the JSP response
-     * @param lazy the lazy flag 
-     */
-    public CmsShowGroupUsersList(PageContext context, HttpServletRequest req, HttpServletResponse res, boolean lazy) {
-
-        this(new CmsJspActionElement(context, req, res), lazy);
-    }
-
-    /**
      * Protected constructor.<p>
      * @param jsp an initialized JSP action element
      * @param listId the id of the specialized list
-     * @param lazy the lazy flag 
+     * @param lazy the lazy flag
      */
     protected CmsShowGroupUsersList(CmsJspActionElement jsp, String listId, boolean lazy) {
 
@@ -142,6 +144,7 @@ public class CmsShowGroupUsersList extends A_CmsGroupUsersList {
     /**
      * @see org.opencms.workplace.list.A_CmsListDialog#defaultActionHtmlStart()
      */
+    @Override
     public String defaultActionHtmlStart() {
 
         return getList().listJs() + dialogContentStart(getParamTitle());
@@ -150,6 +153,7 @@ public class CmsShowGroupUsersList extends A_CmsGroupUsersList {
     /**
      * @see org.opencms.workplace.list.A_CmsListDialog#executeListMultiActions()
      */
+    @Override
     public void executeListMultiActions() throws CmsRuntimeException {
 
         throwListUnsupportedActionException();
@@ -158,14 +162,15 @@ public class CmsShowGroupUsersList extends A_CmsGroupUsersList {
     /**
      * @see org.opencms.workplace.list.A_CmsListDialog#executeListSingleActions()
      */
+    @Override
     public void executeListSingleActions() throws IOException, ServletException {
 
         String userId = getSelectedItem().getId();
 
-        Map params = new HashMap();
-        params.put(CmsDialog.PARAM_ACTION, CmsDialog.DIALOG_INITIAL);
-        params.put(A_CmsEditUserDialog.PARAM_USERID, userId);
-        params.put(A_CmsOrgUnitDialog.PARAM_OUFQN, getParamOufqn());
+        Map<String, String[]> params = new HashMap<String, String[]>();
+        params.put(CmsDialog.PARAM_ACTION, new String[] {CmsDialog.DIALOG_INITIAL});
+        params.put(A_CmsEditUserDialog.PARAM_USERID, new String[] {userId});
+        params.put(A_CmsOrgUnitDialog.PARAM_OUFQN, new String[] {getParamOufqn()});
 
         if (getParamListAction().equals(LIST_ACTION_EDIT)) {
             getToolManager().jspForwardTool(
@@ -175,73 +180,6 @@ public class CmsShowGroupUsersList extends A_CmsGroupUsersList {
         } else {
             throwListUnsupportedActionException();
         }
-    }
-
-    /**
-     * @see org.opencms.workplace.tools.accounts.A_CmsGroupUsersList#getUsers(boolean)
-     */
-    protected List getUsers(boolean withOtherOus) throws CmsException {
-
-        return getCms().getUsersOfGroup(getParamGroupname(), withOtherOus);
-    }
-
-    /**
-     * @see org.opencms.workplace.tools.accounts.A_CmsGroupUsersList#setDefaultAction(org.opencms.workplace.list.CmsListColumnDefinition)
-     */
-    protected void setDefaultAction(CmsListColumnDefinition loginCol) {
-
-        CmsListDefaultAction editAction = new CmsListDefaultAction(LIST_ACTION_EDIT) {
-
-            /**
-             * @see org.opencms.workplace.tools.A_CmsHtmlIconButton#isEnabled()
-             */
-            public boolean isEnabled() {
-
-                return getItem().get(LIST_COLUMN_ORGUNIT).equals(
-                    CmsOrganizationalUnit.SEPARATOR + ((CmsShowGroupUsersList)getWp()).getParamOufqn());
-            }
-        };
-        editAction.setName(Messages.get().container(Messages.GUI_USERS_LIST_ACTION_EDIT_NAME_0));
-        editAction.setHelpText(Messages.get().container(Messages.GUI_USERS_LIST_ACTION_EDIT_HELP_0));
-        loginCol.addDefaultAction(editAction);
-    }
-
-    /**
-     * @see org.opencms.workplace.tools.accounts.A_CmsGroupUsersList#setIconAction(org.opencms.workplace.list.CmsListColumnDefinition)
-     */
-    protected void setIconAction(CmsListColumnDefinition iconCol) {
-
-        CmsListDirectAction iconAction = new CmsListDirectAction(LIST_ACTION_ICON) {
-
-            /**
-             * @see org.opencms.workplace.tools.I_CmsHtmlIconButton#getIconPath()
-             */
-            public String getIconPath() {
-
-                return ((A_CmsGroupUsersList)getWp()).getIconPath(getItem());
-            }
-        };
-        iconAction.setName(Messages.get().container(Messages.GUI_USERS_LIST_INGROUP_NAME_0));
-        iconAction.setHelpText(Messages.get().container(Messages.GUI_USERS_LIST_INGROUP_HELP_0));
-        iconAction.setIconPath(A_CmsUsersList.PATH_BUTTONS + "user.png");
-        iconAction.setEnabled(false);
-        iconCol.addDirectAction(iconAction);
-    }
-
-    /**
-     * @see org.opencms.workplace.list.A_CmsListDialog#setMultiActions(org.opencms.workplace.list.CmsListMetadata)
-     */
-    protected void setMultiActions(CmsListMetadata metadata) {
-
-        // noop
-    }
-
-    /**
-     * @see org.opencms.workplace.tools.accounts.A_CmsGroupUsersList#setStateActionCol(org.opencms.workplace.list.CmsListMetadata)
-     */
-    protected void setStateActionCol(CmsListMetadata metadata) {
-
-        // no-op
     }
 
     /**
@@ -267,23 +205,11 @@ public class CmsShowGroupUsersList extends A_CmsGroupUsersList {
     }
 
     /**
-     * @see org.opencms.workplace.tools.accounts.A_CmsGroupUsersList#setColumns(org.opencms.workplace.list.CmsListMetadata)
-     */
-    @Override
-    protected void setColumns(CmsListMetadata meta) {
-
-        if (m_lazy) {
-            meta.setSelfManaged(true);
-        }
-        super.setColumns(meta);
-    }
-
-    /**
      * Gets the search parameters.<p>
-     * 
-     * @return the search parameters 
-     * 
-     * @throws CmsException if something goes wrong 
+     *
+     * @return the search parameters
+     *
+     * @throws CmsException if something goes wrong
      */
     protected CmsUserSearchParameters getSearchParams() throws CmsException {
 
@@ -296,7 +222,7 @@ public class CmsShowGroupUsersList extends A_CmsGroupUsersList {
         }
         params.setPaging(getList().getMaxItemsPerPage(), state.getPage());
         params.setSorting(getSortKey(state.getColumn()), state.getOrder().equals(CmsListOrderEnum.ORDER_ASCENDING));
-        CmsGroup group = getCms().readGroup(getParamGroupid());
+        CmsGroup group = getCms().readGroup(new CmsUUID(getParamGroupid()));
         params.setGroup(group);
         params.setFilterByGroupOu(false);
         return params;
@@ -304,9 +230,9 @@ public class CmsShowGroupUsersList extends A_CmsGroupUsersList {
 
     /**
      * Gets the sort key for a column.<p>
-     * 
-     * @param column a column 
-     * @return the sort key 
+     *
+     * @param column a column
+     * @return the sort key
      */
     protected SortKey getSortKey(String column) {
 
@@ -319,5 +245,91 @@ public class CmsShowGroupUsersList extends A_CmsGroupUsersList {
             return SortKey.loginName;
         }
         return null;
+    }
+
+    /**
+     * @see org.opencms.workplace.tools.accounts.A_CmsGroupUsersList#getUsers(boolean)
+     */
+    @Override
+    protected List<CmsUser> getUsers(boolean withOtherOus) throws CmsException {
+
+        return getCms().getUsersOfGroup(getParamGroupname(), withOtherOus);
+    }
+
+    /**
+     * @see org.opencms.workplace.tools.accounts.A_CmsGroupUsersList#setColumns(org.opencms.workplace.list.CmsListMetadata)
+     */
+    @Override
+    protected void setColumns(CmsListMetadata meta) {
+
+        if (m_lazy) {
+            meta.setSelfManaged(true);
+        }
+        super.setColumns(meta);
+    }
+
+    /**
+     * @see org.opencms.workplace.tools.accounts.A_CmsGroupUsersList#setDefaultAction(org.opencms.workplace.list.CmsListColumnDefinition)
+     */
+    @Override
+    protected void setDefaultAction(CmsListColumnDefinition loginCol) {
+
+        CmsListDefaultAction editAction = new CmsListDefaultAction(LIST_ACTION_EDIT) {
+
+            /**
+             * @see org.opencms.workplace.tools.A_CmsHtmlIconButton#isEnabled()
+             */
+            @Override
+            public boolean isEnabled() {
+
+                return getItem().get(LIST_COLUMN_ORGUNIT).equals(
+                    CmsOrganizationalUnit.SEPARATOR + ((CmsShowGroupUsersList)getWp()).getParamOufqn());
+            }
+        };
+        editAction.setName(Messages.get().container(Messages.GUI_USERS_LIST_ACTION_EDIT_NAME_0));
+        editAction.setHelpText(Messages.get().container(Messages.GUI_USERS_LIST_ACTION_EDIT_HELP_0));
+        loginCol.addDefaultAction(editAction);
+    }
+
+    /**
+     * @see org.opencms.workplace.tools.accounts.A_CmsGroupUsersList#setIconAction(org.opencms.workplace.list.CmsListColumnDefinition)
+     */
+    @Override
+    protected void setIconAction(CmsListColumnDefinition iconCol) {
+
+        CmsListDirectAction iconAction = new CmsListDirectAction(LIST_ACTION_ICON) {
+
+            /**
+             * @see org.opencms.workplace.tools.I_CmsHtmlIconButton#getIconPath()
+             */
+            @Override
+            public String getIconPath() {
+
+                return ((A_CmsGroupUsersList)getWp()).getIconPath(getItem());
+            }
+        };
+        iconAction.setName(Messages.get().container(Messages.GUI_USERS_LIST_INGROUP_NAME_0));
+        iconAction.setHelpText(Messages.get().container(Messages.GUI_USERS_LIST_INGROUP_HELP_0));
+        iconAction.setIconPath(A_CmsUsersList.PATH_BUTTONS + "user.png");
+        iconAction.setEnabled(false);
+        iconCol.addDirectAction(iconAction);
+    }
+
+    /**
+     * @see org.opencms.workplace.list.A_CmsListDialog#setMultiActions(org.opencms.workplace.list.CmsListMetadata)
+     */
+    @Override
+    protected void setMultiActions(CmsListMetadata metadata) {
+
+        // noop
+    }
+
+    /**
+     * @see org.opencms.workplace.tools.accounts.A_CmsGroupUsersList#setStateActionCol(org.opencms.workplace.list.CmsListMetadata)
+     */
+    @Override
+    protected void setStateActionCol(CmsListMetadata metadata) {
+
+        // no-op
     }
 }

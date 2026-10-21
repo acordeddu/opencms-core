@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -15,11 +15,11 @@
  * Lesser General Public License for more details.
  *
  * For further information about Alkacon Software, please see the
- * company website: http://www.alkacon.com
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -28,20 +28,25 @@
 package org.opencms.ade.editprovider.client;
 
 import org.opencms.gwt.client.A_CmsEntryPoint;
+import org.opencms.gwt.client.CmsBroadcastTimer;
 import org.opencms.gwt.client.CmsCoreProvider;
 import org.opencms.gwt.client.rpc.CmsRpcAction;
 import org.opencms.gwt.client.ui.CmsPushButton;
+import org.opencms.gwt.client.ui.CmsQuickLauncher;
+import org.opencms.gwt.client.ui.CmsQuickLauncher.A_QuickLaunchHandler;
 import org.opencms.gwt.client.ui.CmsToolbar;
 import org.opencms.gwt.client.ui.CmsToolbarContextButton;
-import org.opencms.gwt.client.ui.I_CmsButton.ButtonStyle;
-import org.opencms.gwt.client.ui.I_CmsButton.Size;
 import org.opencms.gwt.client.ui.I_CmsToolbarButton;
-import org.opencms.gwt.client.ui.css.I_CmsImageBundle;
 import org.opencms.gwt.client.ui.css.I_CmsLayoutBundle;
 import org.opencms.gwt.client.ui.css.I_CmsToolbarButtonLayoutBundle;
 import org.opencms.gwt.client.util.CmsDomUtil;
+import org.opencms.gwt.client.util.CmsDomUtil.Tag;
 import org.opencms.gwt.client.util.CmsPositionBean;
 import org.opencms.gwt.client.util.CmsStyleVariable;
+import org.opencms.gwt.shared.CmsCoreData.AdeContext;
+import org.opencms.gwt.shared.CmsGwtConstants;
+import org.opencms.gwt.shared.CmsGwtConstants.QuickLaunch;
+import org.opencms.gwt.shared.CmsQuickLaunchParams;
 
 import java.util.HashMap;
 import java.util.List;
@@ -61,13 +66,10 @@ import com.google.gwt.user.client.ui.RootPanel;
 
 /**
  * The entry point class for the org.opencms.ade.editprovider.EditProvider module.<p>
- * 
+ *
  * @since 8.0.0
  */
 public class CmsDirectEditEntryPoint extends A_CmsEntryPoint {
-
-    /** The class name for data elements which precede the direct editable elements. */
-    public static final String CLASS_NAME = "cms-editable";
 
     /** The map of button bar positions. */
     protected Map<String, CmsPositionBean> m_buttonPositions = new HashMap<String, CmsPositionBean>();
@@ -84,15 +86,12 @@ public class CmsDirectEditEntryPoint extends A_CmsEntryPoint {
     /** The dierect edit buttons. */
     private Map<String, CmsDirectEditButtons> m_directEditButtons = Maps.newHashMap();
 
-    /** The selection button.<p>*/
-    private CmsToolbarSelectionButton m_selection;
-
     /**
      * Initializes the direct edit buttons.<p>
      */
     public void initializeButtons() {
 
-        List<Element> editableElements = CmsDomUtil.getElementsByClass(CLASS_NAME);
+        List<Element> editableElements = CmsDomUtil.getElementsByClass(CmsGwtConstants.CLASS_EDITABLE, Tag.ALL);
         List<CmsDirectEditButtons> editables = Lists.newArrayList();
 
         for (Element elem : editableElements) {
@@ -123,10 +122,9 @@ public class CmsDirectEditEntryPoint extends A_CmsEntryPoint {
     @Override
     public void onModuleLoad() {
 
+        super.onModuleLoad();
         org.opencms.gwt.client.ui.css.I_CmsLayoutBundle.INSTANCE.directEditCss().ensureInjected();
-        RootPanel.get().addStyleName(I_CmsToolbarButtonLayoutBundle.INSTANCE.toolbarButtonCss().toolbarSelection());
-        RootPanel.get().addStyleName(
-            org.opencms.gwt.client.ui.css.I_CmsLayoutBundle.INSTANCE.directEditCss().classicDirectEdit());
+        RootPanel.get().addStyleName(I_CmsToolbarButtonLayoutBundle.INSTANCE.toolbarButtonCss().editButtonsVisible());
         installToolbar();
         Scheduler.get().scheduleDeferred(new ScheduledCommand() {
 
@@ -136,12 +134,12 @@ public class CmsDirectEditEntryPoint extends A_CmsEntryPoint {
 
             }
         });
-
+        CmsBroadcastTimer.start();
     }
 
     /**
      * Writes the tool-bar visibility into the session cache.<p>
-     * 
+     *
      * @param visible <code>true</code> if the tool-bar is visible
      */
     public void saveToolbarVisibility(final boolean visible) {
@@ -183,84 +181,79 @@ public class CmsDirectEditEntryPoint extends A_CmsEntryPoint {
 
                 I_CmsToolbarButton source = (I_CmsToolbarButton)event.getSource();
                 source.onToolbarClick();
+                if (source instanceof CmsPushButton) {
+                    ((CmsPushButton)source).clearHoverState();
+                }
             }
         };
         m_toolbar = new CmsToolbar();
         RootPanel root = RootPanel.get();
-        m_toolbarVisibility = new CmsStyleVariable(root);
+        m_toolbarVisibility = new CmsStyleVariable(m_toolbar);
         root.add(m_toolbar);
-        CmsPushButton toggleToolbarButton = new CmsPushButton();
         boolean initiallyVisible = CmsCoreProvider.get().isToolbarVisible();
-        toggleToolbarButton.setButtonStyle(ButtonStyle.TEXT, null);
-        toggleToolbarButton.setSize(Size.small);
-        toggleToolbarButton.setImageClass(I_CmsImageBundle.INSTANCE.style().opencmsSymbol());
-        toggleToolbarButton.removeStyleName(org.opencms.gwt.client.ui.css.I_CmsLayoutBundle.INSTANCE.generalCss().buttonCornerAll());
-        toggleToolbarButton.addStyleName(org.opencms.gwt.client.ui.css.I_CmsLayoutBundle.INSTANCE.generalCss().cornerAll());
-        root.add(toggleToolbarButton);
-        toggleToolbarButton.addClickHandler(new ClickHandler() {
-
-            /**
-             * @see com.google.gwt.event.dom.client.ClickHandler#onClick(com.google.gwt.event.dom.client.ClickEvent)
-             */
-            public void onClick(ClickEvent event) {
-
-                toggleToolbar();
-            }
-
-        });
         if (initiallyVisible) {
             m_toolbarVisibility.setValue(I_CmsLayoutBundle.INSTANCE.toolbarCss().simpleToolbarShow());
         } else {
             m_toolbarVisibility.setValue(I_CmsLayoutBundle.INSTANCE.toolbarCss().toolbarHide());
         }
 
-        toggleToolbarButton.addStyleName(org.opencms.gwt.client.ui.css.I_CmsLayoutBundle.INSTANCE.toolbarCss().toolbarToggle());
-        CmsDirectEditToolbarHandler handler = new CmsDirectEditToolbarHandler();
+        CmsDirectEditToolbarHandler handler = new CmsDirectEditToolbarHandler(this);
 
         CmsToolbarPublishButton publish = new CmsToolbarPublishButton(handler);
         publish.addClickHandler(clickHandler);
         m_toolbar.addLeft(publish);
 
+        CmsQuickLauncher ql = new CmsQuickLauncher();
+        m_toolbar.addRight(ql);
+
         CmsToolbarSelectionButton selection = new CmsToolbarSelectionButton(handler);
         selection.setActive(initiallyVisible);
         selection.addClickHandler(clickHandler);
         m_toolbar.addLeft(selection);
-        m_selection = selection;
+        CmsToolbarContextButton contextMenuButton = new CmsToolbarContextButton(handler);
+        contextMenuButton.setMenuContext(AdeContext.editprovider);
+        contextMenuButton.addClickHandler(clickHandler);
+        m_toolbar.addRight(contextMenuButton);
+        handler.setContextMenuButton(contextMenuButton);
+        m_toolbar.setQuickLaunchHandler(new A_QuickLaunchHandler() {
 
-        CmsToolbarContextButton context = new CmsToolbarContextButton(handler);
-        context.addClickHandler(clickHandler);
-        m_toolbar.addRight(context);
-        handler.setContextMenuButton(context);
+            public CmsQuickLaunchParams getParameters() {
+
+                return new CmsQuickLaunchParams(
+                    QuickLaunch.CONTEXT_PAGE,
+                    CmsCoreProvider.get().getStructureId(),
+                    null,
+                    null,
+                    CmsCoreProvider.get().getUri(),
+                    CmsCoreProvider.get().getLastPageId());
+            }
+        });
 
     }
 
     /**
      * Checks if the toolbar is visible.<p>
-     * 
-     * @return true if the toolbar is visible 
+     *
+     * @return true if the toolbar is visible
      */
     protected boolean isToolbarVisible() {
 
-        return m_toolbarVisibility.getValue().equals(
-            org.opencms.gwt.client.ui.css.I_CmsLayoutBundle.INSTANCE.toolbarCss().simpleToolbarShow());
+        return m_toolbarVisibility.getValue().equals(I_CmsLayoutBundle.INSTANCE.toolbarCss().simpleToolbarShow());
     }
 
     /**
      * Adds the direct edit buttons for a single editable element.<p>
-     * 
-     * @param elem the data container element 
-     * 
-     * @return the direct edit buttons widget which was created for the element 
+     *
+     * @param elem the data container element
+     *
+     * @return the direct edit buttons widget which was created for the element
      */
     protected CmsDirectEditButtons processEditableElement(Element elem) {
 
         RootPanel root = RootPanel.get();
         CmsDirectEditButtons result = new CmsDirectEditButtons(elem, null);
         root.add(result);
-        result.setPosition(
-            m_positions.get(elem.getId()),
-            m_buttonPositions.get(elem.getId()),
-            (com.google.gwt.user.client.Element)elem.getParentElement());
+        result.setPosition(m_positions.get(elem.getId()), m_buttonPositions.get(elem.getId()), elem.getParentElement());
         return result;
     }
 
@@ -282,31 +275,32 @@ public class CmsDirectEditEntryPoint extends A_CmsEntryPoint {
             buttons.setPosition(
                 m_positions.get(id),
                 m_buttonPositions.get(id),
-                (com.google.gwt.user.client.Element)buttons.getMarkerTag().getParentElement());
+                buttons.getMarkerTag().getParentElement());
         }
 
     }
 
     /**
      * Toggles the visibility of the toolbar.<p>
+     *
+     * @param show <code>true</code> to show the toolbar
      */
-    protected void toggleToolbar() {
+    protected void toggleToolbar(boolean show) {
 
-        if (isToolbarVisible()) {
-            CmsToolbar.showToolbar(
-                m_toolbar,
-                false,
-                m_toolbarVisibility,
-                I_CmsLayoutBundle.INSTANCE.toolbarCss().simpleToolbarShow());
-            saveToolbarVisibility(false);
-        } else {
+        if (show) {
             CmsToolbar.showToolbar(
                 m_toolbar,
                 true,
                 m_toolbarVisibility,
                 I_CmsLayoutBundle.INSTANCE.toolbarCss().simpleToolbarShow());
             saveToolbarVisibility(true);
-            m_selection.setActive(true);
+        } else {
+            CmsToolbar.showToolbar(
+                m_toolbar,
+                false,
+                m_toolbarVisibility,
+                I_CmsLayoutBundle.INSTANCE.toolbarCss().simpleToolbarShow());
+            saveToolbarVisibility(false);
         }
 
     }

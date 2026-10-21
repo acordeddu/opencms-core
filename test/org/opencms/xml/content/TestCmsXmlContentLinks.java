@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -14,12 +14,12 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * Lesser General Public License for more details.
  *
- * For further information about Alkacon Software GmbH, please see the
- * company website: http://www.alkacon.com
+ * For further information about Alkacon Software GmbH & Co. KG, please see the
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -27,34 +27,44 @@
 
 package org.opencms.xml.content;
 
+import org.opencms.file.CmsFile;
 import org.opencms.file.CmsObject;
 import org.opencms.file.CmsProject;
+import org.opencms.file.CmsProperty;
 import org.opencms.file.CmsResource;
+import org.opencms.file.types.CmsResourceTypeFolder;
 import org.opencms.file.types.CmsResourceTypePlain;
 import org.opencms.i18n.CmsEncoder;
 import org.opencms.main.OpenCms;
 import org.opencms.relations.CmsLink;
 import org.opencms.relations.CmsRelationType;
 import org.opencms.staticexport.CmsLinkTable;
-import org.opencms.test.OpenCmsTestCase;
-import org.opencms.test.OpenCmsTestProperties;
+import org.opencms.staticexport.CmsLinkTable.LinkKeyComparator;
+import org.opencms.test.OpenCmsTestRunner;
 import org.opencms.util.CmsFileUtil;
 import org.opencms.xml.CmsXmlEntityResolver;
 import org.opencms.xml.types.CmsXmlHtmlValue;
 import org.opencms.xml.types.CmsXmlVfsFileValue;
 
 import java.io.IOException;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
-import junit.extensions.TestSetup;
-import junit.framework.Test;
-import junit.framework.TestSuite;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.MethodOrderer;
+import org.junit.jupiter.api.Order;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInfo;
+import org.junit.jupiter.api.TestMethodOrder;
 
 /**
  * Tests the OpenCms XML contents with real VFS operations.<p>
  */
-public class TestCmsXmlContentLinks extends OpenCmsTestCase {
+@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
+public class TestCmsXmlContentLinks extends OpenCmsTestRunner {
 
     /** The link original filename. */
     private static final String FILENAME = "/folder1/image2.gif";
@@ -74,19 +84,12 @@ public class TestCmsXmlContentLinks extends OpenCmsTestCase {
     /** simple xml content schema system id, with attachment relation type. */
     private static final String SCHEMA_SYSTEM_ID_14 = "http://www.opencms.org/test14.xsd";
 
-    /**
-     * Default JUnit constructor.<p>
-     * 
-     * @param arg0 JUnit parameters
-     */
-    public TestCmsXmlContentLinks(String arg0) {
-
-        super(arg0);
-    }
+    /** The current VFS prefix as added to internal links according to the configuration in opencms-importexport.xml. */
+    private String m_vfsPrefix;
 
     /**
      * Compares two link objects.<p>
-     * 
+     *
      * @param expected the expected link object
      * @param result the resulting link object
      * @param assertStructureId if the structure id should be asserted or not
@@ -109,12 +112,12 @@ public class TestCmsXmlContentLinks extends OpenCmsTestCase {
 
     /**
      * Returns the unique link for the given html node in the given xml content.<p>
-     * 
+     *
      * @param cms the cms context
      * @param xmlcontent the xml content
      * @param nodeName the html node name
      * @param linkName the name of the link
-     * 
+     *
      * @return the link object
      */
     public static CmsLink getHtmlLink(CmsObject cms, CmsXmlContent xmlcontent, String nodeName, String linkName) {
@@ -129,11 +132,11 @@ public class TestCmsXmlContentLinks extends OpenCmsTestCase {
 
     /**
      * Returns the link for the given vfs file reference node in the given xml content.<p>
-     * 
+     *
      * @param cms the cms context
      * @param xmlcontent the xml content
      * @param nodeName the vfs file reference node name
-     * 
+     *
      * @return the link object
      */
     public static CmsLink getVfsFileRefLink(CmsObject cms, CmsXmlContent xmlcontent, String nodeName) {
@@ -144,50 +147,8 @@ public class TestCmsXmlContentLinks extends OpenCmsTestCase {
     }
 
     /**
-     * Test suite for this test class.<p>
-     * 
-     * @return the test suite
-     */
-    public static Test suite() {
-
-        OpenCmsTestProperties.initialize(org.opencms.test.AllTests.TEST_PROPERTIES_PATH);
-
-        TestSuite suite = new TestSuite();
-        suite.setName(TestCmsXmlContentLinks.class.getName());
-
-        suite.addTest(new TestCmsXmlContentLinks("testUpdatePath"));
-        suite.addTest(new TestCmsXmlContentLinks("testUpdateId"));
-        suite.addTest(new TestCmsXmlContentLinks("testRemoveNode"));
-        suite.addTest(new TestCmsXmlContentLinks("testRemoveParent"));
-        suite.addTest(new TestCmsXmlContentLinks("testRelationType"));
-        suite.addTest(new TestCmsXmlContentLinks("testInvalidateFalse"));
-
-        TestSetup wrapper = new TestSetup(suite) {
-
-            @Override
-            protected void setUp() {
-
-                setupOpenCms("simpletest", "/");
-                try {
-                    initSchemas();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            }
-
-            @Override
-            protected void tearDown() {
-
-                removeOpenCms();
-            }
-        };
-
-        return wrapper;
-    }
-
-    /**
      * Initializes all schema definitions.<p>
-     * 
+     *
      * @throws IOException if something goes wrong
      */
     protected static void initSchemas() throws IOException {
@@ -226,10 +187,10 @@ public class TestCmsXmlContentLinks extends OpenCmsTestCase {
 
     /**
      * Returns a link object prototype for the given type.<p>
-     * 
+     *
      * @param cms the cms context
      * @param forHtml <code>true</code> for html or <code>false</code> for vfs file refs
-     * 
+     *
      * @return a link object prototype
      */
     private static CmsLink getExpected(CmsObject cms, boolean forHtml) {
@@ -244,7 +205,7 @@ public class TestCmsXmlContentLinks extends OpenCmsTestCase {
 
     /**
      * Updates a link, and checks the result against the given resource.<p>
-     * 
+     *
      * @param cms the cms context
      * @param link the lin k to update
      * @param resource the resource to check against
@@ -257,10 +218,147 @@ public class TestCmsXmlContentLinks extends OpenCmsTestCase {
     }
 
     /**
-     * Test removing the node of a broken link.<p>
-     * 
+     * @see org.opencms.test.OpenCmsTestRunner#$openCmsSetUp(org.junit.jupiter.api.TestInfo)
+     */
+    @Override
+    @BeforeAll
+    public void $openCmsSetUp(TestInfo testInfo) {
+
+        setupOpenCms(testInfo, "simpletest", "/");
+        try {
+            initSchemas();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    /**
+     * Test the option to do not invalidate a broken link node.<p>
+     *
      * @throws Exception in case something goes wrong
      */
+    @Test
+    @Order(7)
+    public void testInvalidateFalse() throws Exception {
+
+        CmsObject cms = getCmsObject();
+        echo("Testing the option to do not invalidate a broken link node");
+
+        CmsXmlEntityResolver resolver = new CmsXmlEntityResolver(cms);
+
+        // now read the XML content
+        String content = CmsFileUtil.readFile("org/opencms/xml/content/xmlcontent-14.xml", CmsEncoder.ENCODING_UTF_8);
+        CmsXmlContent xmlcontent = CmsXmlContentFactory.unmarshal(cms, content, CmsEncoder.ENCODING_UTF_8, resolver);
+
+        // validate the XML structure
+        xmlcontent.validateXmlStructure(resolver);
+
+        // get and validate the vfs reference
+        String name = CmsLink.DEFAULT_NAME;
+        CmsRelationType type = CmsRelationType.XML_STRONG;
+        String target = cms.getRequestContext().addSiteRoot(FILENAME);
+        CmsLink expectedRefLink = new CmsLink(name, type, target, true);
+        expectedRefLink.checkConsistency(cms);
+        CmsLink refLink = getVfsFileRefLink(cms, xmlcontent, "VfsLink");
+        assertLink(expectedRefLink, refLink, true);
+
+        // get and validate the html link
+        CmsLink expectedHtmlLink = getExpected(cms, true);
+        CmsLink htmlLink = getHtmlLink(cms, xmlcontent, "Html", "link0");
+        assertLink(expectedHtmlLink, htmlLink, true);
+
+        // delete the link
+        cms.lockResource(FILENAME);
+        cms.deleteResource(FILENAME, CmsResource.DELETE_PRESERVE_SIBLINGS);
+        OpenCms.getPublishManager().publishResource(cms, FILENAME);
+        OpenCms.getPublishManager().waitWhileRunning();
+
+        // store the current content, this is important since the original content had no ids
+        content = xmlcontent.toString();
+        // read the content again
+        xmlcontent = CmsXmlContentFactory.unmarshal(cms, content, CmsEncoder.ENCODING_UTF_8, resolver);
+        // validate the XML structure
+        xmlcontent.validateXmlStructure(resolver);
+
+        // get and validate the vfs reference
+        expectedRefLink = new CmsLink(name, type, target, true);
+        expectedRefLink.checkConsistency(cms);
+        refLink = getVfsFileRefLink(cms, xmlcontent, "VfsLink");
+        assertLink(expectedRefLink, refLink, true);
+
+        // get and validate the html link
+        expectedHtmlLink = getExpected(cms, true);
+        htmlLink = getHtmlLink(cms, xmlcontent, "Html", "link0");
+        assertLink(expectedHtmlLink, htmlLink, true);
+    }
+
+    /**
+     * Tests the link comparator which is used to deterministically order link tables.<p>
+     *
+     * @throws Exception if something goes wrong
+     */
+    @Test
+    @Order(8)
+    public void testLinkComparator() throws Exception {
+
+        LinkKeyComparator comparator = new LinkKeyComparator();
+        List<String> ascendingKeys = Arrays.asList(null, "a1", "a2", "a11", "b1", "b2", "b11", "c", "c0", "c00", "c1");
+        for (int i = 0; i < ascendingKeys.size(); i++) {
+            for (int j = 0; j < ascendingKeys.size(); j++) {
+                String firstKey = ascendingKeys.get(i);
+                String secondKey = ascendingKeys.get(j);
+                assertEquals(
+                    Integer.compare(i, j),
+                    comparator.compare(firstKey, secondKey),
+                    "Wrong comparator result for values " + firstKey + ", " + secondKey);
+            }
+        }
+
+    }
+
+    /**
+     * Test the relation type configuration in xml content.<p>
+     *
+     * @throws Exception in case something goes wrong
+     */
+    @Test
+    @Order(6)
+    public void testRelationType() throws Exception {
+
+        CmsObject cms = getCmsObject();
+        echo("Testing the relation type configuration in xml content");
+
+        CmsXmlEntityResolver resolver = new CmsXmlEntityResolver(cms);
+
+        // now read the XML content
+        String content = CmsFileUtil.readFile("org/opencms/xml/content/xmlcontent-14.xml", CmsEncoder.ENCODING_UTF_8);
+        CmsXmlContent xmlcontent = CmsXmlContentFactory.unmarshal(cms, content, CmsEncoder.ENCODING_UTF_8, resolver);
+
+        // validate the XML structure
+        xmlcontent.validateXmlStructure(resolver);
+
+        // get and validate the vfs reference
+        String name = CmsLink.DEFAULT_NAME;
+        CmsRelationType type = CmsRelationType.XML_STRONG;
+        String target = cms.getRequestContext().addSiteRoot(FILENAME);
+        CmsLink expectedRefLink = new CmsLink(name, type, target, true);
+        expectedRefLink.checkConsistency(cms);
+        CmsLink refLink = getVfsFileRefLink(cms, xmlcontent, "VfsLink");
+        assertLink(expectedRefLink, refLink, true);
+
+        // get and validate the html link
+        CmsLink expectedHtmlLink = getExpected(cms, true);
+        CmsLink htmlLink = getHtmlLink(cms, xmlcontent, "Html", "link0");
+        assertLink(expectedHtmlLink, htmlLink, true);
+    }
+
+    /**
+     * Test removing the node of a broken link.<p>
+     *
+     * @throws Exception in case something goes wrong
+     */
+    @Test
+    @Order(4)
     public void testRemoveNode() throws Exception {
 
         CmsObject cms = getCmsObject();
@@ -321,8 +419,10 @@ public class TestCmsXmlContentLinks extends OpenCmsTestCase {
         Map<String, String> enWarnings = errHandler.getWarnings().get(Locale.ENGLISH);
         assertEquals(enWarnings.size(), 1);
         assertTrue(enWarnings.containsKey("VfsLink[1]"));
-        assertTrue(enWarnings.containsValue(org.opencms.xml.content.Messages.get().getBundle().key(
-            org.opencms.xml.content.Messages.GUI_XMLCONTENT_CHECK_WARNING_NOT_RELEASED_0)));
+        assertTrue(
+            enWarnings.containsValue(
+                org.opencms.xml.content.Messages.get().getBundle().key(
+                    org.opencms.xml.content.Messages.GUI_XMLCONTENT_CHECK_WARNING_NOT_RELEASED_0)));
 
         // reset the time to have the 'normal' behaviour again
         cms.getRequestContext().setRequestTime(System.currentTimeMillis());
@@ -408,8 +508,10 @@ public class TestCmsXmlContentLinks extends OpenCmsTestCase {
         Map<String, String> enErrors = errHandler.getErrors().get(Locale.ENGLISH);
         assertEquals(enErrors.size(), 1);
         assertTrue(enErrors.containsKey("VfsLink[1]"));
-        assertTrue(enErrors.containsValue(org.opencms.xml.content.Messages.get().getBundle().key(
-            org.opencms.xml.content.Messages.GUI_XMLCONTENT_CHECK_ERROR_0)));
+        assertTrue(
+            enErrors.containsValue(
+                org.opencms.xml.content.Messages.get().getBundle().key(
+                    org.opencms.xml.content.Messages.GUI_XMLCONTENT_CHECK_ERROR_0)));
         assertTrue(errHandler.getWarnings().isEmpty());
 
         // reset the time to have the 'normal' behaviour again
@@ -471,9 +573,11 @@ public class TestCmsXmlContentLinks extends OpenCmsTestCase {
 
     /**
      * Test removing the parent node of a broken link.<p>
-     * 
+     *
      * @throws Exception in case something goes wrong
      */
+    @Test
+    @Order(5)
     public void testRemoveParent() throws Exception {
 
         CmsObject cms = getCmsObject();
@@ -540,8 +644,10 @@ public class TestCmsXmlContentLinks extends OpenCmsTestCase {
         Map<String, String> enWarnings = errHandler.getWarnings().get(Locale.ENGLISH);
         assertEquals(enWarnings.size(), 1);
         assertTrue(enWarnings.containsKey("ALink[1]/VfsLink[1]"));
-        assertTrue(enWarnings.containsValue(org.opencms.xml.content.Messages.get().getBundle().key(
-            org.opencms.xml.content.Messages.GUI_XMLCONTENT_CHECK_WARNING_NOT_RELEASED_0)));
+        assertTrue(
+            enWarnings.containsValue(
+                org.opencms.xml.content.Messages.get().getBundle().key(
+                    org.opencms.xml.content.Messages.GUI_XMLCONTENT_CHECK_WARNING_NOT_RELEASED_0)));
 
         // reset the time to have the 'normal' behaviour again
         cms.getRequestContext().setRequestTime(System.currentTimeMillis());
@@ -628,8 +734,10 @@ public class TestCmsXmlContentLinks extends OpenCmsTestCase {
         Map<String, String> enErrors = errHandler.getErrors().get(Locale.ENGLISH);
         assertEquals(enErrors.size(), 1);
         assertTrue(enErrors.containsKey("ALink[1]/VfsLink[1]"));
-        assertTrue(enErrors.containsValue(org.opencms.xml.content.Messages.get().getBundle().key(
-            org.opencms.xml.content.Messages.GUI_XMLCONTENT_CHECK_ERROR_0)));
+        assertTrue(
+            enErrors.containsValue(
+                org.opencms.xml.content.Messages.get().getBundle().key(
+                    org.opencms.xml.content.Messages.GUI_XMLCONTENT_CHECK_ERROR_0)));
         assertTrue(errHandler.getWarnings().isEmpty());
 
         // reset the time to have the 'normal' behaviour again
@@ -688,10 +796,192 @@ public class TestCmsXmlContentLinks extends OpenCmsTestCase {
     }
 
     /**
+     * Tests saving XML contents with links from/to various sites.<p>
+     *
+     * @throws Exception in case the test fails
+     */
+    @Test
+    @Order(1)
+    public void testSiteLinks() throws Exception {
+
+        CmsObject cms = getCmsObject();
+        cms.getRequestContext().setSiteRoot("");
+        cms.createResource("/sites/testsite/", CmsResourceTypeFolder.getStaticTypeId());
+        cms.unlockResource("/sites/testsite/");
+        OpenCms.getPublishManager().publishProject(cms);
+        OpenCms.getPublishManager().waitWhileRunning();
+        cms.getRequestContext().setSiteRoot("");
+        // Site A
+        CmsResource a = createTestFile("/sites/testsite/testfile-a.html");
+
+        // Site B
+        CmsResource b = createTestFile("/sites/default/folder1/testfile-b.html");
+
+        // (W)orkplace site
+        CmsResource w = createTestFile("/sites/default/testfile-w.html");
+
+        // (S)hared
+        CmsResource s = createTestFile("/shared/testfile-shared.html");
+
+        // (R)oot
+        CmsResource r = createTestFile("/system/testfile-system.html");
+
+        // Macros to replace, have to be real URLs of existing files in order to avoid console Exception log output because of malforme URLs
+        String target1 = createTestFile("/shared/target-1.html").getRootPath();
+        String target2 = createTestFile("/shared/target-2.html").getRootPath();
+
+        for (String targetMacro : new String[] {target1, target2}) {
+
+            // from default site
+            checkSetLink("/sites/default", w, targetMacro, "/testfile-w.html", w);
+            checkSetLink(
+                "/sites/default",
+                w,
+                targetMacro,
+                "http://localhost:8080" + getVfsPrefix() + "/testfile-w.html",
+                w);
+            checkSetLink("/sites/default", w, targetMacro, getVfsPrefix() + "/testfile-w.html", w);
+
+            checkSetLink(
+                "/sites/default",
+                w,
+                targetMacro,
+                "http://localhost:8082" + getVfsPrefix() + "/testfile-a.html",
+                a);
+
+            checkSetLink(
+                "/sites/default",
+                w,
+                targetMacro,
+                "http://localhost:8080" + getVfsPrefix() + "/system/testfile-system.html",
+                r);
+            checkSetLink("/sites/default", w, targetMacro, getVfsPrefix() + "/system/testfile-system.html", r);
+            checkSetLink("/sites/default", w, targetMacro, "/system/testfile-system.html", r);
+
+            checkSetLink("/sites/default", w, targetMacro, "/shared/testfile-shared.html", s);
+            checkSetLink(
+                "/sites/default",
+                w,
+                targetMacro,
+                "http://localhost:8080" + getVfsPrefix() + "/shared/testfile-shared.html",
+                s);
+            checkSetLink("/sites/default", w, targetMacro, getVfsPrefix() + "/shared/testfile-shared.html", s);
+
+            // from shared folder
+
+            checkSetLink("/shared", s, targetMacro, "/testfile-shared.html", s);
+            checkSetLink(
+                "/shared",
+                s,
+                targetMacro,
+                "http://localhost:8080" + getVfsPrefix() + "/testfile-shared.html",
+                s);
+            checkSetLink(
+                "/shared",
+                s,
+                targetMacro,
+                "http://localhost:8080" + getVfsPrefix() + "/shared/testfile-shared.html",
+                s);
+            checkSetLink("/shared", s, targetMacro, getVfsPrefix() + "/shared/testfile-shared.html", s);
+
+            checkSetLink("/shared", s, targetMacro, "http://localhost:8082" + getVfsPrefix() + "/testfile-a.html", a);
+            checkSetLink("/shared", s, targetMacro, "http://localhost:8080" + getVfsPrefix() + "/testfile-w.html", w);
+
+            checkSetLink(
+                "/shared",
+                s,
+                targetMacro,
+                "http://localhost:8080" + getVfsPrefix() + "/system/testfile-system.html",
+                r);
+            checkSetLink("/shared", s, targetMacro, getVfsPrefix() + "/system/testfile-system.html", r);
+
+            // from root site
+
+            checkSetLink("", r, targetMacro, "/shared/testfile-shared.html", s);
+            checkSetLink(
+                "",
+                r,
+                targetMacro,
+                "http://localhost:8080" + getVfsPrefix() + "/shared/testfile-shared.html",
+                s);
+            checkSetLink("", r, targetMacro, "/system/testfile-system.html", r);
+            checkSetLink(
+                "",
+                r,
+                targetMacro,
+                "http://localhost:8080" + getVfsPrefix() + "/system/testfile-system.html",
+                r);
+            checkSetLink("", r, targetMacro, "/sites/testsite/testfile-a.html", a);
+            checkSetLink(
+                "",
+                r,
+                targetMacro,
+                "http://localhost:8080" + getVfsPrefix() + "/sites/testsite/testfile-a.html",
+                a);
+
+            // From testsite
+
+            checkSetLink(
+                "/sites/testsite",
+                a,
+                targetMacro,
+                "http://localhost:8082" + getVfsPrefix() + "/testfile-a.html",
+                a);
+            checkSetLink("/sites/testsite", a, targetMacro, "/testfile-a.html", a);
+            checkSetLink(
+                "/sites/testsite",
+                a,
+                targetMacro,
+                "http://localhost:8080" + getVfsPrefix() + "/testfile-a.html",
+                a);
+            checkSetLink(
+                "/sites/testsite",
+                a,
+                targetMacro,
+                "http://localhost:8080" + getVfsPrefix() + "/testfile-w.html",
+                w);
+            checkSetLink("/sites/testsite", a, targetMacro, "/shared/testfile-shared.html", s);
+            checkSetLink(
+                "/sites/testsite",
+                a,
+                targetMacro,
+                "http://localhost:8080" + getVfsPrefix() + "/shared/testfile-shared.html",
+                s);
+            checkSetLink(
+                "/sites/testsite",
+                a,
+                targetMacro,
+                "http://localhost:8082" + getVfsPrefix() + "/shared/testfile-shared.html",
+                s);
+            checkSetLink("/sites/testsite", a, targetMacro, "/system/testfile-system.html", r);
+            checkSetLink(
+                "/sites/testsite",
+                a,
+                targetMacro,
+                "http://localhost:8080" + getVfsPrefix() + "/system/testfile-system.html",
+                r);
+            checkSetLink(
+                "/sites/testsite",
+                a,
+                targetMacro,
+                "http://localhost:8082" + getVfsPrefix() + "/system/testfile-system.html",
+                r);
+            checkSetLink(
+                "/sites/testsite",
+                a,
+                targetMacro,
+                "http://localhost:8081" + getVfsPrefix() + "/testfile-b.html",
+                b);
+        }
+    }
+
+    /**
      * Test updating the id of a moved resource in a broken link.<p>
-     * 
+     *
      * @throws Exception in case something goes wrong
      */
+    @Test
+    @Order(3)
     public void testUpdateId() throws Exception {
 
         CmsObject cms = getCmsObject();
@@ -743,9 +1033,11 @@ public class TestCmsXmlContentLinks extends OpenCmsTestCase {
 
     /**
      * Test updating the path of a moved resource in a broken link.<p>
-     * 
+     *
      * @throws Exception in case something goes wrong
      */
+    @Test
+    @Order(2)
     public void testUpdatePath() throws Exception {
 
         CmsObject cms = getCmsObject();
@@ -814,94 +1106,63 @@ public class TestCmsXmlContentLinks extends OpenCmsTestCase {
     }
 
     /**
-     * Test the relation type configuration in xml content.<p>
-     * 
-     * @throws Exception in case something goes wrong
+     * Initializes m_vfsPrefix lazily, otherwise it does not work.
+     * @return the VFS prefix as added to internal links
      */
-    public void testRelationType() throws Exception {
+    protected String getVfsPrefix() {
 
-        CmsObject cms = getCmsObject();
-        echo("Testing the relation type configuration in xml content");
-
-        CmsXmlEntityResolver resolver = new CmsXmlEntityResolver(cms);
-
-        // now read the XML content
-        String content = CmsFileUtil.readFile("org/opencms/xml/content/xmlcontent-14.xml", CmsEncoder.ENCODING_UTF_8);
-        CmsXmlContent xmlcontent = CmsXmlContentFactory.unmarshal(cms, content, CmsEncoder.ENCODING_UTF_8, resolver);
-
-        // validate the XML structure
-        xmlcontent.validateXmlStructure(resolver);
-
-        // get and validate the vfs reference
-        String name = CmsLink.DEFAULT_NAME;
-        CmsRelationType type = CmsRelationType.XML_STRONG;
-        String target = cms.getRequestContext().addSiteRoot(FILENAME);
-        CmsLink expectedRefLink = new CmsLink(name, type, target, true);
-        expectedRefLink.checkConsistency(cms);
-        CmsLink refLink = getVfsFileRefLink(cms, xmlcontent, "VfsLink");
-        assertLink(expectedRefLink, refLink, true);
-
-        // get and validate the html link
-        CmsLink expectedHtmlLink = getExpected(cms, true);
-        CmsLink htmlLink = getHtmlLink(cms, xmlcontent, "Html", "link0");
-        assertLink(expectedHtmlLink, htmlLink, true);
+        if (null == m_vfsPrefix) {
+            m_vfsPrefix = OpenCms.getStaticExportManager().getVfsPrefix();
+        }
+        return m_vfsPrefix;
     }
 
     /**
-     * Test the option to do not invalidate a broken link node.<p>
-     * 
-     * @throws Exception in case something goes wrong
+     * Replaces the content of an xmlcontent resource with a new content which contains a given link, and then checks if the
+     * link has been correctly created.<p>
+     *
+     * @param siteRoot the site root to set
+     * @param source the resource whose content should be written
+     * @param macro the macro to replace with the link
+     * @param targetUri the URI which should be saved
+     * @param expected the resource to which the resource should link after saving
+     *
+     * @throws Exception if something goes wrong
      */
-    public void testInvalidateFalse() throws Exception {
+    private void checkSetLink(String siteRoot, CmsResource source, String macro, String targetUri, CmsResource expected)
+    throws Exception {
 
         CmsObject cms = getCmsObject();
-        echo("Testing the option to do not invalidate a broken link node");
+        cms.getRequestContext().setSiteRoot(siteRoot);
+        String data = CmsFileUtil.readFile("org/opencms/xml/content/xmlcontent-15.xml", "UTF-8");
+        data = data.replace(macro, targetUri);
+        CmsFile file = cms.readFile(source);
+        byte[] originalContent = file.getContents();
+        file.setContents(data.getBytes());
+        cms.writeFile(file);
+        file = cms.readFile(source);
+        String newData = new String(file.getContents(), "UTF-8");
+        assertTrue(
+            newData.contains(expected.getStructureId().toString()),
+            "[" + newData + "] does not contain " + expected.getStructureId());
+        file.setContents(originalContent);
+        cms.writeFile(file);
+    }
 
-        CmsXmlEntityResolver resolver = new CmsXmlEntityResolver(cms);
+    /**
+     * Creates a test file for the testSiteLinks test.<p>
+     *
+     * @param rootPath the test file path
+     * @return the new test file
+     * @throws Exception if something goes wrong
+     */
+    private CmsResource createTestFile(String rootPath) throws Exception {
 
-        // now read the XML content
-        String content = CmsFileUtil.readFile("org/opencms/xml/content/xmlcontent-14.xml", CmsEncoder.ENCODING_UTF_8);
-        CmsXmlContent xmlcontent = CmsXmlContentFactory.unmarshal(cms, content, CmsEncoder.ENCODING_UTF_8, resolver);
-
-        // validate the XML structure
-        xmlcontent.validateXmlStructure(resolver);
-
-        // get and validate the vfs reference
-        String name = CmsLink.DEFAULT_NAME;
-        CmsRelationType type = CmsRelationType.XML_STRONG;
-        String target = cms.getRequestContext().addSiteRoot(FILENAME);
-        CmsLink expectedRefLink = new CmsLink(name, type, target, true);
-        expectedRefLink.checkConsistency(cms);
-        CmsLink refLink = getVfsFileRefLink(cms, xmlcontent, "VfsLink");
-        assertLink(expectedRefLink, refLink, true);
-
-        // get and validate the html link
-        CmsLink expectedHtmlLink = getExpected(cms, true);
-        CmsLink htmlLink = getHtmlLink(cms, xmlcontent, "Html", "link0");
-        assertLink(expectedHtmlLink, htmlLink, true);
-
-        // delete the link
-        cms.lockResource(FILENAME);
-        cms.deleteResource(FILENAME, CmsResource.DELETE_PRESERVE_SIBLINGS);
-        OpenCms.getPublishManager().publishResource(cms, FILENAME);
-        OpenCms.getPublishManager().waitWhileRunning();
-
-        // store the current content, this is important since the original content had no ids
-        content = xmlcontent.toString();
-        // read the content again
-        xmlcontent = CmsXmlContentFactory.unmarshal(cms, content, CmsEncoder.ENCODING_UTF_8, resolver);
-        // validate the XML structure
-        xmlcontent.validateXmlStructure(resolver);
-
-        // get and validate the vfs reference
-        expectedRefLink = new CmsLink(name, type, target, true);
-        expectedRefLink.checkConsistency(cms);
-        refLink = getVfsFileRefLink(cms, xmlcontent, "VfsLink");
-        assertLink(expectedRefLink, refLink, true);
-
-        // get and validate the html link
-        expectedHtmlLink = getExpected(cms, true);
-        htmlLink = getHtmlLink(cms, xmlcontent, "Html", "link0");
-        assertLink(expectedHtmlLink, htmlLink, true);
+        CmsObject cms = getCmsObject();
+        cms.getRequestContext().setSiteRoot("");
+        int xmlcontentType = OpenCms.getResourceManager().getResourceType("xmlcontent").getTypeId();
+        byte[] content = CmsFileUtil.readFile("org/opencms/xml/content/xmlcontent-14.xml");
+        CmsResource tsl = cms.createResource(rootPath, xmlcontentType, content, Collections.<CmsProperty> emptyList());
+        return tsl;
     }
 }

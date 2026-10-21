@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -14,12 +14,12 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * Lesser General Public License for more details.
  *
- * For further information about Alkacon Software GmbH, please see the
- * company website: http://www.alkacon.com
+ * For further information about Alkacon Software GmbH & Co. KG, please see the
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -28,7 +28,10 @@
 package org.opencms.xml.types;
 
 import org.opencms.file.CmsObject;
+import org.opencms.json.JSONException;
+import org.opencms.main.CmsException;
 import org.opencms.main.CmsIllegalArgumentException;
+import org.opencms.main.CmsLog;
 import org.opencms.main.CmsRuntimeException;
 import org.opencms.main.OpenCms;
 import org.opencms.relations.CmsLink;
@@ -39,8 +42,12 @@ import org.opencms.util.CmsStringUtil;
 import org.opencms.util.CmsUUID;
 import org.opencms.xml.I_CmsXmlDocument;
 import org.opencms.xml.page.CmsXmlPage;
+import org.opencms.xml.xml2json.I_CmsJsonFormattableValue;
+import org.opencms.xml.xml2json.renderer.CmsJsonRendererXmlContent;
 
 import java.util.Locale;
+
+import org.apache.commons.logging.Log;
 
 import org.dom4j.Attribute;
 import org.dom4j.Element;
@@ -49,10 +56,10 @@ import org.dom4j.Element;
  * Describes the XML content type "OpenCmsVfsFile".<p>
  *
  * This type allows links to internal VFS resources only.<p>
- * 
- * @since 7.0.0 
+ *
+ * @since 7.0.0
  */
-public class CmsXmlVfsFileValue extends A_CmsXmlContentValue {
+public class CmsXmlVfsFileValue extends A_CmsXmlContentValue implements I_CmsJsonFormattableValue {
 
     /** Value to mark that no link is defined, "none". */
     public static final String NO_LINK = "none";
@@ -62,6 +69,9 @@ public class CmsXmlVfsFileValue extends A_CmsXmlContentValue {
 
     /** The vfs link type constant. */
     public static final String TYPE_VFS_LINK = "vfsLink";
+
+    /** Logger instance for this class. */
+    private static final Log LOG = CmsLog.getLog(CmsXmlVfsFileValue.class);
 
     /** The schema definition String is located in a text for easier editing. */
     private static String m_schemaDefinition;
@@ -79,7 +89,7 @@ public class CmsXmlVfsFileValue extends A_CmsXmlContentValue {
 
     /**
      * Creates a new XML content value of type "OpenCmsVfsFile".<p>
-     * 
+     *
      * @param document the XML content instance this value belongs to
      * @param element the XML element that contains this value
      * @param locale the locale this value is created for
@@ -92,7 +102,7 @@ public class CmsXmlVfsFileValue extends A_CmsXmlContentValue {
 
     /**
      * Creates a new schema type descriptor for the type "OpenCmsVfsFile".<p>
-     * 
+     *
      * @param name the name of the XML node containing the value according to the XML schema
      * @param minOccurs minimum number of occurrences of this type according to the XML schema
      * @param maxOccurs maximum number of occurrences of this type according to the XML schema
@@ -104,7 +114,7 @@ public class CmsXmlVfsFileValue extends A_CmsXmlContentValue {
 
     /**
      * Fills the given element with a {@link CmsXmlVfsFileValue} for the given data.<p>
-     * 
+     *
      * @param element the element to fill
      * @param id the id to use
      * @param rootPath the path to use
@@ -150,25 +160,29 @@ public class CmsXmlVfsFileValue extends A_CmsXmlContentValue {
 
     /**
      * Returns the link object represented by this XML content value.<p>
-     * 
+     *
      * @param cms the cms context, can be <code>null</code> but in this case no link check is performed
-     * 
-     * @return the link object represented by this XML content value
+     *
+     * @return the link object represented by this XML content value (will return null for an empty link)
      */
     public CmsLink getLink(CmsObject cms) {
 
         Element linkElement = m_element.element(CmsXmlPage.NODE_LINK);
         if (linkElement == null) {
-            String uri = m_element.getText();
-            if (CmsStringUtil.isNotEmptyOrWhitespaceOnly(uri)) {
-                setStringValue(cms, uri);
+            String textValue = m_element.getText();
+            if (CmsStringUtil.isNotEmptyOrWhitespaceOnly(textValue)) {
+                if (CmsUUID.isValidUUID(textValue)) {
+                    setIdValue(cms, new CmsUUID(textValue));
+                } else {
+                    setStringValue(cms, textValue);
+                }
             }
             linkElement = m_element.element(CmsXmlPage.NODE_LINK);
             if (linkElement == null) {
                 return null;
             }
         }
-        CmsLinkUpdateUtil.updateType(linkElement, getContentDefinition().getContentHandler().getRelationType(getPath()));
+        CmsLinkUpdateUtil.updateType(linkElement, getRelationType(getPath()));
         CmsLink link = new CmsLink(linkElement);
         link.checkConsistency(cms);
         if (CmsStringUtil.isEmptyOrWhitespaceOnly(link.getTarget())) {
@@ -218,6 +232,21 @@ public class CmsXmlVfsFileValue extends A_CmsXmlContentValue {
     }
 
     /**
+     * Returns the raw data from the XML value as a CmsLink, without any consistency checks.
+     *
+     * @return the unchecked data from the XML as a CmsLink
+     */
+    public CmsLink getUncheckedLink() {
+
+        Element linkElement = m_element.element(CmsXmlPage.NODE_LINK);
+        if (linkElement == null) {
+            return null;
+        }
+        return new CmsLink(linkElement);
+
+    }
+
+    /**
      * @see org.opencms.xml.types.A_CmsXmlContentValue#isSearchable()
      */
     @Override
@@ -237,13 +266,13 @@ public class CmsXmlVfsFileValue extends A_CmsXmlContentValue {
 
     /**
      * Sets the value as a structure id.<p>
-     * 
-     * @param cms the current CMS context 
-     * @param id the structure id which should be stored in the file value  
+     *
+     * @param cms the current CMS context
+     * @param id the structure id which should be stored in the file value
      */
     public void setIdValue(CmsObject cms, CmsUUID id) {
 
-        CmsRelationType type = getContentDefinition().getContentHandler().getRelationType(getPath());
+        CmsRelationType type = getRelationType(getPath());
         CmsLink link = new CmsLink(TYPE_VFS_LINK, type, id, "@", true);
         // link management check
         link.checkConsistency(cms);
@@ -264,6 +293,10 @@ public class CmsXmlVfsFileValue extends A_CmsXmlContentValue {
             // no valid value given
             return;
         }
+        if (CmsUUID.isValidUUID(value)) {
+            setIdValue(cms, new CmsUUID(value));
+            return;
+        }
         String path = value;
         if (cms != null) {
             String siteRoot = OpenCms.getSiteManager().getSiteRoot(value);
@@ -274,6 +307,9 @@ public class CmsXmlVfsFileValue extends A_CmsXmlContentValue {
                     cms.getRequestContext().setSiteRoot(siteRoot);
                     // remove the site root, because the link manager call will append it anyway
                     path = cms.getRequestContext().removeSiteRoot(value);
+                    if (CmsStringUtil.isEmptyOrWhitespaceOnly(path)) {
+                        path = "/";
+                    }
                 }
                 // remove parameters, if not the link manager call might fail
                 String query = "";
@@ -303,7 +339,7 @@ public class CmsXmlVfsFileValue extends A_CmsXmlContentValue {
         if (CmsStringUtil.isEmptyOrWhitespaceOnly(path)) {
             return;
         }
-        CmsRelationType type = getContentDefinition().getContentHandler().getRelationType(getPath());
+        CmsRelationType type = getRelationType(getPath());
         CmsLink link = new CmsLink(TYPE_VFS_LINK, type, path, true);
         // link management check
         link.checkConsistency(cms);
@@ -312,10 +348,32 @@ public class CmsXmlVfsFileValue extends A_CmsXmlContentValue {
     }
 
     /**
+     * @see org.opencms.xml.xml2json.I_CmsJsonFormattableValue#toJson(org.opencms.file.CmsObject)
+     */
+    public Object toJson(CmsObject cms) {
+
+        try {
+            String link = null;
+            CmsLink linkObj = getLink(cms);
+            if (linkObj != null) {
+                link = linkObj.getLink(cms);
+            }
+            CmsObject rootCms = OpenCms.initCmsObject(cms);
+            String path = getStringValue(rootCms);
+            return CmsJsonRendererXmlContent.linkAndPath(link, path, cms);
+        } catch (JSONException e) {
+            return null;
+        } catch (CmsException e) {
+            LOG.error(e.getLocalizedMessage(), e);
+            return null;
+        }
+    }
+
+    /**
      * Creates the String value for this vfs file value element.<p>
-     * 
+     *
      * @param cms the cms context
-     * 
+     *
      * @return the String value for this vfs file value element
      */
     private String createStringValue(CmsObject cms) {
@@ -334,4 +392,5 @@ public class CmsXmlVfsFileValue extends A_CmsXmlContentValue {
         }
         return content;
     }
+
 }

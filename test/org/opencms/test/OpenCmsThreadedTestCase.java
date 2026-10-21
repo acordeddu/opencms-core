@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -15,11 +15,11 @@
  * Lesser General Public License for more details.
  *
  * For further information about Alkacon Software, please see the
- * company website: http://www.alkacon.com
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -31,11 +31,11 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
 /**
- * Allows to run an {@link org.opencms.test.OpenCmsTestCase} in a separate Thread,
+ * Allows to run an {@link org.opencms.test.OpenCmsTestRunner} in a separate Thread,
  * for concurrent execution.<p>
- * 
+ *
  * Usually this class is created by a {@link org.opencms.test.OpenCmsThreadedTestCaseSuite}.<p>
- * 
+ *
  * @since 6.5.0
  */
 public class OpenCmsThreadedTestCase extends Thread {
@@ -53,19 +53,19 @@ public class OpenCmsThreadedTestCase extends Thread {
     private long m_runtime;
 
     /** The base test case class to run the method from. */
-    private OpenCmsTestCase m_testCase;
+    private OpenCmsTestRunner m_testCase;
 
     /** Error that occurred when running the test method. */
     private Throwable m_throwable;
 
     /**
      * Generates a new threaded test case.<p>
-     * 
+     *
      * @param testCase the test case class to use
      * @param method the method to execute on the test case
      * @param parameters the parameter values for the method
      */
-    public OpenCmsThreadedTestCase(OpenCmsTestCase testCase, Method method, Object[] parameters) {
+    public OpenCmsThreadedTestCase(OpenCmsTestRunner testCase, Method method, Object[] parameters) {
 
         m_throwable = null;
         m_result = null;
@@ -87,7 +87,7 @@ public class OpenCmsThreadedTestCase extends Thread {
 
     /**
      * Returns the total runtime of this thread, or <code>-1</code> if the thread was not run at all.<p>
-     * 
+     *
      * @return the total runtime of this thread, or <code>-1</code> if the thread was not run at all
      */
     public long getRuntime() {

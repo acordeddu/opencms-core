@@ -1,0 +1,36 @@
+.main{
+	position: absolute;
+	top: 0; 
+	bottom: 4px; 
+	left: 0; 
+	right: 0; 
+	overflow: auto;
+}
+div.descriptionLabel{
+	margin: 4px 6px 0px;
+}
+div.input{
+	width: 320px;
+	margin-right: 10px;
+	vertical-align: middle;
+}
+
+div.linkWidget > * { 
+	vertical-align: middle; 
+}
+
+div.selectBox{
+	width: 150px;
+	vertical-align: middle;
+}
+div.selectBox *{
+	font-size: value("constants.css.fontSizeSmall");
+	line-height: 12px;
+}
+div.input, div.selectBox{
+	display: inline-block;
+}
+
+div.selectBox .input-selectBoxOpener {
+	line-height: 28px; 
+}

@@ -1,0 +1,92 @@
+<xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema" elementFormDefault="qualified">
+
+    <!-- File: sitemap_master_config.xsd -->
+
+    <xsd:include schemaLocation="opencms://opencms-xmlcontent.xsd" />
+    <xsd:include schemaLocation="opencms://system/modules/org.opencms.ade.config/schemas/type.xsd" />
+    <xsd:include schemaLocation="opencms://system/modules/org.opencms.ade.config/schemas/model_page.xsd" />
+    <xsd:include schemaLocation="opencms://system/modules/org.opencms.ade.config/schemas/field.xsd" />
+    <xsd:include schemaLocation="opencms://system/modules/org.opencms.ade.config/schemas/parameters.xsd" />
+    <xsd:include schemaLocation="opencms://system/modules/org.opencms.ade.config/schemas/detailpage.xsd" />
+    <xsd:include schemaLocation="opencms://system/modules/org.opencms.ade.config/schemas/function_list.xsd" />
+    <xsd:include schemaLocation="opencms://system/modules/org.opencms.ade.config/schemas/plugin_list.xsd" />
+    <xsd:include schemaLocation="opencms://system/modules/org.opencms.ade.config/schemas/formatters/add_formatters_block.xsd" />
+    <xsd:include schemaLocation="opencms://system/modules/org.opencms.ade.config/schemas/formatters/remove_formatters_block.xsd" />
+    <xsd:include schemaLocation="opencms://system/modules/org.opencms.ade.config/schemas/add_content_restriction.xsd" />
+    <xsd:include schemaLocation="opencms://system/modules/org.opencms.ade.config/schemas/folder_option.xsd" />
+    
+    <xsd:element name="SitemapMasterConfigurations" type="OpenCmsSitemapMasterConfigurations" />
+
+    <xsd:complexType name="OpenCmsSitemapMasterConfigurations">
+        <xsd:sequence>
+            <xsd:element name="SitemapMasterConfiguration" type="OpenCmsSitemapMasterConfiguration" minOccurs="0" maxOccurs="unbounded" />
+        </xsd:sequence>
+    </xsd:complexType>
+
+    <xsd:complexType name="OpenCmsSitemapMasterConfiguration">
+        <xsd:sequence>
+            <xsd:element name="MasterConfig" type="OpenCmsVfsFile" minOccurs="0" maxOccurs="unbounded" />
+            <xsd:element name="DiscardTypes" type="OpenCmsBoolean" minOccurs="0" maxOccurs="1" />
+
+            <xsd:element name="PreferDetailPagesForLocalContents" type="OpenCmsBoolean" minOccurs="0" maxOccurs="1" />
+            <xsd:element name="TypeOrderingMode" type="OpenCmsBoolean" minOccurs="0" maxOccurs="1" />
+            <xsd:element name="DisabledTypesMode" type="OpenCmsString" minOccurs="0" maxOccurs="1" />
+			<xsd:element name="ContentFolder" type="OpenCmsADEFolderOption" minOccurs="0" maxOccurs="1" />
+            <xsd:element name="ResourceType" type="OpenCmsADEType" minOccurs="0" maxOccurs="unbounded" />
+            <xsd:element name="UseFormatterKeys" type="OpenCmsBoolean" minOccurs="0" maxOccurs="1" />
+    		<xsd:element name="SharedSettingOverride" type="OpenCmsVfsFile" minOccurs="0" maxOccurs="1" />
+            <xsd:element name="RemoveAllSharedSettingOverrides" type="OpenCmsBoolean" minOccurs="0" maxOccurs="1"/>
+            <xsd:element name="RemoveAllFormatters" type="OpenCmsBoolean" minOccurs="0" maxOccurs="1" />
+            <xsd:element name="RemoveFormatters" type="OpenCmsRemoveFormattersBlock" minOccurs="0"/>
+            <xsd:element name="AddFormatters"    type="OpenCmsAddFormattersBlock" minOccurs="0"/>
+            <xsd:element name="DisabledFunctionsMode" type="OpenCmsString" minOccurs="0" maxOccurs="1" />
+            <xsd:element name="RemoveAllFunctions" type="OpenCmsBoolean" minOccurs="0" maxOccurs="1" />
+            <xsd:element name="RemoveFunctions" type="OpenCmsFunctionList" minOccurs="0" maxOccurs="1" />
+            <xsd:element name="Function" type="OpenCmsVfsFile" minOccurs="0" maxOccurs="unbounded" />
+            <xsd:element name="RemoveAllPlugins" type="OpenCmsBoolean" minOccurs="0" />
+            <xsd:element name="RemovePlugins" type="OpenCmsPluginList" minOccurs="0" maxOccurs="1" />
+            <xsd:element name="AddPlugins" type="OpenCmsPluginList" minOccurs="0" maxOccurs="1" />
+            <xsd:element name="DiscardProperties" type="OpenCmsString" minOccurs="0" maxOccurs="1" />
+            <xsd:element name="Property" type="OpenCmsADEField" minOccurs="0" maxOccurs="unbounded" />
+            <xsd:element name="AddContentRestriction" type="OpenCmsAddContentRestriction" minOccurs="0" maxOccurs="unbounded" />
+            <xsd:element name="AttributeEditorConfig" type="OpenCmsVfsFile" minOccurs="0" /> 
+            <xsd:element name="Attribute" type="OpenCmsParameter" minOccurs="0" maxOccurs="unbounded" />
+        </xsd:sequence>
+        <xsd:attribute name="language" type="OpenCmsLocale" use="optional" />
+    </xsd:complexType>
+
+    <xsd:annotation>
+        <xsd:appinfo>
+            <resourcebundle name="org.opencms.xml.containerpage.messages" />
+            <layouts>
+                <layout element="Function" widget="VfsFileWidget" configuration="searchtypes=function,function_config" />
+                <layout element="Attribute/Value" widget="TextareaWidget" />
+                <layout element="AddFormatters/AddFormatter" widget="VfsFileWidget" configuration="searchtypes=formatter_config,flex_formatter,macro_formatter|selectabletypes=formatter_config,flex_formatter,macro_formatter" />
+                <layout element="RemoveFormatters/RemoveFormatter" widget="VfsFileWidget" configuration="searchtypes=formatter_config,flex_formatter,macro_formatter|selectabletypes=formatter_config,flex_formatter,macro_formatter" />
+                <layout element="DiscardProperties" widget="SelectorWidget" configuration="false:%(key.discardprops.false)|true:%(key.discardprops.true)|top:%(key.discardprops.top)" />
+                <layout element="DisabledTypesMode" widget="SelectorWidget" configuration="mark:%(key.disabledtypesmode.mark)|hide:%(key.disabledtypesmode.hide)" display="singleline"/>
+                <layout element="DisabledFunctionsMode" widget="SelectorWidget" configuration="mark:%(key.disabledfunctionsmode.mark)|hide*:%(key.disabledfunctionsmode.hide)" display="singleline"/>
+            </layouts>
+            <relations>
+                <relation element="AddFormatters/AddFormatter" invalidate="false" />
+                <relation element="RemoveFormatters/RemoveFormatter" invalidate="false" />
+                <relation element="ResourceType/Folder/Path" invalidate="false" />
+                <relation element="Function" invalidate="false" />
+                <relation element="MasterConfig" invalidate="false" />
+            </relations>
+            <tabs>
+                <tab element="MasterConfig" name="TabResourceTypes" collapse="false" />
+                <tab element="UseFormatterKeys" name="TabFormatters" collapse="false" />
+                <tab element="DisabledFunctionsMode" name="TabFunctions" collapse="false" />
+                <tab element="DiscardProperties" name="TabPropertyConfiguration" collapse="false" />
+                <tab element="AddContentRestriction" name="TabRestrictions" collapse="false" />
+                <tab element="AttributeEditorConfig" name="TabAttributes" collapse="false" />
+            </tabs>
+            <messagekeyhandler class="org.opencms.i18n.CmsReplaceMessageKeyPrefix" configuration="label.SitemapMasterConfiguration:label.SitemapConfiguration" />
+        </xsd:appinfo>
+    </xsd:annotation>
+
+</xsd:schema>
+
+
+

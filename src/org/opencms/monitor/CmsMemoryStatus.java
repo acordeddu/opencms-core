@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -14,12 +14,12 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * Lesser General Public License for more details.
  *
- * For further information about Alkacon Software GmbH, please see the
- * company website: http://www.alkacon.com
+ * For further information about Alkacon Software GmbH & Co. KG, please see the
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -27,23 +27,38 @@
 
 package org.opencms.monitor;
 
+import java.io.Serializable;
+
 /**
  * Data structure for dealing with memory status information.<p>
- * 
- * @since 6.0.0 
+ *
+ * @since 6.0.0
  */
-public class CmsMemoryStatus {
+public class CmsMemoryStatus implements Serializable {
 
+    /**Default serial id. */
+    private static final long serialVersionUID = 1L;
+
+    /** The count used to calculate the average. */
     private int m_count;
+
+    /** The current free memory, in megabytes. */
     private long m_freeMemory;
 
+    /** The maximum available memory, in megabytes. */
     private long m_maxMemory;
+
+    /** The amount of memory currently availble to the JVM, in megabytes. */
     private long m_totalMemory;
+
+    /** The current memory usage, in percent. */
     private long m_usage;
+
+    /** The amount of memory currently used, in megabytes. */
     private long m_usedMemory;
 
     /**
-     * Initializes a new instance of the memory status with the current memory values.<p> 
+     * Initializes a new instance of the memory status with the current memory values.<p>
      */
     public CmsMemoryStatus() {
 
@@ -51,9 +66,9 @@ public class CmsMemoryStatus {
     }
 
     /**
-     * Calculates the average memory consumption by updating the stored information with 
-     * the provided current information.<p>  
-     * 
+     * Calculates the average memory consumption by updating the stored information with
+     * the provided current information.<p>
+     *
      * @param currentStatus the memory status to update the average with
      */
     public void calculateAverage(CmsMemoryStatus currentStatus) {
@@ -63,7 +78,7 @@ public class CmsMemoryStatus {
         m_totalMemory = ((m_count * m_totalMemory) + currentStatus.getTotalMemory()) / newCount;
         m_usedMemory = ((m_count * m_usedMemory) + currentStatus.getUsedMemory()) / newCount;
         m_freeMemory = ((m_count * m_freeMemory) + currentStatus.getFreeMemory()) / newCount;
-        m_usage = m_usedMemory * 100 / m_maxMemory;
+        m_usage = (m_usedMemory * 100) / m_maxMemory;
         m_count = newCount;
     }
 
@@ -79,7 +94,7 @@ public class CmsMemoryStatus {
 
     /**
      * Returns the current free memory, in megabytes.<p>
-     * 
+     *
      * @return the current free memory, in megabytes
      */
     public long getFreeMemory() {
@@ -89,7 +104,7 @@ public class CmsMemoryStatus {
 
     /**
      * Returns the maximum available memory, in megabytes.<p>
-     * 
+     *
      * @return the maximum available memory, in megabytes
      */
     public long getMaxMemory() {
@@ -99,7 +114,7 @@ public class CmsMemoryStatus {
 
     /**
      * Returns the amount of memory currently availble to the JVM, in megabytes.<p>
-     * 
+     *
      * @return the amount of memory currently availble to the JVM, in megabytes
      */
     public long getTotalMemory() {
@@ -109,7 +124,7 @@ public class CmsMemoryStatus {
 
     /**
      * Returns the current memory usage, in percent.<p>
-     * 
+     *
      * @return the current memory usage, in percent
      */
     public long getUsage() {
@@ -119,7 +134,7 @@ public class CmsMemoryStatus {
 
     /**
      * Returns the amount of memory currently used, in megabytes.<p>
-     * 
+     *
      * @return the amount of memory currently used, in megabytes
      */
     public long getUsedMemory() {
@@ -128,7 +143,7 @@ public class CmsMemoryStatus {
     }
 
     /**
-     * Updates this memory status with the current memory information.<p> 
+     * Updates this memory status with the current memory information.<p>
      */
     public void update() {
 
@@ -136,6 +151,6 @@ public class CmsMemoryStatus {
         m_totalMemory = Runtime.getRuntime().totalMemory() / 1048576;
         m_usedMemory = (Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory()) / 1048576;
         m_freeMemory = m_maxMemory - m_usedMemory;
-        m_usage = m_usedMemory * 100 / m_maxMemory;
+        m_usage = (m_usedMemory * 100) / m_maxMemory;
     }
 }

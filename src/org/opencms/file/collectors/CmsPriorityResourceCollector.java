@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -14,12 +14,12 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * Lesser General Public License for more details.
  *
- * For further information about Alkacon Software GmbH, please see the
- * company website: http://www.alkacon.com
+ * For further information about Alkacon Software GmbH & Co. KG, please see the
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -44,10 +44,10 @@ import java.util.List;
 /**
  * A collector to fetch sorted XML contents in a folder or subtree based on their priority
  * and date or title values.<p>
- * 
+ *
  * The date or title information has to be stored as property for each resource.<p>
- * 
- * @since 6.0.0 
+ *
+ * @since 6.0.0
  */
 public class CmsPriorityResourceCollector extends A_CmsResourceCollector {
 
@@ -107,9 +107,8 @@ public class CmsPriorityResourceCollector extends A_CmsResourceCollector {
                 // "allMappedToUriPriorityDateAsc", "allMappedToUriPriorityDateDesc"
                 return null;
             default:
-                throw new CmsDataAccessException(Messages.get().container(
-                    Messages.ERR_COLLECTOR_NAME_INVALID_1,
-                    collectorName));
+                throw new CmsDataAccessException(
+                    Messages.get().container(Messages.ERR_COLLECTOR_NAME_INVALID_1, collectorName));
         }
     }
 
@@ -138,16 +137,37 @@ public class CmsPriorityResourceCollector extends A_CmsResourceCollector {
                 // "allMappedToUriPriorityDateAsc", "allMappedToUriPriorityDateDesc"
                 return null;
             default:
-                throw new CmsDataAccessException(Messages.get().container(
-                    Messages.ERR_COLLECTOR_NAME_INVALID_1,
-                    collectorName));
+                throw new CmsDataAccessException(
+                    Messages.get().container(Messages.ERR_COLLECTOR_NAME_INVALID_1, collectorName));
         }
+    }
+
+    /**
+     * @see org.opencms.file.collectors.A_CmsResourceCollector#getCreateTypeId(org.opencms.file.CmsObject, java.lang.String, java.lang.String)
+     */
+    @Override
+    public int getCreateTypeId(CmsObject cms, String collectorName, String param) {
+
+        int result = -1;
+        if (param != null) {
+            result = new CmsCollectorData(param).getType();
+        }
+        return result;
     }
 
     /**
      * @see org.opencms.file.collectors.I_CmsResourceCollector#getResults(org.opencms.file.CmsObject, java.lang.String, java.lang.String)
      */
     public List<CmsResource> getResults(CmsObject cms, String collectorName, String param)
+    throws CmsDataAccessException, CmsException {
+
+        return getResults(cms, collectorName, param, -1);
+    }
+
+    /**
+     * @see org.opencms.file.collectors.I_CmsResourceCollector#getResults(org.opencms.file.CmsObject, java.lang.String, java.lang.String)
+     */
+    public List<CmsResource> getResults(CmsObject cms, String collectorName, String param, int numResults)
     throws CmsException, CmsDataAccessException {
 
         // if action is not set use default
@@ -159,49 +179,54 @@ public class CmsPriorityResourceCollector extends A_CmsResourceCollector {
 
             case 0:
                 // "allInFolderPriorityDateAsc"
-                return allInFolderPriorityDate(cms, param, false, true);
+                return allInFolderPriorityDate(cms, param, false, true, numResults);
             case 1:
                 // "allInSubTreePriorityDateAsc"
-                return allInFolderPriorityDate(cms, param, true, true);
+                return allInFolderPriorityDate(cms, param, true, true, numResults);
             case 2:
                 // "allInFolderPriorityDateDesc"
-                return allInFolderPriorityDate(cms, param, false, false);
+                return allInFolderPriorityDate(cms, param, false, false, numResults);
             case 3:
                 // "allInSubTreePriorityDateDesc"
-                return allInFolderPriorityDate(cms, param, true, false);
+                return allInFolderPriorityDate(cms, param, true, false, numResults);
             case 4:
                 // "allInFolderPriorityTitleDesc"
-                return allInFolderPriorityTitle(cms, param, false);
+                return allInFolderPriorityTitle(cms, param, false, numResults);
             case 5:
                 // "allInSubTreePriorityTitleDesc"
-                return allInFolderPriorityTitle(cms, param, true);
+                return allInFolderPriorityTitle(cms, param, true, numResults);
             case 6:
                 // "allMappedToUriPriorityDateAsc"
-                return allMappedToUriPriorityDate(cms, param, true);
+                return allMappedToUriPriorityDate(cms, param, true, numResults);
             case 7:
                 // "allMappedToUriPriorityDateDesc"
-                return allMappedToUriPriorityDate(cms, param, false);
+                return allMappedToUriPriorityDate(cms, param, false, numResults);
             default:
-                throw new CmsDataAccessException(Messages.get().container(
-                    Messages.ERR_COLLECTOR_NAME_INVALID_1,
-                    collectorName));
+                throw new CmsDataAccessException(
+                    Messages.get().container(Messages.ERR_COLLECTOR_NAME_INVALID_1, collectorName));
         }
 
     }
 
     /**
      * Returns a list of all resource in a specified folder sorted by priority, then date ascending or descending.<p>
-     * 
+     *
      * @param cms the current OpenCms user context
      * @param param the folder name to use
      * @param tree if true, look in folder and all child folders, if false, look only in given folder
      * @param asc if true, the date sort order is ascending, otherwise descending
-     * 
+     * @param numResults the number of results
+     *
      * @return all resources in the folder matching the given criteria
-     * 
+     *
      * @throws CmsException if something goes wrong
      */
-    protected List<CmsResource> allInFolderPriorityDate(CmsObject cms, String param, boolean tree, boolean asc)
+    protected List<CmsResource> allInFolderPriorityDate(
+        CmsObject cms,
+        String param,
+        boolean tree,
+        boolean asc,
+        int numResults)
     throws CmsException {
 
         CmsCollectorData data = new CmsCollectorData(param);
@@ -209,55 +234,32 @@ public class CmsPriorityResourceCollector extends A_CmsResourceCollector {
 
         CmsResourceFilter filter = CmsResourceFilter.DEFAULT.addRequireType(data.getType()).addExcludeFlags(
             CmsResource.FLAG_TEMPFILE);
+        if (data.isExcludeTimerange() && !cms.getRequestContext().getCurrentProject().isOnlineProject()) {
+            // include all not yet released and expired resources in an offline project
+            filter = filter.addExcludeTimerange();
+        }
         List<CmsResource> result = cms.readResources(foldername, filter, tree);
 
         // create priority comparator to use to sort the resources
         CmsPriorityDateResourceComparator comparator = new CmsPriorityDateResourceComparator(cms, asc);
         Collections.sort(result, comparator);
 
-        return shrinkToFit(result, data.getCount());
+        return shrinkToFit(result, data.getCount(), numResults);
     }
 
     /**
      * Returns a list of all resource in a specified folder sorted by priority descending, then Title ascending.<p>
-     * 
+     *
      * @param cms the current OpenCms user context
      * @param param the folder name to use
      * @param tree if true, look in folder and all child folders, if false, look only in given folder
-     * 
+     * @param numResults the number of results
+     *
      * @return all resources in the folder matching the given criteria
-     * 
+     *
      * @throws CmsException if something goes wrong
      */
-    protected List<CmsResource> allInFolderPriorityTitle(CmsObject cms, String param, boolean tree) throws CmsException {
-
-        CmsCollectorData data = new CmsCollectorData(param);
-        String foldername = CmsResource.getFolderPath(data.getFileName());
-
-        CmsResourceFilter filter = CmsResourceFilter.DEFAULT.addRequireType(data.getType()).addExcludeFlags(
-            CmsResource.FLAG_TEMPFILE);
-        List<CmsResource> result = cms.readResources(foldername, filter, tree);
-
-        // create priority comparator to use to sort the resources
-        CmsPriorityTitleResourceComparator comparator = new CmsPriorityTitleResourceComparator(cms);
-        Collections.sort(result, comparator);
-
-        return shrinkToFit(result, data.getCount());
-    }
-
-    /**
-     * Returns a list of all resource from specified folder that have been mapped to 
-     * the currently requested uri, sorted by priority, then date ascending or descending.<p>
-     * 
-     * @param cms the current OpenCms user context
-     * @param param the folder name to use
-     * @param asc if true, the date sort order is ascending, otherwise descending
-     * 
-     * @return all resources in the folder matching the given criteria
-     * 
-     * @throws CmsException if something goes wrong
-     */
-    protected List<CmsResource> allMappedToUriPriorityDate(CmsObject cms, String param, boolean asc)
+    protected List<CmsResource> allInFolderPriorityTitle(CmsObject cms, String param, boolean tree, int numResults)
     throws CmsException {
 
         CmsCollectorData data = new CmsCollectorData(param);
@@ -265,6 +267,44 @@ public class CmsPriorityResourceCollector extends A_CmsResourceCollector {
 
         CmsResourceFilter filter = CmsResourceFilter.DEFAULT.addRequireType(data.getType()).addExcludeFlags(
             CmsResource.FLAG_TEMPFILE);
+        if (data.isExcludeTimerange() && !cms.getRequestContext().getCurrentProject().isOnlineProject()) {
+            // include all not yet released and expired resources in an offline project
+            filter = filter.addExcludeTimerange();
+        }
+        List<CmsResource> result = cms.readResources(foldername, filter, tree);
+
+        // create priority comparator to use to sort the resources
+        CmsPriorityTitleResourceComparator comparator = new CmsPriorityTitleResourceComparator(cms);
+        Collections.sort(result, comparator);
+
+        return shrinkToFit(result, data.getCount(), numResults);
+    }
+
+    /**
+     * Returns a list of all resource from specified folder that have been mapped to
+     * the currently requested uri, sorted by priority, then date ascending or descending.<p>
+     *
+     * @param cms the current OpenCms user context
+     * @param param the folder name to use
+     * @param asc if true, the date sort order is ascending, otherwise descending
+     * @param numResults the number of results
+     *
+     * @return all resources in the folder matching the given criteria
+     *
+     * @throws CmsException if something goes wrong
+     */
+    protected List<CmsResource> allMappedToUriPriorityDate(CmsObject cms, String param, boolean asc, int numResults)
+    throws CmsException {
+
+        CmsCollectorData data = new CmsCollectorData(param);
+        String foldername = CmsResource.getFolderPath(data.getFileName());
+
+        CmsResourceFilter filter = CmsResourceFilter.DEFAULT.addRequireType(data.getType()).addExcludeFlags(
+            CmsResource.FLAG_TEMPFILE);
+        if (data.isExcludeTimerange() && !cms.getRequestContext().getCurrentProject().isOnlineProject()) {
+            // include all not yet released and expired resources in an offline project
+            filter = filter.addExcludeTimerange();
+        }
 
         List<CmsResource> result = cms.readResources(foldername, filter, true);
         List<CmsResource> mapped = new ArrayList<CmsResource>();
@@ -276,8 +316,9 @@ public class CmsPriorityResourceCollector extends A_CmsResourceCollector {
             // read all properties - reason: comparator will do this later anyway, so we just prefill the cache
             CmsProperty prop = cms.readPropertyObject(res, PROPERTY_CHANNEL, false);
             if (!prop.isNullProperty()) {
-                if (CmsProject.isInsideProject(prop.getValueList(), cms.getRequestContext().getSiteRoot()
-                    + cms.getRequestContext().getUri())) {
+                if (CmsProject.isInsideProject(
+                    prop.getValueList(),
+                    cms.getRequestContext().getSiteRoot() + cms.getRequestContext().getUri())) {
                     mapped.add(res);
                 }
             }
@@ -292,6 +333,6 @@ public class CmsPriorityResourceCollector extends A_CmsResourceCollector {
         CmsPriorityDateResourceComparator comparator = new CmsPriorityDateResourceComparator(cms, asc);
         Collections.sort(mapped, comparator);
 
-        return shrinkToFit(mapped, data.getCount());
+        return shrinkToFit(mapped, data.getCount(), numResults);
     }
 }

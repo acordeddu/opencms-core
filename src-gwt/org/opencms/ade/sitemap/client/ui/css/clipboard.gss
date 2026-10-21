@@ -1,0 +1,28 @@
+@external gwt-TabLayoutPanel;
+
+.menuTabContainer div.clipboardList{
+	border: 1px solid value("constants.css.borderColor");
+	background: value("constants.css.backgroundColorDialog");
+	position: absolute;
+	top: 6px;
+	bottom:	6px;
+	left: 6px;
+	right: 6px;
+}
+
+div.clipboardList ul{
+	padding: 0 2px;
+	min-height: 82px;
+}
+.gwt-TabLayoutPanel div.listClearButton{
+	position: absolute;
+	top: -36px;
+	right: 0px;
+}
+
+.menuTabContainer > div{
+	border: none;	
+}
+.menuTabContainer > div >.gwt-TabLayoutPanel{
+	border: none;
+}

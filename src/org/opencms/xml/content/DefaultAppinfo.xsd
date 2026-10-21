@@ -14,6 +14,7 @@
 			<xsd:element name="defaults" type="OpenCmsDefaultAppinfoDefaults" minOccurs="0" />
 			<xsd:element name="mappings" type="OpenCmsDefaultAppinfoMappings" minOccurs="0" />
 			<xsd:element name="layouts" type="OpenCmsDefaultAppinfoLayouts" minOccurs="0" />
+			<xsd:element name="templates" type="OpenCmsDefaultAppinfoTemplates" minOccurs="0" />
 			<xsd:element name="validationrules" type="OpenCmsDefaultAppinfoValidationrules" minOccurs="0" />
 			<xsd:element name="searchsettings" type="OpenCmsDefaultAppinfoSearchsettings" minOccurs="0" />
 			<xsd:element name="relations" type="OpenCmsDefaultAppinfoRelations" minOccurs="0" />
@@ -22,6 +23,20 @@
 			<xsd:element name="formatters" type="OpenCmsDefaultAppinfoFormatters" minOccurs="0" />
 			<xsd:element name="headincludes" type="OpenCmsDefaultAppinfoHeadIncludes" minOccurs="0" />
 			<xsd:element name="settings" type="OpenCmsDefaultAppinfoSettings" minOccurs="0" />
+			<xsd:element name="edithandler" type="OpenCmsDefaultAppinfoEditHandler" minOccurs="0" />
+			<xsd:element name="defaultwidget" type="OpenCmsDefaultAppinfoDefaultWidget" minOccurs="0" />
+			<xsd:element name="visibilities" type="OpenCmsDefaultAppinfoVisibilities" minOccurs="0" />
+			<xsd:element name="synchronizations" type="OpenCmsDefaultAppinfoSynchronizations" minOccurs="0" />
+			<xsd:element name="editorchangehandlers" type="OpenCmsDefaultAppinfoEditorChangeHandlers" minOccurs="0" />
+			<xsd:element name="nestedformatters" type="OpenCmsDefaultAppinfoNestedFormatters" minOccurs="0" />
+			<xsd:element name="messagekeyhandler" type="OpenCmsDefaultAppinfoMessageKeyHandler" minOccurs="0" />
+			<xsd:element name="parameters" type="OpenCmsDefaultAppinfoParameters" minOccurs="0" />
+			<xsd:element name="FieldSettings" type="OpenCmsDefaultAppinfoFields" minOccurs="0"/>      
+            <xsd:element name="jsonrenderer" type="OpenCmsJsonRenderer" minOccurs="0"  />
+            <xsd:element name="reverse-mapping-enabled" type="xsd:string" minOccurs="0" />
+            <xsd:element name="geomapping" type="OpenCmsDefaultAppinfoGeoMapping" minOccurs="0" />
+            <xsd:element name="versiontransformation" type="xsd:string" minOccurs="0" />
+			
 		</xsd:all>
 	</xsd:complexType>
 	

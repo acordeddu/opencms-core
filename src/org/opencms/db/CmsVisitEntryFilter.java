@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -15,11 +15,11 @@
  * Lesser General Public License for more details.
  *
  * For further information about Alkacon Software, please see the
- * company website: http://www.alkacon.com
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -33,7 +33,7 @@ import java.util.Date;
 
 /**
  * A filter which contains criteria for reading {@link CmsVisitEntry} instances from the database.<p>
- * 
+ *
  * @since 8.0.0
  */
 public final class CmsVisitEntryFilter implements Cloneable {
@@ -77,9 +77,9 @@ public final class CmsVisitEntryFilter implements Cloneable {
 
     /**
      * Returns an extended filter with the starting date restriction.<p>
-     * 
+     *
      * @param from the starting date to filter
-     *  
+     *
      * @return an extended filter with the starting date restriction
      */
     public CmsVisitEntryFilter filterFrom(long from) {
@@ -93,21 +93,21 @@ public final class CmsVisitEntryFilter implements Cloneable {
      * Returns an extended filter with the given resource restriction.<p>
      *
      * @param structureId the structure id to filter
-     *  
+     *
      * @return an extended filter with the given resource restriction
      */
     public CmsVisitEntryFilter filterResource(CmsUUID structureId) {
 
-        CmsVisitEntryFilter filter = (CmsVisitEntryFilter)this.clone();
+        CmsVisitEntryFilter filter = (CmsVisitEntryFilter)clone();
         filter.m_structureId = structureId;
         return filter;
     }
 
     /**
      * Returns an extended filter with the end date restriction.<p>
-     * 
+     *
      * @param to the end date to filter
-     *  
+     *
      * @return an extended filter with the end date restriction
      */
     public CmsVisitEntryFilter filterTo(long to) {
@@ -119,14 +119,14 @@ public final class CmsVisitEntryFilter implements Cloneable {
 
     /**
      * Returns an extended filter with the given user ID restriction.<p>
-     * 
+     *
      * @param userId the user ID to filter
-     *  
+     *
      * @return an extended filter with the given user ID restriction
      */
     public CmsVisitEntryFilter filterUser(CmsUUID userId) {
 
-        CmsVisitEntryFilter filter = (CmsVisitEntryFilter)this.clone();
+        CmsVisitEntryFilter filter = (CmsVisitEntryFilter)clone();
         filter.m_userId = userId;
         return filter;
     }

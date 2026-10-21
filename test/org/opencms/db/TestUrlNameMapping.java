@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -15,11 +15,11 @@
  * Lesser General Public License for more details.
  *
  * For further information about Alkacon Software, please see the
- * company website: http://www.alkacon.com
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -27,70 +27,124 @@
 
 package org.opencms.db;
 
+import org.opencms.file.CmsFile;
 import org.opencms.file.CmsObject;
 import org.opencms.file.CmsProject;
+import org.opencms.file.CmsProperty;
 import org.opencms.file.CmsResource;
 import org.opencms.file.CmsResource.CmsResourceUndoMode;
-import org.opencms.file.types.CmsResourceTypePlain;
+import org.opencms.file.types.CmsResourceTypeXmlContent;
+import org.opencms.lock.CmsLockUtil;
 import org.opencms.main.CmsException;
 import org.opencms.main.OpenCms;
-import org.opencms.test.OpenCmsTestCase;
-import org.opencms.test.OpenCmsTestProperties;
+import org.opencms.test.OpenCmsTestRunner;
 import org.opencms.util.CmsUUID;
+import org.opencms.xml.content.CmsXmlContent;
+import org.opencms.xml.content.CmsXmlContentFactory;
 
-import junit.framework.Test;
+import java.util.ArrayList;
+import java.util.Locale;
+
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.MethodOrderer;
+import org.junit.jupiter.api.Order;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInfo;
+import org.junit.jupiter.api.TestMethodOrder;
+
+import com.google.common.collect.Lists;
 
 /**
  * Tests the URL name mapping facilities of OpenCms.<p>
- * 
+ *
  * @since 8.0.0
  */
-public class TestUrlNameMapping extends OpenCmsTestCase {
+@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
+public class TestUrlNameMapping extends OpenCmsTestRunner {
 
     /** The counter used for generating new file names. */
     private static int m_fileCounter;
 
     /**
-     * Test constructor.<p>
-     * 
-     * @param arg0
+     * Creates an XML content for testing URL name mappings.<p>
+     *
+     * @param title the title value
+     * @param replace the replace value
+     *
+     * @return the XML content data
      */
-    public TestUrlNameMapping(String arg0) {
+    public static String createTestContent(String title, String replace) {
 
-        super(arg0);
+        return "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
+            + "\n"
+            + "<UrlNameTests xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xsi:noNamespaceSchemaLocation=\"internal://org/opencms/db/urlname.xsd\">\n"
+            + "  <UrlNameTest language=\"en\">\n"
+            + "<Title>"
+            + title
+            + "</Title>\n"
+            + "<Replace>"
+            + replace
+            + "</Replace>\n"
+            + "  </UrlNameTest>\n"
+            + "</UrlNameTests>\n"
+            + "";
     }
 
     /**
-     * Returns the test suite.<p>
-     * 
-     * @return the test suite 
+     * Overrides the OpenCms test setup.
      */
-    public static Test suite() {
+    @Override
+    @BeforeAll
+    public void $openCmsSetUp(TestInfo testInfo) {
 
-        OpenCmsTestProperties.initialize(org.opencms.test.AllTests.TEST_PROPERTIES_PATH);
-        return generateSetupTestWrapper(TestUrlNameMapping.class, "systemtest", "/");
+        setupOpenCms(testInfo, "systemtest", "/");
+    }
+
+    /**
+     * Creates an XML content with the given string as file content.<p>
+     *
+     * @param content the file content
+     * @return the created resource
+     *
+     * @throws Exception if something goes wrong
+     */
+    public CmsResource createContent(String content) throws Exception {
+
+        byte[] contentBytes = content.getBytes("UTF-8");
+        CmsResource created = getCmsObject().createResource(
+            "/file" + m_fileCounter++,
+            7,
+            contentBytes,
+            new ArrayList<CmsProperty>());
+        CmsResource res = getCmsObject().readResource(created.getStructureId());
+        CmsFile file = getCmsObject().readFile(res);
+        file.setContents(contentBytes);
+        getCmsObject().writeFile(file);
+        return file;
     }
 
     /**
      * Creates a new file and returns it.<p>
-     * 
-     * @return the new file 
-     * @throws Exception if something goes wrong 
+     *
+     * @return the new file
+     * @throws Exception if something goes wrong
      */
     public CmsResource createFile() throws Exception {
 
         CmsResource result = getCmsObject().createResource(
             "/file" + m_fileCounter++,
-            CmsResourceTypePlain.getStaticTypeId());
+            OpenCms.getResourceManager().getResourceType(CmsResourceTypeXmlContent.getStaticTypeName()).getTypeId(),
+            new byte[] {},
+            new ArrayList<>());
         return result;
     }
 
     /**
      * Helper method for getting a CMS context set to the Online project.<p>
-     * 
+     *
      * @return a {@link CmsObject} with the project set to the Online project
-     * 
-     * @throws Exception if something goes wrong 
+     *
+     * @throws Exception if something goes wrong
      */
     public CmsObject getOnlineCmsObject() throws Exception {
 
@@ -101,10 +155,35 @@ public class TestUrlNameMapping extends OpenCmsTestCase {
     }
 
     /**
-     * Tests that when a not-new resource is deleted and published, its URL name mappings are also deleted.<p>
-     * 
-     * @throws Exception if something goes wrong 
+     * Tests adding normal mappings after having added 'replace' mappings.<p>
+     *
+     * @throws Exception
      */
+    @Test
+    @Order(10)
+    public void testChangeReplaceSetting() throws Exception {
+
+        CmsResource resource = createFile();
+        String basename = "testChangeReplaceSetting";
+        String name1 = addReplaceMapping(basename + 1, resource);
+        publish();
+        String name2 = addMapping(basename + 2, resource);
+        publish();
+        String name3 = addMapping(basename + 3, resource);
+        publish();
+        CmsObject cms = getCmsObject();
+        assertEquals(resource.getStructureId(), cms.readIdForUrlName(name1));
+        assertEquals(resource.getStructureId(), cms.readIdForUrlName(name2));
+        assertEquals(resource.getStructureId(), cms.readIdForUrlName(name3));
+    }
+
+    /**
+     * Tests that when a not-new resource is deleted and published, its URL name mappings are also deleted.<p>
+     *
+     * @throws Exception if something goes wrong
+     */
+    @Test
+    @Order(20)
     public void testDeleteChanged() throws Exception {
 
         CmsObject cms = getCmsObject();
@@ -121,10 +200,12 @@ public class TestUrlNameMapping extends OpenCmsTestCase {
         publish();
         delete(res);
         assertEquals(res.getStructureId(), onlineCms.readIdForUrlName(baseName));
-        assertEquals(baseName, onlineCms.readBestUrlName(
-            res.getStructureId(),
-            onlineCms.getRequestContext().getLocale(),
-            OpenCms.getLocaleManager().getDefaultLocales()));
+        assertEquals(
+            baseName,
+            onlineCms.readBestUrlName(
+                res.getStructureId(),
+                onlineCms.getRequestContext().getLocale(),
+                OpenCms.getLocaleManager().getDefaultLocales()));
         assertEquals(res.getStructureId(), cms.readIdForUrlName(baseName));
         assertEquals(baseName, readBestUrlName(cms, res.getStructureId()));
         publish();
@@ -137,19 +218,13 @@ public class TestUrlNameMapping extends OpenCmsTestCase {
         assertEquals(res2.getStructureId(), onlineCms.readIdForUrlName(otherName));
     }
 
-    String readBestUrlName(CmsObject cms, CmsUUID structureId) throws CmsException {
-
-        return cms.readBestUrlName(
-            structureId,
-            cms.getRequestContext().getLocale(),
-            OpenCms.getLocaleManager().getDefaultLocales());
-    }
-
     /**
      * Tests that when a new resource is deleted, its URL name mapping is also deleted.<p>
-     * 
-     * @throws Exception if something goes wrong 
+     *
+     * @throws Exception if something goes wrong
      */
+    @Test
+    @Order(30)
     public void testDeleteNew() throws Exception {
 
         CmsObject cms = getCmsObject();
@@ -163,9 +238,11 @@ public class TestUrlNameMapping extends OpenCmsTestCase {
 
     /**
      * Tests mapping the same URL name to multiple ids.<p>
-     * 
-     * @throws Exception if something goes wrong 
+     *
+     * @throws Exception if something goes wrong
      */
+    @Test
+    @Order(40)
     public void testMultipleIdMapping() throws Exception {
 
         CmsObject cms = getCmsObject();
@@ -185,10 +262,37 @@ public class TestUrlNameMapping extends OpenCmsTestCase {
     }
 
     /**
-     * Tests mapping multiple names to the same resource.<p>
-     * 
-     * @throws Exception if something goes wrong 
+     * Tests mapping the same URL name to multiple ids.<p>
+     *
+     * @throws Exception if something goes wrong
      */
+    @Test
+    @Order(50)
+    public void testMultipleIdMappingWithDot() throws Exception {
+
+        CmsObject cms = getCmsObject();
+        String baseName = "testMultipleIdMapping.foo";
+        CmsResource res1 = createFile();
+        CmsResource res2 = createFile();
+        String name = baseName;
+        CmsUUID id1 = res1.getStructureId();
+        CmsUUID id2 = res2.getStructureId();
+        String returnedName1 = addMapping(name, res1);
+        String returnedName2 = addMapping(name, res2);
+        publish();
+        assertTrue(returnedName2.contains(returnedName1));
+        assertFalse(returnedName2.equals(returnedName1));
+        assertEquals(returnedName1, readBestUrlName(cms, id1));
+        assertEquals(returnedName2, readBestUrlName(cms, id2));
+    }
+
+    /**
+     * Tests mapping multiple names to the same resource.<p>
+     *
+     * @throws Exception if something goes wrong
+     */
+    @Test
+    @Order(60)
     public void testMultipleNameMapping() throws Exception {
 
         CmsObject cms = getCmsObject();
@@ -208,10 +312,44 @@ public class TestUrlNameMapping extends OpenCmsTestCase {
     }
 
     /**
-     * Tests that an URL name that has not been published will be overwritten by a new URL name.<p>
-     * 
-     * @throws Exception if something goes wrong 
+     * Tests that the cache for URL names works when using multiple names.
+     *
+     * @throws Exception if something goes wrong
      */
+    @Test
+    @Order(70)
+    public void testMultipleNameMappingCache() throws Exception {
+
+        CmsObject cms = getCmsObject();
+        String baseName = "testMultipleNameMappingCache";
+        String name1 = baseName + 1;
+        String name2 = baseName + 2;
+        CmsResource res = createFile();
+        String returnedName1 = addMapping(name1, res);
+        publish();
+        String returnedName2 = addMapping(name2, res);
+        publish();
+        CmsLockUtil.ensureLock(cms, res);
+        OpenCms.getADEManager().getDetailIdCache(false).waitForUpdate();
+        cms.writePropertyObjects(res, Lists.newArrayList(new CmsProperty("Title", "", "")));
+        OpenCms.getADEManager().getDetailIdCache(false).waitForUpdate();
+        CmsLockUtil.tryUnlock(cms, res);
+        for (String name : new String[] {returnedName1, returnedName2}) {
+            assertEquals(
+                res.getStructureId(),
+                OpenCms.getADEManager().getDetailIdCache(false).getDetailId(name),
+                "Structure id for name " + name + " should match the resource's structure id.");
+        }
+
+    }
+
+    /**
+     * Tests that an URL name that has not been published will be overwritten by a new URL name.<p>
+     *
+     * @throws Exception if something goes wrong
+     */
+    @Test
+    @Order(80)
     public void testOverwrite() throws Exception {
 
         CmsObject cms = getCmsObject();
@@ -227,9 +365,11 @@ public class TestUrlNameMapping extends OpenCmsTestCase {
 
     /**
      * Tests publishing the URL name mappings of a resource.<p>
-     * 
-     * @throws Exception if something goes wrong 
+     *
+     * @throws Exception if something goes wrong
      */
+    @Test
+    @Order(90)
     public void testPublish() throws Exception {
 
         CmsObject onlineCms = getOnlineCmsObject();
@@ -245,10 +385,47 @@ public class TestUrlNameMapping extends OpenCmsTestCase {
     }
 
     /**
-     * Tests adding a single url name in the Offline project.<p>
-     * 
-     * @throws Exception if something goes wrong 
+     * Tests that the urlname.replace property mapping is handled correctly, and that the urlname.replace property works the way it should.<p>
+     *
+     * @throws Exception
      */
+    @Test
+    @Order(100)
+    public void testReplaceProperty() throws Exception {
+
+        CmsObject cms = getCmsObject();
+        String basename = "testReplaceProperty";
+        CmsResource res1 = createContent(createTestContent(basename + "A", "false"));
+        CmsResource res2 = createContent(createTestContent(basename + "B", "false"));
+        publish();
+
+        CmsFile f1 = cms.readFile(cms.getSitePath(res1));
+        CmsFile f2 = cms.readFile(cms.getSitePath(res2));
+        CmsXmlContent c1 = CmsXmlContentFactory.unmarshal(cms, f1);
+        CmsXmlContent c2 = CmsXmlContentFactory.unmarshal(cms, f2);
+        c1.getValue("/Title", Locale.ENGLISH).setStringValue(cms, basename + "X");
+        c2.getValue("/Title", Locale.ENGLISH).setStringValue(cms, basename + "Y");
+        c2.getValue("/Replace", Locale.ENGLISH).setStringValue(cms, "true");
+        f1.setContents(c1.marshal());
+        f2.setContents(c2.marshal());
+        cms.lockResourceTemporary(f1);
+        cms.lockResourceTemporary(f2);
+        cms.writeFile(f1);
+        cms.writeFile(f2);
+        publish();
+        assertEquals(res1.getStructureId(), cms.readIdForUrlName(basename + "A"));
+        assertEquals(res1.getStructureId(), cms.readIdForUrlName(basename + "X"));
+        assertNull(cms.readIdForUrlName(basename + "B"), "Url name should have been removed");
+        assertEquals(res2.getStructureId(), cms.readIdForUrlName(basename + "Y"));
+    }
+
+    /**
+     * Tests adding a single url name in the Offline project.<p>
+     *
+     * @throws Exception if something goes wrong
+     */
+    @Test
+    @Order(110)
     public void testSimpleMapping() throws Exception {
 
         CmsObject cms = getCmsObject();
@@ -265,9 +442,11 @@ public class TestUrlNameMapping extends OpenCmsTestCase {
 
     /**
      * Tests that when the changes of a resource are undone, its unpublished URL name mapping will be removed.<p>
-     * 
-     * @throws Exception if something goes wrong 
+     *
+     * @throws Exception if something goes wrong
      */
+    @Test
+    @Order(120)
     public void testUndo() throws Exception {
 
         CmsObject cms = getCmsObject();
@@ -287,28 +466,74 @@ public class TestUrlNameMapping extends OpenCmsTestCase {
     }
 
     /**
+    * Tests replace-on-publish functionality for URL names.<p>
+    *
+    * @throws Exception
+    */
+    @Test
+    @Order(130)
+    public void testUrlNameReplace() throws Exception {
+
+        CmsObject cms = getCmsObject();
+        String baseName = "testUrlNameReplace";
+        CmsResource res = createFile();
+        String name1 = addMapping(baseName + "A", res);
+        publish();
+        assertEquals(res.getStructureId(), cms.readIdForUrlName(name1));
+
+        String name2 = addReplaceMapping(baseName + "C", res);
+        assertEquals(res.getStructureId(), cms.readIdForUrlName(name2));
+        assertEquals(res.getStructureId(), cms.readIdForUrlName(name1));
+        publish();
+        assertEquals(res.getStructureId(), cms.readIdForUrlName(name2));
+        assertNull(cms.readIdForUrlName(name1), "Old URL name should not be found");
+        CmsObject onlineCms = getOnlineCmsObject();
+        assertNull(onlineCms.readIdForUrlName(name1), "Old URL name should not be found");
+
+    }
+
+    /**
      * Helper method for adding a resource mapping.<p>
-     * 
-     * @param name the mapping name to be used 
+     *
+     * @param name the mapping name to be used
      * @param res the resource to which the
-     *  
-     * @return the URL name which has actually been mapped 
+     *
+     * @return the URL name which has actually been mapped
      * @throws Exception
      */
     protected String addMapping(String name, CmsResource res) throws Exception {
 
         CmsObject cms = getCmsObject();
-        // touch the resource so that we can publish it and its URL name mappings later 
+        // touch the resource so that we can publish it and its URL name mappings later
         touch(res);
-        String result = cms.writeUrlNameMapping(name, res.getStructureId(), "en");
+        String result = cms.writeUrlNameMapping(name, res.getStructureId(), "en", false);
+        return result;
+    }
+
+    /**
+     * Adds a 'replace' mapping to a resource.<p>
+     *
+     * @param name the URL name
+     * @param res the resource to which to add the mapping
+     *
+     * @return the actual URL name which was used
+     *
+     * @throws Exception
+     */
+    protected String addReplaceMapping(String name, CmsResource res) throws Exception {
+
+        CmsObject cms = getCmsObject();
+        // touch the resource so that we can publish it and its URL name mappings later
+        touch(res);
+        String result = cms.writeUrlNameMapping(name, res.getStructureId(), "en", true);
         return result;
     }
 
     /**
      * Helper method for deleting a resource.<p>
-     * 
-     * @param res the resource to delete 
-     * @throws Exception if something goes wrong 
+     *
+     * @param res the resource to delete
+     * @throws Exception if something goes wrong
      */
     protected void delete(CmsResource res) throws Exception {
 
@@ -319,7 +544,7 @@ public class TestUrlNameMapping extends OpenCmsTestCase {
         try {
             cms.unlockResource(sitePath);
         } catch (CmsException e) {
-            // ignore 
+            // ignore
         }
     }
 
@@ -335,10 +560,10 @@ public class TestUrlNameMapping extends OpenCmsTestCase {
 
     /**
      * Changes a resource's "last modified" time to the current time.<p>
-     * 
+     *
      * @param res the resource which should be touched
-     *  
-     * @throws Exception if something goes wrong 
+     *
+     * @throws Exception if something goes wrong
      */
     protected void touch(CmsResource res) throws Exception {
 
@@ -347,6 +572,24 @@ public class TestUrlNameMapping extends OpenCmsTestCase {
         cms.lockResource(path);
         cms.setDateLastModified(path, System.currentTimeMillis(), false);
         cms.unlockResource(cms.getSitePath(res));
+    }
+
+    /**
+     * Reads the best URL name for the given structure id.<p>
+     *
+     * @param cms the current CMS context
+     * @param structureId the structure ID of the resource
+     *
+     * @return the best URL name for the resource
+     *
+     * @throws CmsException
+     */
+    String readBestUrlName(CmsObject cms, CmsUUID structureId) throws CmsException {
+
+        return cms.readBestUrlName(
+            structureId,
+            cms.getRequestContext().getLocale(),
+            OpenCms.getLocaleManager().getDefaultLocales());
     }
 
 }

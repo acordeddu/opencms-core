@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -14,12 +14,12 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * Lesser General Public License for more details.
  *
- * For further information about Alkacon Software GmbH, please see the
- * company website: http://www.alkacon.com
+ * For further information about Alkacon Software GmbH & Co. KG, please see the
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -37,81 +37,44 @@ import org.opencms.main.CmsException;
 import org.opencms.main.OpenCms;
 import org.opencms.security.I_CmsPrincipal;
 import org.opencms.staticexport.CmsLinkTable;
-import org.opencms.test.OpenCmsTestCase;
-import org.opencms.test.OpenCmsTestProperties;
 import org.opencms.test.OpenCmsTestResourceFilter;
+import org.opencms.test.OpenCmsTestRunner;
 import org.opencms.xml.page.CmsXmlPage;
 import org.opencms.xml.page.CmsXmlPageFactory;
 
 import java.util.Iterator;
 import java.util.Locale;
 
-import junit.extensions.TestSetup;
-import junit.framework.Test;
-import junit.framework.TestSuite;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.MethodOrderer;
+import org.junit.jupiter.api.Order;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInfo;
+import org.junit.jupiter.api.TestMethodOrder;
 
 /**
  * Unit tests for move/rename operation.<p>
  */
-public class TestMoveRename2 extends OpenCmsTestCase {
+@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
+public class TestMoveRename2 extends OpenCmsTestRunner {
 
     /**
-     * Default JUnit constructor.<p>
-     * 
-     * @param arg0 JUnit parameters
+     * @see org.opencms.test.OpenCmsTestRunner#$openCmsSetUp(org.junit.jupiter.api.TestInfo)
      */
-    public TestMoveRename2(String arg0) {
+    @Override
+    @BeforeAll
+    public void $openCmsSetUp(TestInfo testInfo) {
 
-        super(arg0);
-    }
-
-    /**
-     * Test suite for this test class.<p>
-     * 
-     * @return the test suite
-     */
-    public static Test suite() {
-
-        OpenCmsTestProperties.initialize(org.opencms.test.AllTests.TEST_PROPERTIES_PATH);
-
-        TestSuite suite = new TestSuite();
-        suite.setName(TestMoveRename2.class.getName());
-
-        suite.addTest(new TestMoveRename2("testMoveSibling"));
-        suite.addTest(new TestMoveRename2("testRenameNewFolder"));
-        suite.addTest(new TestMoveRename2("testRenameFileUpperLowerCase"));
-        suite.addTest(new TestMoveRename2("testRenameFolderUpperLowerCase"));
-        suite.addTest(new TestMoveRename2("testMoveLostAndFound"));
-        suite.addTest(new TestMoveRename2("testMoveOverDeleted"));
-        suite.addTest(new TestMoveRename2("testMoveFolderWithNewResource"));
-        suite.addTest(new TestMoveRename2("testPublishMovedDeletedFolderWithMovedResource"));
-        suite.addTest(new TestMoveRename2("testMoveFolderWithPermissionCheck"));
-        suite.addTest(new TestMoveRename2("testMoveFolderWithInvisibleResources"));
-        suite.addTest(new TestMoveRename2("testMoveBigFolder"));
-
-        TestSetup wrapper = new TestSetup(suite) {
-
-            @Override
-            protected void setUp() {
-
-                setupOpenCms("simpletest", "/");
-            }
-
-            @Override
-            protected void tearDown() {
-
-                removeOpenCms();
-            }
-        };
-
-        return wrapper;
+        setupOpenCms(testInfo, "simpletest", "/");
     }
 
     /**
      * Tests to move a big folder.<p>
-     * 
+     *
      * @throws Exception if the test fails
      */
+    @Test
+    @Order(11)
     public void testMoveBigFolder() throws Exception {
 
         CmsObject cms = getCmsObject();
@@ -125,18 +88,20 @@ public class TestMoveRename2 extends OpenCmsTestCase {
         cms.lockResource(src);
         cms.moveResource(src, dest);
 
-        Iterator itResources = cms.readResources(dest, CmsResourceFilter.ALL, true).iterator();
+        Iterator<CmsResource> itResources = cms.readResources(dest, CmsResourceFilter.ALL, true).iterator();
         while (itResources.hasNext()) {
-            CmsResource res = (CmsResource)itResources.next();
+            CmsResource res = itResources.next();
             cms.readResource(res.getRootPath());
         }
     }
 
     /**
      * Tests to move a folder structure with invisible resources inside.<p>
-     * 
+     *
      * @throws Exception if the test fails
      */
+    @Test
+    @Order(10)
     public void testMoveFolderWithInvisibleResources() throws Exception {
 
         CmsObject cms = getCmsObject();
@@ -169,9 +134,11 @@ public class TestMoveRename2 extends OpenCmsTestCase {
 
     /**
      * Tests renaming a folder containing a new resource.<p>
-     * 
+     *
      * @throws Throwable if something goes wrong
      */
+    @Test
+    @Order(7)
     public void testMoveFolderWithNewResource() throws Throwable {
 
         CmsObject cms = getCmsObject();
@@ -213,9 +180,11 @@ public class TestMoveRename2 extends OpenCmsTestCase {
 
     /**
      * Tests to move a deep folder structure with real permission check.<p>
-     * 
+     *
      * @throws Exception if the test fails
      */
+    @Test
+    @Order(9)
     public void testMoveFolderWithPermissionCheck() throws Exception {
 
         CmsObject cms = getCmsObject();
@@ -241,9 +210,11 @@ public class TestMoveRename2 extends OpenCmsTestCase {
 
     /**
      * Tests the move to lost and found folder operation.<p>
-     * 
+     *
      * @throws Exception if the test fails
      */
+    @Test
+    @Order(5)
     public void testMoveLostAndFound() throws Exception {
 
         CmsObject cms = getCmsObject();
@@ -281,21 +252,25 @@ public class TestMoveRename2 extends OpenCmsTestCase {
 
         assertSiblingCount(cms, filename, 2);
         assertState(cms, filename, CmsResource.STATE_DELETED);
-
+        // the resource needs to be published first
+        OpenCms.getPublishManager().publishResource(cms, filename);
+        OpenCms.getPublishManager().waitWhileRunning();
         cms.createResource(filename, CmsResourceTypePlain.getStaticTypeId());
 
         file = cms.readFile(res1);
         page = CmsXmlPageFactory.unmarshal(cms, file, true);
         CmsLinkTable links = page.getLinkTable("test", Locale.ENGLISH);
         assertEquals(links.size(), 1);
-        assertEquals(links.getLink("link0").getSitePath(), filename);
+        assertEquals(links.getLink("link0").getSitePath(cms), filename);
     }
 
     /**
      * Tests to move a file over a deleted one.<p>
-     * 
+     *
      * @throws Exception if the test fails
      */
+    @Test
+    @Order(6)
     public void testMoveOverDeleted() throws Exception {
 
         CmsObject cms = getCmsObject();
@@ -324,9 +299,11 @@ public class TestMoveRename2 extends OpenCmsTestCase {
 
     /**
      * Tests moving a sibling.<p>
-     * 
+     *
      * @throws Exception if the test fails
      */
+    @Test
+    @Order(1)
     public void testMoveSibling() throws Exception {
 
         CmsObject cms = getCmsObject();
@@ -375,9 +352,11 @@ public class TestMoveRename2 extends OpenCmsTestCase {
 
     /**
      * Tests to publish a moved deleted folder with a unpublished moved resource.<p>
-     * 
+     *
      * @throws Exception if the test fails
      */
+    @Test
+    @Order(8)
     public void testPublishMovedDeletedFolderWithMovedResource() throws Exception {
 
         CmsObject cms = getCmsObject();
@@ -425,10 +404,12 @@ public class TestMoveRename2 extends OpenCmsTestCase {
     }
 
     /**
-     * Tests renaming a file to the same name with a different case.<p> 
-     * 
+     * Tests renaming a file to the same name with a different case.<p>
+     *
      * @throws Exception if the test fails
      */
+    @Test
+    @Order(3)
     public void testRenameFileUpperLowerCase() throws Exception {
 
         CmsObject cms = getCmsObject();
@@ -465,15 +446,17 @@ public class TestMoveRename2 extends OpenCmsTestCase {
         assertLock(cms, destination, CmsLockType.EXCLUSIVE);
         // set filter mapping
         setMapping(destination, source);
-        // now assert the filter for the rest of the attributes        
+        // now assert the filter for the rest of the attributes
         assertFilter(cms, destination, OpenCmsTestResourceFilter.FILTER_MOVE_DESTINATION);
     }
 
     /**
-     * Tests renaming a folder to the same name with a different case.<p> 
-     * 
+     * Tests renaming a folder to the same name with a different case.<p>
+     *
      * @throws Exception if the test fails
      */
+    @Test
+    @Order(4)
     public void testRenameFolderUpperLowerCase() throws Exception {
 
         CmsObject cms = getCmsObject();
@@ -519,9 +502,11 @@ public class TestMoveRename2 extends OpenCmsTestCase {
 
     /**
      * Tests renaming a new folder with content.<p>
-     * 
+     *
      * @throws Throwable if something goes wrong
      */
+    @Test
+    @Order(2)
     public void testRenameNewFolder() throws Throwable {
 
         CmsObject cms = getCmsObject();

@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -14,12 +14,12 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * Lesser General Public License for more details.
  *
- * For further information about Alkacon Software GmbH, please see the
- * company website: http://www.alkacon.com
+ * For further information about Alkacon Software GmbH & Co. KG, please see the
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -60,8 +60,8 @@ import com.google.common.collect.Lists;
 
 /**
  * Not Usergroups view.<p>
- * 
- * @since 6.0.0 
+ *
+ * @since 6.0.0
  */
 public class CmsNotGroupUsersList extends A_CmsGroupUsersList {
 
@@ -78,11 +78,11 @@ public class CmsNotGroupUsersList extends A_CmsGroupUsersList {
     public static final String LIST_MACTION_ADD = "ma";
 
     /** a set of action id's to use for adding. */
-    protected static Set m_addActionIds = new HashSet();
+    protected static Set<String> m_addActionIds = new HashSet<String>();
 
     /**
      * Public constructor.<p>
-     * 
+     *
      * @param jsp an initialized JSP action element
      */
     public CmsNotGroupUsersList(CmsJspActionElement jsp) {
@@ -92,9 +92,9 @@ public class CmsNotGroupUsersList extends A_CmsGroupUsersList {
 
     /**
      * Public constructor.<p>
-     * 
+     *
      * @param jsp an initialized JSP action element
-     * @param lazy the lazy flag 
+     * @param lazy the lazy flag
      */
     public CmsNotGroupUsersList(CmsJspActionElement jsp, boolean lazy) {
 
@@ -103,7 +103,7 @@ public class CmsNotGroupUsersList extends A_CmsGroupUsersList {
 
     /**
      * Public constructor with JSP variables.<p>
-     * 
+     *
      * @param context the JSP page context
      * @param req the JSP request
      * @param res the JSP response
@@ -115,11 +115,11 @@ public class CmsNotGroupUsersList extends A_CmsGroupUsersList {
 
     /**
      * Public constructor with JSP variables.<p>
-     * 
+     *
      * @param context the JSP page context
      * @param req the JSP request
      * @param res the JSP response
-     * @param lazy the lazy flag 
+     * @param lazy the lazy flag
      */
     public CmsNotGroupUsersList(PageContext context, HttpServletRequest req, HttpServletResponse res, boolean lazy) {
 
@@ -140,7 +140,7 @@ public class CmsNotGroupUsersList extends A_CmsGroupUsersList {
      * Protected constructor.<p>
      * @param jsp an initialized JSP action element
      * @param listId the id of the specialized list
-     * @param lazy the lazy flag 
+     * @param lazy the lazy flag
      */
     protected CmsNotGroupUsersList(CmsJspActionElement jsp, String listId, boolean lazy) {
 
@@ -150,19 +150,20 @@ public class CmsNotGroupUsersList extends A_CmsGroupUsersList {
     /**
      * @see org.opencms.workplace.list.A_CmsListDialog#executeListMultiActions()
      */
+    @Override
     public void executeListMultiActions() throws CmsRuntimeException {
 
         if (getParamListAction().equals(LIST_MACTION_ADD)) {
             // execute the remove multiaction
             try {
-                Iterator itItems = getSelectedItems().iterator();
+                Iterator<CmsListItem> itItems = getSelectedItems().iterator();
                 while (itItems.hasNext()) {
-                    CmsListItem listItem = (CmsListItem)itItems.next();
+                    CmsListItem listItem = itItems.next();
                     getCms().addUserToGroup((String)listItem.get(LIST_COLUMN_LOGIN), getParamGroupname());
                 }
             } catch (CmsException e) {
                 // refresh the list
-                Map objects = (Map)getSettings().getListObject();
+                Map<?, ?> objects = (Map<?, ?>)getSettings().getListObject();
                 if (objects != null) {
                     objects.remove(CmsGroupsList.class.getName());
                     objects.remove(A_CmsUsersList.class.getName());
@@ -178,6 +179,7 @@ public class CmsNotGroupUsersList extends A_CmsGroupUsersList {
     /**
      * @see org.opencms.workplace.list.A_CmsListDialog#executeListSingleActions()
      */
+    @Override
     public void executeListSingleActions() throws CmsRuntimeException {
 
         if (m_addActionIds.contains(getParamListAction())) {
@@ -218,10 +220,10 @@ public class CmsNotGroupUsersList extends A_CmsGroupUsersList {
 
     /**
      * Gets the search parameters.<p>
-     * 
-     * @return the search parameters 
-     * 
-     * @throws CmsException if something goes wrong 
+     *
+     * @return the search parameters
+     *
+     * @throws CmsException if something goes wrong
      */
     protected CmsUserSearchParameters getSearchParams() throws CmsException {
 
@@ -244,10 +246,10 @@ public class CmsNotGroupUsersList extends A_CmsGroupUsersList {
 
     /**
      * Gets the sort key for a column.<p>
-     * 
-     * @param column a column 
-     * 
-     * @return the sort key 
+     *
+     * @param column a column
+     *
+     * @return the sort key
      */
     protected SortKey getSortKey(String column) {
 
@@ -265,10 +267,11 @@ public class CmsNotGroupUsersList extends A_CmsGroupUsersList {
     /**
      * @see org.opencms.workplace.tools.accounts.A_CmsGroupUsersList#getUsers(boolean)
      */
-    protected List getUsers(boolean withOtherOus) throws CmsException {
+    @Override
+    protected List<CmsUser> getUsers(boolean withOtherOus) throws CmsException {
 
-        List groupusers = getCms().getUsersOfGroup(getParamGroupname(), withOtherOus);
-        List users;
+        List<CmsUser> groupusers = getCms().getUsersOfGroup(getParamGroupname(), withOtherOus);
+        List<CmsUser> users;
         if (withOtherOus) {
             users = OpenCms.getRoleManager().getManageableUsers(getCms(), "", true);
         } else {
@@ -281,6 +284,7 @@ public class CmsNotGroupUsersList extends A_CmsGroupUsersList {
     /**
      * @see org.opencms.workplace.tools.accounts.A_CmsGroupUsersList#setColumns(org.opencms.workplace.list.CmsListMetadata)
      */
+    @Override
     protected void setColumns(CmsListMetadata meta) {
 
         if (m_lazy) {
@@ -292,6 +296,7 @@ public class CmsNotGroupUsersList extends A_CmsGroupUsersList {
     /**
      * @see org.opencms.workplace.tools.accounts.A_CmsGroupUsersList#setDefaultAction(org.opencms.workplace.list.CmsListColumnDefinition)
      */
+    @Override
     protected void setDefaultAction(CmsListColumnDefinition loginCol) {
 
         // add add action
@@ -306,6 +311,7 @@ public class CmsNotGroupUsersList extends A_CmsGroupUsersList {
     /**
      * @see org.opencms.workplace.tools.accounts.A_CmsGroupUsersList#setIconAction(org.opencms.workplace.list.CmsListColumnDefinition)
      */
+    @Override
     protected void setIconAction(CmsListColumnDefinition iconCol) {
 
         CmsListDirectAction iconAction = new CmsListDefaultAction(LIST_ACTION_ICON) {
@@ -313,6 +319,7 @@ public class CmsNotGroupUsersList extends A_CmsGroupUsersList {
             /**
              * @see org.opencms.workplace.tools.I_CmsHtmlIconButton#getIconPath()
              */
+            @Override
             public String getIconPath() {
 
                 return ((A_CmsGroupUsersList)getWp()).getIconPath(getItem());
@@ -328,6 +335,7 @@ public class CmsNotGroupUsersList extends A_CmsGroupUsersList {
     /**
      * @see org.opencms.workplace.tools.accounts.A_CmsGroupUsersList#setIndependentActions(org.opencms.workplace.list.CmsListMetadata)
      */
+    @Override
     protected void setIndependentActions(CmsListMetadata metadata) {
 
         super.setIndependentActions(metadata);
@@ -338,6 +346,7 @@ public class CmsNotGroupUsersList extends A_CmsGroupUsersList {
     /**
      * @see org.opencms.workplace.list.A_CmsListDialog#setMultiActions(org.opencms.workplace.list.CmsListMetadata)
      */
+    @Override
     protected void setMultiActions(CmsListMetadata metadata) {
 
         // add add multi action
@@ -352,6 +361,7 @@ public class CmsNotGroupUsersList extends A_CmsGroupUsersList {
     /**
      * @see org.opencms.workplace.tools.accounts.A_CmsGroupUsersList#setStateActionCol(org.opencms.workplace.list.CmsListMetadata)
      */
+    @Override
     protected void setStateActionCol(CmsListMetadata metadata) {
 
         // create column for state change

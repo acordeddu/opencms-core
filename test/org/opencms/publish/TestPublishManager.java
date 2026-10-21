@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -14,12 +14,12 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * Lesser General Public License for more details.
  *
- * For further information about Alkacon Software GmbH, please see the
- * company website: http://www.alkacon.com
+ * For further information about Alkacon Software GmbH & Co. KG, please see the
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -37,74 +37,41 @@ import org.opencms.main.OpenCms;
 import org.opencms.security.CmsPermissionSet;
 import org.opencms.security.CmsSecurityException;
 import org.opencms.security.I_CmsPrincipal;
-import org.opencms.test.OpenCmsTestCase;
-import org.opencms.test.OpenCmsTestProperties;
+import org.opencms.test.OpenCmsTestRunner;
 
 import java.util.Iterator;
 import java.util.List;
 
-import junit.extensions.TestSetup;
-import junit.framework.Test;
-import junit.framework.TestSuite;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.MethodOrderer;
+import org.junit.jupiter.api.Order;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInfo;
+import org.junit.jupiter.api.TestMethodOrder;
 
 /**
  * Unit tests for the publish manager.<p>
  */
-public class TestPublishManager extends OpenCmsTestCase {
+@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
+public class TestPublishManager extends OpenCmsTestRunner {
 
     /**
-     * Default JUnit constructor.<p>
-     * 
-     * @param arg0 JUnit parameters
+     * @see org.opencms.test.OpenCmsTestRunner#$openCmsSetUp(org.junit.jupiter.api.TestInfo)
      */
-    public TestPublishManager(String arg0) {
+    @Override
+    @BeforeAll
+    public void $openCmsSetUp(TestInfo testInfo) {
 
-        super(arg0);
-    }
-
-    /**
-     * Test suite for this test class.<p>
-     * 
-     * @return the test suite
-     */
-    public static Test suite() {
-
-        OpenCmsTestProperties.initialize(org.opencms.test.AllTests.TEST_PROPERTIES_PATH);
-
-        TestSuite suite = new TestSuite();
-        suite.setName(TestPublishManager.class.getName());
-
-        suite.addTest(new TestPublishManager("testPublishReport"));
-        suite.addTest(new TestPublishManager("testAbortJob"));
-        suite.addTest(new TestPublishManager("testRunning"));
-        suite.addTest(new TestPublishManager("testStop"));
-        suite.addTest(new TestPublishManager("testListener"));
-        suite.addTest(new TestPublishManager("testInitialization1"));
-        suite.addTest(new TestPublishManager("testInitialization2"));
-
-        TestSetup wrapper = new TestSetup(suite) {
-
-            @Override
-            protected void setUp() {
-
-                setupOpenCms("simpletest", "/");
-            }
-
-            @Override
-            protected void tearDown() {
-
-                removeOpenCms();
-            }
-        };
-
-        return wrapper;
+        setupOpenCms(testInfo, "simpletest", "/");
     }
 
     /**
      * Test aborting an enqueued publish job.<p>
-     * 
+     *
      * @throws Throwable if something goes wrong
      */
+    @Test
+    @Order(2)
     public void testAbortJob() throws Throwable {
 
         CmsObject cms = getCmsObject();
@@ -183,10 +150,12 @@ public class TestPublishManager extends OpenCmsTestCase {
     }
 
     /**
-     * Tests the reinitialization of the publish manager/engine.<p> 
-     * 
+     * Tests the reinitialization of the publish manager/engine.<p>
+     *
      * @throws Throwable if something goes wrong
      */
+    @Test
+    @Order(6)
     public void testInitialization1() throws Throwable {
 
         CmsObject cms = getCmsObject();
@@ -204,7 +173,7 @@ public class TestPublishManager extends OpenCmsTestCase {
             cms.unlockResource(source);
         }
 
-        int max = 12; // be sure that it is the same as the system/publishhistory/history-size value + 2        
+        int max = 12; // be sure that it is the same as the system/publishhistory/history-size value + 2
         // copy n new resources
         for (int i = 0; i < max; i++) {
             cms.copyResource(source, destination1 + (i + 1) + ".gif", CmsResource.COPY_AS_NEW);
@@ -226,11 +195,12 @@ public class TestPublishManager extends OpenCmsTestCase {
         // compare old and new queue
         echo("Checking revived publish queue (" + oldQueue.size() + " items)");
         if (newQueue.size() != oldQueue.size()) {
-            fail("Old and new queue have not the same size: Expected <"
-                + oldQueue.size()
-                + ">, was <"
-                + newQueue.size()
-                + ">");
+            fail(
+                "Old and new queue have not the same size: Expected <"
+                    + oldQueue.size()
+                    + ">, was <"
+                    + newQueue.size()
+                    + ">");
         }
         Iterator n = newQueue.iterator();
         Iterator o = oldQueue.iterator();
@@ -240,14 +210,15 @@ public class TestPublishManager extends OpenCmsTestCase {
             assertEquals(newJob, oldJob, true, true);
         }
 
-        // compare old and new history  
+        // compare old and new history
         echo("Checking revived publish history (" + oldHistory.size() + " items)");
         if (newHistory.size() != oldHistory.size()) {
-            fail("Old and new history have not the same size: Expected <"
-                + oldHistory.size()
-                + ">, was <"
-                + newHistory.size()
-                + ">");
+            fail(
+                "Old and new history have not the same size: Expected <"
+                    + oldHistory.size()
+                    + ">, was <"
+                    + newHistory.size()
+                    + ">");
         }
         n = newHistory.iterator();
         o = oldHistory.iterator();
@@ -263,10 +234,12 @@ public class TestPublishManager extends OpenCmsTestCase {
     }
 
     /**
-     * Tests the reinitialization of the publish manager/engine.<p> 
-     * 
+     * Tests the reinitialization of the publish manager/engine.<p>
+     *
      * @throws Throwable if something goes wrong
      */
+    @Test
+    @Order(7)
     public void testInitialization2() throws Throwable {
 
         CmsObject cms = getCmsObject();
@@ -295,7 +268,7 @@ public class TestPublishManager extends OpenCmsTestCase {
         List oldQueue = OpenCms.getPublishManager().getPublishQueue();
 
         // add an event listener used to restart the engine when ther job was started
-        OpenCms.getPublishManager().addPublishListener(new TestPublishEventListener2(cms));
+        OpenCms.getPublishManager().addPublishListener(new CmsTestPublishEventListener2(cms));
 
         // now start publishing again and reinitialize the publish manager and engine while it is running
         OpenCms.getPublishManager().startPublishing();
@@ -319,9 +292,11 @@ public class TestPublishManager extends OpenCmsTestCase {
 
     /**
      * Test the publish event listener.<p>
-     * 
+     *
      * @throws Throwable if something goes wrong
      */
+    @Test
+    @Order(5)
     public void testListener() throws Throwable {
 
         CmsObject cms = getCmsObject();
@@ -337,13 +312,13 @@ public class TestPublishManager extends OpenCmsTestCase {
         }
 
         // set the listener for the first job
-        TestPublishEventListener firstListener = new TestPublishEventListener(cms.readResource(destination + "1.gif"));
+        CmsTestPublishEventListener firstListener = new CmsTestPublishEventListener(
+            cms.readResource(destination + "1.gif"));
         OpenCms.getPublishManager().addPublishListener(firstListener);
 
         // set the listener for the last job
-        TestPublishEventListener lastListener = new TestPublishEventListener(cms.readResource(destination
-            + max
-            + ".gif"));
+        CmsTestPublishEventListener lastListener = new CmsTestPublishEventListener(
+            cms.readResource(destination + max + ".gif"));
         OpenCms.getPublishManager().addPublishListener(lastListener);
 
         // remember the time
@@ -440,9 +415,11 @@ public class TestPublishManager extends OpenCmsTestCase {
 
     /**
      * Tests the publish report stored in the database.<p>
-     * 
+     *
      * @throws Throwable if something goes wrong
      */
+    @Test
+    @Order(1)
     public void testPublishReport() throws Throwable {
 
         CmsObject cms = getCmsObject();
@@ -469,9 +446,11 @@ public class TestPublishManager extends OpenCmsTestCase {
 
     /**
      * Test publishing process.<p>
-     * 
+     *
      * @throws Throwable if something goes wrong
      */
+    @Test
+    @Order(3)
     public void testRunning() throws Throwable {
 
         CmsObject cms = getCmsObject();
@@ -539,9 +518,11 @@ public class TestPublishManager extends OpenCmsTestCase {
 
     /**
      * Test stopping/starting the publish engine.<p>
-     * 
+     *
      * @throws Throwable if something goes wrong
      */
+    @Test
+    @Order(4)
     public void testStop() throws Throwable {
 
         CmsObject cms = getCmsObject();
@@ -553,7 +534,7 @@ public class TestPublishManager extends OpenCmsTestCase {
         String destination3 = "/folder2/subfolder22/image1_new3.gif";
         String destination4 = "/folder2/subfolder22/image1_new4.gif";
 
-        // copy and publish a new resource 
+        // copy and publish a new resource
         cms.copyResource(source, destination1, CmsResource.COPY_AS_NEW);
         OpenCms.getPublishManager().publishResource(cms, destination1);
 
@@ -566,7 +547,7 @@ public class TestPublishManager extends OpenCmsTestCase {
         // stop the publish engine by disabling the login
         OpenCms.getLoginManager().setLoginMessage(cms, new CmsLoginMessage("test", true));
 
-        // copy and publish a new resource 
+        // copy and publish a new resource
         cms.copyResource(source, destination2, CmsResource.COPY_AS_NEW);
         // should still work since i am the admin
         OpenCms.getPublishManager().publishResource(cms, destination2);
@@ -578,21 +559,26 @@ public class TestPublishManager extends OpenCmsTestCase {
         cms.copyResource(source, destination4, CmsResource.COPY_AS_NEW);
 
         // give the user publish permission
-        cms.chacc(destination3, I_CmsPrincipal.PRINCIPAL_USER, "test1", new CmsPermissionSet(
-            CmsPermissionSet.PERMISSION_FULL,
-            0).getPermissionString());
-        cms.chacc(destination4, I_CmsPrincipal.PRINCIPAL_USER, "test1", new CmsPermissionSet(
-            CmsPermissionSet.PERMISSION_FULL,
-            0).getPermissionString());
+        cms.chacc(
+            destination3,
+            I_CmsPrincipal.PRINCIPAL_USER,
+            "test1",
+            new CmsPermissionSet(CmsPermissionSet.PERMISSION_FULL, 0).getPermissionString());
+        cms.chacc(
+            destination4,
+            I_CmsPrincipal.PRINCIPAL_USER,
+            "test1",
+            new CmsPermissionSet(CmsPermissionSet.PERMISSION_FULL, 0).getPermissionString());
 
         // and unlock the resources in order to let the other user publish them
         cms.unlockResource(destination3);
         cms.unlockResource(destination4);
 
-        // publish a new resource 
+        // publish a new resource
         try {
             OpenCms.getPublishManager().publishResource(ucms, destination3);
-            fail("a user without administration rights should not be able to publish when the publish engine is disabled");
+            fail(
+                "a user without administration rights should not be able to publish when the publish engine is disabled");
         } catch (CmsPublishException e) {
             // ok, ignore
         }

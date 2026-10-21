@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -14,12 +14,12 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * Lesser General Public License for more details.
  *
- * For further information about Alkacon Software GmbH, please see the
- * company website: http://www.alkacon.com
+ * For further information about Alkacon Software GmbH & Co. KG, please see the
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -51,21 +51,22 @@ import java.util.Iterator;
 import java.util.List;
 
 /**
- * A collector that allows to collect resources within a time range based upon 
+ * A collector that allows to collect resources within a time range based upon
  * a configurable property that contains a time stamp.<p>
- * 
- * Additionally a property may be specified that contains a comma separated 
- * list of category Strings that have to match the specified list of categories 
+ *
+ * Additionally a property may be specified that contains a comma separated
+ * list of category Strings that have to match the specified list of categories
  * to allow. <p>
- * 
+ *
  * <b>Demo usage:</b><br/>
  * <pre>
- * &lt;cms:contentload collector="timeFrameAndCategories" 
+ * &lt;cms:contentload collector="timeFrameAndCategories"
  *   param="
  *     resource=/de/events/|
  *     resourceType=xmlcontent|
  *     resultLimit=10|
  *     sortDescending=true|
+ *     excludeTimerange=true|
  *     timeStart=2007-08-01 14:22:12|
  *     timeEnd=2007-08-01 14:22:12|
  *     propertyTime=collector.time|
@@ -74,76 +75,80 @@ import java.util.List;
  *   &gt;
  * </pre>
  * <p>
- * 
+ *
  * <b>The param attribute</b>
- * 
+ *
  * supports a key - value syntax for collector params.<p>
- * 
- * All parameters are specified as follows: 
+ *
+ * All parameters are specified as follows:
  * <pre>
  * key=value
  * </pre>
  * <p>
- * Many key - value pairs may exist: 
+ * Many key - value pairs may exist:
  * <pre>
  * key=value|key2=value2|key3=value3
  * </pre>
  * <p>
- * The following keys are reserved: 
+ * The following keys are reserved:
  * <ul>
  * <li>
  * <b>resource</b><br/>
- * The value defines the folder / single file for collection of results. 
+ * The value defines the folder / single file for collection of results.
  * </li>
  * <li>
  * <b>resourceType</b><br/>
- * The value defines the name of the type of resource that is required for the result as 
- * defined in opencms-modules.xml, opencms-workplace.xml. 
+ * The value defines the name of the type of resource that is required for the result as
+ * defined in opencms-modules.xml, opencms-workplace.xml.
  * </li>
  * <li>
  * <b>resultLimit</b><br/>
- * The value defines the maximum amount of results to return. 
+ * The value defines the maximum amount of results to return.
  * </li>
  * <li>
  * <b>sortDescending</b><br/>
- * The value defines if the result is sorted in descending ("true") or ascending 
- * (anything else than "true") order. 
+ * The value defines if the result is sorted in descending ("true") or ascending
+ * (anything else than "true") order.
+ * </li>
+ * <li>
+ * <b>excludeTimeRange</b><br/>
+ * The value defines if the result should exclude the time range in an offline project.
  * </li>
  * <li>
  * <b>timeStart</b><br/>
- * The value defines the start time in the format <code>yyyy-MM-dd HH:mm:ss</code> as 
- * known by the description of <code>{@link SimpleDateFormat}</code> 
- * that will be used for the validity time frame of result candidates. 
+ * The value defines the start time in the format <code>yyyy-MM-dd HH:mm:ss</code> as
+ * known by the description of <code>{@link SimpleDateFormat}</code>
+ * that will be used for the validity time frame of result candidates.
  * </li>
  * <li>
  * <b>timeEnd</b><br/>
- * The value defines the end time in the format <code>yyyy-MM-dd HH:mm:ss</code> as 
- * known by the description of <code>{@link SimpleDateFormat}</code> 
- * that will be used for the validity time frame of result candidates. 
+ * The value defines the end time in the format <code>yyyy-MM-dd HH:mm:ss</code> as
+ * known by the description of <code>{@link SimpleDateFormat}</code>
+ * that will be used for the validity time frame of result candidates.
  * </li>
  * <li>
  * <b>propertyTime</b><br/>
- * The value defines the name of the property that is inspected for a time stamp 
- * in <code> {@link System#currentTimeMillis()}</code> syntax for the validity time frame 
- * check. 
+ * The value defines the name of the property that is inspected for a time stamp
+ * in <code> {@link System#currentTimeMillis()}</code> syntax for the validity time frame
+ * check.
  * </li>
  * <li>
  * <b>propertyCategories</b><br/>
- * The value defines the name of the property that is inspected for a pipe separated 
- * list of category strings. 
+ * The value defines the name of the property that is inspected for a pipe separated
+ * list of category strings.
  * </li>
  * <li>
  * <b>categories</b><br/>
- * The value defines a list of comma separated category Strings used to filter 
- * result candidates by. If this parameter is missing completely no category 
- * filtering will be done and also resources with empty category property will 
- * be accepted. 
+ * The value defines a list of comma separated category Strings used to filter
+ * result candidates by. If this parameter is missing completely no category
+ * filtering will be done and also resources with empty category property will
+ * be accepted.
  * </li>
  * </ul>
  * <p>
- * 
+ *
  * All other key - value pairs are ignored.<p>
- * 
+ *
  * @since 7.0.3
  *
  */
@@ -151,66 +156,70 @@ public class CmsTimeFrameCategoryCollector extends A_CmsResourceCollector {
 
     /**
      * Supports a key - value syntax for collector params.<p>
-     * 
-     * All parameters are specified as follows: 
+     *
+     * All parameters are specified as follows:
      * <pre>
      * key=value
      * </pre>
      * <p>
-     * Many key - value pairs may exist: 
+     * Many key - value pairs may exist:
      * <pre>
      * key=value|key2=value2|key3=value3
      * </pre>
      * <p>
-     * The following keys are reserved: 
+     * The following keys are reserved:
      * <ul>
      * <li>
      * <b>resource</b><br/>
-     * The value defines the folder / single file for collection of results. 
+     * The value defines the folder / single file for collection of results.
      * </li>
      * <li>
      * <b>resourceType</b><br/>
-     * The value defines the name of the type of resource that is required for the result as 
-     * defined in opencms-modules.xml, opencms-workplace.xml. 
+     * The value defines the name of the type of resource that is required for the result as
+     * defined in opencms-modules.xml, opencms-workplace.xml.
      * </li>
      * <li>
      * <b>resultLimit</b><br/>
-     * The value defines the maximum amount of results to return. 
+     * The value defines the maximum amount of results to return.
      * </li>
      * <li>
      * <b>sortDescending</b><br/>
-     * The value defines if the result is sorted in descending ("true") or ascending 
-     * (anything else than "true") order. 
+     * The value defines if the result is sorted in descending ("true") or ascending
+     * (anything else than "true") order.
+     * </li>
+     * <li>
+     * <b>excludeTimeRange</b><br/>
+     * The value defines if the result should exclude the time range in an offline project.
      * </li>
      * <li>
      * <b>timeStart</b><br/>
-     * The value defines the start time in the format <code>yyyy-MM-dd HH:mm:ss</code> as 
-     * known by the description of <code>{@link SimpleDateFormat}</code> 
-     * that will be used for the validity time frame of result candidates. 
+     * The value defines the start time in the format <code>yyyy-MM-dd HH:mm:ss</code> as
+     * known by the description of <code>{@link SimpleDateFormat}</code>
+     * that will be used for the validity time frame of result candidates.
      * </li>
      * <li>
      * <b>timeEnd</b><br/>
-     * The value defines the end time in the format <code>yyyy-MM-dd HH:mm:ss</code> as 
-     * known by the description of <code>{@link SimpleDateFormat}</code> 
-     * that will be used for the validity time frame of result candidates. 
+     * The value defines the end time in the format <code>yyyy-MM-dd HH:mm:ss</code> as
+     * known by the description of <code>{@link SimpleDateFormat}</code>
+     * that will be used for the validity time frame of result candidates.
      * </li>
      * <li>
      * <b>propertyTime</b><br/>
-     * The value defines the name of the property that is inspected for a time stamp 
-     * in <code> {@link System#currentTimeMillis()}</code> syntax for the validity time frame 
-     * check. 
+     * The value defines the name of the property that is inspected for a time stamp
+     * in <code> {@link System#currentTimeMillis()}</code> syntax for the validity time frame
+     * check.
      * </li>
      * <li>
      * <b>propertyCategories</b><br/>
-     * The value defines the name of the property that is inspected for a pipe separated 
-     * list of category strings. 
+     * The value defines the name of the property that is inspected for a pipe separated
+     * list of category strings.
      * </li>
      * <li>
      * <b>categories</b><br/>
-     * The value defines a list of comma separated category Strings used to filter 
-     * result candidates by. If this parameter is missing completely no category 
-     * filtering will be done and also resources with empty category property will 
-     * be accepted. 
+     * The value defines a list of comma separated category Strings used to filter
+     * result candidates by. If this parameter is missing completely no category
+     * filtering will be done and also resources with empty category property will
+     * be accepted.
      * </li>
      * </ul>
      * <p>
@@ -273,11 +282,11 @@ public class CmsTimeFrameCategoryCollector extends A_CmsResourceCollector {
 
         /**
          * Constructor with the collector param of the tag.<p>
-         * 
-         * @param data the param attribute value of the contentload tag. 
-         * 
+         *
+         * @param data the param attribute value of the contentload tag.
+         *
          * @throws CmsLoaderException if the collector param specifies an illegal resource type.
-         * 
+         *
          */
         public CollectorDataPropertyBased(String data)
         throws CmsLoaderException {
@@ -285,8 +294,8 @@ public class CmsTimeFrameCategoryCollector extends A_CmsResourceCollector {
             try {
                 parseParam(data);
             } catch (ParseException pe) {
-                CmsRuntimeException ex = new CmsIllegalArgumentException(Messages.get().container(
-                    Messages.ERR_COLLECTOR_PARAM_DATE_FORMAT_SYNTAX_0));
+                CmsRuntimeException ex = new CmsIllegalArgumentException(
+                    Messages.get().container(Messages.ERR_COLLECTOR_PARAM_DATE_FORMAT_SYNTAX_0));
                 ex.initCause(pe);
                 throw ex;
             }
@@ -306,7 +315,7 @@ public class CmsTimeFrameCategoryCollector extends A_CmsResourceCollector {
         /**
          * Returns the count.
          * <p>
-         * 
+         *
          * @return the count
          */
         @Override
@@ -317,7 +326,7 @@ public class CmsTimeFrameCategoryCollector extends A_CmsResourceCollector {
 
         /**
          * Returns the file name.<p>
-         * 
+         *
          * @return the file name
          */
         @Override
@@ -329,9 +338,9 @@ public class CmsTimeFrameCategoryCollector extends A_CmsResourceCollector {
         /**
          * Returns the property to look for a pipe separated list of category strings in.<p>
          *
-         * Never write this property to VFS as it is "invented in RAM" and not 
+         * Never write this property to VFS as it is "invented in RAM" and not
          * read from VFS!<p>
-         * 
+         *
          * @return the property to look for a pipe separated list of category strings in.
          */
         public CmsProperty getPropertyCategories() {
@@ -340,10 +349,10 @@ public class CmsTimeFrameCategoryCollector extends A_CmsResourceCollector {
         }
 
         /**
-         * Returns The property to look up for a time stamp 
+         * Returns The property to look up for a time stamp
          * on result candidates for validity time frame check.<p>
-         * 
-         * Never write this property to VFS as it is "invented in RAM" and not 
+         *
+         * Never write this property to VFS as it is "invented in RAM" and not
          * read from VFS!<p>
          *
          * @return The property to look up for a time stamp on result candidates for validity time frame check.
@@ -357,7 +366,7 @@ public class CmsTimeFrameCategoryCollector extends A_CmsResourceCollector {
          * Returns the timeFrameEnd.<p>
          *
          * @return the timeFrameEnd
-         * 
+         *
          * @see #getPropertyTime()
          */
         public long getTimeFrameEnd() {
@@ -378,7 +387,7 @@ public class CmsTimeFrameCategoryCollector extends A_CmsResourceCollector {
         /**
          * Returns the type.
          * <p>
-         * 
+         *
          * @return the type
          */
         @Override
@@ -389,10 +398,10 @@ public class CmsTimeFrameCategoryCollector extends A_CmsResourceCollector {
 
         /**
          * If true results should be sorted in descending order.<p>
-         * 
+         *
          * Defaults to true.<p>
          *
-         * @return true if results should be sorted in descending order, false 
+         * @return true if results should be sorted in descending order, false
          *      if results should be sorted in ascending order.
          */
         public boolean isSortDescending() {
@@ -401,14 +410,14 @@ public class CmsTimeFrameCategoryCollector extends A_CmsResourceCollector {
         }
 
         /**
-         * Internally parses the constructor-given param into the data model 
-         * of this instance.<p> 
-         * 
-         * @param param the constructor-given param. 
-         * 
+         * Internally parses the constructor-given param into the data model
+         * of this instance.<p>
+         *
+         * @param param the constructor-given param.
+         *
          * @throws CmsLoaderException if the collector param specifies an illegal resource type.
-         * 
-         * @throws ParseException if date parsing in scope of the param attribute fails. 
+         *
+         * @throws ParseException if date parsing in scope of the param attribute fails.
          */
         private void parseParam(final String param) throws CmsLoaderException, ParseException {
 
@@ -422,9 +431,10 @@ public class CmsTimeFrameCategoryCollector extends A_CmsResourceCollector {
                 keyValuePairStr = itKeyValuePairs.next();
                 keyValuePair = CmsStringUtil.splitAsArray(keyValuePairStr, '=');
                 if (keyValuePair.length != 2) {
-                    throw new CmsIllegalArgumentException(Messages.get().container(
-                        Messages.ERR_COLLECTOR_PARAM_KEY_VALUE_SYNTAX_1,
-                        new Object[] {keyValuePairStr}));
+                    throw new CmsIllegalArgumentException(
+                        Messages.get().container(
+                            Messages.ERR_COLLECTOR_PARAM_KEY_VALUE_SYNTAX_1,
+                            new Object[] {keyValuePairStr}));
                 }
                 key = String.valueOf(keyValuePair[0]).trim();
                 value = String.valueOf(keyValuePair[1]).trim();
@@ -436,7 +446,7 @@ public class CmsTimeFrameCategoryCollector extends A_CmsResourceCollector {
                 } else if (PARAM_KEY_RESULT_LIMIT.equals(key)) {
                     m_count = Integer.parseInt(value);
                 } else if (PARAM_KEY_SORT_DESCENDING.equals(key)) {
-                    m_sortDescending = new Boolean(value).booleanValue();
+                    m_sortDescending = Boolean.valueOf(value).booleanValue();
                 } else if (PARAM_KEY_TIMEFRAME_START.equals(key)) {
                     m_timeFrameStart = DATEFORMAT_SQL.parse(value).getTime();
                 } else if (PARAM_KEY_TIMEFRAME_END.equals(key)) {
@@ -447,6 +457,8 @@ public class CmsTimeFrameCategoryCollector extends A_CmsResourceCollector {
                     m_categories = CmsStringUtil.splitAsList(value, ',');
                 } else if (PARAM_KEY_PPROPERTY_CATEGORIES.equals(key)) {
                     m_propertyCategories.setName(value);
+                } else if (PARAM_EXCLUDETIMERANGE.equalsIgnoreCase(key)) {
+                    setExcludeTimerange(Boolean.valueOf(value).booleanValue());
                 } else {
                     // nop, one could accept additional filter properties here...
                 }
@@ -457,14 +469,15 @@ public class CmsTimeFrameCategoryCollector extends A_CmsResourceCollector {
 
     }
 
+    /** SQL Standard date format: "yyyy-MM-dd HH:mm:ss".*/
+    public static final DateFormat DATEFORMAT_SQL = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+
     /** Static array of the collectors implemented by this class. */
     private static final String COLLECTOR_NAME = "timeFrameAndCategories";
 
     /** Sorted set for fast collector name lookup. */
-    private static final List<String> COLLECTORS_LIST = Collections.unmodifiableList(Arrays.asList(new String[] {COLLECTOR_NAME}));
-
-    /** SQL Standard date format: "yyyy-MM-dd HH:mm:ss".*/
-    public static final DateFormat DATEFORMAT_SQL = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+    private static final List<String> COLLECTORS_LIST = Collections.unmodifiableList(
+        Arrays.asList(new String[] {COLLECTOR_NAME}));
 
     /**
      * Public constructor.<p>
@@ -495,9 +508,10 @@ public class CmsTimeFrameCategoryCollector extends A_CmsResourceCollector {
         if (COLLECTOR_NAME.equals(collectorName)) {
             return getCreateInFolder(cms, new CollectorDataPropertyBased(param));
         } else {
-            throw new CmsDataAccessException(org.opencms.file.collectors.Messages.get().container(
-                org.opencms.file.collectors.Messages.ERR_COLLECTOR_NAME_INVALID_1,
-                collectorName));
+            throw new CmsDataAccessException(
+                org.opencms.file.collectors.Messages.get().container(
+                    org.opencms.file.collectors.Messages.ERR_COLLECTOR_NAME_INVALID_1,
+                    collectorName));
         }
     }
 
@@ -510,9 +524,31 @@ public class CmsTimeFrameCategoryCollector extends A_CmsResourceCollector {
     }
 
     /**
+     * @see org.opencms.file.collectors.A_CmsResourceCollector#getCreateTypeId(org.opencms.file.CmsObject, java.lang.String, java.lang.String)
+     */
+    @Override
+    public int getCreateTypeId(CmsObject cms, String collectorName, String param) throws CmsException {
+
+        int result = -1;
+        if (param != null) {
+            result = new CollectorDataPropertyBased(param).getType();
+        }
+        return result;
+    }
+
+    /**
      * @see org.opencms.file.collectors.I_CmsResourceCollector#getResults(org.opencms.file.CmsObject, java.lang.String, java.lang.String)
      */
     public List<CmsResource> getResults(CmsObject cms, String collectorName, String param)
+    throws CmsDataAccessException, CmsException {
+
+        return getResults(cms, collectorName, param, -1);
+    }
+
+    /**
+     * @see org.opencms.file.collectors.I_CmsResourceCollector#getResults(org.opencms.file.CmsObject, java.lang.String, java.lang.String)
+     */
+    public List<CmsResource> getResults(CmsObject cms, String collectorName, String param, int numResults)
     throws CmsDataAccessException, CmsException {
 
         // if action is not set use default
@@ -522,15 +558,28 @@ public class CmsTimeFrameCategoryCollector extends A_CmsResourceCollector {
 
         if (COLLECTOR_NAME.equals(collectorName)) {
             // "singleFile"
-            return getTimeFrameAndCategories(cms, param);
+            return getTimeFrameAndCategories(cms, param, numResults);
         } else {
-            throw new CmsDataAccessException(org.opencms.file.collectors.Messages.get().container(
-                org.opencms.file.collectors.Messages.ERR_COLLECTOR_NAME_INVALID_1,
-                collectorName));
+            throw new CmsDataAccessException(
+                org.opencms.file.collectors.Messages.get().container(
+                    org.opencms.file.collectors.Messages.ERR_COLLECTOR_NAME_INVALID_1,
+                    collectorName));
         }
     }
 
-    private List<CmsResource> getTimeFrameAndCategories(CmsObject cms, String param) throws CmsException {
+    /**
+     * Returns a list of resources according to the given parameter.<p>
+     *
+     * @param cms the current cms context
+     * @param param the parameter
+     * @param numResults the number of results
+     *
+     * @return the resulting list of resources
+     *
+     * @throws CmsException if something goes wrong reading the resources
+     */
+    private List<CmsResource> getTimeFrameAndCategories(CmsObject cms, String param, int numResults)
+    throws CmsException {
 
         List<CmsResource> result = null;
         CollectorDataPropertyBased data = new CollectorDataPropertyBased(param);
@@ -539,6 +588,10 @@ public class CmsTimeFrameCategoryCollector extends A_CmsResourceCollector {
         String foldername = CmsResource.getFolderPath(data.getFileName());
         CmsResourceFilter filter = CmsResourceFilter.DEFAULT.addRequireType(data.getType()).addExcludeFlags(
             CmsResource.FLAG_TEMPFILE);
+        if (data.isExcludeTimerange() && !cms.getRequestContext().getCurrentProject().isOnlineProject()) {
+            // include all not yet released and expired resources in an offline project
+            filter = filter.addExcludeTimerange();
+        }
         result = cms.readResources(foldername, filter, true);
 
         // Step 2: Time range filtering
@@ -570,9 +623,9 @@ public class CmsTimeFrameCategoryCollector extends A_CmsResourceCollector {
                 res = itResults.next();
                 prop = cms.readPropertyObject(res, categoriesProperty, true);
                 if (prop.isNullProperty()) {
-                    // disallow contents with empty category property: 
+                    // disallow contents with empty category property:
                     itResults.remove();
-                    // accept contents with empty category property: 
+                    // accept contents with empty category property:
                     // continue;
                 } else {
                     categoriesFound = CmsStringUtil.splitAsList(prop.getValue(), '|');
@@ -603,6 +656,6 @@ public class CmsTimeFrameCategoryCollector extends A_CmsResourceCollector {
         }
 
         // Step 5: result limit
-        return shrinkToFit(result, data.getCount());
+        return shrinkToFit(result, data.getCount(), numResults);
     }
 }

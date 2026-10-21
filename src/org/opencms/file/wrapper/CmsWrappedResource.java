@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -14,12 +14,12 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * Lesser General Public License for more details.
  *
- * For further information about Alkacon Software GmbH, please see the
- * company website: http://www.alkacon.com
+ * For further information about Alkacon Software GmbH & Co. KG, please see the
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -33,11 +33,11 @@ import org.opencms.file.CmsResource;
 /**
  * Helper class to create "virtual" resources not existing in the vfs which are
  * based on existing resources.<p>
- * 
+ *
  * It is not possible to change a {@link CmsResource} instance. This helper class
- * clones a <code>CmsResource</code> and can change some attributes of the 
+ * clones a <code>CmsResource</code> and can change some attributes of the
  * <code>CmsResource</code> like the path, the typeId or the length.<p>
- * 
+ *
  * @since 6.2.4
  */
 public class CmsWrappedResource {
@@ -59,7 +59,7 @@ public class CmsWrappedResource {
 
     /**
      * Creates a new virtual resource.<p>
-     * 
+     *
      * @param res the resource this virtual resource is based on
      */
     public CmsWrappedResource(CmsResource res) {
@@ -74,7 +74,7 @@ public class CmsWrappedResource {
 
     /**
      * Returns the virtual resource as a file.<p>
-     * 
+     *
      * @return the virtual resource as a file
      */
     public CmsFile getFile() {
@@ -118,7 +118,7 @@ public class CmsWrappedResource {
 
     /**
      * Returns the virtual resource.<p>
-     * 
+     *
      * @return the virtual resource
      */
     public CmsResource getResource() {

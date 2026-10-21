@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -14,12 +14,12 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * Lesser General Public License for more details.
  *
- * For further information about Alkacon Software GmbH, please see the
- * company website: http://www.alkacon.com
+ * For further information about Alkacon Software GmbH & Co. KG, please see the
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -42,15 +42,16 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 
 import org.apache.commons.logging.Log;
 
 /**
  * HTML cleaner and pretty printer.<p>
- * 
+ *
  * Used to clean up HTML code (e.g. remove word tags) and optionally create XHTML from HTML.<p>
- * 
- * @since 6.0.0 
+ *
+ * @since 6.0.0
  */
 public class CmsHtmlConverter {
 
@@ -83,7 +84,7 @@ public class CmsHtmlConverter {
 
     /**
      * Constructor, creates a new CmsHtmlConverter.<p>
-     * 
+     *
      * The encoding used by default is {@link CmsEncoder#ENCODING_UTF_8}.<p>
      */
     public CmsHtmlConverter() {
@@ -93,7 +94,7 @@ public class CmsHtmlConverter {
 
     /**
      * Constructor, creates a new CmsHtmlConverter.<p>
-     * 
+     *
      * Possible values for the default conversion mode are:<ul>
      * <li>{@link #PARAM_DISABLED}: The conversion is disabled.</li>
      * <li>{@link #PARAM_ENABLED}: Conversion is enabled without transformation, so HTML is pretty printed only.</li>
@@ -101,9 +102,9 @@ public class CmsHtmlConverter {
      * <li>{@link #PARAM_WORD}: Cleanup of word like HTML tags is enabled.</li>
      * <li>Other values can be used by the implementing converter class.</li>
      * </ul>
-     * Values can be combined with the <code>;</code> separator, so it is e.g. possible to convert 
+     * Values can be combined with the <code>;</code> separator, so it is e.g. possible to convert
      * to XHTML and clean from word at the same time.<p>
-     * 
+     *
      * @param encoding the encoding used for the HTML code conversion
      * @param mode the conversion mode to use
      */
@@ -114,9 +115,9 @@ public class CmsHtmlConverter {
 
     /**
      * Reads the content conversion property of a given resource and returns its value.<p>
-     * 
+     *
      * A default value (disabled) is returned if the property could not be read.<p>
-     * 
+     *
      * @param cms the CmsObject
      * @param resource the resource in the VFS
      * @return the content conversion property value
@@ -141,7 +142,7 @@ public class CmsHtmlConverter {
 
     /**
      * Tests if the content conversion is enabled.<p>
-     * 
+     *
      * @param conversionMode the content conversion mode string
      * @return true or false
      */
@@ -156,10 +157,10 @@ public class CmsHtmlConverter {
 
     /**
      * Converts the given HTML code according to the settings of this converter.<p>
-     * 
+     *
      * @param htmlInput HTML input stored in an array of bytes
      * @return array of bytes containing the converted HTML
-     * 
+     *
      * @throws UnsupportedEncodingException if the encoding set for the conversion is not supported
      */
     public byte[] convertToByte(byte[] htmlInput) throws UnsupportedEncodingException {
@@ -169,10 +170,10 @@ public class CmsHtmlConverter {
 
     /**
      * Converts the given HTML code according to the settings of this converter.<p>
-     * 
+     *
      * @param htmlInput HTML input stored in a string
      * @return array of bytes containing the converted HTML
-     * 
+     *
      * @throws UnsupportedEncodingException if the encoding set for the conversion is not supported
      */
     public byte[] convertToByte(String htmlInput) throws UnsupportedEncodingException {
@@ -182,9 +183,9 @@ public class CmsHtmlConverter {
 
     /**
      * Converts the given HTML code according to the settings of this converter.<p>
-     * 
+     *
      * If an any error occurs during the conversion process, the original input is returned unmodified.<p>
-     * 
+     *
      * @param htmlInput HTML input stored in an array of bytes
      * @return array of bytes containing the converted HTML
      */
@@ -202,9 +203,9 @@ public class CmsHtmlConverter {
 
     /**
      * Converts the given HTML code according to the settings of this converter.<p>
-     * 
+     *
      * If an any error occurs during the conversion process, the original input is returned unmodified.<p>
-     * 
+     *
      * @param htmlInput HTML input stored in a string
      * @return array of bytes containing the converted HTML
      */
@@ -229,10 +230,10 @@ public class CmsHtmlConverter {
 
     /**
      * Converts the given HTML code according to the settings of this converter.<p>
-     * 
+     *
      * @param htmlInput HTML input stored in an array of bytes
      * @return string containing the converted HTML
-     * 
+     *
      * @throws UnsupportedEncodingException if the encoding set for the conversion is not supported
      */
     public String convertToString(byte[] htmlInput) throws UnsupportedEncodingException {
@@ -242,23 +243,23 @@ public class CmsHtmlConverter {
 
     /**
      * Converts the given HTML code according to the settings of the converter.<p>
-     * 
+     *
      * @param htmlInput HTML input stored in a string
      * @return string containing the converted HTML
-     * 
+     *
      * @throws UnsupportedEncodingException if the encoding set for the conversion is not supported
      */
     public String convertToString(String htmlInput) throws UnsupportedEncodingException {
 
         // first: collect all converter classes to use on the input
-        Map converters = new HashMap();
-        for (Iterator i = getModes().iterator(); i.hasNext();) {
-            String mode = (String)i.next();
+        Map<String, List<String>> converters = new HashMap<String, List<String>>();
+        for (Iterator<String> i = getModes().iterator(); i.hasNext();) {
+            String mode = i.next();
             String converterClass = OpenCms.getResourceManager().getHtmlConverter(mode);
-            List modes = new ArrayList();
+            List<String> modes = new ArrayList<String>();
             if (converters.containsKey(converterClass)) {
                 // converter class already defined for a previous mode, get mode list
-                modes = (List)converters.get(converterClass);
+                modes = converters.get(converterClass);
             }
             // add mode name to list for the converter
             modes.add(mode);
@@ -267,10 +268,10 @@ public class CmsHtmlConverter {
         }
 
         // second: convert the content with all found converter classes
-        for (Iterator i = converters.entrySet().iterator(); i.hasNext();) {
-            Map.Entry entry = (Map.Entry)i.next();
-            String className = (String)entry.getKey();
-            List modes = (List)entry.getValue();
+        for (Iterator<Entry<String, List<String>>> i = converters.entrySet().iterator(); i.hasNext();) {
+            Entry<String, List<String>> entry = i.next();
+            String className = entry.getKey();
+            List<String> modes = entry.getValue();
             try {
                 I_CmsHtmlConverter converter = (I_CmsHtmlConverter)Class.forName(className).newInstance();
                 // initialize converter
@@ -278,17 +279,23 @@ public class CmsHtmlConverter {
                 // convert input String
                 htmlInput = converter.convertToString(htmlInput);
             } catch (ClassNotFoundException e) {
-                LOG.error(org.opencms.loader.Messages.get().getBundle().key(
-                    org.opencms.loader.Messages.LOG_HTML_CONVERTER_CLASS_NOT_FOUND_1,
-                    className), e);
+                LOG.error(
+                    org.opencms.loader.Messages.get().getBundle().key(
+                        org.opencms.loader.Messages.LOG_HTML_CONVERTER_CLASS_NOT_FOUND_1,
+                        className),
+                    e);
             } catch (IllegalAccessException e) {
-                LOG.error(org.opencms.loader.Messages.get().getBundle().key(
-                    org.opencms.loader.Messages.LOG_HTML_CONVERTER_CLASS_NOT_FOUND_1,
-                    className), e);
+                LOG.error(
+                    org.opencms.loader.Messages.get().getBundle().key(
+                        org.opencms.loader.Messages.LOG_HTML_CONVERTER_CLASS_NOT_FOUND_1,
+                        className),
+                    e);
             } catch (InstantiationException e) {
-                LOG.error(org.opencms.loader.Messages.get().getBundle().key(
-                    org.opencms.loader.Messages.LOG_HTML_CONVERTER_CLASS_NOT_FOUND_1,
-                    className), e);
+                LOG.error(
+                    org.opencms.loader.Messages.get().getBundle().key(
+                        org.opencms.loader.Messages.LOG_HTML_CONVERTER_CLASS_NOT_FOUND_1,
+                        className),
+                    e);
             }
         }
         return htmlInput;
@@ -296,11 +303,11 @@ public class CmsHtmlConverter {
 
     /**
      * Converts the given HTML code according to the settings of this converter.<p>
-     * 
+     *
      * If an any error occurs during the conversion process, the original input is returned unmodified.<p>
-     * 
+     *
      * @param htmlInput HTML input stored in an array of bytes
-     * 
+     *
      * @return string containing the converted HTML
      */
     public String convertToStringSilent(byte[] htmlInput) {
@@ -324,11 +331,11 @@ public class CmsHtmlConverter {
 
     /**
      * Converts the given HTML code according to the settings of this converter.<p>
-     * 
+     *
      * If an any error occurs during the conversion process, the original input is returned unmodified.<p>
-     * 
-     * @param htmlInput HTML input stored in string 
-     * 
+     *
+     * @param htmlInput HTML input stored in string
+     *
      * @return string containing the converted HTML
      */
     public String convertToStringSilent(String htmlInput) {
@@ -345,7 +352,7 @@ public class CmsHtmlConverter {
 
     /**
      * Returns the encoding used for the HTML code conversion.<p>
-     * 
+     *
      * @return the encoding used for the HTML code conversion
      */
     public String getEncoding() {
@@ -355,7 +362,7 @@ public class CmsHtmlConverter {
 
     /**
      * Returns the conversion mode to use.<p>
-     * 
+     *
      * @return the conversion mode to use
      */
     public String getMode() {
@@ -365,12 +372,12 @@ public class CmsHtmlConverter {
 
     /**
      * Returns the conversion modes to use as List of String parameters.<p>
-     * 
+     *
      * @return the conversion modes to use as List of String parameters
      */
-    private List getModes() {
+    private List<String> getModes() {
 
-        List modes = new ArrayList();
+        List<String> modes = new ArrayList<String>();
         try {
             modes = CmsStringUtil.splitAsList(getMode(), SEPARATOR_MODES, true);
         } catch (Exception e) {
@@ -382,12 +389,12 @@ public class CmsHtmlConverter {
 
     /**
      * Initializes the HTML converter instance.<p>
-     * 
+     *
      * Possible values for the conversion mode are dependent from the converter implementation.<p>
-     * 
-     * Values can be combined with the <code>;</code> separator, so that it is e.g. possible to convert 
+     *
+     * Values can be combined with the <code>;</code> separator, so that it is e.g. possible to convert
      * to XHTML and clean from word at the same time.<p>
-     * 
+     *
      * @param encoding the encoding used for the HTML code conversion
      * @param mode the conversion mode to use
      */

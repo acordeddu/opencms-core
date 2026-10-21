@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -14,12 +14,12 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * Lesser General Public License for more details.
  *
- * For further information about Alkacon Software GmbH, please see the
- * company website: http://www.alkacon.com
+ * For further information about Alkacon Software GmbH & Co. KG, please see the
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -32,8 +32,7 @@ import org.opencms.file.types.CmsResourceTypeFolder;
 import org.opencms.main.OpenCms;
 import org.opencms.publish.CmsPublishJobFinished;
 import org.opencms.report.CmsShellReport;
-import org.opencms.test.OpenCmsTestCase;
-import org.opencms.test.OpenCmsTestProperties;
+import org.opencms.test.OpenCmsTestRunner;
 import org.opencms.test.OpenCmsThreadedTestCase;
 import org.opencms.test.OpenCmsThreadedTestCaseSuite;
 import org.opencms.util.CmsStringUtil;
@@ -44,67 +43,36 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
-import junit.extensions.TestSetup;
-import junit.framework.Test;
-import junit.framework.TestSuite;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.MethodOrderer;
+import org.junit.jupiter.api.Order;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInfo;
+import org.junit.jupiter.api.TestMethodOrder;
 
 /**
  * Unit test for concurrent operations of the CmsObject.<p>
  */
-public class TestConcurrentOperations extends OpenCmsTestCase {
+@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
+public class TestConcurrentOperations extends OpenCmsTestRunner {
 
     /**
-     * Default JUnit constructor.<p>
-     * 
-     * @param arg0 JUnit parameters
+     * @see org.opencms.test.OpenCmsTestRunner#$openCmsSetUp(org.junit.jupiter.api.TestInfo)
      */
-    public TestConcurrentOperations(String arg0) {
+    @Override
+    @BeforeAll
+    public void $openCmsSetUp(TestInfo testInfo) {
 
-        super(arg0);
-    }
-
-    /**
-     * Test suite for this test class.<p>
-     * 
-     * @return the test suite
-     */
-    public static Test suite() {
-
-        OpenCmsTestProperties.initialize(org.opencms.test.AllTests.TEST_PROPERTIES_PATH);
-
-        TestSuite suite = new TestSuite();
-        suite.setName(TestConcurrentOperations.class.getName());
-
-        suite.addTest(new TestConcurrentOperations("testConcurrentPublishResource"));
-        suite.addTest(new TestConcurrentOperations("testConcurrentPublishResourceWithRelated"));
-        suite.addTest(new TestConcurrentOperations("testConcurrentPublishProject"));
-        suite.addTest(new TestConcurrentOperations("testConcurrentCreationIssue"));
-
-        TestSetup wrapper = new TestSetup(suite) {
-
-            @Override
-            protected void setUp() {
-
-                setupOpenCms("simpletest", "/");
-            }
-
-            @Override
-            protected void tearDown() {
-
-                removeOpenCms();
-            }
-        };
-
-        return wrapper;
+        setupOpenCms(testInfo, "simpletest", "/");
     }
 
     /**
      * Concurrent creation test method.<p>
-     * 
+     *
      * @param cms the OpenCms user context to use
      * @param count the count for this test
      * @param value used to pass a counter value between the councurrent tests
-     * 
+     *
      * @throws Exception in case the resource could not be created (which is expected)
      */
     public void doConcurrentCreationOperation(CmsObject cms, Integer count, Integer[] value) throws Exception {
@@ -113,20 +81,18 @@ public class TestConcurrentOperations extends OpenCmsTestCase {
         int val = value[0].intValue();
         String name = "/testfolder/sub1/sub2/sub3/subtestfolder" + val;
         CmsResource res = cms.createResource(name, CmsResourceTypeFolder.RESOURCE_TYPE_ID);
-        value[0] = new Integer(++val);
-        System.out.println("++++++++++++++++++ Finished creation of folder "
-            + res.getRootPath()
-            + " - count: "
-            + count.intValue());
+        value[0] = Integer.valueOf(++val);
+        System.out.println(
+            "++++++++++++++++++ Finished creation of folder " + res.getRootPath() + " - count: " + count.intValue());
     }
 
     /**
      * Concurrent publish project test method.<p>
-     * 
+     *
      * @param cms the OpenCms user context to use
      * @param count the count for this test
      * @param value used to pass a counter value between the councurrent tests
-     * 
+     *
      * @throws Exception if something goes wrong, unexpected
      */
     public void doConcurrentPublishProjectOperation(CmsObject cms, Integer count, Integer[] value) throws Exception {
@@ -134,17 +100,17 @@ public class TestConcurrentOperations extends OpenCmsTestCase {
         System.out.println("Running doConcurrentPublishProjectOperation() method call - count: " + count.intValue());
         int val = value[0].intValue();
         OpenCms.getPublishManager().publishProject(cms);
-        value[0] = new Integer(++val);
+        value[0] = Integer.valueOf(++val);
         System.out.println("++++++++++++++++++ Finished publish project - count: " + count.intValue());
     }
 
     /**
      * Concurrent publish resource test method.<p>
-     * 
+     *
      * @param cms the OpenCms user context to use
      * @param count the count for this test
      * @param value used to pass a counter value between the councurrent tests
-     * 
+     *
      * @throws Exception if something goes wrong, unexpected
      */
     public void doConcurrentPublishResourceOperation(CmsObject cms, Integer count, Integer[] value) throws Exception {
@@ -154,17 +120,17 @@ public class TestConcurrentOperations extends OpenCmsTestCase {
 
         OpenCms.getPublishManager().publishResource(cms, "index.html");
 
-        value[0] = new Integer(++val);
+        value[0] = Integer.valueOf(++val);
         System.out.println("++++++++++++++++++ Finished publish resource - count: " + count.intValue());
     }
 
     /**
      * Concurrent publish resource test method.<p>
-     * 
+     *
      * @param cms the OpenCms user context to use
      * @param count the count for this test
      * @param value used to pass a counter value between the councurrent tests
-     * 
+     *
      * @throws Exception if something goes wrong, unexpected
      */
     public void doConcurrentPublishResourceWithRelatedOperation(CmsObject cms, Integer count, Integer[] value)
@@ -192,15 +158,17 @@ public class TestConcurrentOperations extends OpenCmsTestCase {
             new CmsShellReport(cms.getRequestContext().getLocale()),
             publishList);
 
-        value[0] = new Integer(++val);
+        value[0] = Integer.valueOf(++val);
         System.out.println("thread " + count + ": finished");
     }
 
     /**
      * Tests concurrent creation a resource with the same name.<p>
-     * 
+     *
      * @throws Exception if the test fails
      */
+    @Test
+    @Order(4)
     public void testConcurrentCreationIssue() throws Exception {
 
         int count = 50;
@@ -215,7 +183,7 @@ public class TestConcurrentOperations extends OpenCmsTestCase {
 
         String name = "doConcurrentCreationOperation";
         Integer[] value = new Integer[1];
-        value[0] = new Integer(0);
+        value[0] = Integer.valueOf(0);
 
         Object[] parameters = new Object[] {
             OpenCmsThreadedTestCaseSuite.PARAM_CMSOBJECT,
@@ -290,17 +258,20 @@ public class TestConcurrentOperations extends OpenCmsTestCase {
             // the "concurrent creation" exception was thrown one or mote times - this must be an error
             fail("Did catch concurrent creation exception at least once - no concurrent exceptions expected!");
         }
-        echo("Concurrent folder creation test success: No duplicates created - "
-            + ec
-            + " concurrent modification exceptions caught");
+        echo(
+            "Concurrent folder creation test success: No duplicates created - "
+                + ec
+                + " concurrent modification exceptions caught");
         echo("Total runtime of concurrent test suite: " + CmsStringUtil.formatRuntime(suite.getRuntime()));
     }
 
     /**
      * Test concurrently publish same project.<p>
-     * 
+     *
      * @throws Throwable if something goes wrong
      */
+    @Test
+    @Order(3)
     public void testConcurrentPublishProject() throws Throwable {
 
         int count = 10;
@@ -315,7 +286,7 @@ public class TestConcurrentOperations extends OpenCmsTestCase {
         // publish directly with a single resource
         String name = "doConcurrentPublishProjectOperation";
         Integer[] value = new Integer[1];
-        value[0] = new Integer(0);
+        value[0] = Integer.valueOf(0);
 
         Object[] parameters = new Object[] {
             OpenCmsThreadedTestCaseSuite.PARAM_CMSOBJECT,
@@ -344,7 +315,7 @@ public class TestConcurrentOperations extends OpenCmsTestCase {
         assertEquals(13 + 51, pubJob.getSize());
         for (int i = 1; i < 10; i++) {
             pubJob = (CmsPublishJobFinished)pubHistory.get(i);
-            assertEquals("pubJob: " + i, 0, pubJob.getSize());
+            assertEquals(0, pubJob.getSize(), "pubJob: " + i);
         }
 
         echo("Concurrent publish project test success");
@@ -353,9 +324,11 @@ public class TestConcurrentOperations extends OpenCmsTestCase {
 
     /**
      * Test concurrently publish same resource.<p>
-     * 
+     *
      * @throws Throwable if something goes wrong
      */
+    @Test
+    @Order(1)
     public void testConcurrentPublishResource() throws Throwable {
 
         int count = 10;
@@ -370,7 +343,7 @@ public class TestConcurrentOperations extends OpenCmsTestCase {
         // publish directly with a single resource
         String name = "doConcurrentPublishResourceOperation";
         Integer[] value = new Integer[1];
-        value[0] = new Integer(0);
+        value[0] = Integer.valueOf(0);
 
         Object[] parameters = new Object[] {
             OpenCmsThreadedTestCaseSuite.PARAM_CMSOBJECT,
@@ -399,7 +372,7 @@ public class TestConcurrentOperations extends OpenCmsTestCase {
         assertEquals(1, pubJob.getSize());
         for (int i = 1; i < 10; i++) {
             pubJob = (CmsPublishJobFinished)pubHistory.get(i);
-            assertEquals("pubJob: " + i, 0, pubJob.getSize());
+            assertEquals(0, pubJob.getSize(), "pubJob: " + i);
         }
 
         echo("Concurrent publish resource test success");
@@ -408,9 +381,11 @@ public class TestConcurrentOperations extends OpenCmsTestCase {
 
     /**
      * Test concurrently publish same resource with related resources, this does the same than the GUI.<p>
-     * 
+     *
      * @throws Throwable if something goes wrong
      */
+    @Test
+    @Order(2)
     public void testConcurrentPublishResourceWithRelated() throws Throwable {
 
         int count = 10;
@@ -432,7 +407,7 @@ public class TestConcurrentOperations extends OpenCmsTestCase {
         // publish directly with a single resource
         String name = "doConcurrentPublishResourceWithRelatedOperation";
         Integer[] value = new Integer[1];
-        value[0] = new Integer(0);
+        value[0] = Integer.valueOf(0);
 
         Object[] parameters = new Object[] {
             OpenCmsThreadedTestCaseSuite.PARAM_CMSOBJECT,
@@ -461,7 +436,7 @@ public class TestConcurrentOperations extends OpenCmsTestCase {
         assertEquals(publishList.getFileList().size(), pubJob.getSize());
         for (int i = 1; i < 10; i++) {
             pubJob = (CmsPublishJobFinished)pubHistory.get(i);
-            assertEquals("pubJob: " + i, 0, pubJob.getSize());
+            assertEquals(0, pubJob.getSize(), "pubJob: " + i);
         }
 
         echo("Concurrent publish resource test success");

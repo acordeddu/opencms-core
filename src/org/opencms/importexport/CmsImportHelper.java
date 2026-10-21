@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -14,12 +14,12 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * Lesser General Public License for more details.
  *
- * For further information about Alkacon Software GmbH, please see the
- * company website: http://www.alkacon.com
+ * For further information about Alkacon Software GmbH & Co. KG, please see the
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -47,8 +47,8 @@ import org.apache.commons.logging.Log;
 
 /**
  * Import helper.<p>
- * 
- * @since 7.0.4 
+ *
+ * @since 7.0.4
  */
 public class CmsImportHelper {
 
@@ -66,7 +66,7 @@ public class CmsImportHelper {
 
     /**
      * Constructor.<p>
-     * 
+     *
      * @param parameters the import parameters to use
      */
     public CmsImportHelper(CmsImportParameters parameters) {
@@ -75,13 +75,13 @@ public class CmsImportHelper {
     }
 
     /**
-     * Adds a new DTD system id prefix mapping for internal resolution 
+     * Adds a new DTD system id prefix mapping for internal resolution
      * of external URLs.<p>
-     * 
+     *
      * @param dtdSystemLocation the internal system location of the DTD file, e.g. <code>org/opencms/configuration/</code>
      * @param dtdFilename the name of the DTD file, e.g. <code>opencms-configuration.dtd</code>
      * @param dtdUrlPrefix the external system id prefix of the DTD file, e.g. <code>http://www.opencms.org/dtd/6.0/</code>
-     * 
+     *
      * @see org.opencms.configuration.I_CmsXmlConfiguration
      */
     public void cacheDtdSystemId(String dtdSystemLocation, String dtdFilename, String dtdUrlPrefix) {
@@ -89,16 +89,21 @@ public class CmsImportHelper {
         if (dtdSystemLocation != null) {
             try {
                 String file = CmsFileUtil.readFile(dtdSystemLocation + dtdFilename, CmsEncoder.ENCODING_UTF_8);
-                CmsXmlEntityResolver.cacheSystemId(dtdUrlPrefix + dtdFilename, file.getBytes(CmsEncoder.ENCODING_UTF_8));
+                CmsXmlEntityResolver.cacheSystemId(
+                    dtdUrlPrefix + dtdFilename,
+                    file.getBytes(CmsEncoder.ENCODING_UTF_8));
                 if (LOG.isDebugEnabled()) {
-                    LOG.debug(org.opencms.configuration.Messages.get().getBundle().key(
-                        org.opencms.configuration.Messages.LOG_CACHE_DTD_SYSTEM_ID_1,
-                        new Object[] {dtdUrlPrefix + dtdFilename + " --> " + dtdSystemLocation + dtdFilename}));
+                    LOG.debug(
+                        org.opencms.configuration.Messages.get().getBundle().key(
+                            org.opencms.configuration.Messages.LOG_CACHE_DTD_SYSTEM_ID_1,
+                            new Object[] {dtdUrlPrefix + dtdFilename + " --> " + dtdSystemLocation + dtdFilename}));
                 }
             } catch (IOException e) {
-                LOG.error(org.opencms.configuration.Messages.get().getBundle().key(
-                    org.opencms.configuration.Messages.LOG_CACHE_DTD_SYSTEM_ID_FAILURE_1,
-                    new Object[] {dtdSystemLocation + dtdFilename}), e);
+                LOG.error(
+                    org.opencms.configuration.Messages.get().getBundle().key(
+                        org.opencms.configuration.Messages.LOG_CACHE_DTD_SYSTEM_ID_FAILURE_1,
+                        new Object[] {dtdSystemLocation + dtdFilename}),
+                    e);
             }
         }
     }
@@ -126,9 +131,9 @@ public class CmsImportHelper {
      * Returns a byte array containing the content of the file.<p>
      *
      * @param filename the name of the file to read, relative to the folder or zip file
-     * 
+     *
      * @return a byte array containing the content of the file
-     * 
+     *
      * @throws CmsImportExportException if something goes wrong
      */
     public byte[] getFileBytes(String filename) throws CmsImportExportException {
@@ -136,24 +141,14 @@ public class CmsImportHelper {
         try {
             // is this a zip-file?
             if (getZipFile() != null) {
-                // yes
-                ZipEntry entry = getZipFile().getEntry(filename);
-                // path to file might be relative, too
-                if ((entry == null) && filename.startsWith("/")) {
-                    entry = m_zipFile.getEntry(filename.substring(1));
-                }
-                if (entry == null) {
-                    throw new ZipException(Messages.get().getBundle().key(
-                        Messages.LOG_IMPORTEXPORT_FILE_NOT_FOUND_IN_ZIP_1,
-                        filename));
-                }
 
+                ZipEntry entry = getZipEntry(filename);
                 InputStream stream = getZipFile().getInputStream(entry);
-                int size = new Long(entry.getSize()).intValue();
+                int size = Long.valueOf(entry.getSize()).intValue();
                 return CmsFileUtil.readFully(stream, size);
             } else {
                 // no - use directory
-                File file = new File(getFolder(), filename);
+                File file = getFile(filename);
                 return CmsFileUtil.readFile(file);
             }
         } catch (FileNotFoundException fnfe) {
@@ -163,7 +158,40 @@ public class CmsImportHelper {
             }
             throw new CmsImportExportException(msg, fnfe);
         } catch (IOException ioe) {
-            CmsMessageContainer msg = Messages.get().container(Messages.ERR_IMPORTEXPORT_ERROR_READING_FILE_1, filename);
+            CmsMessageContainer msg = Messages.get().container(
+                Messages.ERR_IMPORTEXPORT_ERROR_READING_FILE_1,
+                filename);
+            if (LOG.isErrorEnabled()) {
+                LOG.error(msg.key(), ioe);
+            }
+            throw new CmsImportExportException(msg, ioe);
+        }
+    }
+
+    public long getFileModification(String filename) throws CmsImportExportException {
+
+        long modificationTime = 0;
+
+        try {
+            // is this a zip-file?
+            if (getZipFile() != null) {
+                // yes
+                ZipEntry entry = getZipEntry(filename);
+                modificationTime = entry.getTime();
+            } else {
+                // no - use directory
+                File file = getFile(filename);
+                modificationTime = file.lastModified();
+            }
+            if (modificationTime < 0) {
+                return 0;
+            } else {
+                return modificationTime;
+            }
+        } catch (IOException ioe) {
+            CmsMessageContainer msg = Messages.get().container(
+                Messages.ERR_IMPORTEXPORT_ERROR_READING_FILE_1,
+                filename);
             if (LOG.isErrorEnabled()) {
                 LOG.error(msg.key(), ioe);
             }
@@ -173,7 +201,7 @@ public class CmsImportHelper {
 
     /**
      * Returns the name of the import file, without zip extension.<p>
-     * 
+     *
      * @return the name of the import file, without zip extension
      */
     public String getFileName() {
@@ -198,9 +226,9 @@ public class CmsImportHelper {
      * Returns a stream for the content of the file.<p>
      *
      * @param fileName the name of the file to stream, relative to the folder or zip file
-     * 
+     *
      * @return an input stream for the content of the file, remember to close it after using
-     * 
+     *
      * @throws CmsImportExportException if something goes wrong
      */
     public InputStream getFileStream(String fileName) throws CmsImportExportException {
@@ -216,9 +244,8 @@ public class CmsImportHelper {
                     entry = getZipFile().getEntry(fileName.substring(1));
                 }
                 if (entry == null) {
-                    throw new ZipException(Messages.get().getBundle().key(
-                        Messages.LOG_IMPORTEXPORT_FILE_NOT_FOUND_IN_ZIP_1,
-                        fileName));
+                    throw new ZipException(
+                        Messages.get().getBundle().key(Messages.LOG_IMPORTEXPORT_FILE_NOT_FOUND_IN_ZIP_1, fileName));
                 }
 
                 stream = getZipFile().getInputStream(entry);
@@ -229,7 +256,9 @@ public class CmsImportHelper {
             }
             return stream;
         } catch (Exception ioe) {
-            CmsMessageContainer msg = Messages.get().container(Messages.ERR_IMPORTEXPORT_ERROR_READING_FILE_1, fileName);
+            CmsMessageContainer msg = Messages.get().container(
+                Messages.ERR_IMPORTEXPORT_ERROR_READING_FILE_1,
+                fileName);
             if (LOG.isErrorEnabled()) {
                 LOG.error(msg.key(), ioe);
             }
@@ -249,9 +278,9 @@ public class CmsImportHelper {
 
     /**
      * Returns the class system location.<p>
-     * 
+     *
      * i.e: <code>org/opencms/importexport</code><p>
-     * 
+     *
      * @param clazz the class to get the location for
      *
      * @return the class system location
@@ -275,7 +304,7 @@ public class CmsImportHelper {
 
     /**
      * Opens the import file.<p>
-     * 
+     *
      * @throws IOException if the file could not be opened
      */
     public void openFile() throws IOException {
@@ -288,5 +317,34 @@ public class CmsImportHelper {
             m_zipFile = new ZipFile(m_params.getPath());
             m_folder = null;
         }
+    }
+
+    /** Returns the file for the provided filename.
+     * @param filename name of the file
+     * @return the file.
+     */
+    protected File getFile(String filename) {
+
+        return new File(getFolder(), filename);
+    }
+
+    /** Returns the zip entry for a file in the archive.
+     * @param filename the file name
+     * @return the zip entry for the file with the provided name
+     * @throws ZipException thrown if the file is not in the zip archive
+     */
+    protected ZipEntry getZipEntry(String filename) throws ZipException {
+
+        // yes
+        ZipEntry entry = getZipFile().getEntry(filename);
+        // path to file might be relative, too
+        if ((entry == null) && filename.startsWith("/")) {
+            entry = m_zipFile.getEntry(filename.substring(1));
+        }
+        if (entry == null) {
+            throw new ZipException(
+                Messages.get().getBundle().key(Messages.LOG_IMPORTEXPORT_FILE_NOT_FOUND_IN_ZIP_1, filename));
+        }
+        return entry;
     }
 }

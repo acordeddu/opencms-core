@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -14,12 +14,12 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * Lesser General Public License for more details.
  *
- * For further information about Alkacon Software GmbH, please see the
- * company website: http://www.alkacon.com
+ * For further information about Alkacon Software GmbH & Co. KG, please see the
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -31,39 +31,46 @@ import org.opencms.file.CmsFile;
 import org.opencms.file.CmsObject;
 import org.opencms.file.CmsProperty;
 import org.opencms.file.CmsResource;
+import org.opencms.file.CmsResource.CmsResourceDeleteMode;
 import org.opencms.file.CmsResourceFilter;
 import org.opencms.file.CmsVfsResourceAlreadyExistsException;
 import org.opencms.file.CmsVfsResourceNotFoundException;
-import org.opencms.file.CmsResource.CmsResourceDeleteMode;
 import org.opencms.lock.CmsLock;
 import org.opencms.main.CmsException;
 import org.opencms.main.CmsIllegalArgumentException;
+import org.opencms.main.CmsLog;
+import org.opencms.util.CmsUUID;
 
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
 
+import org.apache.commons.logging.Log;
+
 /**
  * Adds a folder in every existing folder with the name "__properties" which
  * contains property files for every resource in the existing folder.<p>
- * 
+ *
  * Empty folders don't have the property folder visible.<p>
- * 
+ *
  * The names of the property files are the same as the resource they belong to
  * with the extension "properties". To keep the correct sorting the names of
  * folders gets additionaly the prefix "__" to keep them at the beginning of the
  * list.<p>
- * 
+ *
  * When creating new folders, the property folder gets visible after a time period
  * of 60 seconds. For new resources the property file appears after that period too.
  * In this time period it is possible to create the property folder and the property
  * files manually. The properties in the created property files will be set at the
  * resource they belong to.<p>
- * 
+ *
  * @since 6.5.6
  */
 public class CmsResourceWrapperPropertyFile extends A_CmsResourceWrapper {
+
+    /** The logger instance for this class. */
+    private static final Log LOG = CmsLog.getLog(CmsResourceWrapperPropertyFile.class);
 
     /** The prefix for folders to keep correct sorting. */
     private static final String FOLDER_PREFIX = "__";
@@ -147,7 +154,8 @@ public class CmsResourceWrapperPropertyFile extends A_CmsResourceWrapper {
         String resourcename,
         int type,
         byte[] content,
-        List<CmsProperty> properties) throws CmsException, CmsIllegalArgumentException {
+        List<CmsProperty> properties)
+    throws CmsException, CmsIllegalArgumentException {
 
         CmsResource res = getResource(cms, resourcename, CmsResourceFilter.DEFAULT);
         if (res != null) {
@@ -160,9 +168,10 @@ public class CmsResourceWrapperPropertyFile extends A_CmsResourceWrapper {
             // check "existance" of resource
             if (existsResource(res)) {
 
-                throw new CmsVfsResourceAlreadyExistsException(org.opencms.db.generic.Messages.get().container(
-                    org.opencms.db.generic.Messages.ERR_RESOURCE_WITH_NAME_ALREADY_EXISTS_1,
-                    resourcename));
+                throw new CmsVfsResourceAlreadyExistsException(
+                    org.opencms.db.generic.Messages.get().container(
+                        org.opencms.db.generic.Messages.ERR_RESOURCE_WITH_NAME_ALREADY_EXISTS_1,
+                        resourcename));
             }
 
             // mark file as created in tmp file table
@@ -213,13 +222,10 @@ public class CmsResourceWrapperPropertyFile extends A_CmsResourceWrapper {
     @Override
     public CmsLock getLock(CmsObject cms, CmsResource resource) throws CmsException {
 
-        CmsResource org = cms.readResource(resource.getStructureId());
-        //CmsResource org = getResource(cms, resource.getRootPath(), CmsResourceFilter.DEFAULT);
+        CmsResource org = getResource(cms, resource.getStructureId());
         if (org != null) {
-
             return cms.getLock(org);
         }
-
         return null;
     }
 
@@ -241,14 +247,19 @@ public class CmsResourceWrapperPropertyFile extends A_CmsResourceWrapper {
     }
 
     /**
-     * @see org.opencms.file.wrapper.A_CmsResourceWrapper#lockResource(org.opencms.file.CmsObject, java.lang.String)
+     * @see org.opencms.file.wrapper.A_CmsResourceWrapper#lockResource(org.opencms.file.CmsObject, java.lang.String, boolean)
      */
     @Override
-    public boolean lockResource(CmsObject cms, String resourcename) throws CmsException {
+    public boolean lockResource(CmsObject cms, String resourcename, boolean temporary) throws CmsException {
 
         CmsResource res = getResource(cms, resourcename, CmsResourceFilter.DEFAULT);
         if (res != null) {
-            cms.lockResource(cms.getRequestContext().removeSiteRoot(res.getRootPath()));
+            String path = cms.getRequestContext().removeSiteRoot(res.getRootPath());
+            if (temporary) {
+                cms.lockResourceTemporary(path);
+            } else {
+                cms.lockResource(path);
+            }
             return true;
         }
 
@@ -360,11 +371,7 @@ public class CmsResourceWrapperPropertyFile extends A_CmsResourceWrapper {
     @Override
     public CmsFile writeFile(CmsObject cms, CmsFile resource) throws CmsException {
 
-        CmsResource res = cms.readResource(resource.getStructureId());
-        //        CmsResource res = getResource(
-        //            cms,
-        //            cms.getRequestContext().removeSiteRoot(resource.getRootPath()),
-        //            CmsResourceFilter.ALL);
+        CmsResource res = getResource(cms, resource.getStructureId());
         if (res != null) {
             CmsResourceWrapperUtils.writePropertyFile(
                 cms,
@@ -377,16 +384,36 @@ public class CmsResourceWrapperPropertyFile extends A_CmsResourceWrapper {
     }
 
     /**
+     * Tries to the read the resource with the given structure id using the given CmsObject and returns it, or null if the resource can not be read.<p>
+     *
+     * @param cms the CmsObject to use
+     * @param structureId the structure id of the resource
+     * @return the resource which has been read
+     */
+    CmsResource getResource(CmsObject cms, CmsUUID structureId) {
+
+        try {
+            CmsResource result = cms.readResource(structureId);
+            return result;
+        } catch (CmsVfsResourceNotFoundException e) {
+            return null;
+        } catch (CmsException e) {
+            LOG.error(e.getLocalizedMessage(), e);
+            return null;
+        }
+    }
+
+    /**
      * Checks if a resource exists depending on the creation date and the temp files saved.<p>
-     * 
-     * Dreamweaver copies folders through creating folder for folder and file for file. 
-     * So there is first a call if the property folder already exists and afterwards create 
+     *
+     * Dreamweaver copies folders through creating folder for folder and file for file.
+     * So there is first a call if the property folder already exists and afterwards create
      * it. If the folder already exists, the copy action fails.
      * In the first time after creating a folder, the property dir does not exists until it is
      * created or the time expired.<p>
-     * 
+     *
      * @param res the resource to check if it exists
-     * 
+     *
      * @return return if the folder exists otherwise false
      */
     private boolean existsResource(CmsResource res) {
@@ -414,9 +441,9 @@ public class CmsResourceWrapperPropertyFile extends A_CmsResourceWrapper {
 
     /**
      * Creates the full path to the property file of the given resource.<p>
-     * 
+     *
      * @param res the resource where to create the path for the property file for
-     * 
+     *
      * @return the full path to the property file of the resource
      */
     private String getPropertyFileName(CmsResource res) {
@@ -449,13 +476,13 @@ public class CmsResourceWrapperPropertyFile extends A_CmsResourceWrapper {
 
     /**
      * Reads the resource for the property file.<p>
-     * 
+     *
      * @param cms the initialized CmsObject
      * @param resourcename the name of the property resource
      * @param filter the filter to use
-     * 
+     *
      * @return the resource for the property file or null if not found
-     * 
+     *
      * @throws CmsException if something goes wrong
      */
     private CmsResource getResource(CmsObject cms, String resourcename, CmsResourceFilter filter) throws CmsException {

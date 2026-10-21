@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -15,11 +15,11 @@
  * Lesser General Public License for more details.
  *
  * For further information about Alkacon Software, please see the
- * company website: http://www.alkacon.com
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -27,25 +27,24 @@
 
 package org.opencms.ade.sitemap.client.hoverbar;
 
+import org.opencms.gwt.client.ui.contextmenu.A_CmsContextMenuItem;
+import org.opencms.gwt.client.ui.contextmenu.CmsContextMenuItem;
 import org.opencms.gwt.client.ui.contextmenu.I_CmsContextMenuEntry;
 
 import java.util.List;
 
 /**
  * Common super class for all sitemap context menu entries.<p>
- * 
+ *
  * @since 8.0.0
  */
-public abstract class A_CmsSitemapMenuEntry implements I_CmsContextMenuEntry, I_CmsHoverbarShowHandler {
+public abstract class A_CmsSitemapMenuEntry implements I_CmsContextMenuEntry {
 
     /** The reason if the entry is de-activated. */
     private String m_disabledReason;
 
     /** The hoverbar. */
     private CmsSitemapHoverbar m_hoverbar;
-
-    /** The image class. */
-    private String m_imageClass;
 
     /** Flag to indicate if this menu entry is active. */
     private boolean m_isActive;
@@ -58,27 +57,26 @@ public abstract class A_CmsSitemapMenuEntry implements I_CmsContextMenuEntry, I_
 
     /**
      * Constructor.<p>
-     * 
-     * @param hoverbar the hoverbar 
+     *
+     * @param hoverbar the hoverbar
      */
     public A_CmsSitemapMenuEntry(CmsSitemapHoverbar hoverbar) {
 
         m_hoverbar = hoverbar;
-        hoverbar.addShowHandler(this);
     }
 
     /**
-     * @see org.opencms.gwt.client.ui.contextmenu.I_CmsContextMenuEntry#getImageClass()
+     * @see org.opencms.gwt.client.ui.contextmenu.I_CmsContextMenuEntry#generateMenuItem()
      */
-    public String getImageClass() {
+    public A_CmsContextMenuItem generateMenuItem() {
 
-        return m_imageClass;
+        return new CmsContextMenuItem(this);
     }
 
     /**
-     * @see org.opencms.gwt.client.ui.contextmenu.I_CmsContextMenuEntry#getImagePath()
+     * @see org.opencms.gwt.client.ui.contextmenu.I_CmsContextMenuEntry#getIconClass()
      */
-    public String getImagePath() {
+    public String getIconClass() {
 
         return null;
     }
@@ -92,19 +90,19 @@ public abstract class A_CmsSitemapMenuEntry implements I_CmsContextMenuEntry, I_
     }
 
     /**
-     * @see org.opencms.gwt.client.ui.contextmenu.I_CmsContextMenuEntry#getName()
-     */
-    public String getName() {
-
-        return null;
-    }
-
-    /**
      * @see org.opencms.gwt.client.ui.contextmenu.I_CmsContextMenuEntry#getLabel()
      */
     public String getLabel() {
 
         return m_label;
+    }
+
+    /**
+     * @see org.opencms.gwt.client.ui.contextmenu.I_CmsContextMenuEntry#getName()
+     */
+    public String getName() {
+
+        return null;
     }
 
     /**
@@ -156,15 +154,13 @@ public abstract class A_CmsSitemapMenuEntry implements I_CmsContextMenuEntry, I_
     }
 
     /**
-     * Executed when the context-menu parent hoverbar is attached.<p>
-     * 
-     * @see org.opencms.ade.sitemap.client.hoverbar.I_CmsHoverbarShowHandler#onShow(org.opencms.ade.sitemap.client.hoverbar.CmsHoverbarShowEvent)
+     * Executed when the context-menu is opened.<p>
      */
-    public abstract void onShow(CmsHoverbarShowEvent event);
+    public abstract void onShow();
 
-    /** 
+    /**
      * Sets if this menu entry is active.<p>
-     * 
+     *
      * @param active <code>true</code> to set this menu entry active
      */
     public void setActive(boolean active) {
@@ -174,8 +170,8 @@ public abstract class A_CmsSitemapMenuEntry implements I_CmsContextMenuEntry, I_
 
     /**
      * Sets the reason if the entry is de-activated.<p>
-     * 
-     * @param reason the reason if the entry is de-activated 
+     *
+     * @param reason the reason if the entry is de-activated
      */
     public void setDisabledReason(String reason) {
 
@@ -183,18 +179,8 @@ public abstract class A_CmsSitemapMenuEntry implements I_CmsContextMenuEntry, I_
     }
 
     /**
-     * Sets the image class for the icon in front of the label.<p>
-     * 
-     * @param imageClass the image class
-     */
-    public void setImageClass(String imageClass) {
-
-        m_imageClass = imageClass;
-    }
-
-    /**
      * Sets the label (text) for the menu entry.<p>
-     * 
+     *
      * @param label the label (text) for the menu entry
      */
     public void setLabel(String label) {
@@ -204,7 +190,7 @@ public abstract class A_CmsSitemapMenuEntry implements I_CmsContextMenuEntry, I_
 
     /**
      * Sets if the menu entry is visible.<p>
-     * 
+     *
      * @param visible <code>true</code> to set the entry visible
      */
     public void setVisible(boolean visible) {
@@ -222,7 +208,7 @@ public abstract class A_CmsSitemapMenuEntry implements I_CmsContextMenuEntry, I_
 
     /**
      * Returns the hoverbar.<p>
-     * 
+     *
      * @return the hoverbar
      */
     protected CmsSitemapHoverbar getHoverbar() {

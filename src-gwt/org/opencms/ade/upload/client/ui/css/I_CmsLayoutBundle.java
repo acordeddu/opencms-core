@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -15,11 +15,11 @@
  * Lesser General Public License for more details.
  *
  * For further information about Alkacon Software, please see the
- * company website: http://www.alkacon.com
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -28,7 +28,6 @@
 package org.opencms.ade.upload.client.ui.css;
 
 import org.opencms.gwt.client.ui.css.I_CmsConstantsBundle;
-import org.opencms.gwt.client.ui.css.I_CmsImageBundle;
 import org.opencms.gwt.client.ui.css.I_CmsLayoutBundle.I_CmsPopupCss;
 
 import com.google.gwt.core.client.GWT;
@@ -36,7 +35,7 @@ import com.google.gwt.resources.client.ClientBundle;
 
 /**
  * Resource bundle to access CSS and image resources.
- * 
+ *
  * @since 8.0.0
  */
 public interface I_CmsLayoutBundle extends ClientBundle {
@@ -44,124 +43,68 @@ public interface I_CmsLayoutBundle extends ClientBundle {
     /** The upload dialog CSS classes. */
     public interface I_CmsUploadCss extends I_CmsPopupCss {
 
-        /** 
+        /**
          * Access method.<p>
-         * 
+         *
          * @return the CSS class name
          */
         String dialogInfo();
 
-        /** 
+        /**
          * Access method.<p>
-         * 
-         * @return the CSS class name
-         */
-        String dialogMessage();
-
-        /** 
-         * Access method.<p>
-         * 
-         * @return the CSS class name
-         */
-        String dialogMessageImportant();
-
-        /** 
-         * Access method.<p>
-         * 
+         *
          * @return the CSS class name
          */
         String dragAndDropMessage();
 
-        /** 
+        /**
          * Access method.<p>
-         * 
-         * @return the CSS class name
-         */
-        String fileInfoTable();
-
-        /** 
-         * Access method.<p>
-         * 
+         *
          * @return the CSS class name
          */
         String fileInputPanel();
 
-        /** 
+        /**
          * Access method.<p>
-         * 
-         * @return the CSS class name
-         */
-        String loadingAnimation();
-
-        /** 
-         * Access method.<p>
-         * 
-         * @return the CSS class name
-         */
-        String loadingPanel();
-
-        /** 
-         * Access method.<p>
-         * 
-         * @return the CSS class name
-         */
-        String loadingText();
-
-        /** 
-         * Access method.<p>
-         * 
+         *
          * @return the CSS class name
          */
         String mainContentWidget();
 
-        /** 
+        /**
          * Access method.<p>
-         * 
-         * @return the CSS class name
-         */
-        String progressInfo();
-
-        /** 
-         * Access method.<p>
-         * 
+         *
          * @return the CSS class name
          */
         String summary();
 
-        /** 
+        /**
          * Access method.<p>
-         * 
+         *
          * @return the CSS class name
          */
-        String uploadButton();
+        String unzipButton();
 
-        /** 
+        /**
          * Access method.<p>
-         * 
+         *
+         * @return the CSS class name
+         */
+        String unzipButtonDownFace();
+
+        /**
+         * Access method.<p>
+         *
+         * @return the CSS class name
+         */
+        String unzipButtonUpFace();
+
+        /**
+         * Access method.<p>
+         *
          * @return the CSS class name
          */
         String uploadDialogButton();
-
-        /** 
-         * Access method.<p>
-         * 
-         * @return the CSS class name
-         */
-        String uploadFileInput();
-
-        /** 
-         * Access method.<p>
-         * 
-         * @return the CSS class name
-         */
-        String warningIcon();
-
-        /** 
-         * Access method.<p>
-         * 
-         * @return the CSS class name
-         */
-        String warningMessage();
     }
 
     /** The bundle instance. */
@@ -169,23 +112,17 @@ public interface I_CmsLayoutBundle extends ClientBundle {
 
     /**
      * The CSS constants bundle.<p>
-     * 
-     * @return a bundle of CSS constants 
+     *
+     * @return a bundle of CSS constants
      */
     I_CmsConstantsBundle constants();
 
     /**
      * Access method.<p>
-     * 
-     * @return the image bundle for the gwt module
-     */
-    I_CmsImageBundle gwtImages();
-
-    /**
-     * Access method.<p>
-     * 
+     *
      * @return the constants CSS
      */
-    @Source("upload.css")
+    @Source("upload.gss")
     I_CmsUploadCss uploadCss();
+
 }

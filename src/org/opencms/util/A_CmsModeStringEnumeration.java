@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -14,12 +14,12 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * Lesser General Public License for more details.
  *
- * For further information about Alkacon Software GmbH, please see the
- * company website: http://www.alkacon.com
+ * For further information about Alkacon Software GmbH & Co. KG, please see the
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -36,8 +36,8 @@ import java.io.Serializable;
  * <ul>
  *   <li>{@link org.opencms.db.CmsUserSettings.CmsSearchResultStyle}
  * </ul>
- * 
- * @since 6.5.5 
+ *
+ * @since 6.5.5
  */
 public abstract class A_CmsModeStringEnumeration implements Serializable {
 
@@ -49,7 +49,7 @@ public abstract class A_CmsModeStringEnumeration implements Serializable {
 
     /**
      * Default constructor.<p>
-     * 
+     *
      * @param mode the internal mode descriptor
      */
     protected A_CmsModeStringEnumeration(String mode) {
@@ -60,6 +60,7 @@ public abstract class A_CmsModeStringEnumeration implements Serializable {
     /**
      * @see java.lang.Object#equals(java.lang.Object)
      */
+    @Override
     public boolean equals(Object obj) {
 
         if (obj == this) {
@@ -87,6 +88,7 @@ public abstract class A_CmsModeStringEnumeration implements Serializable {
     /**
      * @see java.lang.Object#hashCode()
      */
+    @Override
     public int hashCode() {
 
         return m_mode.hashCode();
@@ -95,6 +97,7 @@ public abstract class A_CmsModeStringEnumeration implements Serializable {
     /**
      * @see java.lang.Object#toString()
      */
+    @Override
     public String toString() {
 
         return m_mode;

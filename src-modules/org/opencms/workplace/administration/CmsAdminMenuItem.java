@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -14,12 +14,12 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * Lesser General Public License for more details.
  *
- * For further information about Alkacon Software GmbH, please see the
- * company website: http://www.alkacon.com
+ * For further information about Alkacon Software GmbH & Co. KG, please see the
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -35,8 +35,8 @@ import org.opencms.workplace.tools.CmsToolMacroResolver;
 /**
  * Html icon button implementation that generates the
  * required html code for a menu item.<p>
- * 
- * @since 6.0.0 
+ *
+ * @since 6.0.0
  */
 public class CmsAdminMenuItem {
 
@@ -62,8 +62,8 @@ public class CmsAdminMenuItem {
     private final String m_target;
 
     /**
-     * Default Constructor.<p> 
-     * 
+     * Default Constructor.<p>
+     *
      * @param id a unique id
      * @param name the name of the item
      * @param iconPath the icon to display
@@ -162,9 +162,9 @@ public class CmsAdminMenuItem {
 
     /**
      * Returns the necessary html code.<p>
-     * 
+     *
      * @param wp the workplace
-     * 
+     *
      * @return html code
      */
     public String itemHtml(CmsWorkplace wp) {
@@ -176,15 +176,16 @@ public class CmsAdminMenuItem {
         html.append("\t<tr>\n");
         html.append("\t\t<td>\n");
         String onClic = "return openView('" + getId() + "', '" + m_link + "', '" + m_target + "');";
-        html.append(A_CmsHtmlIconButton.defaultButtonHtml(
-            CmsHtmlIconButtonStyleEnum.SMALL_ICON_TEXT,
-            getId(),
-            getName(),
-            getHelpText(),
-            isEnabled(),
-            getIconPath(),
-            null,
-            onClic));
+        html.append(
+            A_CmsHtmlIconButton.defaultButtonHtml(
+                CmsHtmlIconButtonStyleEnum.SMALL_ICON_TEXT,
+                getId(),
+                getName(),
+                getHelpText(),
+                isEnabled(),
+                getIconPath(),
+                null,
+                onClic));
 
         html.append("\t\t</td>\n");
         html.append("\t</tr>\n");

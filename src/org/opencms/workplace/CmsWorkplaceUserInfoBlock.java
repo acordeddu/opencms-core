@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -14,12 +14,12 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * Lesser General Public License for more details.
  *
- * For further information about Alkacon Software GmbH, please see the
- * company website: http://www.alkacon.com
+ * For further information about Alkacon Software GmbH & Co. KG, please see the
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -32,7 +32,7 @@ import java.util.List;
 
 /**
  * Represents an user additional information block.<p>
- * 
+ *
  * @since 6.5.6
  */
 public final class CmsWorkplaceUserInfoBlock {
@@ -53,7 +53,7 @@ public final class CmsWorkplaceUserInfoBlock {
 
     /**
      * Creates a new entry.<p>
-     * 
+     *
      * @param key the additional information key
      * @param type the class name of the stored data type
      * @param widget the widget class name
@@ -67,7 +67,7 @@ public final class CmsWorkplaceUserInfoBlock {
 
     /**
      * Returns a list of all configured additional information entries.<p>
-     * 
+     *
      * @return a list of {@link CmsWorkplaceUserInfoEntry} objects
      */
     public List<CmsWorkplaceUserInfoEntry> getEntries() {

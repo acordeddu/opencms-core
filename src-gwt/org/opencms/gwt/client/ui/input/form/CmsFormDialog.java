@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -15,11 +15,11 @@
  * Lesser General Public License for more details.
  *
  * For further information about Alkacon Software, please see the
- * company website: http://www.alkacon.com
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -31,24 +31,38 @@ import org.opencms.gwt.client.Messages;
 import org.opencms.gwt.client.ui.CmsPopup;
 import org.opencms.gwt.client.ui.CmsPushButton;
 import org.opencms.gwt.client.ui.input.I_CmsFormField;
-import org.opencms.xml.content.CmsXmlContentProperty;
+import org.opencms.gwt.client.util.CmsDomUtil;
 
 import java.util.Map;
 
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
+import com.google.gwt.dom.client.Element;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
+import com.google.gwt.event.dom.client.KeyCodes;
+import com.google.gwt.event.logical.shared.CloseEvent;
+import com.google.gwt.event.logical.shared.CloseHandler;
+import com.google.gwt.event.shared.HandlerRegistration;
+import com.google.gwt.user.client.DOM;
+import com.google.gwt.user.client.Event;
+import com.google.gwt.user.client.Event.NativePreviewEvent;
+import com.google.gwt.user.client.Event.NativePreviewHandler;
+import com.google.gwt.user.client.Window;
+import com.google.gwt.user.client.ui.PopupPanel;
 
 /**
  * A dialog containing a form.<p>
- * 
+ *
  * @since 8.0.0
  */
-public class CmsFormDialog extends CmsPopup implements I_CmsFormDialog {
+public class CmsFormDialog extends CmsPopup {
+
+    /** The maximum dialog width. */
+    public static final int MAX_DIALOG_WIDTH = 930;
 
     /** The dialog width. */
-    public static final int STANDARD_DIALOG_WIDTH = 600;
+    public static final int STANDARD_DIALOG_WIDTH = 700;
 
     /** The widget containing the form fields. */
     protected CmsForm m_form;
@@ -59,52 +73,61 @@ public class CmsFormDialog extends CmsPopup implements I_CmsFormDialog {
     /** The OK button of this dialog. */
     private CmsPushButton m_okButton;
 
-    /** 
+    /** The event preview handler registration. */
+    private HandlerRegistration m_previewHandlerRegistration;
+
+    /**
      * Constructs a new form dialog with a given title.<p>
-     * 
+     *
      * @param title the title of the form dialog
-     * @param form the form to use  
+     * @param form the form to use
      */
     public CmsFormDialog(String title, CmsForm form) {
 
-        super(title);
+        this(title, form, -1);
+    }
+
+    /**
+     * Constructs a new form dialog with a given title.<p>
+     *
+     * @param title the title of the form dialog
+     * @param form the form to use
+     * @param dialogWidthObj the dialog width (if null, don't set any width; if negative, set default width)
+     */
+    public CmsFormDialog(String title, CmsForm form, Integer dialogWidthObj) {
+
+        super(title, -1);
         setGlassEnabled(true);
         setAutoHideEnabled(false);
         setModal(true);
-        setWidth(STANDARD_DIALOG_WIDTH);
+        // check the available width for this dialog
+
+        if (dialogWidthObj != null) {
+            int dialogWidth = dialogWidthObj.intValue();
+            int windowWidth = Window.getClientWidth();
+            if (dialogWidth > 0) {
+                // reduce the dialog width if necessary
+                if ((windowWidth - 50) < dialogWidth) {
+                    dialogWidth = windowWidth - 50;
+                }
+            } else {
+                dialogWidth = (windowWidth - 100) > STANDARD_DIALOG_WIDTH ? windowWidth - 100 : STANDARD_DIALOG_WIDTH;
+                dialogWidth = dialogWidth > MAX_DIALOG_WIDTH ? MAX_DIALOG_WIDTH : dialogWidth;
+            }
+            setWidth(dialogWidth);
+        }
         addButton(createCancelButton());
         m_okButton = createOkButton();
         addButton(m_okButton);
         m_form = form;
-        m_form.setFormDialog(this);
-    }
 
-    /**
-     * Static utility method for opening a property form dialog.<p>
-     * 
-     * @param propertyConfig the configuration of the properties 
-     * @param properties the current values of the properties 
-     * @param title the title of the dialog 
-     * @param formHandler the form handler which should be used 
-     */
-    public static void showPropertyDialog(
-        Map<String, CmsXmlContentProperty> propertyConfig,
-        Map<String, String> properties,
-        String title,
-        I_CmsFormHandler formHandler) {
+        addCloseHandler(new CloseHandler<PopupPanel>() {
 
-        CmsSimpleFormFieldPanel simplePanel = new CmsSimpleFormFieldPanel();
-        CmsForm form = new CmsForm(simplePanel);
-        CmsFormDialog dialog = new CmsFormDialog(Messages.get().key(Messages.GUI_FORM_PROPERTIES_EDIT_0), form);
-        dialog.setFormHandler(formHandler);
-        Map<String, I_CmsFormField> formFields = CmsBasicFormField.createFields(propertyConfig.values());
+            public void onClose(CloseEvent<PopupPanel> event) {
 
-        for (I_CmsFormField field : formFields.values()) {
-            String currentValue = properties.get(field.getId());
-            form.addField(field, currentValue);
-        }
-        form.render();
-        dialog.center();
+                removePreviewHandler();
+            }
+        });
     }
 
     /**
@@ -114,22 +137,15 @@ public class CmsFormDialog extends CmsPopup implements I_CmsFormDialog {
     public void center() {
 
         initContent();
+        registerPreviewHandler();
         super.center();
         notifyWidgetsOfOpen();
     }
 
     /**
-     * @see org.opencms.gwt.client.ui.input.form.I_CmsFormDialog#closeDialog()
-     */
-    public void closeDialog() {
-
-        hide();
-    }
-
-    /**
      * Gets the form of this dialog.<p>
-     * 
-     * @return the form of this dialog 
+     *
+     * @return the form of this dialog
      */
     public CmsForm getForm() {
 
@@ -138,7 +154,7 @@ public class CmsFormDialog extends CmsPopup implements I_CmsFormDialog {
 
     /**
      * Returns the 'OK' button.<p>
-     * 
+     *
      * @return the 'OK' button
      */
     public CmsPushButton getOkButton() {
@@ -148,8 +164,8 @@ public class CmsFormDialog extends CmsPopup implements I_CmsFormDialog {
 
     /**
      * Sets the form handler for this form dialog.<p>
-     * 
-     * @param formHandler the new form handler 
+     *
+     * @param formHandler the new form handler
      */
     public void setFormHandler(I_CmsFormHandler formHandler) {
 
@@ -157,7 +173,9 @@ public class CmsFormDialog extends CmsPopup implements I_CmsFormDialog {
     }
 
     /**
-     * @see org.opencms.gwt.client.ui.input.form.I_CmsFormDialog#setOkButtonEnabled(boolean)
+     * Enables/disables the OK button.<p>
+     *
+     * @param enabled if true, enables the OK button, else disables it
      */
     public void setOkButtonEnabled(final boolean enabled) {
 
@@ -168,7 +186,7 @@ public class CmsFormDialog extends CmsPopup implements I_CmsFormDialog {
              */
             public void execute() {
 
-                // The event handling of GWT gets confused if we don't execute this as a scheduled command 
+                // The event handling of GWT gets confused if we don't execute this as a scheduled command
                 getOkButton().setDown(false);
                 getOkButton().setEnabled(enabled);
             }
@@ -183,6 +201,7 @@ public class CmsFormDialog extends CmsPopup implements I_CmsFormDialog {
     public void show() {
 
         initContent();
+        registerPreviewHandler();
         super.show();
         notifyWidgetsOfOpen();
     }
@@ -196,6 +215,14 @@ public class CmsFormDialog extends CmsPopup implements I_CmsFormDialog {
     }
 
     /**
+     * Called when the cancel button is clicked.
+     */
+    protected void onClickCancel() {
+
+        hide();
+    }
+
+    /**
      * The method which should be called when the user clicks on the OK button of the dialog.<p>
      */
     protected void onClickOk() {
@@ -204,8 +231,48 @@ public class CmsFormDialog extends CmsPopup implements I_CmsFormDialog {
     }
 
     /**
+     * Registers the 'Enter' and 'Esc' shortcut action handler.<p>
+     */
+    protected void registerPreviewHandler() {
+
+        if (m_previewHandlerRegistration == null) {
+            NativePreviewHandler eventPreviewHandler = new NativePreviewHandler() {
+
+                public void onPreviewNativeEvent(NativePreviewEvent event) {
+
+                    Event nativeEvent = Event.as(event.getNativeEvent());
+                    if (DOM.eventGetType(nativeEvent) == Event.ONKEYDOWN) {
+                        int keyCode = nativeEvent.getKeyCode();
+                        if (keyCode == KeyCodes.KEY_ESCAPE) {
+                            onClickCancel();
+                        } else if (keyCode == KeyCodes.KEY_ENTER) {
+                            Element element = CmsDomUtil.getActiveElement();
+                            boolean isTextarea = (element != null) && element.getTagName().equalsIgnoreCase("textarea");
+                            if (!isTextarea) {
+                                onClickOk();
+                            }
+                        }
+                    }
+                }
+            };
+            m_previewHandlerRegistration = Event.addNativePreviewHandler(eventPreviewHandler);
+        }
+    }
+
+    /**
+     * Removes the 'Enter' and 'Esc' shortcut action handler.<p>
+     */
+    protected void removePreviewHandler() {
+
+        if (m_previewHandlerRegistration != null) {
+            m_previewHandlerRegistration.removeHandler();
+            m_previewHandlerRegistration = null;
+        }
+    }
+
+    /**
      * Creates the cancel button.<p>
-     * 
+     *
      * @return the cancel button
      */
     private CmsPushButton createCancelButton() {
@@ -222,7 +289,8 @@ public class CmsFormDialog extends CmsPopup implements I_CmsFormDialog {
              */
             public void onClick(ClickEvent event) {
 
-                CmsFormDialog.this.hide();
+                onClickCancel();
+
             }
         });
         return button;
@@ -230,7 +298,7 @@ public class CmsFormDialog extends CmsPopup implements I_CmsFormDialog {
 
     /**
      * Creates the OK button.<p>
-     * 
+     *
      * @return the OK button
      */
     private CmsPushButton createOkButton() {

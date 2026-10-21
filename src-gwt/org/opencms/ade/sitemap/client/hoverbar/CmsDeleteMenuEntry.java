@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -15,11 +15,11 @@
  * Lesser General Public License for more details.
  *
  * For further information about Alkacon Software, please see the
- * company website: http://www.alkacon.com
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -27,29 +27,29 @@
 
 package org.opencms.ade.sitemap.client.hoverbar;
 
+import org.opencms.ade.detailpage.CmsDetailPageInfo;
+import org.opencms.ade.sitemap.client.CmsSitemapView;
 import org.opencms.ade.sitemap.client.Messages;
 import org.opencms.ade.sitemap.client.control.CmsSitemapController;
 import org.opencms.ade.sitemap.shared.CmsClientSitemapEntry;
 import org.opencms.gwt.client.ui.CmsDeleteWarningDialog;
 import org.opencms.gwt.client.ui.I_CmsConfirmDialogHandler;
-import org.opencms.gwt.client.ui.css.I_CmsImageBundle;
 
 /**
  * Sitemap context menu delete entry.<p>
- * 
+ *
  * @since 8.0.0
  */
 public class CmsDeleteMenuEntry extends A_CmsSitemapMenuEntry {
 
     /**
      * Constructor.<p>
-     * 
-     * @param hoverbar the hoverbar 
+     *
+     * @param hoverbar the hoverbar
      */
     public CmsDeleteMenuEntry(CmsSitemapHoverbar hoverbar) {
 
         super(hoverbar);
-        setImageClass(I_CmsImageBundle.INSTANCE.contextMenuIcons().delete());
         setLabel(Messages.get().key(Messages.GUI_HOVERBAR_DELETE_0));
         setActive(true);
     }
@@ -66,7 +66,7 @@ public class CmsDeleteMenuEntry extends A_CmsSitemapMenuEntry {
              */
             public void onClose() {
 
-                // do nothing 
+                // do nothing
             }
 
             /**
@@ -74,26 +74,36 @@ public class CmsDeleteMenuEntry extends A_CmsSitemapMenuEntry {
              */
             public void onOk() {
 
-                getHoverbar().getController().delete(getHoverbar().getSitePath());
+                getHoverbar().getController().delete(getHoverbar().getEntry().getSitePath());
             }
         };
-        CmsDeleteWarningDialog dialog = new CmsDeleteWarningDialog(getHoverbar().getSitePath());
+        CmsDeleteWarningDialog dialog = new CmsDeleteWarningDialog(getHoverbar().getEntry().getSitePath());
         dialog.setHandler(handler);
         dialog.loadAndShow(null);
     }
 
     /**
-     * @see org.opencms.ade.sitemap.client.hoverbar.A_CmsSitemapMenuEntry#onShow(org.opencms.ade.sitemap.client.hoverbar.CmsHoverbarShowEvent)
+     * @see org.opencms.ade.sitemap.client.hoverbar.A_CmsSitemapMenuEntry#onShow()
      */
     @Override
-    public void onShow(CmsHoverbarShowEvent event) {
+    public void onShow() {
 
-        String sitePath = getHoverbar().getSitePath();
         CmsSitemapController controller = getHoverbar().getController();
-        CmsClientSitemapEntry entry = controller.getEntry(sitePath);
-        boolean show = !controller.isRoot(sitePath) && (entry != null) && entry.isInNavigation();
+        CmsClientSitemapEntry entry = getHoverbar().getEntry();
+
+        // gallery folders may only be deleted by gallery managers
+        boolean show = controller.isEditable()
+            && !controller.isRoot(entry.getSitePath())
+            && !CmsSitemapView.getInstance().isModelPageMode()
+            && (!CmsSitemapView.getInstance().isGalleryMode()
+                || getHoverbar().getController().getData().isGalleryManager());
+        CmsDetailPageInfo detailInfo = controller.getDetailPageInfo(entry.getId());
+        if ((detailInfo != null) && !controller.canManageDetailPages()) {
+            show = false;
+        }
+
         setVisible(show);
-        if (show && (entry != null) && !entry.isEditable()) {
+        if (show && !entry.isEditable()) {
             setActive(false);
             setDisabledReason(controller.getNoEditReason(entry));
         } else {

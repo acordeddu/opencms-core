@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -14,12 +14,12 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * Lesser General Public License for more details.
  *
- * For further information about Alkacon Software GmbH, please see the
- * company website: http://www.alkacon.com
+ * For further information about Alkacon Software GmbH & Co. KG, please see the
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -27,6 +27,7 @@
 
 package org.opencms.search;
 
+import org.opencms.db.CmsPublishedResource;
 import org.opencms.file.CmsResource;
 import org.opencms.i18n.CmsMessageContainer;
 import org.opencms.main.CmsLog;
@@ -36,12 +37,11 @@ import org.opencms.report.I_CmsReport;
 import java.io.IOException;
 
 import org.apache.commons.logging.Log;
-import org.apache.lucene.document.Document;
 
 /**
  * Implements the management of indexing threads.<p>
- * 
- * @since 6.0.0 
+ *
+ * @since 6.0.0
  */
 public class CmsIndexingThreadManager {
 
@@ -71,7 +71,7 @@ public class CmsIndexingThreadManager {
 
     /**
      * Creates and starts a thread manager for indexing threads.<p>
-     * 
+     *
      * @param timeout timeout after a thread is abandoned
      * @param maxModificationsBeforeCommit the maximum number of modifications before a commit in the search index is triggered
      */
@@ -83,13 +83,13 @@ public class CmsIndexingThreadManager {
 
     /**
      * Creates and starts a new indexing thread for a resource.<p>
-     * 
-     * After an indexing thread was started, the manager suspends itself 
+     *
+     * After an indexing thread was started, the manager suspends itself
      * and waits for an amount of time specified by the <code>timeout</code>
      * value. If the timeout value is reached, the indexing thread is
      * aborted by an interrupt signal.<p>
-     * 
-     * @param indexer the VFS indexer to create the index thread for 
+     *
+     * @param indexer the VFS indexer to create the index thread for
      * @param writer the index writer that can update the index
      * @param res the resource
      */
@@ -111,7 +111,7 @@ public class CmsIndexingThreadManager {
             // ignore
         }
         if (thread.isAlive()) {
-            // the thread has not finished - so it must be marked as an abandoned thread 
+            // the thread has not finished - so it must be marked as an abandoned thread
             m_abandonedCounter++;
             thread.interrupt();
             if (LOG.isWarnEnabled()) {
@@ -130,20 +130,24 @@ public class CmsIndexingThreadManager {
             // the thread finished normally
             m_returnedCounter++;
         }
-        Document doc = thread.getResult();
+        I_CmsSearchDocument doc = thread.getResult();
         if (doc != null) {
             // write the document to the index
             indexer.updateResource(writer, res.getRootPath(), doc);
+        } else {
+            indexer.deleteResource(writer, new CmsPublishedResource(res));
         }
         if ((m_startedCounter % m_maxModificationsBeforeCommit) == 0) {
             try {
                 writer.commit();
             } catch (IOException e) {
                 if (LOG.isWarnEnabled()) {
-                    LOG.warn(Messages.get().getBundle().key(
-                        Messages.LOG_IO_INDEX_WRITER_COMMIT_2,
-                        indexer.getIndex().getName(),
-                        indexer.getIndex().getPath()), e);
+                    LOG.warn(
+                        Messages.get().getBundle().key(
+                            Messages.LOG_IO_INDEX_WRITER_COMMIT_2,
+                            indexer.getIndex().getName(),
+                            indexer.getIndex().getPath()),
+                        e);
                 }
             }
         }
@@ -151,7 +155,7 @@ public class CmsIndexingThreadManager {
 
     /**
      * Returns if the indexing manager still have indexing threads.<p>
-     * 
+     *
      * @return true if the indexing manager still have indexing threads
      */
     public boolean isRunning() {
@@ -164,19 +168,21 @@ public class CmsIndexingThreadManager {
             if ((currentTime - m_lastLogWarnTime) > 30000) {
                 // write warning to log after 30 seconds
                 if (LOG.isWarnEnabled()) {
-                    LOG.warn(Messages.get().getBundle().key(
-                        Messages.LOG_WAITING_ABANDONED_THREADS_2,
-                        new Integer(m_abandonedCounter),
-                        new Integer((m_startedCounter - m_returnedCounter))));
+                    LOG.warn(
+                        Messages.get().getBundle().key(
+                            Messages.LOG_WAITING_ABANDONED_THREADS_2,
+                            Integer.valueOf(m_abandonedCounter),
+                            Integer.valueOf((m_startedCounter - m_returnedCounter))));
                 }
                 m_lastLogWarnTime = currentTime;
             }
             if ((currentTime - m_lastLogErrorTime) > 600000) {
                 // write error to log after 10 minutes
-                LOG.error(Messages.get().getBundle().key(
-                    Messages.LOG_WAITING_ABANDONED_THREADS_2,
-                    new Integer(m_abandonedCounter),
-                    new Integer((m_startedCounter - m_returnedCounter))));
+                LOG.error(
+                    Messages.get().getBundle().key(
+                        Messages.LOG_WAITING_ABANDONED_THREADS_2,
+                        Integer.valueOf(m_abandonedCounter),
+                        Integer.valueOf((m_startedCounter - m_returnedCounter))));
                 m_lastLogErrorTime = currentTime;
             }
         }
@@ -191,12 +197,12 @@ public class CmsIndexingThreadManager {
 
     /**
      * Writes statistical information to the report.<p>
-     * 
+     *
      * The method reports the total number of threads started
      * (equals to the number of indexed files), the number of returned
      * threads (equals to the number of successfully indexed files),
      * and the number of abandoned threads (hanging threads reaching the timeout).
-     * 
+     *
      * @param report the report to write the statistics to
      */
     public void reportStatistics(I_CmsReport report) {
@@ -205,9 +211,9 @@ public class CmsIndexingThreadManager {
             CmsMessageContainer message = Messages.get().container(
                 Messages.RPT_SEARCH_INDEXING_STATS_4,
                 new Object[] {
-                    new Integer(m_startedCounter),
-                    new Integer(m_returnedCounter),
-                    new Integer(m_abandonedCounter),
+                    Integer.valueOf(m_startedCounter),
+                    Integer.valueOf(m_returnedCounter),
+                    Integer.valueOf(m_abandonedCounter),
                     report.formatRuntime()});
 
             report.println(message);

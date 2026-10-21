@@ -1,0 +1,15 @@
+
+.opencms .o-gallery-preview-image img {
+	object-fit: scale-down;
+	display: block;
+	background-image: repeating-conic-gradient(#ddd 0% 25%, #fff 0% 50%);
+	background-size: 10px 10px;
+	background-position: 0 0, 5px 5px;
+
+}
+
+.opencms .o-gallery-preview-image img[src*=".svg"] {
+	object-fit: contain;
+}
+
+

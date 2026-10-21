@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -14,12 +14,12 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * Lesser General Public License for more details.
  *
- * For further information about Alkacon Software GmbH, please see the
- * company website: http://www.alkacon.com
+ * For further information about Alkacon Software GmbH & Co. KG, please see the
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -32,7 +32,7 @@ import org.opencms.main.OpenCms;
 /**
  * Bean to store the entries made by the user in the History Clear form in the
  * administration view.<p>
- * 
+ *
  * @since 6.9.1
  */
 public class CmsHistoryClear {
@@ -56,6 +56,16 @@ public class CmsHistoryClear {
     }
 
     /**
+     * Returns the clear deleted mode.<p>
+     *
+     * @return the clear deleted mode
+     */
+    public String getClearDeletedMode() {
+
+        return m_clearDeletedMode;
+    }
+
+    /**
      * Returns the date versions older than will be cleared.<p>
      *
      * @return the date versions older than will be cleared
@@ -76,19 +86,9 @@ public class CmsHistoryClear {
     }
 
     /**
-     * Returns the clear deleted mode.<p>
-     *
-     * @return the clear deleted mode
-     */
-    public String getClearDeletedMode() {
-
-        return m_clearDeletedMode;
-    }
-
-    /**
      * Sets the clear deleted mode.<p>
      *
-     * @param clearDeletedMode the clear deleted mode 
+     * @param clearDeletedMode the clear deleted mode
      */
     public void setClearDeletedMode(String clearDeletedMode) {
 

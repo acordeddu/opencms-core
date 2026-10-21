@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -14,12 +14,12 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * Lesser General Public License for more details.
  *
- * For further information about Alkacon Software GmbH, please see the
- * company website: http://www.alkacon.com
+ * For further information about Alkacon Software GmbH & Co. KG, please see the
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -45,10 +45,10 @@ import javax.servlet.ServletException;
 
 /**
  * A schedulable OpenCms job to write a complete static export (e.g. nightly exports).<p>
- * 
+ *
  * This job does not have any parameters.<p>
- * 
- * @since 6.0.0 
+ *
+ * @since 6.0.0
  */
 public class CmsStaticExportJob implements I_CmsScheduledJob {
 
@@ -67,24 +67,19 @@ public class CmsStaticExportJob implements I_CmsScheduledJob {
             eventData.put(I_CmsEventListener.KEY_REPORT, report);
             OpenCms.fireCmsEvent(new CmsEvent(I_CmsEventListener.EVENT_FULLSTATIC_EXPORT, eventData));
         } catch (CmsException e) {
-            if (report != null) {
-                report.println(e);
-            }
+            report.println(e);
         } catch (IOException e) {
-            if (report != null) {
-                report.println(e);
-            }
+            report.println(e);
         } catch (ServletException e) {
-            if (report != null) {
-                report.println(e);
-            }
+            report.println(e);
         } finally {
             // append runtime statistics to the report
             if (report != null) {
                 report.print(org.opencms.report.Messages.get().container(org.opencms.report.Messages.RPT_STAT_0));
-                report.println(org.opencms.report.Messages.get().container(
-                    org.opencms.report.Messages.RPT_STAT_DURATION_1,
-                    report.formatRuntime()));
+                report.println(
+                    org.opencms.report.Messages.get().container(
+                        org.opencms.report.Messages.RPT_STAT_DURATION_1,
+                        report.formatRuntime()));
                 report.println(Messages.get().container(Messages.RPT_STATICEXPORT_END_0), I_CmsReport.FORMAT_HEADLINE);
             }
         }

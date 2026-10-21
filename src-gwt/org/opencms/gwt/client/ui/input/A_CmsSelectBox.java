@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -15,11 +15,11 @@
  * Lesser General Public License for more details.
  *
  * For further information about Alkacon Software, please see the
- * company website: http://www.alkacon.com
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -28,9 +28,11 @@
 package org.opencms.gwt.client.ui.input;
 
 import org.opencms.gwt.client.ui.CmsPushButton;
+import org.opencms.gwt.client.ui.CmsScrollPanel;
+import org.opencms.gwt.client.ui.I_CmsButton;
 import org.opencms.gwt.client.ui.I_CmsButton.ButtonStyle;
+import org.opencms.gwt.client.ui.I_CmsButton.Size;
 import org.opencms.gwt.client.ui.I_CmsTruncable;
-import org.opencms.gwt.client.ui.css.I_CmsImageBundle;
 import org.opencms.gwt.client.ui.css.I_CmsInputCss;
 import org.opencms.gwt.client.ui.css.I_CmsInputLayoutBundle;
 import org.opencms.gwt.client.ui.css.I_CmsLayoutBundle;
@@ -41,15 +43,25 @@ import java.util.HashMap;
 import java.util.Map;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.core.client.Scheduler;
+import com.google.gwt.core.client.Scheduler.ScheduledCommand;
+import com.google.gwt.dom.client.Element;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
+import com.google.gwt.event.dom.client.FocusEvent;
+import com.google.gwt.event.dom.client.FocusHandler;
+import com.google.gwt.event.dom.client.HasFocusHandlers;
 import com.google.gwt.event.dom.client.MouseOutEvent;
 import com.google.gwt.event.dom.client.MouseOutHandler;
 import com.google.gwt.event.dom.client.MouseOverEvent;
 import com.google.gwt.event.dom.client.MouseOverHandler;
+import com.google.gwt.event.dom.client.MouseWheelEvent;
+import com.google.gwt.event.dom.client.MouseWheelHandler;
 import com.google.gwt.event.logical.shared.CloseEvent;
 import com.google.gwt.event.logical.shared.CloseHandler;
 import com.google.gwt.event.logical.shared.HasValueChangeHandlers;
+import com.google.gwt.event.logical.shared.ResizeEvent;
+import com.google.gwt.event.logical.shared.ResizeHandler;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
@@ -57,24 +69,30 @@ import com.google.gwt.event.shared.SimpleEventBus;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.uibinder.client.UiHandler;
+import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.FocusPanel;
 import com.google.gwt.user.client.ui.Panel;
 import com.google.gwt.user.client.ui.PopupPanel;
+import com.google.gwt.user.client.ui.RootPanel;
 import com.google.gwt.user.client.ui.Widget;
+
+import elemental2.dom.CSSProperties.MaxHeightUnionType;
+import elemental2.dom.HTMLElement;
+import jsinterop.base.Js;
 
 /**
  * Abstract superclass for select box widgets.<p>
- * 
- * @param <OPTION> the widget type of the select options 
- * 
+ *
+ * @param <OPTION> the widget type of the select options
+ *
  * @since 8.0.0
- * 
+ *
  */
 public abstract class A_CmsSelectBox<OPTION extends A_CmsSelectCell> extends Composite
-implements I_CmsFormWidget, HasValueChangeHandlers<String>, I_CmsTruncable {
+implements I_CmsFormWidget, HasValueChangeHandlers<String>, HasFocusHandlers, I_CmsTruncable {
 
     /**
      * The UI Binder interface for this widget.<p>
@@ -86,9 +104,6 @@ implements I_CmsFormWidget, HasValueChangeHandlers<String>, I_CmsTruncable {
     /** The layout bundle. */
     protected static final I_CmsInputCss CSS = I_CmsInputLayoutBundle.INSTANCE.inputCss();
 
-    /** Text metrics key. */
-    private static final String TM_OPTION = "Option";
-
     /** The UiBinder instance used for this widget. */
     private static I_CmsSelectBoxUiBinder uiBinder = GWT.create(I_CmsSelectBoxUiBinder.class);
 
@@ -98,6 +113,9 @@ implements I_CmsFormWidget, HasValueChangeHandlers<String>, I_CmsTruncable {
 
     /** The event bus. */
     protected SimpleEventBus m_eventBus;
+
+    /** Handler registration for mouse wheel handlers. */
+    protected HandlerRegistration m_mousewheelRegistration;
 
     /** The open-close button. */
     protected CmsPushButton m_openClose;
@@ -134,11 +152,20 @@ implements I_CmsFormWidget, HasValueChangeHandlers<String>, I_CmsTruncable {
     /** The value of the first select option. */
     private String m_firstValue;
 
+    /** The maximum cell width. */
+    private int m_preferredPopupWidth;
+
+    /** The value to test the popup resize behaviour.*/
+    private boolean m_resizePopup = true;
+
     /** The text metrics prefix. */
     private String m_textMetricsPrefix;
 
     /** The widget width for truncation. */
     private int m_widgetWidth;
+
+    /** Handler registration for the window resize handler. */
+    private HandlerRegistration m_windowResizeHandlerReg;
 
     /**
      * Creates a new select box.<p>
@@ -151,16 +178,15 @@ implements I_CmsFormWidget, HasValueChangeHandlers<String>, I_CmsTruncable {
         m_selectBoxState = new CmsStyleVariable(m_opener);
         m_selectBoxState.setValue(I_CmsLayoutBundle.INSTANCE.generalCss().cornerAll());
 
-        m_selectorState = new CmsStyleVariable(m_selector);
+        m_selectorState = new CmsStyleVariable(m_popup);
         m_selectorState.setValue(I_CmsLayoutBundle.INSTANCE.generalCss().cornerBottom());
 
         m_opener.addStyleName(CSS.selectBoxSelected());
         addHoverHandlers(m_opener);
-
-        m_openClose = new CmsPushButton(
-            I_CmsImageBundle.INSTANCE.style().triangleRight(),
-            I_CmsImageBundle.INSTANCE.style().triangleDown());
-        m_openClose.setButtonStyle(ButtonStyle.TRANSPARENT, null);
+        addMainPanelHoverHandlers(m_panel);
+        m_openClose = new CmsPushButton(I_CmsButton.TRIANGLE_RIGHT, I_CmsButton.TRIANGLE_DOWN);
+        m_openClose.setButtonStyle(ButtonStyle.FONT_ICON, null);
+        m_openClose.setSize(Size.small);
         m_openClose.addStyleName(CSS.selectIcon());
         m_panel.add(m_openClose);
         m_openClose.addClickHandler(new ClickHandler() {
@@ -177,14 +203,14 @@ implements I_CmsFormWidget, HasValueChangeHandlers<String>, I_CmsTruncable {
                 }
             }
         });
-
         m_popup.setWidget(m_selector);
         m_popup.addStyleName(CSS.selectorPopup());
         m_popup.addAutoHidePartner(m_panel.getElement());
 
-        m_selector.setStyleName(CSS.selectBoxSelector());
-        m_selector.addStyleName(I_CmsLayoutBundle.INSTANCE.generalCss().cornerBottom());
-        m_selector.addStyleName(I_CmsLayoutBundle.INSTANCE.generalCss().textMedium());
+        m_popup.addStyleName(CSS.selectBoxSelector());
+        m_popup.addStyleName(I_CmsLayoutBundle.INSTANCE.generalCss().opencms());
+        m_popup.addStyleName(I_CmsLayoutBundle.INSTANCE.generalCss().cornerBottom());
+        m_popup.addStyleName(I_CmsLayoutBundle.INSTANCE.generalCss().textMedium());
         m_popup.addCloseHandler(new CloseHandler<PopupPanel>() {
 
             /**
@@ -199,9 +225,17 @@ implements I_CmsFormWidget, HasValueChangeHandlers<String>, I_CmsTruncable {
     }
 
     /**
+     * @see com.google.gwt.event.dom.client.HasFocusHandlers#addFocusHandler(com.google.gwt.event.dom.client.FocusHandler)
+     */
+    public HandlerRegistration addFocusHandler(FocusHandler handler) {
+
+        return addDomHandler(handler, FocusEvent.getType());
+    }
+
+    /**
      * Adds a new select option to the select box.<p>
-     * 
-     * @param cell the widget representing the select option 
+     *
+     * @param cell the widget representing the select option
      */
     public void addOption(OPTION cell) {
 
@@ -226,6 +260,50 @@ implements I_CmsFormWidget, HasValueChangeHandlers<String>, I_CmsTruncable {
     }
 
     /**
+     * Adds a widget.<p>
+     *
+     * @param widget the widget to add
+     */
+    public void addWidget(Widget widget) {
+
+        m_panel.add(widget);
+    }
+
+    /**
+     * Returns whether the select options are being displayed below or above the widget.<p>
+     *
+     * @return <code>true</code> in case the select options are displayed above the widget
+     */
+    public boolean displayingAbove() {
+
+        int popupHeight = getPopupHeight();
+        // Calculate top position for the popup
+        int top = m_opener.getAbsoluteTop();
+
+        // Make sure scrolling is taken into account, since
+        // box.getAbsoluteTop() takes scrolling into account.
+        int windowTop = Window.getScrollTop();
+        int windowBottom = Window.getScrollTop() + Window.getClientHeight();
+
+        // Distance from the top edge of the window to the top edge of the
+        // text box
+        int distanceFromWindowTop = top - windowTop;
+
+        // Distance from the bottom edge of the window to the bottom edge of
+        // the text box
+        int distanceToWindowBottom = windowBottom - (top + m_opener.getOffsetHeight());
+
+        // If there is not enough space for the popup's height below the text
+        // box and there IS enough space for the popup's height above the text
+        // box, then then position the popup above the text box. However, if there
+        // is not enough space on either side, then stick with displaying the
+        // popup below the text box.
+        boolean displayAbove = (distanceFromWindowTop > distanceToWindowBottom)
+            && (distanceToWindowBottom < popupHeight);
+        return displayAbove;
+    }
+
+    /**
      * @see org.opencms.gwt.client.ui.input.I_CmsFormWidget#getFieldType()
      */
     public FieldType getFieldType() {
@@ -238,8 +316,8 @@ implements I_CmsFormWidget, HasValueChangeHandlers<String>, I_CmsTruncable {
      */
     public Object getFormValue() {
 
-        if (m_selectedValue.equals("")) {
-            return null;
+        if (m_selectedValue == null) {
+            return "";
         }
         return m_selectedValue;
     }
@@ -253,11 +331,34 @@ implements I_CmsFormWidget, HasValueChangeHandlers<String>, I_CmsTruncable {
     }
 
     /**
+     * Returns the selector of this widget.<p>
+     *
+     * @return the selector of this widget
+     */
+    public Panel getSelectorPopup() {
+
+        return m_popup;
+    }
+
+    /**
      * @see org.opencms.gwt.client.ui.input.I_CmsFormWidget#isEnabled()
      */
     public boolean isEnabled() {
 
         return m_enabled;
+    }
+
+    /**
+     * @see com.google.gwt.user.client.ui.Composite#onBrowserEvent(com.google.gwt.user.client.Event)
+     */
+    @Override
+    public void onBrowserEvent(Event event) {
+
+        // Should not act on button if disabled.
+        if (!isEnabled()) {
+            return;
+        }
+        super.onBrowserEvent(event);
     }
 
     /**
@@ -271,9 +372,9 @@ implements I_CmsFormWidget, HasValueChangeHandlers<String>, I_CmsTruncable {
 
     /**
      * Helper method to set the current selected option.<p>
-     * 
+     *
      * This method does not trigger the "value changed" event.<p>
-     * 
+     *
      * @param value the new value
      */
     public void selectValue(String value) {
@@ -297,6 +398,13 @@ implements I_CmsFormWidget, HasValueChangeHandlers<String>, I_CmsTruncable {
 
         close();
         m_enabled = enabled;
+        getElement().setPropertyBoolean("disabled", !enabled);
+        m_openClose.setEnabled(enabled);
+        if (enabled) {
+            removeStyleName(CSS.selectBoxDisabled());
+        } else {
+            addStyleName(CSS.selectBoxDisabled());
+        }
     }
 
     /**
@@ -309,10 +417,21 @@ implements I_CmsFormWidget, HasValueChangeHandlers<String>, I_CmsTruncable {
 
     /**
      * Sets the form value of this select box.<p>
-     * 
-     * @param value the new value 
+     *
+     * @param value the new value
      */
     public void setFormValue(Object value) {
+
+        setFormValue(value, false);
+    }
+
+    /**
+     * Sets the form value of this select box.<p>
+     *
+     * @param value the new value
+     * @param fireEvents true if change events should be fired
+     */
+    public void setFormValue(Object value, boolean fireEvents) {
 
         if (value == null) {
             value = "";
@@ -325,7 +444,7 @@ implements I_CmsFormWidget, HasValueChangeHandlers<String>, I_CmsTruncable {
         }
         if (value instanceof String) {
             String strValue = (String)value;
-            this.onValueSelect(strValue);
+            onValueSelect(strValue, fireEvents);
         }
     }
 
@@ -338,6 +457,16 @@ implements I_CmsFormWidget, HasValueChangeHandlers<String>, I_CmsTruncable {
     }
 
     /**
+     * Sets the behavior of the popup if the input is bigger than the selectbox itself.
+     *
+     * @param resize <code>true</code> to resize
+     */
+    public void setPopupResize(boolean resize) {
+
+        m_resizePopup = resize;
+    }
+
+    /**
      * @see org.opencms.gwt.client.ui.I_CmsTruncable#truncate(java.lang.String, int)
      */
     public void truncate(String textMetricsPrefix, int widgetWidth) {
@@ -345,12 +474,6 @@ implements I_CmsFormWidget, HasValueChangeHandlers<String>, I_CmsTruncable {
         m_textMetricsPrefix = textMetricsPrefix;
         m_widgetWidth = widgetWidth;
         truncateOpener(textMetricsPrefix, widgetWidth);
-        int labelWidth = widgetWidth - 2 - 5; // 2px border left/right + 5px left margin
-        for (Widget widget : m_selector) {
-            if (widget instanceof I_CmsTruncable) {
-                ((I_CmsTruncable)widget).truncate(textMetricsPrefix + TM_OPTION, labelWidth);
-            }
-        }
     }
 
     /**
@@ -364,7 +487,7 @@ implements I_CmsFormWidget, HasValueChangeHandlers<String>, I_CmsTruncable {
     }
 
     /**
-     * Internal method which is called when the selector is closed.<p> 
+     * Internal method which is called when the selector is closed.<p>
      */
     protected void close() {
 
@@ -378,16 +501,16 @@ implements I_CmsFormWidget, HasValueChangeHandlers<String>, I_CmsTruncable {
 
     /**
      * Internal method to create a select option for an unknown value.<p>
-     * 
-     * @param value the value for which to create the option 
-     * 
+     *
+     * @param value the value for which to create the option
+     *
      * @return the new option
      */
     protected abstract OPTION createUnknownOption(String value);
 
     /**
      * Handle clicks on the opener.<p>
-     * 
+     *
      * @param e the click event
      */
     @UiHandler("m_opener")
@@ -396,20 +519,140 @@ implements I_CmsFormWidget, HasValueChangeHandlers<String>, I_CmsTruncable {
         toggleOpen();
     }
 
-    /** 
+    /**
+     * Returns the offset height of the popup panel, should also work when the popup is currently not showing.<p>
+     *
+     * @return the offset height
+     */
+    protected int getPopupHeight() {
+
+        if (m_popup.isShowing()) {
+            return m_popup.getOffsetHeight();
+        } else {
+            Element el = CmsDomUtil.clone(m_popup.getElement());
+            RootPanel.getBodyElement().appendChild(el);
+            el.getStyle().setProperty("position", "absolute");
+            int height = el.getOffsetHeight();
+            el.removeFromParent();
+            return height;
+        }
+    }
+
+    /**
      * The implementation of this method should initialize the opener of the select box.<p>
      */
     protected abstract void initOpener();
 
     /**
-     * Internal handler method which is called when a new value is selected.<p>
-     * 
-     * @param value the new value
+     * Initializes the selector width.<p>
+     *
+     * @return the preferred popup width
+     */
+    protected int initPreferredPopupWidth() {
+
+        int width = m_opener.getOffsetWidth() - 2 /*border*/;
+        for (Widget widget : m_selector) {
+            if (widget instanceof A_CmsSelectCell) {
+                int cellWidth = ((A_CmsSelectCell)widget).getRequiredWidth();
+                if (cellWidth > width) {
+                    width = cellWidth;
+                }
+            }
+        }
+        return width;
+    }
+
+    /**
+     * @see com.google.gwt.user.client.ui.Composite#onDetach()
+     */
+    @Override
+    protected void onDetach() {
+
+        super.onDetach();
+        removeWindowResizeHandler();
+    }
+
+    /**
+     * Handles the focus event on the opener.<p>
+     *
+     * @param event the focus event
+     */
+    @UiHandler("m_opener")
+    protected void onFocus(FocusEvent event) {
+
+        CmsDomUtil.fireFocusEvent(this);
+    }
+
+    /**
+     * @see com.google.gwt.user.client.ui.Widget#onLoad()
+     */
+    @Override
+    protected void onLoad() {
+
+        removeWindowResizeHandler();
+        m_windowResizeHandlerReg = Window.addResizeHandler(new ResizeHandler() {
+
+            public void onResize(ResizeEvent event) {
+
+                close();
+            }
+        });
+
+        m_mousewheelRegistration = RootPanel.get().addDomHandler(new MouseWheelHandler() {
+
+            public void onMouseWheel(MouseWheelEvent event) {
+
+                Scheduler.get().scheduleDeferred(new ScheduledCommand() {
+
+                    public void execute() {
+
+                        positionPopup();
+                    }
+                });
+
+            }
+        }, MouseWheelEvent.getType());
+
+    }
+
+    /**
+     * @see com.google.gwt.user.client.ui.Widget#onUnload()
+     */
+    @Override
+    protected void onUnload() {
+
+        super.onUnload();
+        if (m_mousewheelRegistration != null) {
+            m_mousewheelRegistration.removeHandler();
+        }
+    }
+
+    /**
+     * This method is called when a value is selected.<p>
+     *
+     * @param value the selected value
      */
     protected void onValueSelect(String value) {
 
+        onValueSelect(value, true);
+    }
+
+    /**
+     * Internal handler method which is called when a new value is selected.<p>
+     *
+     * @param value the new value
+     * @param fireEvents true if change events should be fired
+     */
+    protected void onValueSelect(String value, boolean fireEvents) {
+
+        String oldValue = m_selectedValue;
         selectValue(value);
-        ValueChangeEvent.<String> fire(this, value);
+        if (fireEvents) {
+            if ((oldValue == null) || !oldValue.equals(value)) {
+                // fire value change only if the the value really changed
+                ValueChangeEvent.<String> fire(this, value);
+            }
+        }
     }
 
     /**
@@ -420,50 +663,119 @@ implements I_CmsFormWidget, HasValueChangeHandlers<String>, I_CmsTruncable {
         if (!m_enabled) {
             return;
         }
-
         m_openClose.setDown(true);
-        int newWidth = m_opener.getOffsetWidth() - 2 /*border*/;
-        m_popup.setWidth(newWidth + "px");
-        m_popup.show();
-        int panelTop = m_panel.getElement().getAbsoluteTop();
-        int openerHeight = CmsDomUtil.getCurrentStyleInt(m_opener.getElement(), CmsDomUtil.Style.height);
-        int popupHeight = m_popup.getOffsetHeight();
-        if (((Window.getClientHeight() - (panelTop + openerHeight)) < popupHeight) && (panelTop > popupHeight)) {
-            CmsDomUtil.positionElement(m_popup.getElement(), m_panel.getElement(), 0, -(popupHeight - 2));
-            m_selectBoxState.setValue(I_CmsLayoutBundle.INSTANCE.generalCss().cornerBottom());
-            m_selectorState.setValue(I_CmsLayoutBundle.INSTANCE.generalCss().cornerTop());
+        int selectorWidth;
+        // if the resize option is deactivated the popup should not be wider than the selectbox.
+        // Default its true.
+        if (!m_resizePopup) {
+            selectorWidth = m_opener.getOffsetWidth() - 2;
         } else {
-            CmsDomUtil.positionElement(m_popup.getElement(), m_panel.getElement(), 0, openerHeight);
-            m_selectBoxState.setValue(I_CmsLayoutBundle.INSTANCE.generalCss().cornerTop());
-            m_selectorState.setValue(I_CmsLayoutBundle.INSTANCE.generalCss().cornerBottom());
+            if (m_preferredPopupWidth == 0) {
+                m_preferredPopupWidth = initPreferredPopupWidth();
+            }
+            selectorWidth = m_preferredPopupWidth;
+            int windowWidth = Window.getClientWidth();
+            if (m_preferredPopupWidth > windowWidth) {
+                selectorWidth = windowWidth - 10;
+            }
         }
-        // m_selectBoxState.setValue(CSS.selectBoxOpen());
+        m_popup.setWidth(selectorWidth + "px");
+        m_popup.setWidget(m_selector);
+        m_popup.show();
+
+        positionPopup();
+    }
+
+    /**
+     * Deinstalls the window resize handler.<p>
+     */
+    protected void removeWindowResizeHandler() {
+
+        if (m_windowResizeHandlerReg != null) {
+            m_windowResizeHandlerReg.removeHandler();
+            m_windowResizeHandlerReg = null;
+        }
     }
 
     /**
      * Abstract method whose implementation should truncate the opener widget(s).<p>
-     * 
+     *
      * @param prefix the text metrics prefix
-     * @param width the widget width 
+     * @param width the widget width
      */
     protected abstract void truncateOpener(String prefix, int width);
 
-    /** 
+    /**
      * The implementation of this method should update the opener when a new value is selected by the user.<p>
-     * 
+     *
      * @param newValue the value selected by the user
      */
     protected abstract void updateOpener(String newValue);
 
     /**
+     * Positions the select popup.<p>
+     */
+    void positionPopup() {
+
+        if (m_popup.isShowing()) {
+            int width = m_popup.getOffsetWidth();
+
+            int openerHeight = CmsDomUtil.getCurrentStyleInt(m_opener.getElement(), CmsDomUtil.Style.height);
+            int popupHeight = getPopupHeight();
+            int dx = 0;
+            if (width > (m_opener.getOffsetWidth())) {
+                int spaceOnTheRight = (Window.getClientWidth() + Window.getScrollLeft())
+                    - m_opener.getAbsoluteLeft()
+                    - width;
+                dx = spaceOnTheRight < 0 ? spaceOnTheRight : 0;
+            }
+            // Calculate top position for the popup
+            int top = m_opener.getAbsoluteTop();
+
+            // Make sure scrolling is taken into account, since
+            // box.getAbsoluteTop() takes scrolling into account.
+            int windowTop = Window.getScrollTop();
+            int windowBottom = Window.getScrollTop() + Window.getClientHeight();
+
+            // Distance from the top edge of the window to the top edge of the
+            // text box
+            int distanceFromWindowTop = top - windowTop;
+
+            // Distance from the bottom edge of the window to the bottom edge of
+            // the text box
+            int distanceToWindowBottom = windowBottom - (top + m_opener.getOffsetHeight());
+
+            boolean displayAbove = displayingAbove();
+
+            // in case there is not enough space, add a scroll panel to the selector popup
+            if ((displayAbove && (distanceFromWindowTop < popupHeight))
+                || (!displayAbove && (distanceToWindowBottom < popupHeight))) {
+                setScrollingSelector((displayAbove ? distanceFromWindowTop : distanceToWindowBottom) - 10);
+                popupHeight = m_popup.getOffsetHeight();
+            }
+
+            if (displayAbove) {
+                // Position above the text box
+                CmsDomUtil.positionElement(m_popup.getElement(), m_panel.getElement(), dx, -(popupHeight - 2));
+                m_selectBoxState.setValue(I_CmsLayoutBundle.INSTANCE.generalCss().cornerBottom());
+                m_selectorState.setValue(I_CmsLayoutBundle.INSTANCE.generalCss().cornerTop());
+            } else {
+                CmsDomUtil.positionElement(m_popup.getElement(), m_panel.getElement(), dx, openerHeight - 1);
+                m_selectBoxState.setValue(I_CmsLayoutBundle.INSTANCE.generalCss().cornerTop());
+                m_selectorState.setValue(I_CmsLayoutBundle.INSTANCE.generalCss().cornerBottom());
+            }
+        }
+    }
+
+    /**
      * Helper method for adding event handlers for a 'hover' effect to the opener.<p>
-     * 
+     *
      * @param panel the opener
      */
     private void addHoverHandlers(FocusPanel panel) {
 
         final CmsStyleVariable hoverVar = new CmsStyleVariable(panel);
-        hoverVar.setValue(CSS.openerNoHover());
+        hoverVar.setValue(I_CmsLayoutBundle.INSTANCE.globalWidgetCss().openerNoHover());
         panel.addMouseOverHandler(new MouseOverHandler() {
 
             /**
@@ -471,8 +783,7 @@ implements I_CmsFormWidget, HasValueChangeHandlers<String>, I_CmsTruncable {
              */
             public void onMouseOver(MouseOverEvent event) {
 
-                hoverVar.setValue(CSS.openerHover());
-
+                hoverVar.setValue(I_CmsLayoutBundle.INSTANCE.globalWidgetCss().openerHover());
             }
         });
 
@@ -483,20 +794,45 @@ implements I_CmsFormWidget, HasValueChangeHandlers<String>, I_CmsTruncable {
              */
             public void onMouseOut(MouseOutEvent event) {
 
-                hoverVar.setValue(CSS.openerNoHover());
+                hoverVar.setValue(I_CmsLayoutBundle.INSTANCE.globalWidgetCss().openerNoHover());
             }
         });
 
     }
 
     /**
+     * Helper method for adding event handlers for a 'hover' effect to the main panel.<p>
+     *
+     * @param panel the main panel
+     */
+    private void addMainPanelHoverHandlers(Panel panel) {
+
+        final CmsStyleVariable hoverPanel = new CmsStyleVariable(panel);
+        hoverPanel.setValue(I_CmsLayoutBundle.INSTANCE.globalWidgetCss().openerNoHover());
+        panel.addDomHandler(new MouseOverHandler() {
+
+            public void onMouseOver(MouseOverEvent event) {
+
+                hoverPanel.setValue(I_CmsLayoutBundle.INSTANCE.globalWidgetCss().openerHover());
+
+            }
+        }, MouseOverEvent.getType());
+        panel.addDomHandler(new MouseOutHandler() {
+
+            public void onMouseOut(MouseOutEvent event) {
+
+                hoverPanel.setValue(I_CmsLayoutBundle.INSTANCE.globalWidgetCss().openerNoHover());
+
+            }
+        }, MouseOutEvent.getType());
+    }
+
+    /**
      * Initializes the event handlers of a select cell.<p>
-     * 
-     * @param cell the select cell whose event handlers should be initialized 
+     *
+     * @param cell the select cell whose event handlers should be initialized
      */
     private void initSelectCell(final A_CmsSelectCell cell) {
-
-        cell.addStyleName(CSS.selectBoxCell());
 
         cell.registerDomHandler(new ClickHandler() {
 
@@ -532,7 +868,20 @@ implements I_CmsFormWidget, HasValueChangeHandlers<String>, I_CmsTruncable {
                 cell.removeStyleName(CSS.selectHover());
             }
         }, MouseOutEvent.getType());
+    }
 
+    /**
+     * Adds a scroll panel to the selector popup.<p>
+     *
+     * @param availableHeight the available popup height
+     */
+    private void setScrollingSelector(int availableHeight) {
+
+        CmsScrollPanel panel = GWT.create(CmsScrollPanel.class);
+        HTMLElement elem = Js.cast(panel.getElement());
+        elem.style.maxHeight = MaxHeightUnionType.of("" + availableHeight + "px");
+        panel.setWidget(m_selector);
+        m_popup.setWidget(panel);
     }
 
     /**

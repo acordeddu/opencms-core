@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -14,12 +14,12 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * Lesser General Public License for more details.
  *
- * For further information about Alkacon Software GmbH, please see the
- * company website: http://www.alkacon.com
+ * For further information about Alkacon Software GmbH & Co. KG, please see the
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -36,8 +36,7 @@ import org.opencms.file.types.CmsResourceTypePlain;
 import org.opencms.file.types.CmsResourceTypeXmlPage;
 import org.opencms.main.OpenCms;
 import org.opencms.report.CmsShellReport;
-import org.opencms.test.OpenCmsTestCase;
-import org.opencms.test.OpenCmsTestProperties;
+import org.opencms.test.OpenCmsTestRunner;
 import org.opencms.util.CmsFileUtil;
 
 import java.io.File;
@@ -45,67 +44,35 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
-import junit.extensions.TestSetup;
-import junit.framework.Test;
-import junit.framework.TestSuite;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.MethodOrderer;
+import org.junit.jupiter.api.Order;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInfo;
+import org.junit.jupiter.api.TestMethodOrder;
 
 /**
  * JUnit test cases for the VFS/RFS synchronization.<p>
- * 
+ *
  * @since 6.0.0
  */
-public class TestSynchronize extends OpenCmsTestCase {
+@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
+public class TestSynchronize extends OpenCmsTestRunner {
 
-    /**
-     * Default JUnit constructor.<p>
-     * 
-     * @param arg0 JUnit parameters
-     */
-    public TestSynchronize(String arg0) {
+    @Override
+    @BeforeAll
+    public void $openCmsSetUp(TestInfo testInfo) {
 
-        super(arg0);
-    }
-
-    /**
-     * Test suite for this test class.<p>
-     * 
-     * @return the test suite
-     */
-    public static Test suite() {
-
-        OpenCmsTestProperties.initialize(org.opencms.test.AllTests.TEST_PROPERTIES_PATH);
-
-        TestSuite suite = new TestSuite();
-        suite.setName(TestSynchronize.class.getName());
-
-        suite.addTest(new TestSynchronize("testSynchronize"));
-        suite.addTest(new TestSynchronize("testLoadSaveSynchronizeSettings"));
-        suite.addTest(new TestSynchronize("testSynchronizeSeveralFolders"));
-
-        TestSetup wrapper = new TestSetup(suite) {
-
-            @Override
-            protected void setUp() {
-
-                setupOpenCms("simpletest", "/");
-            }
-
-            @Override
-            protected void tearDown() {
-
-                removeOpenCms();
-            }
-
-        };
-
-        return wrapper;
+        setupOpenCms(testInfo, "simpletest", "/");
     }
 
     /**
      * Tests loading and saving the user synchronize settings.<p>
-     * 
+     *
      * @throws Exception if the test fails
      */
+    @Test
+    @Order(2)
     public void testLoadSaveSynchronizeSettings() throws Exception {
 
         CmsObject cms = getCmsObject();
@@ -153,12 +120,14 @@ public class TestSynchronize extends OpenCmsTestCase {
 
     /**
      * Tests the synchronize function.<p>
-     * 
+     *
      * Synchronizes everything below "/" into the RFS, modifies .txt, .jsp and .html
      * files in the RFS, and synchronizes everything back into the VFS.<p>
-     * 
+     *
      * @throws Exception if the test fails
      */
+    @Test
+    @Order(1)
     public void testSynchronize() throws Exception {
 
         String source = "/sites/default/";
@@ -185,10 +154,11 @@ public class TestSynchronize extends OpenCmsTestCase {
             cms.getRequestContext().setSiteRoot("/");
             storeResources(cms, source);
 
-            echo("Synchronizing "
-                + syncSettings.getSourceListInVfs()
-                + " with "
-                + syncSettings.getDestinationPathInRfs());
+            echo(
+                "Synchronizing "
+                    + syncSettings.getSourceListInVfs()
+                    + " with "
+                    + syncSettings.getDestinationPathInRfs());
 
             // synchronize everything to the RFS
             new CmsSynchronize(cms, syncSettings, new CmsShellReport(cms.getRequestContext().getLocale()));
@@ -243,9 +213,11 @@ public class TestSynchronize extends OpenCmsTestCase {
 
     /**
      * Tests the synchronize function with more then one source folder.<p>
-     * 
+     *
      * @throws Exception if the test fails
      */
+    @Test
+    @Order(3)
     public void testSynchronizeSeveralFolders() throws Exception {
 
         // save what gets synchronized
@@ -332,11 +304,11 @@ public class TestSynchronize extends OpenCmsTestCase {
 
     /**
      * Returns a rfs path for a given resource to be synchronized.<p>
-     * 
+     *
      * @param cms the cms context
      * @param resource the resource to synchronize
      * @param syncSettings the synchronization settings
-     * 
+     *
      * @return the rfs path
      */
     private String getRfsPath(CmsObject cms, CmsResource resource, CmsSynchronizeSettings syncSettings) {
@@ -348,7 +320,7 @@ public class TestSynchronize extends OpenCmsTestCase {
     /**
      * "Touches" the last modification date of a resource the RFS so that it is
      * synchronized back to the VFS as a modified resource.<p>
-     * 
+     *
      * @param cms the current user's Cms object
      * @param resource the VFS resource to be modified in the RFS
      * @param syncSettings the synchronization settings

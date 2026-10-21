@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -14,12 +14,12 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * Lesser General Public License for more details.
  *
- * For further information about Alkacon Software GmbH, please see the
- * company website: http://www.alkacon.com
+ * For further information about Alkacon Software GmbH & Co. KG, please see the
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -36,77 +36,41 @@ import org.opencms.security.CmsAccessControlEntry;
 import org.opencms.security.CmsPermissionViolationException;
 import org.opencms.security.CmsRole;
 import org.opencms.security.I_CmsPrincipal;
-import org.opencms.test.OpenCmsTestCase;
-import org.opencms.test.OpenCmsTestProperties;
+import org.opencms.test.OpenCmsTestRunner;
 
 import java.util.Iterator;
 import java.util.List;
 
-import junit.extensions.TestSetup;
-import junit.framework.Test;
-import junit.framework.TestSuite;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.MethodOrderer;
+import org.junit.jupiter.api.Order;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInfo;
+import org.junit.jupiter.api.TestMethodOrder;
 
 /**
  * Unit tests for VFS permissions.<p>
  */
-public class TestDeletion extends OpenCmsTestCase {
+@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
+public class TestDeletion extends OpenCmsTestRunner {
 
     /**
-     * Default JUnit constructor.<p>
-     * 
-     * @param arg0 JUnit parameters
+     * @see org.opencms.test.OpenCmsTestRunner#$openCmsSetUp(org.junit.jupiter.api.TestInfo)
      */
-    public TestDeletion(String arg0) {
+    @Override
+    @BeforeAll
+    public void $openCmsSetUp(TestInfo testInfo) {
 
-        super(arg0);
-    }
-
-    /**
-     * Test suite for this test class.<p>
-     * 
-     * @return the test suite
-     */
-    public static Test suite() {
-
-        OpenCmsTestProperties.initialize(org.opencms.test.AllTests.TEST_PROPERTIES_PATH);
-
-        TestSuite suite = new TestSuite();
-        suite.setName(TestDeletion.class.getName());
-
-        suite.addTest(new TestDeletion("testGroupDeletion"));
-        suite.addTest(new TestDeletion("testDeleteFolderAfterMove"));
-        suite.addTest(new TestDeletion("testDeleteFolderAfterMoveWithLock"));
-        suite.addTest(new TestDeletion("testDeleteFolderAfterDeleteWithLock"));
-        suite.addTest(new TestDeletion("testAdvancedGroupDeletion"));
-        suite.addTest(new TestDeletion("testUserDeletion"));
-        suite.addTest(new TestDeletion("testDeleteFolderWithUnvisibleResources"));
-        suite.addTest(new TestDeletion("testDeleteFolderWithLockedSiblings"));
-        suite.addTest(new TestDeletion("testDeleteFolderWithLockedResources"));
-        suite.addTest(new TestDeletion("testDeleteWithoutWritePermissions"));
-
-        TestSetup wrapper = new TestSetup(suite) {
-
-            @Override
-            protected void setUp() {
-
-                setupOpenCms("simpletest", "/");
-            }
-
-            @Override
-            protected void tearDown() {
-
-                removeOpenCms();
-            }
-        };
-
-        return wrapper;
+        setupOpenCms(testInfo, "simpletest", "/");
     }
 
     /**
      * Tests an advanced group deletion.<p>
-     * 
+     *
      * @throws Throwable if something goes wrong
      */
+    @Test
+    @Order(5)
     public void testAdvancedGroupDeletion() throws Throwable {
 
         CmsObject cms = getCmsObject();
@@ -176,9 +140,11 @@ public class TestDeletion extends OpenCmsTestCase {
 
     /**
      * Tests to delete a folder after deleting a subresource with lock.<p>
-     * 
+     *
      * @throws Exception if the test fails
      */
+    @Test
+    @Order(4)
     public void testDeleteFolderAfterDeleteWithLock() throws Exception {
 
         CmsObject cms = getCmsObject();
@@ -211,9 +177,11 @@ public class TestDeletion extends OpenCmsTestCase {
 
     /**
      * Tests to delete a folder after moving a subresource.<p>
-     * 
+     *
      * @throws Exception if the test fails
      */
+    @Test
+    @Order(2)
     public void testDeleteFolderAfterMove() throws Exception {
 
         CmsObject cms = getCmsObject();
@@ -241,9 +209,11 @@ public class TestDeletion extends OpenCmsTestCase {
 
     /**
      * Tests to delete a folder after moving a subresource with lock.<p>
-     * 
+     *
      * @throws Exception if the test fails
      */
+    @Test
+    @Order(3)
     public void testDeleteFolderAfterMoveWithLock() throws Exception {
 
         CmsObject cms = getCmsObject();
@@ -282,9 +252,11 @@ public class TestDeletion extends OpenCmsTestCase {
 
     /**
      * Tests to delete a folder structure with (from other user) locked resources inside.<p>
-     * 
+     *
      * @throws Exception if the test fails
      */
+    @Test
+    @Order(9)
     public void testDeleteFolderWithLockedResources() throws Exception {
 
         CmsObject cms = getCmsObject();
@@ -326,9 +298,11 @@ public class TestDeletion extends OpenCmsTestCase {
 
     /**
      * Tests to delete a folder structure with (from other user) locked siblings inside.<p>
-     * 
+     *
      * @throws Exception if the test fails
      */
+    @Test
+    @Order(8)
     public void testDeleteFolderWithLockedSiblings() throws Exception {
 
         CmsObject cms = getCmsObject();
@@ -369,9 +343,11 @@ public class TestDeletion extends OpenCmsTestCase {
 
     /**
      * Tests to delete a folder structure with invisible resources inside.<p>
-     * 
+     *
      * @throws Exception if the test fails
      */
+    @Test
+    @Order(7)
     public void testDeleteFolderWithUnvisibleResources() throws Exception {
 
         CmsObject cms = getCmsObject();
@@ -407,9 +383,11 @@ public class TestDeletion extends OpenCmsTestCase {
 
     /**
      * Tests to delete a folder with no write permission on a subresource.<p>
-     * 
+     *
      * @throws Exception if the test fails
      */
+    @Test
+    @Order(10)
     public void testDeleteWithoutWritePermissions() throws Exception {
 
         CmsObject cms = getCmsObject();
@@ -445,17 +423,19 @@ public class TestDeletion extends OpenCmsTestCase {
         cms.loginUser("Admin", "admin");
         cms.getRequestContext().setCurrentProject(cms.readProject("Offline"));
 
-        assertEquals("there missing files after deletion try", files, cms.readResources(
-            folder,
-            CmsResourceFilter.ALL,
-            true).size());
+        assertEquals(
+            files,
+            cms.readResources(folder, CmsResourceFilter.ALL, true).size(),
+            "there missing files after deletion try");
     }
 
     /**
      * Tests user group deletion.<p>
-     * 
+     *
      * @throws Throwable if something goes wrong
      */
+    @Test
+    @Order(1)
     public void testGroupDeletion() throws Throwable {
 
         CmsObject cms = getCmsObject();
@@ -478,9 +458,11 @@ public class TestDeletion extends OpenCmsTestCase {
 
     /**
      * Tests user deletion.<p>
-     * 
+     *
      * @throws Throwable if something goes wrong
      */
+    @Test
+    @Order(6)
     public void testUserDeletion() throws Throwable {
 
         CmsObject cms = getCmsObject();
@@ -490,6 +472,7 @@ public class TestDeletion extends OpenCmsTestCase {
         CmsGroup testGroup = cms.readGroup("Testgroup");
         cms.createUser("testuser1", "test1", "A test user 1", null);
         cms.addUserToGroup("testuser1", "Testgroup");
+        OpenCms.getRoleManager().addUserToRole(cms, CmsRole.ELEMENT_AUTHOR, "testuser1");
         CmsUser testUser1 = cms.readUser("testuser1");
 
         cms.lockResource("/");

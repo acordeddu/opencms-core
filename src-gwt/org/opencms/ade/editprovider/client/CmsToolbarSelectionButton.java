@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -15,11 +15,11 @@
  * Lesser General Public License for more details.
  *
  * For further information about Alkacon Software, please see the
- * company website: http://www.alkacon.com
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -36,7 +36,7 @@ import com.google.gwt.user.client.ui.RootPanel;
 
 /**
  * The selection button for the direct edit provider.<p>
- * 
+ *
  * @since 8.0.0
  */
 public class CmsToolbarSelectionButton extends A_CmsToolbarButton<CmsDirectEditToolbarHandler> {
@@ -46,12 +46,13 @@ public class CmsToolbarSelectionButton extends A_CmsToolbarButton<CmsDirectEditT
 
     /**
      * Constructor.<p>
-     * 
+     *
      * @param handler the container-page handler
      */
     public CmsToolbarSelectionButton(CmsDirectEditToolbarHandler handler) {
 
         super(I_CmsButton.ButtonData.SELECTION, handler);
+        addStyleName(I_CmsLayoutBundle.INSTANCE.toolbarCss().toolbarShow());
         m_editButtonsVisibility = new CmsStyleVariable(RootPanel.get());
     }
 
@@ -60,7 +61,7 @@ public class CmsToolbarSelectionButton extends A_CmsToolbarButton<CmsDirectEditT
      */
     public void onToolbarActivate() {
 
-        // this is never called 
+        // this is never called
     }
 
     /**
@@ -81,7 +82,7 @@ public class CmsToolbarSelectionButton extends A_CmsToolbarButton<CmsDirectEditT
      */
     public void onToolbarDeactivate() {
 
-        // this is never called 
+        // this is never called
     }
 
     /**
@@ -96,20 +97,22 @@ public class CmsToolbarSelectionButton extends A_CmsToolbarButton<CmsDirectEditT
 
     /**
      * Sets the visibility of the direct edit buttons.<p>
-     *  
-     * @param visible true if the buttons should be shown 
+     *
+     * @param visible true if the buttons should be shown
      */
     protected void setDirectEditButtonsVisible(boolean visible) {
 
-        m_editButtonsVisibility.setValue(visible
-        ? I_CmsLayoutBundle.INSTANCE.directEditCss().showButtons()
-        : I_CmsLayoutBundle.INSTANCE.directEditCss().hideButtons());
+        m_editButtonsVisibility.setValue(
+            visible
+            ? I_CmsLayoutBundle.INSTANCE.directEditCss().showButtons()
+            : I_CmsLayoutBundle.INSTANCE.directEditCss().hideButtons());
+        getHandler().showToolbar(visible);
     }
 
     /**
      * Checks whether the direct edit buttons are visible.<p>
-     * 
-     * @return true if the direct edit buttons are visible 
+     *
+     * @return true if the direct edit buttons are visible
      */
     private boolean areEditButtonsVisible() {
 

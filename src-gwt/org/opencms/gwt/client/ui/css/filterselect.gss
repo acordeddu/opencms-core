@@ -1,0 +1,33 @@
+
+@external opencms-icon-triangle-right, opencms-icon-triangle-down ;
+
+.input-highTextBoxes .filterSelect input.filterInput.filterInput {
+    height: value("constants.css.inputInnerHeight");
+}
+
+.filterSelect input.filterInput.filterInput {
+    height: value("constants.css.inputInnerHeight");
+    margin-left: 5px;
+    width: calc(100% - 36px);
+    position: relative;
+    text-overflow: ellipsis;
+    cursor: pointer;
+    outline: none;
+}
+
+.filterSelect input.filterInput.filterInput:focus {
+    cursor: text;
+}
+
+.filterSelect input.filterInput.filterInput[disabled] {
+    pointer-events: none;
+}
+
+.filterSelect .opencms-icon-triangle-right::before {
+    content: "\e60c\e646";
+} 
+
+ .filterSelect .opencms-icon-triangle-down::before {
+    content: "\e60c\e647";
+ }
+

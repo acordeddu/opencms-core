@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -14,12 +14,12 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * Lesser General Public License for more details.
  *
- * For further information about Alkacon Software GmbH, please see the
- * company website: http://www.alkacon.com
+ * For further information about Alkacon Software GmbH & Co. KG, please see the
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -27,22 +27,24 @@
 
 package org.opencms.util;
 
+import org.opencms.test.OpenCmsTestRunner;
+
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Arrays;
 
-import junit.framework.TestCase;
+import org.junit.jupiter.api.Test;
 
 /**
  * @since 6.2.2
  */
-public class TestCmsFileUtil extends TestCase {
+public class TestCmsFileUtil extends OpenCmsTestRunner {
 
     /**
      * An input stream that provides 24 bytes of data in two chunks, the first of 16 bytes,
      * the second of 8 bytes.<p>
-     * 
+     *
      * This simulates the behavior of calls to <code>available()</code> and <code>read()</code> on
      * buffered file or zip input streams, where the size of the underlying data slightly exceeds the size
      * of the stream's internal buffers.<p>
@@ -54,7 +56,7 @@ public class TestCmsFileUtil extends TestCase {
         private ByteArrayInputStream m_secondChunk;
 
         /**
-         * Input stream implementation that exploits an error with {@link CmsFileUtil#readFully(InputStream)}.<p>  
+         * Input stream implementation that exploits an error with {@link CmsFileUtil#readFully(InputStream)}.<p>
          */
         TestInputStream() {
 
@@ -64,8 +66,8 @@ public class TestCmsFileUtil extends TestCase {
             Arrays.fill(first, (byte)1);
             Arrays.fill(second, (byte)2);
 
-            this.m_firstChunk = new ByteArrayInputStream(first);
-            this.m_secondChunk = new ByteArrayInputStream(second);
+            m_firstChunk = new ByteArrayInputStream(first);
+            m_secondChunk = new ByteArrayInputStream(second);
         }
 
         /**
@@ -95,7 +97,7 @@ public class TestCmsFileUtil extends TestCase {
 
         /**
          * Returns <code>true</code> if this stream was closed.<p>
-         * 
+         *
          * @return <code>true</code> if this stream was closed
          */
         public boolean isClosed() {
@@ -137,10 +139,11 @@ public class TestCmsFileUtil extends TestCase {
 
     /**
      * Test the behavior of {@link CmsFileUtil#readFully(InputStream)}
-     * when the read takes more than one iteration to complete.<p>  
-     *  
+     * when the read takes more than one iteration to complete.<p>
+     *
      * @throws IOException in case the test fails
      */
+    @Test
     public void testMultiPassReadFully() throws IOException {
 
         // this test is written especially to exploit an array bounds bug (bug 1131)
@@ -148,17 +151,17 @@ public class TestCmsFileUtil extends TestCase {
         // a value greater than the second call to available(), an IndexOutOfBoundsException is thrown.
         TestInputStream is = new TestInputStream();
         byte[] data = CmsFileUtil.readFully(is);
-        assertNotNull("new byte array returned by readFully", data);
+        assertNotNull(data, "new byte array returned by readFully");
 
         // test that all the data from both chunks of the input stream was read correctly.
-        assertEquals("all data returned", 24, data.length);
+        assertEquals(24, data.length, "all data returned");
         for (int i = 0; i < 16; ++i) {
-            assertEquals("first chunk data[" + i + "] has correct value", 1, data[i]);
+            assertEquals(1, data[i], "first chunk data[" + i + "] has correct value");
         }
         for (int i = 16; i < 24; ++i) {
-            assertEquals("second chunk data[" + i + "] has correct value", 2, data[i]);
+            assertEquals(2, data[i], "second chunk data[" + i + "] has correct value");
         }
 
-        assertTrue("input stream was closed", is.isClosed());
+        assertTrue(is.isClosed(), "input stream was closed");
     }
 }

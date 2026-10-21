@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -14,12 +14,12 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * Lesser General Public License for more details.
  *
- * For further information about Alkacon Software GmbH, please see the
- * company website: http://www.alkacon.com
+ * For further information about Alkacon Software GmbH & Co. KG, please see the
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -73,7 +73,7 @@ import org.apache.commons.logging.Log;
 
 /**
  * Generic (ANSI-SQL) database server implementation of the history driver methods.<p>
- * 
+ *
  * @since 6.9.1
  */
 public class CmsHistoryDriver implements I_CmsDriver, I_CmsHistoryDriver {
@@ -93,7 +93,8 @@ public class CmsHistoryDriver implements I_CmsDriver, I_CmsHistoryDriver {
     public CmsPropertyDefinition createPropertyDefinition(
         CmsDbContext dbc,
         String name,
-        CmsPropertyDefinition.CmsPropertyType type) throws CmsDataAccessException {
+        CmsPropertyDefinition.CmsPropertyType type)
+    throws CmsDataAccessException {
 
         Connection conn = null;
         PreparedStatement stmt = null;
@@ -106,9 +107,9 @@ public class CmsHistoryDriver implements I_CmsDriver, I_CmsHistoryDriver {
             stmt.setInt(3, type.getMode());
             stmt.executeUpdate();
         } catch (SQLException e) {
-            throw new CmsDbSqlException(Messages.get().container(
-                Messages.ERR_GENERIC_SQL_1,
-                CmsDbSqlException.getErrorQuery(stmt)), e);
+            throw new CmsDbSqlException(
+                Messages.get().container(Messages.ERR_GENERIC_SQL_1, CmsDbSqlException.getErrorQuery(stmt)),
+                e);
 
         } finally {
             m_sqlManager.closeAll(dbc, conn, stmt, null);
@@ -135,8 +136,10 @@ public class CmsHistoryDriver implements I_CmsDriver, I_CmsHistoryDriver {
             stmt = m_sqlManager.getPreparedStatement(conn, "C_STRUCTURE_HISTORY_MAXVER");
             stmt.setString(1, resource.getStructureId().toString());
             res = stmt.executeQuery();
+            boolean noHistoryStructure = false;
             if (res.next()) {
                 maxVersion = res.getInt(1);
+                noHistoryStructure |= res.wasNull();
                 while (res.next()) {
                     // do nothing only move through all rows because of mssql odbc driver
                 }
@@ -172,56 +175,60 @@ public class CmsHistoryDriver implements I_CmsDriver, I_CmsHistoryDriver {
                     }
                 }
             }
-
-            if ((maxVersion - versionsToKeep) <= 0) {
-                // nothing to delete
-                internalCleanup(dbc, resource);
-                return 0;
-            }
-
+            int structureVersions = 0;
             // get the minimal structure publish tag to keep for this sibling
-            int minStrPublishTagToKeep = -1;
             conn = m_sqlManager.getConnection(dbc);
-            stmt = m_sqlManager.getPreparedStatement(conn, "C_HISTORY_READ_MAXTAG_FOR_VERSION");
-            stmt.setString(1, resource.getStructureId().toString());
-            stmt.setInt(2, (1 + maxVersion) - versionsToKeep);
-            res = stmt.executeQuery();
-            if (res.next()) {
-                minStrPublishTagToKeep = res.getInt(1);
-                while (res.next()) {
-                    // do nothing only move through all rows because of mssql odbc driver
+            if (!noHistoryStructure) {
+                if ((versionsToKeep == -1) || ((maxVersion - versionsToKeep) <= 0)) {
+                    // nothing to delete
+                    internalCleanup(dbc, resource);
+                    return 0;
                 }
-            } else {
-                // make sure the statement and the result is closed
+
+                // get the minimal structure publish tag to keep for this sibling
+                int minStrPublishTagToKeep = -1;
+
+                stmt = m_sqlManager.getPreparedStatement(conn, "C_HISTORY_READ_MAXTAG_FOR_VERSION");
+                stmt.setString(1, resource.getStructureId().toString());
+                stmt.setInt(2, (1 + maxVersion) - versionsToKeep);
+                res = stmt.executeQuery();
+                if (res.next()) {
+                    minStrPublishTagToKeep = res.getInt(1);
+                    while (res.next()) {
+                        // do nothing only move through all rows because of mssql odbc driver
+                    }
+                } else {
+                    // make sure the statement and the result is closed
+                    m_sqlManager.closeAll(dbc, conn, stmt, res);
+                    // nothing to delete
+                    internalCleanup(dbc, resource);
+                    return 0;
+                }
                 m_sqlManager.closeAll(dbc, conn, stmt, res);
-                // nothing to delete
-                internalCleanup(dbc, resource);
-                return 0;
+                if (minStrPublishTagToKeep < 1) {
+                    // nothing to delete
+                    internalCleanup(dbc, resource);
+                    return 0;
+                }
+                minStrPublishTagToKeep++;
+
+                // delete the properties
+                conn = m_sqlManager.getConnection(dbc);
+                stmt = m_sqlManager.getPreparedStatement(conn, "C_PROPERTIES_HISTORY_DELETE");
+                stmt.setString(1, resource.getStructureId().toString());
+                stmt.setInt(2, minStrPublishTagToKeep);
+                stmt.executeUpdate();
+                m_sqlManager.closeAll(dbc, null, stmt, null);
+
+                // delete the structure entries
+                stmt = m_sqlManager.getPreparedStatement(conn, "C_STRUCTURE_HISTORY_DELETE");
+                stmt.setString(1, resource.getStructureId().toString());
+                stmt.setInt(2, minStrPublishTagToKeep);
+                structureVersions = stmt.executeUpdate();
+                m_sqlManager.closeAll(dbc, null, stmt, null);
             }
-            m_sqlManager.closeAll(dbc, conn, stmt, res);
-            if (minStrPublishTagToKeep < 1) {
-                // nothing to delete
-                internalCleanup(dbc, resource);
-                return 0;
-            }
-            minStrPublishTagToKeep++;
 
-            // delete the properties
-            conn = m_sqlManager.getConnection(dbc);
-            stmt = m_sqlManager.getPreparedStatement(conn, "C_PROPERTIES_HISTORY_DELETE");
-            stmt.setString(1, resource.getStructureId().toString());
-            stmt.setInt(2, minStrPublishTagToKeep);
-            stmt.executeUpdate();
-            m_sqlManager.closeAll(dbc, null, stmt, null);
-
-            // delete the structure entries
-            stmt = m_sqlManager.getPreparedStatement(conn, "C_STRUCTURE_HISTORY_DELETE");
-            stmt.setString(1, resource.getStructureId().toString());
-            stmt.setInt(2, minStrPublishTagToKeep);
-            int structureVersions = stmt.executeUpdate();
-            m_sqlManager.closeAll(dbc, null, stmt, null);
-
-            // get the minimal resource publish tag to keep, 
+            // get the minimal resource publish tag to keep,
             // all entries with publish tag less than this will be deleted
             int minResPublishTagToKeep = -1;
             stmt = m_sqlManager.getPreparedStatement(conn, "C_HISTORY_READ_MIN_USED_TAG");
@@ -231,19 +238,13 @@ public class CmsHistoryDriver implements I_CmsDriver, I_CmsHistoryDriver {
                 minResPublishTagToKeep = res.getInt(1);
                 if (res.wasNull()) {
                     // the database will return a row with a single NULL column if there are no rows at all for the given
-                    // resource id. This means that we want to clean up all resource history and content history entries 
+                    // resource id. This means that we want to clean up all resource history and content history entries
                     // for this resource id, and we achieve this by comparing their publish tag with the maximum integer.
                     minResPublishTagToKeep = Integer.MAX_VALUE;
                 }
                 while (res.next()) {
                     // do nothing only move through all rows because of mssql odbc driver
                 }
-            } else {
-                // make sure the statement and the result is closed
-                m_sqlManager.closeAll(dbc, conn, stmt, res);
-                // nothing to delete
-                internalCleanup(dbc, resource);
-                return structureVersions;
             }
             m_sqlManager.closeAll(dbc, conn, stmt, res);
 
@@ -255,20 +256,22 @@ public class CmsHistoryDriver implements I_CmsDriver, I_CmsHistoryDriver {
             int resourceVersions = stmt.executeUpdate();
             m_sqlManager.closeAll(dbc, null, stmt, null);
 
-            // delete the content entries
-            stmt = m_sqlManager.getPreparedStatement(conn, "C_CONTENT_HISTORY_DELETE");
-            stmt.setString(1, resource.getResourceId().toString());
-            stmt.setInt(2, minResPublishTagToKeep);
-            stmt.executeUpdate();
-
-            // make sure the statement and the result is closed
             m_sqlManager.closeAll(dbc, conn, stmt, res);
+            conn = null;
+            stmt = null;
+            res = null;
+
+            // delete the content entries
+            m_driverManager.getVfsDriver(dbc).deleteHistoryContent(
+                dbc,
+                resource.getResourceId(),
+                minResPublishTagToKeep);
             internalCleanup(dbc, resource);
             return Math.max(structureVersions, resourceVersions);
         } catch (SQLException e) {
-            throw new CmsDbSqlException(Messages.get().container(
-                Messages.ERR_GENERIC_SQL_1,
-                CmsDbSqlException.getErrorQuery(stmt)), e);
+            throw new CmsDbSqlException(
+                Messages.get().container(Messages.ERR_GENERIC_SQL_1, CmsDbSqlException.getErrorQuery(stmt)),
+                e);
         } finally {
             m_sqlManager.closeAll(dbc, conn, stmt, res);
         }
@@ -277,7 +280,8 @@ public class CmsHistoryDriver implements I_CmsDriver, I_CmsHistoryDriver {
     /**
      * @see org.opencms.db.I_CmsHistoryDriver#deletePropertyDefinition(org.opencms.db.CmsDbContext, org.opencms.file.CmsPropertyDefinition)
      */
-    public void deletePropertyDefinition(CmsDbContext dbc, CmsPropertyDefinition metadef) throws CmsDataAccessException {
+    public void deletePropertyDefinition(CmsDbContext dbc, CmsPropertyDefinition metadef)
+    throws CmsDataAccessException {
 
         Connection conn = null;
         PreparedStatement stmt = null;
@@ -286,9 +290,8 @@ public class CmsHistoryDriver implements I_CmsDriver, I_CmsHistoryDriver {
             if ((internalCountProperties(dbc, metadef, CmsProject.ONLINE_PROJECT_ID) != 0)
                 || (internalCountProperties(dbc, metadef, CmsUUID.getOpenCmsUUID()) != 0)) { // HACK: to get an offline project
 
-                throw new CmsDbConsistencyException(Messages.get().container(
-                    Messages.ERR_ERROR_DELETING_PROPERTYDEF_1,
-                    metadef.getName()));
+                throw new CmsDbConsistencyException(
+                    Messages.get().container(Messages.ERR_ERROR_DELETING_PROPERTYDEF_1, metadef.getName()));
             }
 
             // delete the historical property definition
@@ -297,9 +300,9 @@ public class CmsHistoryDriver implements I_CmsDriver, I_CmsHistoryDriver {
             stmt.setString(1, metadef.getId().toString());
             stmt.executeUpdate();
         } catch (SQLException e) {
-            throw new CmsDbSqlException(Messages.get().container(
-                Messages.ERR_GENERIC_SQL_1,
-                CmsDbSqlException.getErrorQuery(stmt)), e);
+            throw new CmsDbSqlException(
+                Messages.get().container(Messages.ERR_GENERIC_SQL_1, CmsDbSqlException.getErrorQuery(stmt)),
+                e);
         } finally {
             m_sqlManager.closeAll(dbc, conn, stmt, null);
         }
@@ -340,9 +343,9 @@ public class CmsHistoryDriver implements I_CmsDriver, I_CmsHistoryDriver {
                 tmpEntrieis.put(structureId, Integer.valueOf(version));
             }
         } catch (SQLException e) {
-            throw new CmsDbSqlException(Messages.get().container(
-                Messages.ERR_GENERIC_SQL_1,
-                CmsDbSqlException.getErrorQuery(stmt)), e);
+            throw new CmsDbSqlException(
+                Messages.get().container(Messages.ERR_GENERIC_SQL_1, CmsDbSqlException.getErrorQuery(stmt)),
+                e);
         } finally {
             m_sqlManager.closeAll(dbc, conn, stmt, res);
         }
@@ -376,9 +379,9 @@ public class CmsHistoryDriver implements I_CmsDriver, I_CmsHistoryDriver {
                 tmpEntrieis.put(structureId, Integer.valueOf(version));
             }
         } catch (SQLException e) {
-            throw new CmsDbSqlException(Messages.get().container(
-                Messages.ERR_GENERIC_SQL_1,
-                CmsDbSqlException.getErrorQuery(stmt)), e);
+            throw new CmsDbSqlException(
+                Messages.get().container(Messages.ERR_GENERIC_SQL_1, CmsDbSqlException.getErrorQuery(stmt)),
+                e);
         } finally {
             m_sqlManager.closeAll(dbc, conn, stmt, res);
         }
@@ -403,7 +406,7 @@ public class CmsHistoryDriver implements I_CmsDriver, I_CmsHistoryDriver {
     public void init(
         CmsDbContext dbc,
         CmsConfigurationManager configurationManager,
-        List successiveDrivers,
+        List<String> successiveDrivers,
         CmsDriverManager driverManager) {
 
         CmsParameterConfiguration configuration = configurationManager.getConfiguration();
@@ -435,9 +438,10 @@ public class CmsHistoryDriver implements I_CmsDriver, I_CmsHistoryDriver {
 
         if ((successiveDrivers != null) && !successiveDrivers.isEmpty()) {
             if (LOG.isWarnEnabled()) {
-                LOG.warn(Messages.get().getBundle().key(
-                    Messages.LOG_SUCCESSIVE_DRIVERS_UNSUPPORTED_1,
-                    getClass().getName()));
+                LOG.warn(
+                    Messages.get().getBundle().key(
+                        Messages.LOG_SUCCESSIVE_DRIVERS_UNSUPPORTED_1,
+                        getClass().getName()));
             }
         }
     }
@@ -453,10 +457,11 @@ public class CmsHistoryDriver implements I_CmsDriver, I_CmsHistoryDriver {
     /**
      * @see org.opencms.db.I_CmsHistoryDriver#readAllAvailableVersions(CmsDbContext, CmsUUID)
      */
-    public List readAllAvailableVersions(CmsDbContext dbc, CmsUUID structureId) throws CmsDataAccessException {
+    public List<I_CmsHistoryResource> readAllAvailableVersions(CmsDbContext dbc, CmsUUID structureId)
+    throws CmsDataAccessException {
 
         ResultSet res = null;
-        List result = new ArrayList();
+        List<I_CmsHistoryResource> result = new ArrayList<I_CmsHistoryResource>();
         PreparedStatement stmt = null;
         Connection conn = null;
 
@@ -465,7 +470,7 @@ public class CmsHistoryDriver implements I_CmsDriver, I_CmsHistoryDriver {
 
             // get all direct versions (where the structure entry has been written)
             // sorted from the NEWEST to the OLDEST version (publish tag descendant)
-            List historyResources = new ArrayList();
+            List<I_CmsHistoryResource> historyResources = new ArrayList<I_CmsHistoryResource>();
             stmt = m_sqlManager.getPreparedStatement(conn, "C_RESOURCES_HISTORY_READ_ALL_VERSIONS");
             stmt.setString(1, structureId.toString());
             res = stmt.executeQuery();
@@ -477,7 +482,7 @@ public class CmsHistoryDriver implements I_CmsDriver, I_CmsHistoryDriver {
             if (!historyResources.isEmpty()) {
                 // look for newer versions
                 // this is the NEWEST version, with the HIGHEST publish tag
-                I_CmsHistoryResource histRes = (I_CmsHistoryResource)historyResources.get(0);
+                I_CmsHistoryResource histRes = historyResources.get(0);
 
                 // look for later resource entries
                 stmt = m_sqlManager.getPreparedStatement(conn, "C_RESOURCES_HISTORY_READ_NEW_VERSIONS");
@@ -502,13 +507,13 @@ public class CmsHistoryDriver implements I_CmsDriver, I_CmsHistoryDriver {
             }
             // iterate from the NEWEST to the OLDEST versions (publish tag descendant)
             for (int i = 0; i < historyResources.size(); i++) {
-                I_CmsHistoryResource histRes = (I_CmsHistoryResource)historyResources.get(i);
+                I_CmsHistoryResource histRes = historyResources.get(i);
                 result.add(histRes);
                 if (i < (historyResources.size() - 1)) {
                     // this is one older direct version than histRes (histRes.getPublishTag() > histRes2.getPublishTag())
-                    I_CmsHistoryResource histRes2 = (I_CmsHistoryResource)historyResources.get(i + 1);
+                    I_CmsHistoryResource histRes2 = historyResources.get(i + 1);
 
-                    // look for resource changes in between of the direct versions in ascendent order                    
+                    // look for resource changes in between of the direct versions in ascendent order
                     stmt = m_sqlManager.getPreparedStatement(conn, "C_RESOURCES_HISTORY_READ_BTW_VERSIONS");
                     stmt.setString(1, histRes.getResourceId().toString());
                     stmt.setInt(2, histRes2.getPublishTag()); // lower limit
@@ -533,7 +538,7 @@ public class CmsHistoryDriver implements I_CmsDriver, I_CmsHistoryDriver {
             }
             if (!result.isEmpty()) {
                 // get the oldest version
-                I_CmsHistoryResource histRes = (I_CmsHistoryResource)result.get(result.size() - 1);
+                I_CmsHistoryResource histRes = result.get(result.size() - 1);
 
                 if (histRes.getVersion() > 1) {
                     // look for older resource versions, in descendant order
@@ -567,9 +572,9 @@ public class CmsHistoryDriver implements I_CmsDriver, I_CmsHistoryDriver {
                 }
             }
         } catch (SQLException e) {
-            throw new CmsDbSqlException(Messages.get().container(
-                Messages.ERR_GENERIC_SQL_1,
-                CmsDbSqlException.getErrorQuery(stmt)), e);
+            throw new CmsDbSqlException(
+                Messages.get().container(Messages.ERR_GENERIC_SQL_1, CmsDbSqlException.getErrorQuery(stmt)),
+                e);
         } finally {
             m_sqlManager.closeAll(dbc, conn, stmt, res);
         }
@@ -582,33 +587,7 @@ public class CmsHistoryDriver implements I_CmsDriver, I_CmsHistoryDriver {
      */
     public byte[] readContent(CmsDbContext dbc, CmsUUID resourceId, int publishTag) throws CmsDataAccessException {
 
-        Connection conn = null;
-        PreparedStatement stmt = null;
-        ResultSet res = null;
-        byte[] content = null;
-
-        try {
-            conn = m_sqlManager.getConnection(dbc);
-            stmt = m_sqlManager.getPreparedStatement(conn, "C_HISTORY_READ_CONTENT");
-            stmt.setString(1, resourceId.toString());
-            stmt.setInt(2, publishTag);
-            stmt.setInt(3, publishTag);
-            res = stmt.executeQuery();
-
-            if (res.next()) {
-                content = m_sqlManager.getBytes(res, m_sqlManager.readQuery("C_RESOURCES_FILE_CONTENT"));
-                while (res.next()) {
-                    // do nothing only move through all rows because of mssql odbc driver
-                }
-            }
-        } catch (SQLException e) {
-            throw new CmsDbSqlException(Messages.get().container(
-                Messages.ERR_GENERIC_SQL_1,
-                CmsDbSqlException.getErrorQuery(stmt)), e);
-        } finally {
-            m_sqlManager.closeAll(dbc, conn, stmt, res);
-        }
-        return content;
+        return m_driverManager.getVfsDriver(dbc).readHistoryContent(dbc, resourceId, publishTag);
     }
 
     /**
@@ -640,9 +619,9 @@ public class CmsHistoryDriver implements I_CmsDriver, I_CmsHistoryDriver {
                 tmpHistRes.add(internalCreateResource(res));
             }
         } catch (SQLException e) {
-            throw new CmsDbSqlException(Messages.get().container(
-                Messages.ERR_GENERIC_SQL_1,
-                CmsDbSqlException.getErrorQuery(stmt)), e);
+            throw new CmsDbSqlException(
+                Messages.get().container(Messages.ERR_GENERIC_SQL_1, CmsDbSqlException.getErrorQuery(stmt)),
+                e);
         } finally {
             m_sqlManager.closeAll(dbc, conn, stmt, res);
         }
@@ -681,9 +660,9 @@ public class CmsHistoryDriver implements I_CmsDriver, I_CmsHistoryDriver {
                 tmpHistRes.add(internalCreateResource(res));
             }
         } catch (SQLException e) {
-            throw new CmsDbSqlException(Messages.get().container(
-                Messages.ERR_GENERIC_SQL_1,
-                CmsDbSqlException.getErrorQuery(stmt)), e);
+            throw new CmsDbSqlException(
+                Messages.get().container(Messages.ERR_GENERIC_SQL_1, CmsDbSqlException.getErrorQuery(stmt)),
+                e);
         } finally {
             m_sqlManager.closeAll(dbc, conn, stmt, res);
         }
@@ -695,48 +674,6 @@ public class CmsHistoryDriver implements I_CmsDriver, I_CmsHistoryDriver {
             result.add(histRes);
         }
         return result;
-    }
-
-    /**
-     * @see org.opencms.db.I_CmsHistoryDriver#readFile(CmsDbContext, CmsUUID, int)
-     * 
-     * @deprecated use {@link #readResource(CmsDbContext, CmsUUID, int)} instead
-     *             but notice that the <code>publishTag != version</code>
-     */
-    public I_CmsHistoryResource readFile(CmsDbContext dbc, CmsUUID structureId, int tagId)
-    throws CmsDataAccessException {
-
-        I_CmsHistoryResource file = null;
-        PreparedStatement stmt = null;
-        ResultSet res = null;
-        Connection conn = null;
-
-        try {
-            conn = m_sqlManager.getConnection(dbc);
-            stmt = m_sqlManager.getPreparedStatement(conn, "C_FILES_READ_HISTORY_BYID");
-            stmt.setString(1, structureId.toString());
-            stmt.setInt(2, tagId);
-            res = stmt.executeQuery();
-            if (res.next()) {
-                file = internalCreateResource(res);
-                while (res.next()) {
-                    // do nothing only move through all rows because of mssql odbc driver
-                }
-            } else {
-                throw new CmsVfsResourceNotFoundException(Messages.get().container(
-                    Messages.ERR_HISTORY_FILE_NOT_FOUND_1,
-                    structureId));
-            }
-        } catch (SQLException e) {
-            throw new CmsDbSqlException(Messages.get().container(
-                Messages.ERR_GENERIC_SQL_1,
-                CmsDbSqlException.getErrorQuery(stmt)), e);
-        } finally {
-            m_sqlManager.closeAll(dbc, conn, stmt, res);
-        }
-
-        ((CmsFile)file).setContents(readContent(dbc, file.getResourceId(), file.getPublishTag()));
-        return file;
     }
 
     /**
@@ -764,9 +701,9 @@ public class CmsHistoryDriver implements I_CmsDriver, I_CmsHistoryDriver {
                 lastVersion = 0;
             }
         } catch (SQLException e) {
-            throw new CmsDbSqlException(Messages.get().container(
-                Messages.ERR_GENERIC_SQL_1,
-                CmsDbSqlException.getErrorQuery(stmt)), e);
+            throw new CmsDbSqlException(
+                Messages.get().container(Messages.ERR_GENERIC_SQL_1, CmsDbSqlException.getErrorQuery(stmt)),
+                e);
         } finally {
             m_sqlManager.closeAll(dbc, conn, stmt, res);
         }
@@ -797,9 +734,9 @@ public class CmsHistoryDriver implements I_CmsDriver, I_CmsHistoryDriver {
                 }
             }
         } catch (SQLException e) {
-            throw new CmsDbSqlException(Messages.get().container(
-                Messages.ERR_GENERIC_SQL_1,
-                CmsDbSqlException.getErrorQuery(stmt)), e);
+            throw new CmsDbSqlException(
+                Messages.get().container(Messages.ERR_GENERIC_SQL_1, CmsDbSqlException.getErrorQuery(stmt)),
+                e);
         } finally {
             m_sqlManager.closeAll(dbc, conn, stmt, res);
         }
@@ -819,7 +756,7 @@ public class CmsHistoryDriver implements I_CmsDriver, I_CmsHistoryDriver {
         int resourcePublishTag = 1;
 
         try {
-            // get the max publish tag from project history 
+            // get the max publish tag from project history
             conn = m_sqlManager.getConnection(dbc);
             stmt = m_sqlManager.getPreparedStatement(conn, "C_PROJECTS_HISTORY_MAXTAG");
             res = stmt.executeQuery();
@@ -837,7 +774,7 @@ public class CmsHistoryDriver implements I_CmsDriver, I_CmsHistoryDriver {
         }
 
         try {
-            // get the max publish tag from resource history 
+            // get the max publish tag from resource history
             stmt = m_sqlManager.getPreparedStatement(conn, "C_RESOURCES_HISTORY_MAXTAG");
             res = stmt.executeQuery();
 
@@ -853,13 +790,13 @@ public class CmsHistoryDriver implements I_CmsDriver, I_CmsHistoryDriver {
             m_sqlManager.closeAll(dbc, null, stmt, res);
         }
 
-        // keep the biggest 
+        // keep the biggest
         if (resourcePublishTag > projectPublishTag) {
             projectPublishTag = resourcePublishTag;
         }
 
         try {
-            // get the max publish tag from contents 
+            // get the max publish tag from contents
             stmt = m_sqlManager.getPreparedStatement(conn, "C_CONTENT_PUBLISH_MAXTAG");
             res = stmt.executeQuery();
 
@@ -875,7 +812,7 @@ public class CmsHistoryDriver implements I_CmsDriver, I_CmsHistoryDriver {
             m_sqlManager.closeAll(dbc, conn, stmt, res);
         }
 
-        // return the biggest 
+        // return the biggest
         if (resourcePublishTag > projectPublishTag) {
             projectPublishTag = resourcePublishTag;
         }
@@ -900,7 +837,8 @@ public class CmsHistoryDriver implements I_CmsDriver, I_CmsHistoryDriver {
             res = stmt.executeQuery();
             if (res.next()) {
                 String userName = res.getString(m_sqlManager.readQuery("C_PRINCIPALS_HISTORY_NAME"));
-                String ou = CmsOrganizationalUnit.removeLeadingSeparator(res.getString(m_sqlManager.readQuery("C_PRINCIPALS_HISTORY_OU")));
+                String ou = CmsOrganizationalUnit.removeLeadingSeparator(
+                    res.getString(m_sqlManager.readQuery("C_PRINCIPALS_HISTORY_OU")));
                 historyPrincipal = new CmsHistoryPrincipal(
                     principalId,
                     ou + userName,
@@ -913,14 +851,13 @@ public class CmsHistoryDriver implements I_CmsDriver, I_CmsHistoryDriver {
                     // do nothing only move through all rows because of mssql odbc driver
                 }
             } else {
-                throw new CmsDbEntryNotFoundException(Messages.get().container(
-                    Messages.ERR_HISTORY_PRINCIPAL_NOT_FOUND_1,
-                    principalId));
+                throw new CmsDbEntryNotFoundException(
+                    Messages.get().container(Messages.ERR_HISTORY_PRINCIPAL_NOT_FOUND_1, principalId));
             }
         } catch (SQLException e) {
-            throw new CmsDbSqlException(Messages.get().container(
-                Messages.ERR_GENERIC_SQL_1,
-                CmsDbSqlException.getErrorQuery(stmt)), e);
+            throw new CmsDbSqlException(
+                Messages.get().container(Messages.ERR_GENERIC_SQL_1, CmsDbSqlException.getErrorQuery(stmt)),
+                e);
         } finally {
             m_sqlManager.closeAll(dbc, conn, stmt, res);
         }
@@ -953,14 +890,13 @@ public class CmsHistoryDriver implements I_CmsDriver, I_CmsHistoryDriver {
                     // do nothing only move through all rows because of mssql odbc driver
                 }
             } else {
-                throw new CmsDbEntryNotFoundException(Messages.get().container(
-                    Messages.ERR_NO_HISTORY_PROJECT_WITH_ID_1,
-                    projectId));
+                throw new CmsDbEntryNotFoundException(
+                    Messages.get().container(Messages.ERR_NO_HISTORY_PROJECT_WITH_ID_1, projectId));
             }
         } catch (SQLException e) {
-            throw new CmsDbSqlException(Messages.get().container(
-                Messages.ERR_GENERIC_SQL_1,
-                CmsDbSqlException.getErrorQuery(stmt)), e);
+            throw new CmsDbSqlException(
+                Messages.get().container(Messages.ERR_GENERIC_SQL_1, CmsDbSqlException.getErrorQuery(stmt)),
+                e);
         } finally {
             m_sqlManager.closeAll(dbc, conn, stmt, res);
         }
@@ -993,14 +929,15 @@ public class CmsHistoryDriver implements I_CmsDriver, I_CmsHistoryDriver {
                     // do nothing only move through all rows because of mssql odbc driver
                 }
             } else {
-                throw new CmsDbEntryNotFoundException(Messages.get().container(
-                    Messages.ERR_NO_HISTORY_PROJECT_WITH_TAG_ID_1,
-                    new Integer(publishTag)));
+                throw new CmsDbEntryNotFoundException(
+                    Messages.get().container(
+                        Messages.ERR_NO_HISTORY_PROJECT_WITH_TAG_ID_1,
+                        Integer.valueOf(publishTag)));
             }
         } catch (SQLException e) {
-            throw new CmsDbSqlException(Messages.get().container(
-                Messages.ERR_GENERIC_SQL_1,
-                CmsDbSqlException.getErrorQuery(stmt)), e);
+            throw new CmsDbSqlException(
+                Messages.get().container(Messages.ERR_GENERIC_SQL_1, CmsDbSqlException.getErrorQuery(stmt)),
+                e);
         } finally {
             m_sqlManager.closeAll(dbc, conn, stmt, res);
         }
@@ -1030,9 +967,9 @@ public class CmsHistoryDriver implements I_CmsDriver, I_CmsHistoryDriver {
                 projectResources.add(res.getString("RESOURCE_PATH"));
             }
         } catch (SQLException e) {
-            throw new CmsDbSqlException(Messages.get().container(
-                Messages.ERR_GENERIC_SQL_1,
-                CmsDbSqlException.getErrorQuery(stmt)), e);
+            throw new CmsDbSqlException(
+                Messages.get().container(Messages.ERR_GENERIC_SQL_1, CmsDbSqlException.getErrorQuery(stmt)),
+                e);
         } finally {
             m_sqlManager.closeAll(dbc, conn, stmt, res);
         }
@@ -1068,9 +1005,9 @@ public class CmsHistoryDriver implements I_CmsDriver, I_CmsHistoryDriver {
                 i++;
             }
         } catch (SQLException e) {
-            throw new CmsDbSqlException(Messages.get().container(
-                Messages.ERR_GENERIC_SQL_1,
-                CmsDbSqlException.getErrorQuery(stmt)), e);
+            throw new CmsDbSqlException(
+                Messages.get().container(Messages.ERR_GENERIC_SQL_1, CmsDbSqlException.getErrorQuery(stmt)),
+                e);
         } finally {
             m_sqlManager.closeAll(dbc, conn, stmt, res);
         }
@@ -1084,16 +1021,17 @@ public class CmsHistoryDriver implements I_CmsDriver, I_CmsHistoryDriver {
         return projects;
     }
 
-    /** 
+    /**
      * @see org.opencms.db.I_CmsHistoryDriver#readProperties(org.opencms.db.CmsDbContext, org.opencms.file.history.I_CmsHistoryResource)
      */
-    public List readProperties(CmsDbContext dbc, I_CmsHistoryResource resource) throws CmsDataAccessException {
+    public List<CmsProperty> readProperties(CmsDbContext dbc, I_CmsHistoryResource resource)
+    throws CmsDataAccessException {
 
         ResultSet res = null;
         PreparedStatement stmt = null;
         Connection conn = null;
 
-        Map propertyMap = new HashMap();
+        Map<String, CmsProperty> propertyMap = new HashMap<String, CmsProperty>();
 
         try {
             conn = m_sqlManager.getConnection(dbc);
@@ -1146,14 +1084,14 @@ public class CmsHistoryDriver implements I_CmsDriver, I_CmsHistoryDriver {
                 m_sqlManager.closeAll(dbc, null, stmt, res);
             }
         } catch (SQLException e) {
-            throw new CmsDbSqlException(Messages.get().container(
-                Messages.ERR_GENERIC_SQL_1,
-                CmsDbSqlException.getErrorQuery(stmt)), e);
+            throw new CmsDbSqlException(
+                Messages.get().container(Messages.ERR_GENERIC_SQL_1, CmsDbSqlException.getErrorQuery(stmt)),
+                e);
         } finally {
             m_sqlManager.closeAll(dbc, conn, stmt, res);
         }
 
-        return new ArrayList(propertyMap.values());
+        return new ArrayList<CmsProperty>(propertyMap.values());
     }
 
     /**
@@ -1176,19 +1114,19 @@ public class CmsHistoryDriver implements I_CmsDriver, I_CmsHistoryDriver {
                 propDef = new CmsPropertyDefinition(
                     new CmsUUID(res.getString(m_sqlManager.readQuery("C_PROPERTYDEF_ID"))),
                     res.getString(m_sqlManager.readQuery("C_PROPERTYDEF_NAME")),
-                    CmsPropertyDefinition.CmsPropertyType.valueOf(res.getInt(m_sqlManager.readQuery("C_PROPERTYDEF_TYPE"))));
+                    CmsPropertyDefinition.CmsPropertyType.valueOf(
+                        res.getInt(m_sqlManager.readQuery("C_PROPERTYDEF_TYPE"))));
                 while (res.next()) {
                     // do nothing only move through all rows because of mssql odbc driver
                 }
             } else {
-                throw new CmsDbEntryNotFoundException(Messages.get().container(
-                    Messages.ERR_NO_PROPERTYDEF_WITH_NAME_1,
-                    name));
+                throw new CmsDbEntryNotFoundException(
+                    Messages.get().container(Messages.ERR_NO_PROPERTYDEF_WITH_NAME_1, name));
             }
         } catch (SQLException e) {
-            throw new CmsDbSqlException(Messages.get().container(
-                Messages.ERR_GENERIC_SQL_1,
-                CmsDbSqlException.getErrorQuery(stmt)), e);
+            throw new CmsDbSqlException(
+                Messages.get().container(Messages.ERR_GENERIC_SQL_1, CmsDbSqlException.getErrorQuery(stmt)),
+                e);
         } finally {
             m_sqlManager.closeAll(dbc, conn, stmt, res);
         }
@@ -1218,9 +1156,9 @@ public class CmsHistoryDriver implements I_CmsDriver, I_CmsHistoryDriver {
                 }
             }
         } catch (SQLException e) {
-            throw new CmsDbSqlException(Messages.get().container(
-                Messages.ERR_GENERIC_SQL_1,
-                CmsDbSqlException.getErrorQuery(stmt)), e);
+            throw new CmsDbSqlException(
+                Messages.get().container(Messages.ERR_GENERIC_SQL_1, CmsDbSqlException.getErrorQuery(stmt)),
+                e);
         } finally {
             m_sqlManager.closeAll(dbc, conn, stmt, res);
         }
@@ -1250,14 +1188,13 @@ public class CmsHistoryDriver implements I_CmsDriver, I_CmsHistoryDriver {
                     // do nothing only move through all rows because of mssql odbc driver
                 }
             } else {
-                throw new CmsVfsResourceNotFoundException(Messages.get().container(
-                    Messages.ERR_HISTORY_FILE_NOT_FOUND_1,
-                    structureId));
+                throw new CmsVfsResourceNotFoundException(
+                    Messages.get().container(Messages.ERR_HISTORY_FILE_NOT_FOUND_1, structureId));
             }
         } catch (SQLException e) {
-            throw new CmsDbSqlException(Messages.get().container(
-                Messages.ERR_GENERIC_SQL_1,
-                CmsDbSqlException.getErrorQuery(stmt)), e);
+            throw new CmsDbSqlException(
+                Messages.get().container(Messages.ERR_GENERIC_SQL_1, CmsDbSqlException.getErrorQuery(stmt)),
+                e);
         } finally {
             m_sqlManager.closeAll(dbc, conn, stmt, res);
         }
@@ -1318,9 +1255,9 @@ public class CmsHistoryDriver implements I_CmsDriver, I_CmsHistoryDriver {
 
             stmt.executeUpdate();
         } catch (SQLException e) {
-            throw new CmsDbSqlException(Messages.get().container(
-                Messages.ERR_GENERIC_SQL_1,
-                CmsDbSqlException.getErrorQuery(stmt)), e);
+            throw new CmsDbSqlException(
+                Messages.get().container(Messages.ERR_GENERIC_SQL_1, CmsDbSqlException.getErrorQuery(stmt)),
+                e);
         } finally {
             m_sqlManager.closeAll(dbc, conn, stmt, null);
         }
@@ -1334,7 +1271,7 @@ public class CmsHistoryDriver implements I_CmsDriver, I_CmsHistoryDriver {
         CmsProject currentProject = dbc.currentProject();
         CmsUser currentUser = dbc.currentUser();
 
-        List projectresources = m_driverManager.getProjectDriver(dbc).readProjectResources(dbc, currentProject);
+        List<String> projectresources = m_driverManager.getProjectDriver(dbc).readProjectResources(dbc, currentProject);
 
         // write historical project to the database
         Connection conn = null;
@@ -1362,18 +1299,18 @@ public class CmsHistoryDriver implements I_CmsDriver, I_CmsHistoryDriver {
 
             // now write the projectresources
             stmt = m_sqlManager.getPreparedStatement(conn, "C_PROJECTRESOURCES_HISTORY_CREATE");
-            Iterator i = projectresources.iterator();
+            Iterator<String> i = projectresources.iterator();
             while (i.hasNext()) {
                 stmt.setInt(1, publishTag);
                 stmt.setString(2, currentProject.getUuid().toString());
-                stmt.setString(3, (String)i.next());
+                stmt.setString(3, i.next());
                 stmt.executeUpdate();
                 stmt.clearParameters();
             }
         } catch (SQLException e) {
-            throw new CmsDbSqlException(Messages.get().container(
-                Messages.ERR_GENERIC_SQL_1,
-                CmsDbSqlException.getErrorQuery(stmt)), e);
+            throw new CmsDbSqlException(
+                Messages.get().container(Messages.ERR_GENERIC_SQL_1, CmsDbSqlException.getErrorQuery(stmt)),
+                e);
         } finally {
             m_sqlManager.closeAll(dbc, conn, stmt, null);
         }
@@ -1402,9 +1339,9 @@ public class CmsHistoryDriver implements I_CmsDriver, I_CmsHistoryDriver {
                 propDefs.put(property, propDef);
             }
         } catch (CmsDataAccessException e) {
-            throw new CmsDbSqlException(Messages.get().container(
-                Messages.ERR_GENERIC_SQL_1,
-                CmsDbSqlException.getErrorQuery(stmt)), e);
+            throw new CmsDbSqlException(
+                Messages.get().container(Messages.ERR_GENERIC_SQL_1, CmsDbSqlException.getErrorQuery(stmt)),
+                e);
         } finally {
             m_sqlManager.closeAll(dbc, conn, stmt, null);
         }
@@ -1449,9 +1386,9 @@ public class CmsHistoryDriver implements I_CmsDriver, I_CmsHistoryDriver {
                 }
             }
         } catch (SQLException e) {
-            throw new CmsDbSqlException(Messages.get().container(
-                Messages.ERR_GENERIC_SQL_1,
-                CmsDbSqlException.getErrorQuery(stmt)), e);
+            throw new CmsDbSqlException(
+                Messages.get().container(Messages.ERR_GENERIC_SQL_1, CmsDbSqlException.getErrorQuery(stmt)),
+                e);
         } finally {
             m_sqlManager.closeAll(dbc, conn, stmt, null);
         }
@@ -1487,7 +1424,8 @@ public class CmsHistoryDriver implements I_CmsDriver, I_CmsHistoryDriver {
                                 true);
                         } else {
                             @SuppressWarnings("unchecked")
-                            Set<CmsUUID> changedAndDeleted = (Set<CmsUUID>)dbc.getAttribute(CmsDriverManager.KEY_CHANGED_AND_DELETED);
+                            Set<CmsUUID> changedAndDeleted = (Set<CmsUUID>)dbc.getAttribute(
+                                CmsDriverManager.KEY_CHANGED_AND_DELETED);
                             if ((changedAndDeleted == null) || !changedAndDeleted.contains(resource.getResourceId())) {
                                 // put the content definitively in the history if no sibling is left
                                 // (unless another sibling with status "changed" or "new" is published)
@@ -1560,9 +1498,9 @@ public class CmsHistoryDriver implements I_CmsDriver, I_CmsHistoryDriver {
             stmt.setInt(10, resource.getVersion());
             stmt.executeUpdate();
         } catch (SQLException e) {
-            throw new CmsDbSqlException(Messages.get().container(
-                Messages.ERR_GENERIC_SQL_1,
-                CmsDbSqlException.getErrorQuery(stmt)), e);
+            throw new CmsDbSqlException(
+                Messages.get().container(Messages.ERR_GENERIC_SQL_1, CmsDbSqlException.getErrorQuery(stmt)),
+                e);
         } finally {
             m_sqlManager.closeAll(dbc, conn, stmt, null);
         }
@@ -1572,23 +1510,24 @@ public class CmsHistoryDriver implements I_CmsDriver, I_CmsHistoryDriver {
 
     /**
      * Updates the property map for the given resource with the given property data.<p>
-     * 
+     *
      * @param propertyMap the map to update
      * @param resource the resource the properties belong to
      * @param propertyKey the property key
      * @param propertyValue the property value
      * @param mappingType the mapping type
-     * 
+     *
      * @throws CmsDbConsistencyException if the mapping type is wrong
      */
     protected void internalAddToPropMap(
-        Map propertyMap,
+        Map<String, CmsProperty> propertyMap,
         I_CmsHistoryResource resource,
         String propertyKey,
         String propertyValue,
-        int mappingType) throws CmsDbConsistencyException {
+        int mappingType)
+    throws CmsDbConsistencyException {
 
-        CmsProperty property = (CmsProperty)propertyMap.get(propertyKey);
+        CmsProperty property = propertyMap.get(propertyKey);
         if (property != null) {
             // there exists already a property for this key in the result
             switch (mappingType) {
@@ -1601,11 +1540,12 @@ public class CmsHistoryDriver implements I_CmsDriver, I_CmsHistoryDriver {
                     property.setResourceValue(propertyValue);
                     break;
                 default:
-                    throw new CmsDbConsistencyException(Messages.get().container(
-                        Messages.ERR_UNKNOWN_PROPERTY_VALUE_MAPPING_3,
-                        resource.getRootPath(),
-                        new Integer(mappingType),
-                        propertyKey));
+                    throw new CmsDbConsistencyException(
+                        Messages.get().container(
+                            Messages.ERR_UNKNOWN_PROPERTY_VALUE_MAPPING_3,
+                            resource.getRootPath(),
+                            Integer.valueOf(mappingType),
+                            propertyKey));
             }
         } else {
             // there doesn't exist a property for this key yet
@@ -1624,11 +1564,12 @@ public class CmsHistoryDriver implements I_CmsDriver, I_CmsHistoryDriver {
                     property.setResourceValue(propertyValue);
                     break;
                 default:
-                    throw new CmsDbConsistencyException(Messages.get().container(
-                        Messages.ERR_UNKNOWN_PROPERTY_VALUE_MAPPING_3,
-                        resource.getRootPath(),
-                        new Integer(mappingType),
-                        propertyKey));
+                    throw new CmsDbConsistencyException(
+                        Messages.get().container(
+                            Messages.ERR_UNKNOWN_PROPERTY_VALUE_MAPPING_3,
+                            resource.getRootPath(),
+                            Integer.valueOf(mappingType),
+                            propertyKey));
             }
             propertyMap.put(propertyKey, property);
         }
@@ -1636,10 +1577,10 @@ public class CmsHistoryDriver implements I_CmsDriver, I_CmsHistoryDriver {
 
     /**
      * Deletes all historical entries of subresources of a folder without any historical netry left.<p>
-     * 
+     *
      * @param dbc the current database context
      * @param resource the resource to check
-     * 
+     *
      * @throws CmsDataAccessException if something goes wrong
      */
     protected void internalCleanup(CmsDbContext dbc, I_CmsHistoryResource resource) throws CmsDataAccessException {
@@ -1657,7 +1598,7 @@ public class CmsHistoryDriver implements I_CmsDriver, I_CmsHistoryDriver {
         if (isFolderAndNoVersionLeft) {
             try {
                 conn = m_sqlManager.getConnection(dbc);
-                // get all direct subresources                    
+                // get all direct subresources
                 stmt = m_sqlManager.getPreparedStatement(conn, "C_STRUCTURE_HISTORY_READ_SUBRESOURCES");
                 stmt.setString(1, resource.getStructureId().toString());
                 res = stmt.executeQuery();
@@ -1667,9 +1608,9 @@ public class CmsHistoryDriver implements I_CmsDriver, I_CmsHistoryDriver {
                     tmpSubResources.put(structureId, Integer.valueOf(version));
                 }
             } catch (SQLException e) {
-                throw new CmsDbSqlException(Messages.get().container(
-                    Messages.ERR_GENERIC_SQL_1,
-                    CmsDbSqlException.getErrorQuery(stmt)), e);
+                throw new CmsDbSqlException(
+                    Messages.get().container(Messages.ERR_GENERIC_SQL_1, CmsDbSqlException.getErrorQuery(stmt)),
+                    e);
             } finally {
                 m_sqlManager.closeAll(dbc, conn, stmt, res);
             }
@@ -1683,11 +1624,11 @@ public class CmsHistoryDriver implements I_CmsDriver, I_CmsHistoryDriver {
 
     /**
      * Returns the amount of properties for a propertydefinition.<p>
-     * 
+     *
      * @param dbc the current database context
      * @param metadef the propertydefinition to test
      * @param projectId the ID of the current project
-     * 
+     *
      * @return the amount of properties for a propertydefinition
      * @throws CmsDataAccessException if something goes wrong
      */
@@ -1712,14 +1653,13 @@ public class CmsHistoryDriver implements I_CmsDriver, I_CmsHistoryDriver {
                     // do nothing only move through all rows because of mssql odbc driver
                 }
             } else {
-                throw new CmsDbConsistencyException(Messages.get().container(
-                    Messages.ERR_NO_PROPERTIES_FOR_PROPERTYDEF_1,
-                    metadef.getName()));
+                throw new CmsDbConsistencyException(
+                    Messages.get().container(Messages.ERR_NO_PROPERTIES_FOR_PROPERTYDEF_1, metadef.getName()));
             }
         } catch (SQLException e) {
-            throw new CmsDbSqlException(Messages.get().container(
-                Messages.ERR_GENERIC_SQL_1,
-                CmsDbSqlException.getErrorQuery(stmt)), e);
+            throw new CmsDbSqlException(
+                Messages.get().container(Messages.ERR_GENERIC_SQL_1, CmsDbSqlException.getErrorQuery(stmt)),
+                e);
         } finally {
             m_sqlManager.closeAll(dbc, conn, stmt, res);
         }
@@ -1730,14 +1670,15 @@ public class CmsHistoryDriver implements I_CmsDriver, I_CmsHistoryDriver {
      * Creates a historical project from the given result set and resources.<p>
      * @param res the resource set
      * @param resources the historical resources
-     * 
+     *
      * @return the historical project
-     *  
+     *
      * @throws SQLException if something goes wrong
      */
-    protected CmsHistoryProject internalCreateProject(ResultSet res, List resources) throws SQLException {
+    protected CmsHistoryProject internalCreateProject(ResultSet res, List<String> resources) throws SQLException {
 
-        String ou = CmsOrganizationalUnit.removeLeadingSeparator(res.getString(m_sqlManager.readQuery("C_PROJECTS_PROJECT_OU_0")));
+        String ou = CmsOrganizationalUnit.removeLeadingSeparator(
+            res.getString(m_sqlManager.readQuery("C_PROJECTS_PROJECT_OU_0")));
         CmsUUID publishedById = new CmsUUID(res.getString(m_sqlManager.readQuery("C_PROJECT_PUBLISHED_BY_0")));
         CmsUUID userId = new CmsUUID(res.getString(m_sqlManager.readQuery("C_PROJECTS_USER_ID_0")));
         return new CmsHistoryProject(
@@ -1757,11 +1698,11 @@ public class CmsHistoryDriver implements I_CmsDriver, I_CmsHistoryDriver {
 
     /**
      * Creates a valid {@link I_CmsHistoryResource} instance from a JDBC ResultSet.<p>
-     * 
+     *
      * @param res the JDBC result set
-     * 
+     *
      * @return the new historical resource instance
-     * 
+     *
      * @throws SQLException if a requested attribute was not found in the result set
      */
     protected I_CmsHistoryResource internalCreateResource(ResultSet res) throws SQLException {
@@ -1839,13 +1780,13 @@ public class CmsHistoryDriver implements I_CmsDriver, I_CmsHistoryDriver {
     /**
      * Merges an historical entry for a sibling, based on the structure data from the given historical resource
      * and result set for the resource entry.<p>
-     * 
+     *
      * @param histRes the original historical entry
      * @param res the result set of the resource entry
      * @param versionOffset the offset for the structure version
-     * 
+     *
      * @return a merged historical entry for the sibling
-     * 
+     *
      * @throws SQLException if something goes wrong
      */
     protected I_CmsHistoryResource internalMergeResource(I_CmsHistoryResource histRes, ResultSet res, int versionOffset)
@@ -1921,13 +1862,13 @@ public class CmsHistoryDriver implements I_CmsDriver, I_CmsHistoryDriver {
 
     /**
      * Tests if a history resource does exist.<p>
-     * 
+     *
      * @param dbc the current database context
      * @param resource the resource to test
      * @param publishTag the publish tag of the resource to test
-     * 
+     *
      * @return <code>true</code> if the resource already exists, <code>false</code> otherwise
-     * 
+     *
      * @throws CmsDataAccessException if something goes wrong
      */
     protected boolean internalValidateResource(CmsDbContext dbc, CmsResource resource, int publishTag)
@@ -1947,9 +1888,9 @@ public class CmsHistoryDriver implements I_CmsDriver, I_CmsHistoryDriver {
 
             exists = res.next();
         } catch (SQLException e) {
-            throw new CmsDbSqlException(Messages.get().container(
-                Messages.ERR_GENERIC_SQL_1,
-                CmsDbSqlException.getErrorQuery(stmt)), e);
+            throw new CmsDbSqlException(
+                Messages.get().container(Messages.ERR_GENERIC_SQL_1, CmsDbSqlException.getErrorQuery(stmt)),
+                e);
         } finally {
             m_sqlManager.closeAll(dbc, conn, stmt, res);
         }

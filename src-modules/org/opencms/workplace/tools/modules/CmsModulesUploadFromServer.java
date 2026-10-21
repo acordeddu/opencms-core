@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -14,12 +14,12 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * Lesser General Public License for more details.
  *
- * For further information about Alkacon Software GmbH, please see the
- * company website: http://www.alkacon.com
+ * For further information about Alkacon Software GmbH & Co. KG, please see the
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -61,21 +61,21 @@ import javax.servlet.jsp.PageContext;
 
 /**
  * Class to upload a module from the server.<p>
- * 
- * @since 6.0.0 
+ *
+ * @since 6.0.0
  */
 public class CmsModulesUploadFromServer extends CmsWidgetDialog {
 
     /**
      * A <code>{@link Comparator}</code> for <code>{@link CmsSelectWidgetOption}</code> instances.<p>
-     * 
+     *
      * @since 7.0.3
      *
      */
     protected class ComparatorSelectWidgetOption implements Comparator {
 
         /** Collator used / wrapped. */
-        private Collator m_collator = Collator.getInstance(CmsModulesUploadFromServer.this.getLocale());
+        private Collator m_collator = Collator.getInstance(getLocale());
 
         /**
          * @see java.util.Comparator#compare(java.lang.Object, java.lang.Object)
@@ -109,7 +109,7 @@ public class CmsModulesUploadFromServer extends CmsWidgetDialog {
 
     /**
      * Public constructor with JSP action element.<p>
-     * 
+     *
      * @param jsp an initialized JSP action element
      */
     public CmsModulesUploadFromServer(CmsJspActionElement jsp) {
@@ -119,7 +119,7 @@ public class CmsModulesUploadFromServer extends CmsWidgetDialog {
 
     /**
      * Public constructor with JSP variables.<p>
-     * 
+     *
      * @param context the JSP page context
      * @param req the JSP request
      * @param res the JSP response
@@ -132,6 +132,7 @@ public class CmsModulesUploadFromServer extends CmsWidgetDialog {
     /**
      * @see org.opencms.workplace.CmsWidgetDialog#actionCommit()
      */
+    @Override
     public void actionCommit() throws IOException, ServletException {
 
         List errors = new ArrayList();
@@ -156,16 +157,19 @@ public class CmsModulesUploadFromServer extends CmsWidgetDialog {
                     dep.append(dependency.getVersion());
                     dep.append(")");
                 }
-                errors.add(new CmsRuntimeException(Messages.get().container(
-                    Messages.ERR_ACTION_MODULE_DEPENDENCY_2,
-                    m_moduleupload,
-                    new String(dep))));
+                errors.add(
+                    new CmsRuntimeException(
+                        Messages.get().container(
+                            Messages.ERR_ACTION_MODULE_DEPENDENCY_2,
+                            m_moduleupload,
+                            new String(dep))));
             }
 
         } catch (CmsConfigurationException e) {
-            errors.add(new CmsRuntimeException(Messages.get().container(
-                Messages.ERR_ACTION_MODULE_UPLOAD_1,
-                m_moduleupload), e));
+            errors.add(
+                new CmsRuntimeException(
+                    Messages.get().container(Messages.ERR_ACTION_MODULE_UPLOAD_1, m_moduleupload),
+                    e));
         }
 
         if ((module != null) && errors.isEmpty()) {
@@ -194,11 +198,31 @@ public class CmsModulesUploadFromServer extends CmsWidgetDialog {
     }
 
     /**
-     * Creates the dialog HTML for all defined widgets of the named dialog (page).<p>  
-     * 
+     * Gets the module parameter.<p>
+     *
+     * @return the module parameter
+     */
+    public String getModuleupload() {
+
+        return m_moduleupload;
+    }
+
+    /**
+     * Sets the module parameter.<p>
+     * @param module the module parameter
+     */
+    public void setModuleupload(String module) {
+
+        m_moduleupload = module;
+    }
+
+    /**
+     * Creates the dialog HTML for all defined widgets of the named dialog (page).<p>
+     *
      * @param dialog the dialog (page) to get the HTML for
      * @return the dialog HTML for all defined widgets of the named dialog (page)
      */
+    @Override
     protected String createDialogHtml(String dialog) {
 
         StringBuffer result = new StringBuffer(1024);
@@ -226,14 +250,19 @@ public class CmsModulesUploadFromServer extends CmsWidgetDialog {
     /**
      * Creates the list of widgets for this dialog.<p>
      */
+    @Override
     protected void defineWidgets() {
 
         List selectOptions = getModulesFromServer();
 
         if (selectOptions.isEmpty()) {
             // no import modules available, display message
-            addWidget(new CmsWidgetDialogParameter(this, "moduleupload", PAGES[0], new CmsDisplayWidget(
-                key(Messages.GUI_MODULES_IMPORT_NOT_AVAILABLE_0))));
+            addWidget(
+                new CmsWidgetDialogParameter(
+                    this,
+                    "moduleupload",
+                    PAGES[0],
+                    new CmsDisplayWidget(key(Messages.GUI_MODULES_IMPORT_NOT_AVAILABLE_0))));
         } else {
             // add the file select box widget
             addWidget(new CmsWidgetDialogParameter(this, "moduleupload", PAGES[0], new CmsSelectWidget(selectOptions)));
@@ -241,8 +270,44 @@ public class CmsModulesUploadFromServer extends CmsWidgetDialog {
     }
 
     /**
+     * @see org.opencms.workplace.CmsWidgetDialog#getPageArray()
+     */
+    @Override
+    protected String[] getPageArray() {
+
+        return PAGES;
+    }
+
+    /**
+     * @see org.opencms.workplace.CmsWorkplace#initMessages()
+     */
+    @Override
+    protected void initMessages() {
+
+        // add specific dialog resource bundle
+        addMessages(Messages.get().getBundleName());
+        // add default resource bundles
+        super.initMessages();
+    }
+
+    /**
+     * @see org.opencms.workplace.CmsWorkplace#initWorkplaceRequestValues(org.opencms.workplace.CmsWorkplaceSettings, javax.servlet.http.HttpServletRequest)
+     */
+    @Override
+    protected void initWorkplaceRequestValues(CmsWorkplaceSettings settings, HttpServletRequest request) {
+
+        // set the dialog type
+        setParamDialogtype(DIALOG_TYPE);
+
+        super.initWorkplaceRequestValues(settings, request);
+
+        // save the current state of the job (may be changed because of the widget values)
+        setDialogObject(m_moduleupload);
+    }
+
+    /**
      * Returns the list of all modules available on the server in prepared CmsSelectWidgetOption objects.<p>
-     * 
+     *
      * @return List of module names in CmsSelectWidgetOption objects
      */
     private List getModulesFromServer() {
@@ -262,7 +327,8 @@ public class CmsModulesUploadFromServer extends CmsWidgetDialog {
                 // check if it is a file and ends with zip -> this is a module
                 if (diskFile.isFile() && diskFile.getName().endsWith(".zip")) {
                     result.add(new CmsSelectWidgetOption(diskFile.getName()));
-                } else if (diskFile.isDirectory() && ((new File(diskFile + File.separator + "manifest.xml")).exists())) {
+                } else if (diskFile.isDirectory()
+                    && ((new File(diskFile + File.separator + "manifest.xml")).exists())) {
                     // this is a folder with manifest file -> this a module
                     result.add(new CmsSelectWidgetOption(diskFile.getName()));
                 }
@@ -273,58 +339,6 @@ public class CmsModulesUploadFromServer extends CmsWidgetDialog {
 
         Collections.sort(result, new ComparatorSelectWidgetOption());
         return result;
-    }
-
-    /**
-     * Gets the module parameter.<p>
-     * 
-     * @return the module parameter
-     */
-    public String getModuleupload() {
-
-        return m_moduleupload;
-    }
-
-    /**
-     * @see org.opencms.workplace.CmsWidgetDialog#getPageArray()
-     */
-    protected String[] getPageArray() {
-
-        return PAGES;
-    }
-
-    /**
-     * @see org.opencms.workplace.CmsWorkplace#initMessages()
-     */
-    protected void initMessages() {
-
-        // add specific dialog resource bundle
-        addMessages(Messages.get().getBundleName());
-        // add default resource bundles
-        super.initMessages();
-    }
-
-    /**
-     * @see org.opencms.workplace.CmsWorkplace#initWorkplaceRequestValues(org.opencms.workplace.CmsWorkplaceSettings, javax.servlet.http.HttpServletRequest)
-     */
-    protected void initWorkplaceRequestValues(CmsWorkplaceSettings settings, HttpServletRequest request) {
-
-        // set the dialog type
-        setParamDialogtype(DIALOG_TYPE);
-
-        super.initWorkplaceRequestValues(settings, request);
-
-        // save the current state of the job (may be changed because of the widget values)
-        setDialogObject(m_moduleupload);
-    }
-
-    /** 
-     * Sets the module parameter.<p>
-     * @param module the module parameter
-     */
-    public void setModuleupload(String module) {
-
-        m_moduleupload = module;
     }
 
 }

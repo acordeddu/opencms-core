@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -14,12 +14,12 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * Lesser General Public License for more details.
  *
- * For further information about Alkacon Software GmbH, please see the
- * company website: http://www.alkacon.com
+ * For further information about Alkacon Software GmbH & Co. KG, please see the
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -34,6 +34,8 @@ import org.opencms.file.CmsResource;
 import org.opencms.file.CmsResourceFilter;
 import org.opencms.lock.CmsLock;
 import org.opencms.main.CmsException;
+import org.opencms.relations.CmsRelation;
+import org.opencms.relations.CmsRelationFilter;
 import org.opencms.security.CmsAccessControlEntry;
 import org.opencms.security.CmsAccessControlList;
 import org.opencms.util.CmsUUID;
@@ -44,7 +46,7 @@ import java.util.List;
 
 /**
  * A single entry of the OpenCmsTestResourceStorage.<p>
- * 
+ *
  */
 public class OpenCmsTestResourceStorageEntry {
 
@@ -96,6 +98,9 @@ public class OpenCmsTestResourceStorageEntry {
     /** The properties of the resource. */
     private List<CmsProperty> m_properties;
 
+    /** The stored relations. */
+    private List<CmsRelation> m_relations;
+
     /** The ID of the resource database record. */
     private CmsUUID m_resourceId;
 
@@ -127,11 +132,11 @@ public class OpenCmsTestResourceStorageEntry {
 
     /**
      * Creates a new OpenCmsTestResourceStorageEntry.<p>
-     * 
+     *
      * @param cms current CmsObject
      * @param resourceName the complete name of the resource
      * @param res the CmsResource to store.
-     * @throws CmsException if something goes wrong 
+     * @throws CmsException if something goes wrong
      */
     public OpenCmsTestResourceStorageEntry(CmsObject cms, String resourceName, CmsResource res)
     throws CmsException {
@@ -169,6 +174,7 @@ public class OpenCmsTestResourceStorageEntry {
         }
 
         m_accessControlList = cms.getAccessControlList(resourceName);
+        m_relations = cms.readRelations(CmsRelationFilter.relationsFromStructureId(m_structureId));
         m_accessControlEntries = cms.getAccessControlEntries(resourceName);
     }
 
@@ -253,15 +259,6 @@ public class OpenCmsTestResourceStorageEntry {
     }
 
     /**
-     * Gets the id of the file content database entry.<p>
-     *
-     * @return the ID of the file content database entry
-     */
-    /* public CmsUUID getFileId() {
-     return m_contentId;
-     } */
-
-    /**
      * Returns the flags of this resource.<p>
      *
      * @return the flags of this resource
@@ -270,6 +267,15 @@ public class OpenCmsTestResourceStorageEntry {
 
         return m_flags;
     }
+
+    /**
+     * Gets the id of the file content database entry.<p>
+     *
+     * @return the ID of the file content database entry
+     */
+    /* public CmsUUID getFileId() {
+     return m_contentId;
+     } */
 
     /**
      * Gets the length of the content (i.e. the file size).<p>
@@ -344,6 +350,16 @@ public class OpenCmsTestResourceStorageEntry {
     }
 
     /**
+     * Gets the stored relations.
+     *
+     * @return the stored relations
+     */
+    public List<CmsRelation> getRelations() {
+
+        return m_relations;
+    }
+
+    /**
      * Returns the id of the resource database entry of this resource.<p>
      *
      * @return the id of the resource database entry
@@ -355,7 +371,7 @@ public class OpenCmsTestResourceStorageEntry {
 
     /**
      * Gets the number of references to the resource.<p>
-     * 
+     *
      * @return the number of links
      */
     public int getSiblingCount() {
@@ -377,7 +393,7 @@ public class OpenCmsTestResourceStorageEntry {
 
     /**
      * Returns the id of the structure record of this resource.<p>
-     * 
+     *
      * @return the id of the structure record of this resource
      */
     public CmsUUID getStructureId() {
@@ -397,7 +413,7 @@ public class OpenCmsTestResourceStorageEntry {
 
     /**
      * Returns the user id of the user who created this resource.<p>
-     * 
+     *
      * @return the user id
      */
     public CmsUUID getUserCreated() {
@@ -417,7 +433,7 @@ public class OpenCmsTestResourceStorageEntry {
 
     /**
      * Returns true if this resource was touched.<p>
-     * 
+     *
      * @return boolean true if this resource was touched
      */
     public boolean isTouched() {

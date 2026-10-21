@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -15,11 +15,11 @@
  * Lesser General Public License for more details.
  *
  * For further information about Alkacon Software, please see the
- * company website: http://www.alkacon.com
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -38,8 +38,7 @@ import org.opencms.gwt.client.ui.input.form.I_CmsFormWidgetFactory;
 
 import java.util.Map;
 
-import com.google.gwt.core.client.Scheduler;
-import com.google.gwt.core.client.Scheduler.ScheduledCommand;
+import com.google.common.base.Optional;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.dom.client.HasClickHandlers;
@@ -52,12 +51,12 @@ import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.HasHorizontalAlignment;
 
 /**
- * This class represents a labeled checkbox which is not represented as an INPUT element in 
- * the DOM, but is displayed as an image.<p> 
- * 
+ * This class represents a labeled checkbox which is not represented as an INPUT element in
+ * the DOM, but is displayed as an image.<p>
+ *
  * It can be checked/unchecked and enabled/disabled, which means 4 combinations in total.
  * So you need to supply 4 images, one for each of the combinations.<p>
- * 
+ *
  * @since 8.0.0
  */
 public class CmsCheckBox extends Composite
@@ -81,6 +80,9 @@ implements HasClickHandlers, I_CmsFormWidget, I_CmsHasInit, HasHorizontalAlignme
     /** Internal root widget to which all other components of this widget are attached. */
     private final FlowPanel m_root;
 
+    /** The internal value of this checkbox. */
+    private String m_value;
+
     /**
      * Default constructor which creates a checkbox without a label.<p>
      */
@@ -91,10 +93,10 @@ implements HasClickHandlers, I_CmsFormWidget, I_CmsHasInit, HasHorizontalAlignme
 
     /**
      * Public constructor for a checkbox.<p>
-     * 
+     *
      * The label text passed will be displayed to the right of the checkbox. If
      * it is null, no label is displayed.<p>
-     * 
+     *
      * @param labelText the label text
      */
     public CmsCheckBox(String labelText) {
@@ -116,20 +118,11 @@ implements HasClickHandlers, I_CmsFormWidget, I_CmsHasInit, HasHorizontalAlignme
         initWidget(m_root);
         addStyleName(CSS.checkBox());
         addStyleName(CSS.inlineBlock());
-        addClickHandler(new ClickHandler() {
+        m_button.addValueChangeHandler(new ValueChangeHandler<Boolean>() {
 
-            /**
-             * @see com.google.gwt.event.dom.client.ClickHandler#onClick(com.google.gwt.event.dom.client.ClickEvent)
-             */
-            public void onClick(ClickEvent event) {
+            public void onValueChange(ValueChangeEvent<Boolean> changeEvent) {
 
-                Scheduler.get().scheduleDeferred(new ScheduledCommand() {
-
-                    public void execute() {
-
-                        fireValueChangedEvent();
-                    }
-                });
+                ValueChangeEvent.fire(CmsCheckBox.this, changeEvent.getValue());
             }
         });
     }
@@ -143,9 +136,9 @@ implements HasClickHandlers, I_CmsFormWidget, I_CmsHasInit, HasHorizontalAlignme
         CmsWidgetFactoryRegistry.instance().registerFactory(WIDGET_TYPE, new I_CmsFormWidgetFactory() {
 
             /**
-             * @see org.opencms.gwt.client.ui.input.form.I_CmsFormWidgetFactory#createWidget(java.util.Map)
+             * @see org.opencms.gwt.client.ui.input.form.I_CmsFormWidgetFactory#createWidget(java.util.Map, com.google.common.base.Optional)
              */
-            public I_CmsFormWidget createWidget(Map<String, String> widgetParams) {
+            public I_CmsFormWidget createWidget(Map<String, String> widgetParams, Optional<String> defaultValue) {
 
                 return new CmsCheckBox(widgetParams.get("label"));
             }
@@ -154,7 +147,7 @@ implements HasClickHandlers, I_CmsFormWidget, I_CmsHasInit, HasHorizontalAlignme
 
     /**
      * Adds a click handler to the checkbox.<p>
-     * 
+     *
      * @see com.google.gwt.event.dom.client.HasClickHandlers#addClickHandler(com.google.gwt.event.dom.client.ClickHandler)
      */
     public HandlerRegistration addClickHandler(ClickHandler handler) {
@@ -172,7 +165,7 @@ implements HasClickHandlers, I_CmsFormWidget, I_CmsHasInit, HasHorizontalAlignme
 
     /**
      * Disables the checkbox and changes the checkbox title attribute to the disabled reason.<p>
-     *   
+     *
      * @param disabledReason the disabled reason
      */
     public void disable(String disabledReason) {
@@ -194,6 +187,16 @@ implements HasClickHandlers, I_CmsFormWidget, I_CmsHasInit, HasHorizontalAlignme
     public String getApparentValue() {
 
         return getFormValueAsString();
+    }
+
+    /**
+     * Gets the toggle button used internally.<p>
+     *
+     * @return the toggle button
+     */
+    public CmsToggleButton getButton() {
+
+        return m_button;
     }
 
     /**
@@ -222,7 +225,7 @@ implements HasClickHandlers, I_CmsFormWidget, I_CmsHasInit, HasHorizontalAlignme
 
     /**
      * This is the alignment of the text in reference to the checkbox, possible values are left or right.<p>
-     * 
+     *
      * @see com.google.gwt.user.client.ui.HasHorizontalAlignment#getHorizontalAlignment()
      */
     public HorizontalAlignmentConstant getHorizontalAlignment() {
@@ -231,8 +234,29 @@ implements HasClickHandlers, I_CmsFormWidget, I_CmsHasInit, HasHorizontalAlignme
     }
 
     /**
+     * Returns the internal value of this Checkbox.<p>
+     *
+     * @return the internal value of this Checkbox
+     */
+    public String getInternalValue() {
+
+        return m_value;
+    }
+
+    /**
+     * Returns the text.<p>
+     *
+     * @return the text as String
+     */
+    public String getText() {
+
+        return m_button.getText();
+
+    }
+
+    /**
      * Returns true if the checkbox is checked.<p>
-     * 
+     *
      * @return true if the checkbox is checked
      */
     public boolean isChecked() {
@@ -242,7 +266,7 @@ implements HasClickHandlers, I_CmsFormWidget, I_CmsHasInit, HasHorizontalAlignme
 
     /**
      * Returns true if the checkbox is enabled.<p>
-     * 
+     *
      * @return true if the checkbox is enabled
      */
     public boolean isEnabled() {
@@ -268,7 +292,7 @@ implements HasClickHandlers, I_CmsFormWidget, I_CmsHasInit, HasHorizontalAlignme
 
     /**
      * Checks or unchecks the checkbox.<p>
-     * 
+     *
      * @param checked if true, check the checkbox else uncheck it
      */
     public void setChecked(boolean checked) {
@@ -277,8 +301,22 @@ implements HasClickHandlers, I_CmsFormWidget, I_CmsHasInit, HasHorizontalAlignme
     }
 
     /**
+     * Toggles between display:inline-block and display:block.<p>
+     *
+     * @param inline <code>true</code> to display inline-block
+     */
+    public void setDisplayInline(boolean inline) {
+
+        if (inline) {
+            addStyleName(CSS.inlineBlock());
+        } else {
+            removeStyleName(CSS.inlineBlock());
+        }
+    }
+
+    /**
      * Enables or disables the checkbox.<p>
-     * 
+     *
      * @param enabled if true, enable the checkbox, else disable it
      */
     public void setEnabled(boolean enabled) {
@@ -296,8 +334,8 @@ implements HasClickHandlers, I_CmsFormWidget, I_CmsHasInit, HasHorizontalAlignme
 
     /**
      * Sets the value of the widget.<p>
-     * 
-     * @param value the new value 
+     *
+     * @param value the new value
      */
     public void setFormValue(Object value) {
 
@@ -317,7 +355,7 @@ implements HasClickHandlers, I_CmsFormWidget, I_CmsHasInit, HasHorizontalAlignme
 
     /**
      * This is the alignment of the text in reference to the checkbox, possible values are left or right.<p>
-     * 
+     *
      * @see com.google.gwt.user.client.ui.HasHorizontalAlignment#setHorizontalAlignment(com.google.gwt.user.client.ui.HasHorizontalAlignment.HorizontalAlignmentConstant)
      */
     public void setHorizontalAlignment(HorizontalAlignmentConstant align) {
@@ -331,6 +369,16 @@ implements HasClickHandlers, I_CmsFormWidget, I_CmsHasInit, HasHorizontalAlignme
     }
 
     /**
+     * Sets the internal value of this Checkbox.<p>
+     *
+     *  @param value the new internal value
+     */
+    public void setInternalValue(String value) {
+
+        m_value = value;
+    }
+
+    /**
      * Sets the text.<p>
      *
      * @param text the text to set
@@ -340,7 +388,7 @@ implements HasClickHandlers, I_CmsFormWidget, I_CmsHasInit, HasHorizontalAlignme
         m_button.setText(text);
     }
 
-    /** 
+    /**
      * Helper method for firing a 'value changed' event.<p>
      */
     protected void fireValueChangedEvent() {

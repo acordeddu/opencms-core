@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -14,12 +14,12 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * Lesser General Public License for more details.
  *
- * For further information about Alkacon Software GmbH, please see the
- * company website: http://www.alkacon.com
+ * For further information about Alkacon Software GmbH & Co. KG, please see the
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -27,22 +27,43 @@
 
 package org.opencms.i18n;
 
+import org.opencms.test.OpenCmsTestRunner;
+import org.opencms.util.CmsMacroResolver;
+
 import java.util.Locale;
 
-import junit.framework.TestCase;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.MethodOrderer;
+import org.junit.jupiter.api.Order;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInfo;
+import org.junit.jupiter.api.TestMethodOrder;
 
 /**
  * Tests for the CmsMessages.<p>
- * 
+ *
  * @since 6.0.0
  */
-public class TestCmsMessages extends TestCase {
+@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
+public class TestCmsMessages extends OpenCmsTestRunner {
+
+    /**
+     * Initializes the shared test configuration without booting OpenCms.<p>
+     */
+    @BeforeAll
+    public void setUpConfiguration(TestInfo testInfo) {
+
+        // This legacy test verifies that invalid MessageFormat patterns are logged but do not fail the test.
+        initConfiguration(false);
+    }
 
     /**
      * Tests if message will be returned in the correct locale.<p>
-     * 
+     *
      * @throws Exception if the test fails
      */
+    @Order(3)
+    @Test
     public void testLocale() throws Exception {
 
         CmsMessages messages = new CmsMessages("org.opencms.i18n.messages", Locale.GERMANY);
@@ -51,10 +72,29 @@ public class TestCmsMessages extends TestCase {
     }
 
     /**
+     * Tests the behavior of message strings with curly braces in them.
+     *
+     * @throws Exception  if the test fails
+     */
+    @Order(1)
+    @Test
+    public void testMessagesWhichAreInvalidMessageFormats() throws Exception {
+
+        CmsMacroResolver resolver = new CmsMacroResolver();
+        CmsMessages bundle = org.opencms.test.Messages.get().getBundle(Locale.ENGLISH);
+        resolver.setMessages(bundle);
+        assertEquals("{test}{0}", resolver.resolveMacros("%(key.LOG_CURLY_BRACES_TEST_1)"));
+        assertEquals("{test}{0}", resolver.resolveMacros("%(key.LOG_CURLY_BRACES_TEST_1|foo)"));
+        assertEquals("{test}{0}", bundle.key(org.opencms.test.Messages.LOG_CURLY_BRACES_TEST_1));
+    }
+
+    /**
      * Tests parameter replacement in messages.<p>
-     * 
+     *
      * @throws Exception if the test fails
      */
+    @Order(4)
+    @Test
     public void testMessageWithParameters() throws Exception {
 
         String value;
@@ -70,9 +110,11 @@ public class TestCmsMessages extends TestCase {
 
     /**
      * Tests for for missing localized keys.<p>
-     * 
+     *
      * @throws Exception if the test fails
      */
+    @Order(2)
+    @Test
     public void testUnknownKeys() throws Exception {
 
         String value = null;
@@ -80,7 +122,7 @@ public class TestCmsMessages extends TestCase {
         // check for null value
         assertTrue(CmsMessages.isUnknownKey(value));
 
-        // test key formatted as unknown 
+        // test key formatted as unknown
         value = CmsMessages.formatUnknownKey("somekey");
         assertTrue(CmsMessages.isUnknownKey(value));
 

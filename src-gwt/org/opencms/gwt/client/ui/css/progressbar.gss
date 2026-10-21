@@ -1,0 +1,33 @@
+.meterWrap{
+    position: relative;
+}
+
+.meterWrap, .meterValue, .meterText {
+    width: 100%;
+    height: 20px;
+}
+
+.meterWrap, .meterValue {
+	background: value("constants.css.backgroundColorSoft");
+    border-radius: value("constants.css.borderRadius");
+    height: 20px;
+}
+
+.colorComplete {
+	background-color: #4DA4F3;
+}
+
+.colorIncomplete {
+	background-color: #BDBDBD;
+}
+
+.meterText {
+    position: absolute;
+    top:0; left:0;
+
+    padding-top: 4px;
+                
+    color: #fff;
+    text-align: center;
+    width: 100%;
+}

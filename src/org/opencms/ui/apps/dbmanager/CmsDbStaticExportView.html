@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html>
+<head>
+ 	<meta name="package-mapping" content="u:org.opencms.ui" />
+  	<meta name="package-mapping" content="o:org.opencms.ui.components" />
+  	<meta name="package-mapping" content="f:org.opencms.ui.components.fileselect" />
+  	<meta name="package-mapping" content="p:org.opencms.ui.dialogs.permissions" />
+</head>
+<body>
+
+	<vaadin7-vertical-layout :center margin spacing style-name="o-workplace-maxwidth">
+		<v-panel _id="m_startPanel">
+			<v-form-layout>
+				<vaadin7-label>%(key.GUI_DATABASEAPP_STATEXP_CONFIRM_START_0)</vaadin7-label>
+			</v-form-layout>
+		</v-panel>
+		<v-panel>
+			<vaadin7-horizontal-layout width="100%">
+				<vaadin7-horizontal-layout :center margin spacing style-name="o-dialog-button-bar">
+					<v-button _id="m_ok">%(key.GUI_DATABASEAPP_EXPORT_START_0)</v-button>
+				</vaadin7-horizontal-layout>
+			</vaadin7-horizontal-layout>	
+		</v-panel>
+	</vaadin7-vertical-layout>
+</body>
+</html>

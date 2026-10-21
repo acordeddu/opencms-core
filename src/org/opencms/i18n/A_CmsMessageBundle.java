@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -14,12 +14,12 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * Lesser General Public License for more details.
  *
- * For further information about Alkacon Software GmbH, please see the
- * company website: http://www.alkacon.com
+ * For further information about Alkacon Software GmbH & Co. KG, please see the
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -30,15 +30,15 @@ package org.opencms.i18n;
 import java.util.Locale;
 
 /**
- * Convenience base class to access the localized messages of an OpenCms package.<p> 
- * 
+ * Convenience base class to access the localized messages of an OpenCms package.<p>
+ *
  * @since 6.0.0
  */
 public abstract class A_CmsMessageBundle implements I_CmsMessageBundle {
 
     /**
      * Returns an array of all messages bundles used by the OpenCms core.<p>
-     * 
+     *
      * @return an array of all messages bundles used by the OpenCms core
      */
     public static I_CmsMessageBundle[] getOpenCmsMessageBundles() {
@@ -50,6 +50,7 @@ public abstract class A_CmsMessageBundle implements I_CmsMessageBundle {
             org.opencms.ade.publish.Messages.get(),
             org.opencms.ade.sitemap.Messages.get(),
             org.opencms.ade.upload.Messages.get(),
+            org.opencms.ai.Messages.get(),
             org.opencms.cache.Messages.get(),
             org.opencms.configuration.Messages.get(),
             org.opencms.db.Messages.get(),
@@ -60,11 +61,13 @@ public abstract class A_CmsMessageBundle implements I_CmsMessageBundle {
             org.opencms.file.types.Messages.get(),
             org.opencms.file.wrapper.Messages.get(),
             org.opencms.flex.Messages.get(),
+            org.opencms.gwt.Messages.get(),
             org.opencms.i18n.Messages.get(),
             org.opencms.importexport.Messages.get(),
             org.opencms.jsp.Messages.get(),
             org.opencms.jsp.decorator.Messages.get(),
             org.opencms.jsp.util.Messages.get(),
+            org.opencms.jsp.userdata.Messages.get(),
             org.opencms.loader.Messages.get(),
             org.opencms.lock.Messages.get(),
             org.opencms.mail.Messages.get(),
@@ -81,25 +84,30 @@ public abstract class A_CmsMessageBundle implements I_CmsMessageBundle {
             org.opencms.search.Messages.get(),
             org.opencms.search.documents.Messages.get(),
             org.opencms.search.extractors.Messages.get(),
+            org.opencms.search.solr.Messages.get(),
             org.opencms.security.Messages.get(),
             org.opencms.site.Messages.get(),
             org.opencms.staticexport.Messages.get(),
             org.opencms.synchronize.Messages.get(),
+            org.opencms.ui.Messages.get(),
+            org.opencms.ui.apps.Messages.get(),
+            org.opencms.ui.apps.git.Messages.get(),
+            org.opencms.ui.components.Messages.get(),
+            org.opencms.ui.contextmenu.Messages.get(),
+            org.opencms.ui.dialogs.Messages.get(),
             org.opencms.util.Messages.get(),
-            org.opencms.webdav.Messages.get(),
             org.opencms.widgets.Messages.get(),
+            org.opencms.workflow.Messages.get(),
             org.opencms.workplace.Messages.get(),
             org.opencms.workplace.commons.Messages.get(),
             org.opencms.workplace.comparison.Messages.get(),
             org.opencms.workplace.editors.Messages.get(),
             org.opencms.workplace.explorer.Messages.get(),
-            org.opencms.workplace.explorer.menu.Messages.get(),
             org.opencms.workplace.galleries.Messages.get(),
-            org.opencms.workplace.help.Messages.get(),
             org.opencms.workplace.list.Messages.get(),
-            org.opencms.workplace.search.Messages.get(),
             org.opencms.workplace.threads.Messages.get(),
             org.opencms.workplace.tools.Messages.get(),
+            org.opencms.workplace.tools.scheduler.Messages.get(),
             org.opencms.xml.Messages.get(),
             org.opencms.xml.containerpage.Messages.get(),
             org.opencms.xml.content.Messages.get(),

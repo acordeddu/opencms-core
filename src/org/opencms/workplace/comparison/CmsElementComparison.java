@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -14,12 +14,12 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * Lesser General Public License for more details.
  *
- * For further information about Alkacon Software GmbH, please see the
- * company website: http://www.alkacon.com
+ * For further information about Alkacon Software GmbH & Co. KG, please see the
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -32,14 +32,14 @@ import java.util.Locale;
 /**
  * Comparison of two xml page elements.<p>
  */
-public class CmsElementComparison extends CmsAttributeComparison implements Comparable {
+public class CmsElementComparison extends CmsAttributeComparison implements Comparable<CmsElementComparison> {
 
     /** The element locale.<p> */
     private Locale m_locale;
 
-    /** 
-     * Creates a new element comparison.<p> 
-     * 
+    /**
+     * Creates a new element comparison.<p>
+     *
      * @param locale the locale of the comparison
      * @param name the name of the element
      */
@@ -52,15 +52,13 @@ public class CmsElementComparison extends CmsAttributeComparison implements Comp
     /**
      * @see java.lang.Comparable#compareTo(java.lang.Object)
      */
-    public int compareTo(Object o) {
+    @Override
+    public int compareTo(CmsElementComparison diffItem) {
 
-        if (this == o) {
+        if (this == diffItem) {
             return 0;
         }
-        if (!(o instanceof CmsElementComparison)) {
-            return 0;
-        }
-        CmsElementComparison diffItem = (CmsElementComparison)o;
+
         // first compare by name
         if (getName().compareTo(diffItem.getName()) != 0) {
             return getName().compareTo(diffItem.getName());
@@ -70,9 +68,10 @@ public class CmsElementComparison extends CmsAttributeComparison implements Comp
     }
 
     /**
-     * 
+     *
      * @see java.lang.Object#equals(java.lang.Object)
      */
+    @Override
     public boolean equals(Object o) {
 
         if (this == o) {
@@ -96,9 +95,10 @@ public class CmsElementComparison extends CmsAttributeComparison implements Comp
     }
 
     /**
-     * 
+     *
      * @see java.lang.Object#hashCode()
      */
+    @Override
     public int hashCode() {
 
         return m_locale.hashCode() + getName().hashCode();

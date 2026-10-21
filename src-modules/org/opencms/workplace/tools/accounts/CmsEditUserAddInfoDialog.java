@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -14,12 +14,12 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * Lesser General Public License for more details.
  *
- * For further information about Alkacon Software GmbH, please see the
- * company website: http://www.alkacon.com
+ * For further information about Alkacon Software GmbH & Co. KG, please see the
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -52,6 +52,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.SortedMap;
 import java.util.TreeMap;
 
@@ -61,7 +62,7 @@ import javax.servlet.jsp.PageContext;
 
 /**
  * Dialog to edit the users additional info in the administration view.<p>
- * 
+ *
  * @since 6.5.6
  */
 public class CmsEditUserAddInfoDialog extends CmsWidgetDialog {
@@ -73,16 +74,16 @@ public class CmsEditUserAddInfoDialog extends CmsWidgetDialog {
     public static final String[] PAGES = {"page1"};
 
     /** The additional information. */
-    protected List m_addInfoList;
+    protected List<CmsUserAddInfoBean> m_addInfoList;
 
     /** The user object that is edited on this dialog. */
     protected CmsUser m_user;
 
     /** The map of editable additional info entries. */
-    private SortedMap m_addInfoEditable;
+    private SortedMap<String, Object> m_addInfoEditable;
 
     /** The map of non-editable additional info entries. */
-    private SortedMap m_addInfoReadOnly;
+    private SortedMap<String, Object> m_addInfoReadOnly;
 
     /** Stores the value of the request parameter for the edit all infos flag. */
     private String m_paramEditall;
@@ -92,7 +93,7 @@ public class CmsEditUserAddInfoDialog extends CmsWidgetDialog {
 
     /**
      * Public constructor with JSP action element.<p>
-     * 
+     *
      * @param jsp an initialized JSP action element
      */
     public CmsEditUserAddInfoDialog(CmsJspActionElement jsp) {
@@ -102,7 +103,7 @@ public class CmsEditUserAddInfoDialog extends CmsWidgetDialog {
 
     /**
      * Public constructor with JSP variables.<p>
-     * 
+     *
      * @param context the JSP page context
      * @param req the JSP request
      * @param res the JSP response
@@ -115,29 +116,30 @@ public class CmsEditUserAddInfoDialog extends CmsWidgetDialog {
     /**
      * Commits the edited user to the db.<p>
      */
+    @Override
     public void actionCommit() {
 
-        List errors = new ArrayList();
+        List<Throwable> errors = new ArrayList<Throwable>();
 
         try {
             if (!Boolean.valueOf(getParamEditall()).booleanValue()) {
                 // fill the values
-                Iterator it = m_addInfoList.iterator();
+                Iterator<CmsUserAddInfoBean> it = m_addInfoList.iterator();
                 while (it.hasNext()) {
-                    CmsUserAddInfoBean infoBean = (CmsUserAddInfoBean)it.next();
+                    CmsUserAddInfoBean infoBean = it.next();
                     if (infoBean.getValue() == null) {
                         m_user.deleteAdditionalInfo(infoBean.getName());
                     } else {
-                        m_user.setAdditionalInfo(infoBean.getName(), CmsDataTypeUtil.parse(
-                            infoBean.getValue(),
-                            infoBean.getType()));
+                        m_user.setAdditionalInfo(
+                            infoBean.getName(),
+                            CmsDataTypeUtil.parse(infoBean.getValue(), infoBean.getType()));
                     }
                 }
             } else {
-                Map readOnly = new HashMap();
-                Iterator itEntries = m_user.getAdditionalInfo().entrySet().iterator();
+                Map<String, Object> readOnly = new HashMap<String, Object>();
+                Iterator<Entry<String, Object>> itEntries = m_user.getAdditionalInfo().entrySet().iterator();
                 while (itEntries.hasNext()) {
-                    Map.Entry entry = (Map.Entry)itEntries.next();
+                    Entry<String, Object> entry = itEntries.next();
                     if (!CmsDataTypeUtil.isParseable(entry.getValue().getClass())) {
                         String key = entry.getKey().toString();
                         if (!entry.getValue().getClass().equals(String.class)) {
@@ -151,8 +153,8 @@ public class CmsEditUserAddInfoDialog extends CmsWidgetDialog {
                 m_user.setAdditionalInfo(readOnly);
                 itEntries = m_addInfoEditable.entrySet().iterator();
                 while (itEntries.hasNext()) {
-                    Map.Entry entry = (Map.Entry)itEntries.next();
-                    String key = (String)entry.getKey();
+                    Entry<String, Object> entry = itEntries.next();
+                    String key = entry.getKey();
                     int pos = key.indexOf("@");
                     if (pos < 0) {
                         m_user.setAdditionalInfo(key, entry.getValue());
@@ -160,7 +162,7 @@ public class CmsEditUserAddInfoDialog extends CmsWidgetDialog {
                     }
                     String className = key.substring(pos + 1);
                     key = key.substring(0, pos);
-                    Class clazz;
+                    Class<?> clazz;
                     try {
                         // try the class name
                         clazz = Class.forName(className);
@@ -185,13 +187,16 @@ public class CmsEditUserAddInfoDialog extends CmsWidgetDialog {
         if (errors.isEmpty()) {
             if (getCurrentToolPath().endsWith("/orgunit/users/edit/addinfo/all")) {
                 // set closelink
-                Map argMap = new HashMap();
-                argMap.put(A_CmsEditUserDialog.PARAM_USERID, m_user.getId());
-                argMap.put("oufqn", m_user.getOuFqn());
-                setParamCloseLink(CmsToolManager.linkForToolPath(getJsp(), getCurrentToolPath().substring(
-                    0,
-                    getCurrentToolPath().indexOf("/orgunit/users/edit/addinfo/all"))
-                    + "/orgunit/users/edit/", argMap));
+                Map<String, String[]> argMap = new HashMap<String, String[]>();
+                argMap.put(A_CmsEditUserDialog.PARAM_USERID, new String[] {m_user.getId().toString()});
+                argMap.put("oufqn", new String[] {m_user.getOuFqn()});
+                setParamCloseLink(
+                    CmsToolManager.linkForToolPath(
+                        getJsp(),
+                        getCurrentToolPath().substring(
+                            0,
+                            getCurrentToolPath().indexOf("/orgunit/users/edit/addinfo/all")) + "/orgunit/users/edit/",
+                        argMap));
             }
         }
 
@@ -204,14 +209,14 @@ public class CmsEditUserAddInfoDialog extends CmsWidgetDialog {
      *
      * @return the additional info map
      */
-    public SortedMap getInfo() {
+    public SortedMap<String, Object> getInfo() {
 
         return m_addInfoEditable;
     }
 
     /**
      * Returns the edit all flag parameter value.<p>
-     * 
+     *
      * @return the edit all flag parameter value
      */
     public String getParamEditall() {
@@ -226,7 +231,7 @@ public class CmsEditUserAddInfoDialog extends CmsWidgetDialog {
 
     /**
      * Returns the user id parameter value.<p>
-     * 
+     *
      * @return the user id parameter value
      */
     public String getParamUserid() {
@@ -239,7 +244,7 @@ public class CmsEditUserAddInfoDialog extends CmsWidgetDialog {
      *
      * @return the read only add info
      */
-    public SortedMap getReadonly() {
+    public SortedMap<String, Object> getReadonly() {
 
         return m_addInfoReadOnly;
     }
@@ -249,14 +254,14 @@ public class CmsEditUserAddInfoDialog extends CmsWidgetDialog {
      *
      * @param addInfo the additional information to set
      */
-    public void setInfo(SortedMap addInfo) {
+    public void setInfo(SortedMap<String, Object> addInfo) {
 
-        m_addInfoEditable = new TreeMap(addInfo);
+        m_addInfoEditable = new TreeMap<String, Object>(addInfo);
     }
 
     /**
      * Sets the edit all flag parameter value.<p>
-     * 
+     *
      * @param editAll the edit all flag parameter value
      */
     public void setParamEditall(String editAll) {
@@ -266,7 +271,7 @@ public class CmsEditUserAddInfoDialog extends CmsWidgetDialog {
 
     /**
      * Sets the user id parameter value.<p>
-     * 
+     *
      * @param userId the user id parameter value to set
      */
     public void setParamUserid(String userId) {
@@ -279,20 +284,21 @@ public class CmsEditUserAddInfoDialog extends CmsWidgetDialog {
      *
      * @param addInfoReadOnly the read only add info to set
      */
-    public void setReadonly(SortedMap addInfoReadOnly) {
+    public void setReadonly(SortedMap<String, Object> addInfoReadOnly) {
 
         m_addInfoReadOnly = addInfoReadOnly;
     }
 
     /**
      * Creates the dialog HTML for all defined widgets of the named dialog (page).<p>
-     * 
+     *
      * This overwrites the method from the super class to create a layout variation for the widgets.<p>
-     * 
+     *
      * @param dialog the dialog (page) to get the HTML for
-     * 
+     *
      * @return the dialog HTML for all defined widgets of the named dialog (page)
      */
+    @Override
     protected String createDialogHtml(String dialog) {
 
         StringBuffer result = new StringBuffer(1024);
@@ -304,13 +310,13 @@ public class CmsEditUserAddInfoDialog extends CmsWidgetDialog {
         if (dialog.equals(PAGES[0])) {
             if (!Boolean.valueOf(getParamEditall()).booleanValue()) {
                 int pos = 0;
-                Iterator it = OpenCms.getWorkplaceManager().getUserInfoManager().getBlocks().iterator();
+                Iterator<CmsWorkplaceUserInfoBlock> it = OpenCms.getWorkplaceManager().getUserInfoManager().getBlocks().iterator();
                 while (it.hasNext()) {
-                    CmsWorkplaceUserInfoBlock block = (CmsWorkplaceUserInfoBlock)it.next();
+                    CmsWorkplaceUserInfoBlock block = it.next();
 
                     result.append(dialogBlockStart(key(block.getTitle())));
                     result.append(createWidgetTableStart());
-                    result.append(createDialogRowsHtml(pos, pos - 1 + block.getEntries().size()));
+                    result.append(createDialogRowsHtml(pos, (pos - 1) + block.getEntries().size()));
                     result.append(createWidgetTableEnd());
                     result.append(dialogBlockEnd());
                     pos += block.getEntries().size();
@@ -331,6 +337,7 @@ public class CmsEditUserAddInfoDialog extends CmsWidgetDialog {
     /**
      * @see org.opencms.workplace.tools.accounts.A_CmsEditUserDialog#defineWidgets()
      */
+    @Override
     protected void defineWidgets() {
 
         // initialize the user object to use for the dialog
@@ -341,25 +348,26 @@ public class CmsEditUserAddInfoDialog extends CmsWidgetDialog {
         int count = 0;
         if (!Boolean.valueOf(getParamEditall()).booleanValue()) {
             // widgets to display
-            Iterator itBlocks = OpenCms.getWorkplaceManager().getUserInfoManager().getBlocks().iterator();
+            Iterator<CmsWorkplaceUserInfoBlock> itBlocks = OpenCms.getWorkplaceManager().getUserInfoManager().getBlocks().iterator();
             while (itBlocks.hasNext()) {
-                CmsWorkplaceUserInfoBlock block = (CmsWorkplaceUserInfoBlock)itBlocks.next();
+                CmsWorkplaceUserInfoBlock block = itBlocks.next();
 
-                Iterator itEntries = block.getEntries().iterator();
+                Iterator<CmsWorkplaceUserInfoEntry> itEntries = block.getEntries().iterator();
                 while (itEntries.hasNext()) {
-                    CmsWorkplaceUserInfoEntry entry = (CmsWorkplaceUserInfoEntry)itEntries.next();
+                    CmsWorkplaceUserInfoEntry entry = itEntries.next();
 
                     int min = entry.isOptional() ? 0 : 1;
                     I_CmsWidget widget = entry.getWidgetObject();
-                    addWidget(new CmsWidgetDialogParameter(
-                        m_addInfoList.get(count),
-                        "value",
-                        entry.getKey(),
-                        "",
-                        PAGES[0],
-                        widget,
-                        min,
-                        1));
+                    addWidget(
+                        new CmsWidgetDialogParameter(
+                            m_addInfoList.get(count),
+                            "value",
+                            entry.getKey(),
+                            "",
+                            PAGES[0],
+                            widget,
+                            min,
+                            1));
                     count++;
                 }
             }
@@ -372,6 +380,7 @@ public class CmsEditUserAddInfoDialog extends CmsWidgetDialog {
     /**
      * @see org.opencms.workplace.CmsWidgetDialog#getPageArray()
      */
+    @Override
     protected String[] getPageArray() {
 
         return PAGES;
@@ -380,6 +389,7 @@ public class CmsEditUserAddInfoDialog extends CmsWidgetDialog {
     /**
      * @see org.opencms.workplace.CmsWorkplace#initMessages()
      */
+    @Override
     protected void initMessages() {
 
         // add specific dialog resource bundle
@@ -391,6 +401,7 @@ public class CmsEditUserAddInfoDialog extends CmsWidgetDialog {
     /**
      * Initializes the additional info bean to work with, depending on the dialog state and request parameters.<p>
      */
+    @SuppressWarnings("unchecked")
     protected void initUserObject() {
 
         try {
@@ -407,11 +418,11 @@ public class CmsEditUserAddInfoDialog extends CmsWidgetDialog {
                 // this is not the initial call, get the user object from session
                 m_user = getCms().readUser(new CmsUUID(getParamUserid()));
                 if (!Boolean.valueOf(getParamEditall()).booleanValue()) {
-                    m_addInfoList = (List)getDialogObject();
+                    m_addInfoList = (List<CmsUserAddInfoBean>)getDialogObject();
                 } else {
-                    Map dObj = (Map)getDialogObject();
-                    m_addInfoEditable = (SortedMap)dObj.get("editable");
-                    m_addInfoReadOnly = (SortedMap)dObj.get("readonly");
+                    Map<String, SortedMap<String, Object>> dObj = (Map<String, SortedMap<String, Object>>)getDialogObject();
+                    m_addInfoEditable = dObj.get("editable");
+                    m_addInfoReadOnly = dObj.get("readonly");
                 }
                 return;
             }
@@ -434,6 +445,7 @@ public class CmsEditUserAddInfoDialog extends CmsWidgetDialog {
     /**
      * @see org.opencms.workplace.CmsWorkplace#initWorkplaceRequestValues(org.opencms.workplace.CmsWorkplaceSettings, javax.servlet.http.HttpServletRequest)
      */
+    @Override
     protected void initWorkplaceRequestValues(CmsWorkplaceSettings settings, HttpServletRequest request) {
 
         // initialize parameters and dialog actions in super implementation
@@ -443,7 +455,7 @@ public class CmsEditUserAddInfoDialog extends CmsWidgetDialog {
         if (!Boolean.valueOf(getParamEditall()).booleanValue()) {
             setDialogObject(m_addInfoList);
         } else {
-            Map dObj = new HashMap();
+            Map<String, SortedMap<String, Object>> dObj = new HashMap<String, SortedMap<String, Object>>();
             dObj.put("editable", m_addInfoEditable);
             dObj.put("readonly", m_addInfoReadOnly);
             setDialogObject(dObj);
@@ -453,6 +465,7 @@ public class CmsEditUserAddInfoDialog extends CmsWidgetDialog {
     /**
      * @see org.opencms.workplace.CmsWidgetDialog#validateParamaters()
      */
+    @Override
     protected void validateParamaters() throws Exception {
 
         // test the needed parameters
@@ -462,21 +475,21 @@ public class CmsEditUserAddInfoDialog extends CmsWidgetDialog {
 
     /**
      * Creates a new additional information bean object.<p>
-     * 
+     *
      * @param user the user to create the bean for
-     * 
+     *
      * @return a new additional information bean object
      */
-    private List createAddInfoList(CmsUser user) {
+    private List<CmsUserAddInfoBean> createAddInfoList(CmsUser user) {
 
-        List addInfoList = new ArrayList();
+        List<CmsUserAddInfoBean> addInfoList = new ArrayList<CmsUserAddInfoBean>();
         // add beans
-        Iterator itBlocks = OpenCms.getWorkplaceManager().getUserInfoManager().getBlocks().iterator();
+        Iterator<CmsWorkplaceUserInfoBlock> itBlocks = OpenCms.getWorkplaceManager().getUserInfoManager().getBlocks().iterator();
         while (itBlocks.hasNext()) {
-            CmsWorkplaceUserInfoBlock block = (CmsWorkplaceUserInfoBlock)itBlocks.next();
-            Iterator itEntries = block.getEntries().iterator();
+            CmsWorkplaceUserInfoBlock block = itBlocks.next();
+            Iterator<CmsWorkplaceUserInfoEntry> itEntries = block.getEntries().iterator();
             while (itEntries.hasNext()) {
-                CmsWorkplaceUserInfoEntry entry = (CmsWorkplaceUserInfoEntry)itEntries.next();
+                CmsWorkplaceUserInfoEntry entry = itEntries.next();
                 Object value = user.getAdditionalInfo(entry.getKey());
                 if (value == null) {
                     value = "";
@@ -492,11 +505,11 @@ public class CmsEditUserAddInfoDialog extends CmsWidgetDialog {
      */
     private void setAddInfoMaps() {
 
-        m_addInfoEditable = new TreeMap();
-        m_addInfoReadOnly = new TreeMap();
-        Iterator itEntries = m_user.getAdditionalInfo().entrySet().iterator();
+        m_addInfoEditable = new TreeMap<String, Object>();
+        m_addInfoReadOnly = new TreeMap<String, Object>();
+        Iterator<Entry<String, Object>> itEntries = m_user.getAdditionalInfo().entrySet().iterator();
         while (itEntries.hasNext()) {
-            Map.Entry entry = (Map.Entry)itEntries.next();
+            Entry<String, Object> entry = itEntries.next();
             String key = entry.getKey().toString();
             if ((entry.getValue() == null) || CmsStringUtil.isEmptyOrWhitespaceOnly(entry.getValue().toString())) {
                 // skip empty entries

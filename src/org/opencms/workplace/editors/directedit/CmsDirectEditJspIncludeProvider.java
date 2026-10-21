@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -15,11 +15,11 @@
  * Lesser General Public License for more details.
  *
  * For further information about Alkacon Software, please see the
- * company website: http://www.alkacon.com
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -48,20 +48,20 @@ import javax.servlet.jsp.JspException;
 import javax.servlet.jsp.PageContext;
 
 /**
- * Direct edit provider that uses the same JSP include based logic that has been 
+ * Direct edit provider that uses the same JSP include based logic that has been
  * the default before the 6.2.3 release.<p>
- * 
+ *
  * Even though placing the HTML of the direct edit buttons appears to be more "flexible" at first,
- * there is a large overhead invloved using this provider as compared to an implementation 
- * like {@link CmsDirectEditDefaultProvider}. For every direct edit button on a page, 
- * a JSP include is processed <i>twice</i> using this provider, 
- * one include for the opening and one for the closing HTML. A JSP include is a costly operation, which means 
+ * there is a large overhead invloved using this provider as compared to an implementation
+ * like {@link CmsDirectEditDefaultProvider}. For every direct edit button on a page,
+ * a JSP include is processed <i>twice</i> using this provider,
+ * one include for the opening and one for the closing HTML. A JSP include is a costly operation, which means
  * the performance of a website is be impacted if many content managers work on the system that makes great
- * use of direct edit with a lot of elements on a page. In order to avoid this performance impact, 
+ * use of direct edit with a lot of elements on a page. In order to avoid this performance impact,
  * OpenCms since version 6.2.3 uses the {@link CmsDirectEditDefaultProvider} by default.<p>
- * 
+ *
  * This provider DOES NOT support {@link CmsDirectEditMode#MANUAL} mode.<p>
- * 
+ *
  * @since 6.2.3
  */
 public class CmsDirectEditJspIncludeProvider extends A_CmsDirectEditProvider {
@@ -106,21 +106,21 @@ public class CmsDirectEditJspIncludeProvider extends A_CmsDirectEditProvider {
     protected String m_permissions;
 
     /**
-     * Includes the "direct edit" element that adds HTML for the editable area to 
+     * Includes the "direct edit" element that adds HTML for the editable area to
      * the output page.<p>
-     * 
+     *
      * @param context the current JSP page context
      * @param jspIncludeFile the VFS path of the JSP that contains the direct edit HTML fragments
-     * @param element the editor element to include       
+     * @param element the editor element to include
      * @param editTarget the direct edit target
      * @param editElement the direct edit element
      * @param editOptions the direct edit options
      * @param editPermissions the direct edit permissions
      * @param createLink the direct edit create link
-     * 
+     *
      * @throws JspException in case something goes wrong
-     * 
-     * @return the direct edit permissions   
+     *
+     * @return the direct edit permissions
      */
     public static String includeDirectEditElement(
         PageContext context,
@@ -130,7 +130,8 @@ public class CmsDirectEditJspIncludeProvider extends A_CmsDirectEditProvider {
         String editElement,
         String editOptions,
         String editPermissions,
-        String createLink) throws JspException {
+        String createLink)
+    throws JspException {
 
         if (editPermissions == null) {
             // we do not have direct edit permissions
@@ -144,7 +145,7 @@ public class CmsDirectEditJspIncludeProvider extends A_CmsDirectEditProvider {
         // append "direct edit" permissions to element
         element = element + "_" + editPermissions;
 
-        // set request parameters required by the included direct edit JSP 
+        // set request parameters required by the included direct edit JSP
         Map<String, String[]> parameterMap = new HashMap<String, String[]>();
         CmsJspTagInclude.addParameter(parameterMap, I_CmsResourceLoader.PARAMETER_ELEMENT, element, true);
         CmsJspTagInclude.addParameter(parameterMap, DIRECT_EDIT_PARAM_TARGET, editTarget, true);
@@ -265,7 +266,7 @@ public class CmsDirectEditJspIncludeProvider extends A_CmsDirectEditProvider {
     public boolean insertDirectEditStart(PageContext context, CmsDirectEditParams params) throws JspException {
 
         String result = null;
-        CmsDirectEditPermissions permissions = getResourceInfo(params.getResourceName()).getPermissions();
+        CmsDirectEditPermissions permissions = getResourceInfo(params, params.getResourceName()).getPermissions();
         if (permissions.getPermission() > 0) {
             // permission to direct edit is granted
             m_permissions = permissions.toString();
@@ -293,7 +294,7 @@ public class CmsDirectEditJspIncludeProvider extends A_CmsDirectEditProvider {
 
     /**
      * Returns <code>false</code> because the JSP include provider does not support manual button placement.<p>
-     * 
+     *
      * @see org.opencms.workplace.editors.directedit.I_CmsDirectEditProvider#isManual(org.opencms.workplace.editors.directedit.CmsDirectEditMode)
      */
     @Override

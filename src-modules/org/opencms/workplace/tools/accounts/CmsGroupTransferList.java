@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -14,12 +14,12 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * Lesser General Public License for more details.
  *
- * For further information about Alkacon Software GmbH, please see the
- * company website: http://www.alkacon.com
+ * For further information about Alkacon Software GmbH & Co. KG, please see the
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -63,8 +63,8 @@ import javax.servlet.jsp.PageContext;
 
 /**
  * Allows to select a group to transfer the permissions and attributes from another one.<p>
- * 
- * @since 6.0.0 
+ *
+ * @since 6.0.0
  */
 public class CmsGroupTransferList extends A_CmsListDialog {
 
@@ -109,7 +109,7 @@ public class CmsGroupTransferList extends A_CmsListDialog {
 
     /**
      * Public constructor.<p>
-     * 
+     *
      * @param jsp an initialized JSP action element
      */
     public CmsGroupTransferList(CmsJspActionElement jsp) {
@@ -119,7 +119,7 @@ public class CmsGroupTransferList extends A_CmsListDialog {
 
     /**
      * Public constructor with JSP variables.<p>
-     * 
+     *
      * @param context the JSP page context
      * @param req the JSP request
      * @param res the JSP response
@@ -131,7 +131,7 @@ public class CmsGroupTransferList extends A_CmsListDialog {
 
     /**
      * Protected constructor.<p>
-     * 
+     *
      * @param listId the id of the specialized list
      * @param jsp an initialized JSP action element
      */
@@ -148,12 +148,13 @@ public class CmsGroupTransferList extends A_CmsListDialog {
 
     /**
      * This method should handle every defined list multi action,
-     * by comparing <code>{@link #getParamListAction()}</code> with the id 
-     * of the action to execute.<p> 
-     * 
+     * by comparing <code>{@link #getParamListAction()}</code> with the id
+     * of the action to execute.<p>
+     *
      * @throws CmsRuntimeException to signal that an action is not supported
-     * 
+     *
      */
+    @Override
     public void executeListMultiActions() throws CmsRuntimeException {
 
         throwListUnsupportedActionException();
@@ -162,6 +163,7 @@ public class CmsGroupTransferList extends A_CmsListDialog {
     /**
      * @see org.opencms.workplace.list.A_CmsListDialog#executeListSingleActions()
      */
+    @Override
     public void executeListSingleActions() throws IOException, ServletException, CmsRuntimeException {
 
         if (getParamListAction().equals(LIST_DEFACTION_TRANSFER) || getParamListAction().equals(LIST_ACTION_TRANSFER)) {
@@ -170,9 +172,9 @@ public class CmsGroupTransferList extends A_CmsListDialog {
                 CmsRequestUtil.forwardRequest(getParamCloseLink(), getJsp().getRequest(), getJsp().getResponse());
                 setForwarded(true);
             } catch (CmsException e) {
-                throw new CmsRuntimeException(Messages.get().container(
-                    Messages.ERR_TRANSFER_GROUP_1,
-                    getSelectedItem().get(LIST_COLUMN_NAME)), e);
+                throw new CmsRuntimeException(
+                    Messages.get().container(Messages.ERR_TRANSFER_GROUP_1, getSelectedItem().get(LIST_COLUMN_NAME)),
+                    e);
             }
         } else {
             throwListUnsupportedActionException();
@@ -192,7 +194,7 @@ public class CmsGroupTransferList extends A_CmsListDialog {
 
     /**
      * Returns the group id parameter value.<p>
-     * 
+     *
      * @return the group id parameter value
      */
     public String getParamGroupid() {
@@ -202,7 +204,7 @@ public class CmsGroupTransferList extends A_CmsListDialog {
 
     /**
      * Sets the group id parameter value.<p>
-     * 
+     *
      * @param groupId the group id parameter value
      */
     public void setParamGroupid(String groupId) {
@@ -213,19 +215,21 @@ public class CmsGroupTransferList extends A_CmsListDialog {
     /**
      * @see org.opencms.workplace.list.A_CmsListDialog#customHtmlStart()
      */
+    @Override
     protected String customHtmlStart() {
 
         StringBuffer result = new StringBuffer(2048);
-        result.append(dialogBlockStart(Messages.get().container(Messages.GUI_GROUPS_TRANSFER_NOTICE_0).key(getLocale())));
+        result.append(
+            dialogBlockStart(Messages.get().container(Messages.GUI_GROUPS_TRANSFER_NOTICE_0).key(getLocale())));
         result.append("\n");
         if (getCurrentToolPath().indexOf("/edit/") < 0) {
             result.append(key(Messages.GUI_GROUP_DEPENDENCIES_SELECTED_GROUPS_0));
             result.append(":<br>\n");
-            List users = CmsStringUtil.splitAsList(getGroupName(), CmsHtmlList.ITEM_SEPARATOR, true);
+            List<String> users = CmsStringUtil.splitAsList(getGroupName(), CmsHtmlList.ITEM_SEPARATOR, true);
             result.append("<ul>\n");
-            Iterator it = users.iterator();
+            Iterator<String> it = users.iterator();
             while (it.hasNext()) {
-                String name = (String)it.next();
+                String name = it.next();
                 result.append("<li>");
                 result.append(name);
                 result.append("</li>\n");
@@ -240,21 +244,22 @@ public class CmsGroupTransferList extends A_CmsListDialog {
     /**
      * @see org.opencms.workplace.list.A_CmsListDialog#fillDetails(java.lang.String)
      */
+    @Override
     protected void fillDetails(String detailId) {
 
         // get content
-        List groups = getList().getAllContent();
-        Iterator itGroups = groups.iterator();
+        List<CmsListItem> groups = getList().getAllContent();
+        Iterator<CmsListItem> itGroups = groups.iterator();
         while (itGroups.hasNext()) {
-            CmsListItem item = (CmsListItem)itGroups.next();
+            CmsListItem item = itGroups.next();
             String groupName = item.get(LIST_COLUMN_NAME).toString();
             StringBuffer html = new StringBuffer(512);
             try {
                 if (detailId.equals(LIST_DETAIL_USERS)) {
                     // users
-                    Iterator itUsers = getCms().getUsersOfGroup(groupName).iterator();
+                    Iterator<CmsUser> itUsers = getCms().getUsersOfGroup(groupName).iterator();
                     while (itUsers.hasNext()) {
-                        html.append(((CmsUser)itUsers.next()).getFullName());
+                        html.append(itUsers.next().getFullName());
                         if (itUsers.hasNext()) {
                             html.append("<br>");
                         }
@@ -262,9 +267,9 @@ public class CmsGroupTransferList extends A_CmsListDialog {
                     }
                 } else if (detailId.equals(LIST_DETAIL_CHILDREN)) {
                     // children
-                    Iterator itChildren = getCms().getChildren(groupName, false).iterator();
+                    Iterator<CmsGroup> itChildren = getCms().getChildren(groupName, false).iterator();
                     while (itChildren.hasNext()) {
-                        html.append(((CmsGroup)itChildren.next()).getName());
+                        html.append(itChildren.next().getName());
                         if (itChildren.hasNext()) {
                             html.append("<br>");
                         }
@@ -282,9 +287,9 @@ public class CmsGroupTransferList extends A_CmsListDialog {
 
     /**
      * Returns the list of groups to display.<p>
-     * 
+     *
      * @return the list of groups to display
-     * 
+     *
      * @throws CmsException if something goes wrong
      */
     protected List<CmsGroup> getGroups() throws CmsException {
@@ -295,15 +300,17 @@ public class CmsGroupTransferList extends A_CmsListDialog {
     /**
      * @see org.opencms.workplace.list.A_CmsListDialog#getListItems()
      */
-    protected List getListItems() throws CmsException {
+    @Override
+    protected List<CmsListItem> getListItems() throws CmsException {
 
-        List ret = new ArrayList();
+        List<CmsListItem> ret = new ArrayList<CmsListItem>();
         // get content
-        List groups = getGroups();
-        Set selGroups = new HashSet(CmsStringUtil.splitAsList(getParamGroupid(), CmsHtmlList.ITEM_SEPARATOR, true));
-        Iterator itGroups = groups.iterator();
+        List<CmsGroup> groups = getGroups();
+        Set<String> selGroups = new HashSet<String>(
+            CmsStringUtil.splitAsList(getParamGroupid(), CmsHtmlList.ITEM_SEPARATOR, true));
+        Iterator<CmsGroup> itGroups = groups.iterator();
         while (itGroups.hasNext()) {
-            CmsGroup group = (CmsGroup)itGroups.next();
+            CmsGroup group = itGroups.next();
             if (selGroups.contains(group.getId().toString())) {
                 continue;
             }
@@ -325,6 +332,7 @@ public class CmsGroupTransferList extends A_CmsListDialog {
     /**
      * @see org.opencms.workplace.CmsWorkplace#initMessages()
      */
+    @Override
     protected void initMessages() {
 
         // add specific dialog resource bundle
@@ -336,6 +344,7 @@ public class CmsGroupTransferList extends A_CmsListDialog {
     /**
      * @see org.opencms.workplace.list.A_CmsListDialog#setColumns(org.opencms.workplace.list.CmsListMetadata)
      */
+    @Override
     protected void setColumns(CmsListMetadata metadata) {
 
         // create column for transfer
@@ -363,9 +372,10 @@ public class CmsGroupTransferList extends A_CmsListDialog {
 
         // create default transfer action
         CmsListDefaultAction defTransferAction = new CmsListDefaultAction(LIST_DEFACTION_TRANSFER);
-        defTransferAction.setName(Messages.get().container(Messages.GUI_GROUPS_TRANSFER_LIST_DEFACTION_TRANSFER_NAME_0));
-        defTransferAction.setHelpText(Messages.get().container(
-            Messages.GUI_GROUPS_TRANSFER_LIST_DEFACTION_TRANSFER_HELP_0));
+        defTransferAction.setName(
+            Messages.get().container(Messages.GUI_GROUPS_TRANSFER_LIST_DEFACTION_TRANSFER_NAME_0));
+        defTransferAction.setHelpText(
+            Messages.get().container(Messages.GUI_GROUPS_TRANSFER_LIST_DEFACTION_TRANSFER_HELP_0));
         displayCol.addDefaultAction(defTransferAction);
 
         // add it to the list definition
@@ -387,6 +397,7 @@ public class CmsGroupTransferList extends A_CmsListDialog {
     /**
      * @see org.opencms.workplace.list.A_CmsListDialog#setIndependentActions(org.opencms.workplace.list.CmsListMetadata)
      */
+    @Override
     protected void setIndependentActions(CmsListMetadata metadata) {
 
         // add user users details
@@ -398,8 +409,8 @@ public class CmsGroupTransferList extends A_CmsListDialog {
         usersDetails.setHideActionName(Messages.get().container(Messages.GUI_GROUPS_DETAIL_HIDE_USERS_NAME_0));
         usersDetails.setHideActionHelpText(Messages.get().container(Messages.GUI_GROUPS_DETAIL_HIDE_USERS_HELP_0));
         usersDetails.setName(Messages.get().container(Messages.GUI_GROUPS_DETAIL_USERS_NAME_0));
-        usersDetails.setFormatter(new CmsListItemDetailsFormatter(Messages.get().container(
-            Messages.GUI_GROUPS_DETAIL_USERS_NAME_0)));
+        usersDetails.setFormatter(
+            new CmsListItemDetailsFormatter(Messages.get().container(Messages.GUI_GROUPS_DETAIL_USERS_NAME_0)));
         metadata.addItemDetails(usersDetails);
 
         // add user children details
@@ -411,14 +422,15 @@ public class CmsGroupTransferList extends A_CmsListDialog {
         childDetails.setHideActionName(Messages.get().container(Messages.GUI_GROUPS_DETAIL_HIDE_CHILDREN_NAME_0));
         childDetails.setHideActionHelpText(Messages.get().container(Messages.GUI_GROUPS_DETAIL_HIDE_CHILDREN_HELP_0));
         childDetails.setName(Messages.get().container(Messages.GUI_GROUPS_DETAIL_CHILDREN_NAME_0));
-        childDetails.setFormatter(new CmsListItemDetailsFormatter(Messages.get().container(
-            Messages.GUI_GROUPS_DETAIL_CHILDREN_NAME_0)));
+        childDetails.setFormatter(
+            new CmsListItemDetailsFormatter(Messages.get().container(Messages.GUI_GROUPS_DETAIL_CHILDREN_NAME_0)));
         metadata.addItemDetails(childDetails);
     }
 
     /**
      * @see org.opencms.workplace.list.A_CmsListDialog#setMultiActions(org.opencms.workplace.list.CmsListMetadata)
      */
+    @Override
     protected void setMultiActions(CmsListMetadata metadata) {
 
         // no-op
@@ -426,7 +438,7 @@ public class CmsGroupTransferList extends A_CmsListDialog {
 
     /**
      * Sets the icon actions for the transfer list.<p>
-     * 
+     *
      * @param transferCol the column to set the action
      */
     protected void setTransferAction(CmsListColumnDefinition transferCol) {
@@ -441,13 +453,17 @@ public class CmsGroupTransferList extends A_CmsListDialog {
     /**
      * @see org.opencms.workplace.list.A_CmsListDialog#validateParamaters()
      */
+    @Override
     protected void validateParamaters() throws Exception {
 
         // test the needed parameters
         m_groupName = "";
-        Iterator itGroups = CmsStringUtil.splitAsList(getParamGroupid(), CmsHtmlList.ITEM_SEPARATOR, true).iterator();
+        Iterator<String> itGroups = CmsStringUtil.splitAsList(
+            getParamGroupid(),
+            CmsHtmlList.ITEM_SEPARATOR,
+            true).iterator();
         while (itGroups.hasNext()) {
-            CmsUUID id = new CmsUUID(itGroups.next().toString());
+            CmsUUID id = new CmsUUID(itGroups.next());
             m_groupName += getCms().readGroup(id).getName();
             if (itGroups.hasNext()) {
                 m_groupName += CmsHtmlList.ITEM_SEPARATOR;

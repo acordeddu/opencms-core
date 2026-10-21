@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html>
+<head>
+ 	<meta name="package-mapping" content="u:org.opencms.ui" />
+  	<meta name="package-mapping" content="o:org.opencms.ui.components" />
+  	<meta name="package-mapping" content="s:org.opencms.ui.apps.scheduler" />
+</head>
+<body>
+	<vaadin7-vertical-layout margin spacing>
+		<v-panel caption="">
+			<vaadin7-vertical-layout margin spacing>
+				<v-button _id="m_buttonAddJob">%(key.GUI_NEWJOB_ADMIN_TOOL_NAME_0)</v-button>
+			</vaadin7-vertical-layout>
+		</v-panel>
+		
+		<v-panel caption="%(key.GUI_JOBS_LIST_NAME_0)">
+			<vaadin7-vertical-layout  spacing>
+				<s-cms-job-table _id="m_jobTable" width="100%"></s-cms-job-table>
+			</vaadin7-vertical-layout>
+		</v-panel>
+		<vaadin7-vertical-layout _id="m_editorContainer" ></vaadin7-vertical-layout>
+	</vaadin7-vertical-layout>
+</body>
+</html>

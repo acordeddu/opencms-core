@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -14,12 +14,12 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * Lesser General Public License for more details.
  *
- * For further information about Alkacon Software GmbH, please see the
- * company website: http://www.alkacon.com
+ * For further information about Alkacon Software GmbH & Co. KG, please see the
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -27,32 +27,26 @@
 
 package org.opencms.importexport;
 
-import junit.framework.TestCase;
+import org.opencms.test.OpenCmsTestRunner;
 
-/**
- * Basic test cases for import/export utilities.<p>
- * 
- * @since 6.0.0
- */
-public class TestCmsImport extends TestCase {
+import org.junit.jupiter.api.MethodOrderer;
+import org.junit.jupiter.api.Order;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestMethodOrder;
 
-    /**
-     * Default JUnit constructor.<p>
-     * 
-     * @param arg0 JUnit parameters
-     */
-    public TestCmsImport(String arg0) {
-
-        super(arg0);
-    }
+@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
+public class TestCmsImport extends OpenCmsTestRunner {
 
     /**
      * Runs a test for the conversion of the digest encoding.<p>
-     * 
+     *
      * @throws Throwable if something goes wrong
-     * 
+     *
      * @deprecated old import version 4 issue
      */
+    @Deprecated
+    @Test
+    @Order(2)
     public void testConvertDigestEncoding() throws Throwable {
 
         A_CmsImport imp = new CmsImportVersion4();
@@ -80,10 +74,13 @@ public class TestCmsImport extends TestCase {
     }
 
     /**
-     * Runs a test for the import of content.<p>  
-     * 
+     * Runs a test for the import of content.<p>
+     *
      * @deprecated old import version 2 issue
      */
+    @Deprecated
+    @Test
+    @Order(1)
     public void testSetDirectories() {
 
         String[] rules = {

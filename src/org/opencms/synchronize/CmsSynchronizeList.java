@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -14,12 +14,12 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * Lesser General Public License for more details.
  *
- * For further information about Alkacon Software GmbH, please see the
- * company website: http://www.alkacon.com
+ * For further information about Alkacon Software GmbH & Co. KG, please see the
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -32,10 +32,10 @@ import org.opencms.util.CmsDateUtil;
 import java.io.Serializable;
 
 /**
- * Defines the CmsSynchronizeList object, used to store synchronisation data 
- * required to synchronize the VFS and the server FS.<p> 
- * 
- * @since 6.0.0 
+ * Defines the CmsSynchronizeList object, used to store synchronisation data
+ * required to synchronize the VFS and the server FS.<p>
+ *
+ * @since 6.0.0
  */
 public class CmsSynchronizeList implements Serializable {
 
@@ -59,7 +59,7 @@ public class CmsSynchronizeList implements Serializable {
 
     /**
      * Name of the translated resource stored in the sync list.
-     * Its nescessary to translate the resource name, since the server FS does 
+     * Its nescessary to translate the resource name, since the server FS does
      * allow different
      * naming conventions than the VFS.
      */
@@ -67,7 +67,7 @@ public class CmsSynchronizeList implements Serializable {
 
     /**
      * Constructor, creates a new CmsSynchronizeList object.
-     * 
+     *
      * @param resName The name of the resource
      * @param transResName The name of the resource
      * @param modifiedVfs last modification date in the Vfs
@@ -83,7 +83,7 @@ public class CmsSynchronizeList implements Serializable {
 
     /**
      * Returns a format description of the sync-list file on the server FS.<p>
-     * 
+     *
      * @return format description
      */
     public static String getFormatDescription() {
@@ -132,11 +132,12 @@ public class CmsSynchronizeList implements Serializable {
 
     /**
      * Returns a string-representation for this object. <p>
-     * 
+     *
      * This is used to create the sync list entries in the server FS
-     *  
+     *
      * @return string-representation for this object.
      */
+    @Override
     public String toString() {
 
         String output = m_resName + ":" + m_transResName + ":" + m_modifiedVfs + ":" + m_modifiedFs;

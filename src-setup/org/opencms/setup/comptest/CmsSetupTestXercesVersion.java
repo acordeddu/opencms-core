@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -14,12 +14,12 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * Lesser General Public License for more details.
  *
- * For further information about Alkacon Software GmbH, please see the
- * company website: http://www.alkacon.com
+ * For further information about Alkacon Software GmbH & Co. KG, please see the
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -40,21 +40,13 @@ import org.xml.sax.InputSource;
 
 /**
  * Test for the Xerces version.<p>
- * 
- * @since 6.1.8 
+ *
+ * @since 6.1.8
  */
 public class CmsSetupTestXercesVersion implements I_CmsSetupTest {
 
     /** The test name. */
     public static final String TEST_NAME = "Xerces Version";
-
-    /**
-     * @see org.opencms.setup.comptest.I_CmsSetupTest#getName()
-     */
-    public String getName() {
-
-        return TEST_NAME;
-    }
 
     /**
      * @see org.opencms.setup.comptest.I_CmsSetupTest#execute(org.opencms.setup.CmsSetupBean)
@@ -92,14 +84,16 @@ public class CmsSetupTestXercesVersion implements I_CmsSetupTest {
         switch (xercesVersion) {
             case 2:
                 testResult.setResult(versionStr);
-                testResult.setHelp("OpenCms requires Xerces version 2 to run. Usually this should be available as part of the servlet environment.");
+                testResult.setHelp(
+                    "OpenCms requires Xerces version 2 to run. Usually this should be available as part of the servlet environment.");
                 testResult.setGreen();
                 break;
             case 1:
                 testResult.setResult(versionStr);
                 testResult.setRed();
-                testResult.setInfo("OpenCms requires Xerces version 2 to run, your Xerces version is 1. "
-                    + "Usually Xerces 2 should be installed by default as part of the servlet environment.");
+                testResult.setInfo(
+                    "OpenCms requires Xerces version 2 to run, your Xerces version is 1. "
+                        + "Usually Xerces 2 should be installed by default as part of the servlet environment.");
                 testResult.setHelp(testResult.getInfo());
                 break;
             default:
@@ -108,10 +102,19 @@ public class CmsSetupTestXercesVersion implements I_CmsSetupTest {
                 }
                 testResult.setResult(versionStr);
                 testResult.setRed();
-                testResult.setInfo("OpenCms requires Xerces version 2 to run. "
-                    + "Usually Xerces 2 should be installed by default as part of the servlet environment.");
+                testResult.setInfo(
+                    "OpenCms requires Xerces version 2 to run. "
+                        + "Usually Xerces 2 should be installed by default as part of the servlet environment.");
                 testResult.setHelp(testResult.getInfo());
         }
         return testResult;
+    }
+
+    /**
+     * @see org.opencms.setup.comptest.I_CmsSetupTest#getName()
+     */
+    public String getName() {
+
+        return TEST_NAME;
     }
 }

@@ -1,0 +1,7 @@
+#Thu May 07 15:19:33 CEST 2020
+\!/=
+/instance/org.eclipse.jdt.ui/org.eclipse.jdt.ui.enable.visibility.order=true
+/instance/org.eclipse.jdt.ui/org.eclipse.jdt.ui.visibility.order=B,R,D,V,
+/instance/org.eclipse.jdt.ui/outlinesortoption=T,SF,F,C,SI,I,SM,M,
+@org.eclipse.jdt.ui=3.21.0.v20200226-1531
+file_export_version=3.0

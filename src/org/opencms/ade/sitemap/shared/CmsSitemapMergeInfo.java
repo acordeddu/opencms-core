@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -15,11 +15,11 @@
  * Lesser General Public License for more details.
  *
  * For further information about Alkacon Software, please see the
- * company website: http://www.alkacon.com
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -31,7 +31,7 @@ import com.google.gwt.user.client.rpc.IsSerializable;
 
 /**
  * This class represents the result of a 'merge sub-sitemap' operation.<p>
- * 
+ *
  * @since 8.0.0
  */
 public class CmsSitemapMergeInfo implements IsSerializable {
@@ -44,9 +44,9 @@ public class CmsSitemapMergeInfo implements IsSerializable {
 
     /**
      * Constructor.<p>
-     * 
+     *
      * @param mergedEntry the entries which have been merged into the parent sitemap
-     * @param timestamp the modification time of the parent sitemap  
+     * @param timestamp the modification time of the parent sitemap
      */
     public CmsSitemapMergeInfo(CmsClientSitemapEntry mergedEntry, long timestamp) {
 
@@ -64,7 +64,7 @@ public class CmsSitemapMergeInfo implements IsSerializable {
 
     /**
      * Returns the entry to be merged back into the parent sitemap.<p>
-     * 
+     *
      * @return the entry to be merged
      */
     public CmsClientSitemapEntry getMergedEntry() {
@@ -74,7 +74,7 @@ public class CmsSitemapMergeInfo implements IsSerializable {
 
     /**
      * The timestamp of the last modification of the parent sitemap.<p>
-     * 
+     *
      * @return the timestamp of the last modification of the parent sitemap
      */
     public long getTimestamp() {

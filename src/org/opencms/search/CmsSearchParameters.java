@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -14,12 +14,12 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * Lesser General Public License for more details.
  *
- * For further information about Alkacon Software GmbH, please see the
- * company website: http://www.alkacon.com
+ * For further information about Alkacon Software GmbH & Co. KG, please see the
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -49,11 +49,11 @@ import org.apache.lucene.search.SortField;
 
 /**
  * Contains the search parameters for a call to <code>{@link org.opencms.search.CmsSearchIndex#search(org.opencms.file.CmsObject, CmsSearchParameters)}</code>.<p>
- * 
- * Primary purpose is translation of search arguments to response parameters and from request parameters as 
+ *
+ * Primary purpose is translation of search arguments to response parameters and from request parameters as
  * well as support for creation of restrictions of several search query parameter sets. <p>
- * 
- * @since 6.0.0 
+ *
+ * @since 6.0.0
  */
 public class CmsSearchParameters {
 
@@ -76,7 +76,7 @@ public class CmsSearchParameters {
 
         /**
          * Creates a new search field query with a variable length search term list.<p>
-         * 
+         *
          * @param fieldName the field name
          * @param fieldOccur the occur parameter for this field
          * @param termList the search term list
@@ -93,10 +93,10 @@ public class CmsSearchParameters {
 
         /**
          * Creates a new search field query with just a single search term.<p>
-         * 
+         *
          * Please note: Since there is only one term, the ocucr parameter for the term combination is
          * not required and set to <code>null</code>.<p>
-         * 
+         *
          * @param fieldName the field name
          * @param searchTerm the search term
          * @param fieldOccur the occur parameter for this field
@@ -130,7 +130,7 @@ public class CmsSearchParameters {
          * Returns the first entry from the term list.<p>
          *
          * @return the search query
-         * 
+         *
          * @deprecated use {@link #getSearchTerms()} instead
          */
         @Deprecated
@@ -183,7 +183,7 @@ public class CmsSearchParameters {
          * Sets the search keywords to just a single entry.<p>
          *
          * @param searchQuery the single search keyword to set
-         * 
+         *
          * @deprecated use {@link #setSearchTerms(List)} instead
          */
         @Deprecated
@@ -194,7 +194,7 @@ public class CmsSearchParameters {
 
         /**
          * Sets the search terms.<p>
-         * 
+         *
          * @param searchTerms the search terms to set
          */
         public void setSearchTerms(List<String> searchTerms) {
@@ -204,16 +204,12 @@ public class CmsSearchParameters {
     }
 
     /** Sort result documents by date of creation, then score. */
-    public static final Sort SORT_DATE_CREATED = new Sort(new SortField(
-        CmsSearchField.FIELD_DATE_CREATED,
-        SortField.STRING,
-        true));
+    public static final Sort SORT_DATE_CREATED = new Sort(
+        new SortField(CmsSearchField.FIELD_DATE_CREATED, SortField.Type.STRING, true));
 
     /** Sort result documents by date of last modification, then score. */
-    public static final Sort SORT_DATE_LASTMODIFIED = new Sort(new SortField(
-        CmsSearchField.FIELD_DATE_LASTMODIFIED,
-        SortField.STRING,
-        true));
+    public static final Sort SORT_DATE_LASTMODIFIED = new Sort(
+        new SortField(CmsSearchField.FIELD_DATE_LASTMODIFIED, SortField.Type.STRING, true));
 
     /** Default sort order (by document score). */
     public static final Sort SORT_DEFAULT = Sort.RELEVANCE;
@@ -226,9 +222,8 @@ public class CmsSearchParameters {
         "SORT_TITLE"};
 
     /** Sort result documents by title, then score. */
-    public static final Sort SORT_TITLE = new Sort(new SortField[] {
-        new SortField(CmsSearchField.FIELD_TITLE, SortField.STRING),
-        SortField.FIELD_SCORE});
+    public static final Sort SORT_TITLE = new Sort(
+        new SortField[] {new SortField(CmsSearchField.FIELD_TITLE, SortField.Type.STRING), SortField.FIELD_SCORE});
 
     /** The log object for this class. */
     private static final Log LOG = CmsLog.getLog(CmsSearchParameters.class);
@@ -275,9 +270,6 @@ public class CmsSearchParameters {
     /** The current result page. */
     private int m_page;
 
-    /** The pre-parsed query. */
-    private String m_parsedQuery;
-
     /** The search query to use. */
     private String m_query;
 
@@ -294,12 +286,12 @@ public class CmsSearchParameters {
     private Sort m_sort;
 
     /**
-     * Creates a new search parameter instance with no search query and 
+     * Creates a new search parameter instance with no search query and
      * default values for the remaining parameters. <p>
-     * 
-     * Before using this search parameters for a search method 
+     *
+     * Before using this search parameters for a search method
      * <code>{@link #setQuery(String)}</code> has to be invoked. <p>
-     * 
+     *
      */
     public CmsSearchParameters() {
 
@@ -307,16 +299,16 @@ public class CmsSearchParameters {
     }
 
     /**
-     * Creates a new search parameter instance with the provided search query and 
+     * Creates a new search parameter instance with the provided search query and
      * default values for the remaining parameters. <p>
-     * 
-     * Only the "meta" field (combination of content and title) will be used for search. 
-     * No search root restriction is chosen. 
-     * No category restriction is used. 
-     * No category counts are calculated for the result. 
+     *
+     * Only the "meta" field (combination of content and title) will be used for search.
+     * No search root restriction is chosen.
+     * No category restriction is used.
+     * No category counts are calculated for the result.
      * Sorting is turned off. This is a simple but fast setup. <p>
-     * 
-     * @param query the query to search for 
+     *
+     * @param query the query to search for
      */
     public CmsSearchParameters(String query) {
 
@@ -326,7 +318,7 @@ public class CmsSearchParameters {
 
     /**
      * Creates a new search parameter instance with the provided parameter values.<p>
-     * 
+     *
      * @param query the search term to search the index
      * @param fields the list of fields to search
      * @param roots only resource that are sub-resource of one of the search roots are included in the search result
@@ -376,12 +368,12 @@ public class CmsSearchParameters {
 
     /**
      * Adds an individual query for a search field.<p>
-     * 
+     *
      * If this is used, any setting made with {@link #setQuery(String)} and {@link #setFields(List)}
      * will be ignored and only the individual field search settings will be used.<p>
      *
      * @param query the query to add
-     * 
+     *
      * @since 7.5.1
      */
     public void addFieldQuery(CmsSearchFieldQuery query) {
@@ -399,14 +391,14 @@ public class CmsSearchParameters {
 
     /**
      * Adds an individual query for a search field.<p>
-     * 
+     *
      * If this is used, any setting made with {@link #setQuery(String)} and {@link #setFields(List)}
      * will be ignored and only the individual field search settings will be used.<p>
-     * 
+     *
      * @param fieldName the field name
      * @param searchQuery the search query
      * @param occur the occur parameter for the query in the field
-     * 
+     *
      * @since 7.5.1
      */
     public void addFieldQuery(String fieldName, String searchQuery, Occur occur) {
@@ -417,7 +409,7 @@ public class CmsSearchParameters {
 
     /**
      * Returns whether category counts are calculated for search results or not. <p>
-     * 
+     *
      * @return a boolean that tells whether category counts are calculated for search results or not
      */
     public boolean getCalculateCategories() {
@@ -436,8 +428,8 @@ public class CmsSearchParameters {
     }
 
     /**
-     * Returns the maximum number of pages which should be shown.<p> 
-     * 
+     * Returns the maximum number of pages which should be shown.<p>
+     *
      * @return the maximum number of pages which should be shown
      */
     public int getDisplayPages() {
@@ -447,7 +439,7 @@ public class CmsSearchParameters {
 
     /**
      * Returns the list of individual field queries.<p>
-     * 
+     *
      * @return the list of individual field queries
      *
      * @since 7.5.1
@@ -469,7 +461,7 @@ public class CmsSearchParameters {
 
     /**
      * Get the name of the index for the search.<p>
-     * 
+     *
      * @return the name of the index for the search
      */
     public String getIndex() {
@@ -479,7 +471,7 @@ public class CmsSearchParameters {
 
     /**
      * Gets the number of matches displayed on each page.<p>
-     * 
+     *
      * @return matches per result page
      */
     public int getMatchesPerPage() {
@@ -528,23 +520,6 @@ public class CmsSearchParameters {
     }
 
     /**
-     * Returns the parsed query.<p>
-     * 
-     * The parsed query is automatically set by the OpenCms search index when a query is created 
-     * with either {@link #setQuery(String)} or {@link #addFieldQuery(CmsSearchFieldQuery)}.
-     * The Lucene query build from the parameters is stored here and can be later used 
-     * for paging through the results.<p>
-     * 
-     * Please note that this returns only to the query part, not the filter part of the search.<p>
-     * 
-     * @return the parsed query 
-     */
-    public String getParsedQuery() {
-
-        return m_parsedQuery;
-    }
-
-    /**
      * Returns the search query to use.<p>
      *
      * @return the search query to use
@@ -556,7 +531,7 @@ public class CmsSearchParameters {
 
     /**
      * Gets the minimum search query length.<p>
-     * 
+     *
      * @return the minimum search query length
      */
     public int getQueryLength() {
@@ -578,9 +553,9 @@ public class CmsSearchParameters {
 
     /**
      * Returns the list of strings of search roots to use.<p>
-     * 
+     *
      * Only resource that are sub-resource of one of the search roots are included in the search result.<p>
-     * 
+     *
      * @return the list of strings of search roots to use
      */
     public List<String> getRoots() {
@@ -599,9 +574,9 @@ public class CmsSearchParameters {
     }
 
     /**
-     * Returns the search index to search in or null if not set before 
+     * Returns the search index to search in or null if not set before
      * (<code>{@link #setSearchIndex(CmsSearchIndex)}</code>). <p>
-     * 
+     *
      * @return the search index to search in or null if not set before (<code>{@link #setSearchIndex(CmsSearchIndex)}</code>)
      */
     public CmsSearchIndex getSearchIndex() {
@@ -611,7 +586,7 @@ public class CmsSearchParameters {
 
     /**
      * Returns the search page to display.<p>
-     *  
+     *
      * @return the search page to display
      */
     public int getSearchPage() {
@@ -621,12 +596,12 @@ public class CmsSearchParameters {
 
     /**
      * Returns the comma separated lists of root folder names to restrict search to.<p>
-     * 
-     * This method is a "sibling" to method <code>{@link #getRoots()}</code> but with 
+     *
+     * This method is a "sibling" to method <code>{@link #getRoots()}</code> but with
      * the support of being usable with widget technology. <p>
-     * 
+     *
      * @return the comma separated lists of field names to search in
-     * 
+     *
      * @see #setSortName(String)
      */
     public String getSearchRoots() {
@@ -635,8 +610,8 @@ public class CmsSearchParameters {
     }
 
     /**
-     * Returns the instance that defines the sort order for the results. 
-     * 
+     * Returns the instance that defines the sort order for the results.
+     *
      * @return the instance that defines the sort order for the results
      */
     public Sort getSort() {
@@ -647,7 +622,7 @@ public class CmsSearchParameters {
     /**
      * Returns the name of the sort option being used.<p>
      * @return the name of the sort option being used
-     * 
+     *
      * @see #SORT_NAMES
      * @see #setSortName(String)
      */
@@ -676,7 +651,7 @@ public class CmsSearchParameters {
     }
 
     /**
-     * Returns <code>true</code> if fields configured for the excerpt should be used for generating the excerpt only 
+     * Returns <code>true</code> if fields configured for the excerpt should be used for generating the excerpt only
      * if they have been actually searched in.<p>
      *
      * The default setting is <code>false</code>, which means all text fields configured for the excerpt will
@@ -686,7 +661,7 @@ public class CmsSearchParameters {
      * in <code>opencms-search.xml</code>. This method controls if so configured fields are used depending on the
      * fields searched, see {@link #setFields(List)}.<p>
      *
-     * @return <code>true</code> if fields configured for the excerpt should be used for generating the excerpt only 
+     * @return <code>true</code> if fields configured for the excerpt should be used for generating the excerpt only
      * if they have been actually searched in
      */
     public boolean isExcerptOnlySearchedFields() {
@@ -698,7 +673,7 @@ public class CmsSearchParameters {
      * Returns <code>true</code> if the query part should be ignored so that only filters are used for searching.<p>
      *
      * @return <code>true</code> if the query part should be ignored so that only filters are used for searching
-     * 
+     *
      * @since 8.0.0
      */
     public boolean isIgnoreQuery() {
@@ -708,25 +683,24 @@ public class CmsSearchParameters {
 
     /**
      * Creates a merged parameter set from this parameters, restricted by the given other parameters.<p>
-     * 
+     *
      * This is mainly intended for "search in search result" functions.<p>
-     * 
+     *
      * The restricted query is build of the queries of both parameters, appended with AND.<p>
-     * 
+     *
      * The lists in the restriction for <code>{@link #getFields()}</code>, <code>{@link #getRoots()}</code> and
      * <code>{@link #getCategories()}</code> are <b>intersected</b> with the lists of this search parameters. Only
-     * elements contained in both lists are included for the created search parameters. 
-     * If a list in either the restriction or in this search parameters is <code>null</code>, 
-     * the list from the other search parameters is used directly.<p> 
-     * 
+     * elements contained in both lists are included for the created search parameters.
+     * If a list in either the restriction or in this search parameters is <code>null</code>,
+     * the list from the other search parameters is used directly.<p>
+     *
      * The values for
      * <code>{@link #isCalculateCategories()}</code>
      * and <code>{@link #getSort()}</code> of this parameters are used for the restricted parameters.<p>
-     * 
+     *
      * @param restriction the parameters to restrict this parameters with
      * @return the restricted parameters
      */
-    @SuppressWarnings("unchecked")
     public CmsSearchParameters restrict(CmsSearchParameters restriction) {
 
         // append queries
@@ -743,7 +717,7 @@ public class CmsSearchParameters {
             }
         }
         if (restriction.getQuery() != null) {
-            // don't let Lucene max terms be exceeded in case someone reuses a CmsSearch and continuously restricts 
+            // don't let Lucene max terms be exceeded in case someone reuses a CmsSearch and continuously restricts
             // query with the same restrictions...
             if (query.indexOf(restriction.getQuery()) < 0) {
                 query.append(" +(");
@@ -769,8 +743,8 @@ public class CmsSearchParameters {
         if ((m_roots != null) && (m_roots.size() > 0)) {
             if ((restriction.getRoots() != null) && (restriction.getRoots().size() > 0)) {
                 roots = ListUtils.intersection(m_roots, restriction.getRoots());
-                // TODO: This only works if there are equal paths in both parameter sets - for two distinct sets 
-                //       all root restrictions are dropped with an empty list. 
+                // TODO: This only works if there are equal paths in both parameter sets - for two distinct sets
+                //       all root restrictions are dropped with an empty list.
             } else {
                 roots = m_roots;
             }
@@ -802,7 +776,7 @@ public class CmsSearchParameters {
             resourceTypes = restriction.getResourceTypes();
         }
 
-        // create the new search parameters 
+        // create the new search parameters
         CmsSearchParameters result = new CmsSearchParameters(
             query.toString(),
             fields,
@@ -816,8 +790,8 @@ public class CmsSearchParameters {
     }
 
     /**
-     * Set whether category counts shall be calculated for the corresponding search results or not.<p> 
-     * 
+     * Set whether category counts shall be calculated for the corresponding search results or not.<p>
+     *
      * @param flag true if category counts shall be calculated for the corresponding search results or false if not
      */
     public void setCalculateCategories(boolean flag) {
@@ -826,8 +800,8 @@ public class CmsSearchParameters {
     }
 
     /**
-     * Set the list of categories (strings) to this parameters. <p> 
-     * 
+     * Set the list of categories (strings) to this parameters. <p>
+     *
      * @param categories the list of categories (strings) of this parameters
      */
     public void setCategories(List<String> categories) {
@@ -837,9 +811,9 @@ public class CmsSearchParameters {
 
     /**
      * Sets the maximum number of pages which should be shown.<p>
-     * 
-     * Enter an odd value to achieve a nice, "symmetric" output.<p> 
-     * 
+     *
+     * Enter an odd value to achieve a nice, "symmetric" output.<p>
+     *
      * @param value the maximum number of pages which should be shown
      */
     public void setDisplayPages(int value) {
@@ -851,7 +825,7 @@ public class CmsSearchParameters {
      * Controls if the excerpt from a field is generated only for searched fields, or for all fields (the default).<p>
      *
      * @param excerptOnlySearchedFields if <code>true</code>, the excerpt is generated only from the fields actually searched in
-     * 
+     *
      * @see #isExcerptOnlySearchedFields()
      */
     public void setExcerptOnlySearchedFields(boolean excerptOnlySearchedFields) {
@@ -861,7 +835,7 @@ public class CmsSearchParameters {
 
     /**
      * Sets the list of strings of names of fields to search in. <p>
-     * 
+     *
      * @param fields the list of strings of names of fields to search in to set
      */
     public void setFields(List<String> fields) {
@@ -873,7 +847,7 @@ public class CmsSearchParameters {
      * Sets the flag to indicate if the query part should be ignored so that only filters are used for searching.<p>
      *
      * @param isIgnoreQuery the flag to indicate if the query part should be ignored
-     * 
+     *
      * @since 8.0.0
      */
     public void setIgnoreQuery(boolean isIgnoreQuery) {
@@ -883,8 +857,7 @@ public class CmsSearchParameters {
 
     /**
      * Set the name of the index to search.<p>
-     * 
-     * 
+     *
      * @param indexName the name of the index
      */
     public void setIndex(String indexName) {
@@ -892,7 +865,8 @@ public class CmsSearchParameters {
         CmsSearchIndex index;
         if (CmsStringUtil.isNotEmpty(indexName)) {
             try {
-                index = OpenCms.getSearchManager().getIndex(indexName);
+                I_CmsSearchIndex idx = OpenCms.getSearchManager().getIndex(indexName);
+                index = idx instanceof CmsSearchIndex ? (CmsSearchIndex)idx : null;
                 if (index == null) {
                     throw new CmsException(Messages.get().container(Messages.ERR_INDEX_NOT_FOUND_1, indexName));
                 }
@@ -907,7 +881,7 @@ public class CmsSearchParameters {
 
     /**
      * Sets the number of matches per page.<p>
-     * 
+     *
      * @param matches the number of matches per page
      */
     public void setMatchesPerPage(int matches) {
@@ -956,48 +930,30 @@ public class CmsSearchParameters {
     }
 
     /**
-     * Sets the parsed query.<p>
-     * 
-     * The parsed query is automatically set by the OpenCms search index when a query is created 
-     * with either {@link #setQuery(String)} or {@link #addFieldQuery(CmsSearchFieldQuery)}.
-     * The Lucene query build from the parameters is stored here and can be later used 
-     * for paging through the results.<p>
-     * 
-     * Please note that this applies only to the query part, not the filter part of the search.<p>
-     * 
-     * @param parsedQuery the parsed query to set 
-     */
-    public void setParsedQuery(String parsedQuery) {
-
-        m_parsedQuery = parsedQuery;
-    }
-
-    /**
-     * Sets the query to search for. <p> 
-     * 
-     * The decoding here is tailored for query strings that are 
-     * additionally manually UTF-8 encoded at client side (javascript) to get around an 
-     * issue with special chars in applications that use non- UTF-8 encoding 
-     * (e.g. ISO-8859-1) OpenCms applications. It is not recommended to use this with 
-     * front ends that don't encode manually as characters like sole "%" (without number suffix) 
-     * will cause an Exception.<p> 
-     * 
+     * Sets the query to search for. <p>
+     *
+     * The decoding here is tailored for query strings that are
+     * additionally manually UTF-8 encoded at client side (javascript) to get around an
+     * issue with special chars in applications that use non- UTF-8 encoding
+     * (e.g. ISO-8859-1) OpenCms applications. It is not recommended to use this with
+     * front ends that don't encode manually as characters like sole "%" (without number suffix)
+     * will cause an Exception.<p>
+     *
      * @param query the query to search for to set
      */
     public void setQuery(String query) {
 
         // for use with widgets the exception is thrown here to enforce the error message next to the widget
         if (query.trim().length() < getQueryLength()) {
-            throw new CmsIllegalArgumentException(Messages.get().container(
-                Messages.ERR_QUERY_TOO_SHORT_1,
-                new Integer(getQueryLength())));
+            throw new CmsIllegalArgumentException(
+                Messages.get().container(Messages.ERR_QUERY_TOO_SHORT_1, Integer.valueOf(getQueryLength())));
         }
         m_query = query;
     }
 
     /**
      * Sets the minimum length of the search query.<p>
-     * 
+     *
      * @param length the minimum search query length
      */
     public void setQueryLength(int length) {
@@ -1006,8 +962,8 @@ public class CmsSearchParameters {
     }
 
     /**
-     * Set the list of resource types (strings) to limit the search to. <p> 
-     * 
+     * Set the list of resource types (strings) to limit the search to. <p>
+     *
      * @param resourceTypes the list of resource types (strings) to limit the search to
      *
      * @since 7.5.1
@@ -1019,7 +975,7 @@ public class CmsSearchParameters {
 
     /**
      * Sets the list of strings of roots to search under for the search.<p>
-     * 
+     *
      * @param roots  the list of strings of roots to search under for the search to set
      */
     public void setRoots(List<String> roots) {
@@ -1029,7 +985,7 @@ public class CmsSearchParameters {
 
     /**
      * Set the comma separated search root names to  restrict search to.<p>
-     * 
+     *
      * @param categories the comma separated category names to  restrict search to
      */
     public void setSearchCategories(String categories) {
@@ -1039,10 +995,10 @@ public class CmsSearchParameters {
 
     /**
      * Sets the search index to use for the search. <p>
-     * 
+     *
      * @param index the search index to use for the search to set.
-     * 
-     * @throws CmsIllegalArgumentException if null is given as argument 
+     *
+     * @throws CmsIllegalArgumentException if null is given as argument
      */
     public void setSearchIndex(CmsSearchIndex index) throws CmsIllegalArgumentException {
 
@@ -1054,7 +1010,7 @@ public class CmsSearchParameters {
 
     /**
      * Set the search page to display. <p>
-     * 
+     *
      * @param page the search page to display
      */
     public void setSearchPage(int page) {
@@ -1064,7 +1020,7 @@ public class CmsSearchParameters {
 
     /**
      * Set the comma separated search root names to  restrict search to.<p>
-     * 
+     *
      * @param rootNameList the comma separated search root names to  restrict search to
      */
     public void setSearchRoots(String rootNameList) {
@@ -1073,8 +1029,8 @@ public class CmsSearchParameters {
     }
 
     /**
-     * Set the instance that defines the sort order for search results. 
-     * 
+     * Set the instance that defines the sort order for search results.
+     *
      * @param sortOrder the instance that defines the sort order for search results to set
      */
     public void setSort(Sort sortOrder) {
@@ -1082,14 +1038,14 @@ public class CmsSearchParameters {
         m_sort = sortOrder;
     }
 
-    /** 
-     * Sets the internal member of type <code>{@link Sort}</code> according to 
+    /**
+     * Sets the internal member of type <code>{@link Sort}</code> according to
      * the given sort name. <p>
-     * 
+     *
      * For a list of valid sort names, please see <code>{@link #SORT_NAMES}</code>.<p>
-     * 
+     *
      * @param sortName the name of the sort to use
-     * 
+     *
      * @see #SORT_NAMES
      */
     public void setSortName(String sortName) {
@@ -1107,20 +1063,15 @@ public class CmsSearchParameters {
 
     /**
      * Creates a query String build from this search parameters for HTML links.<p>
-     * 
+     *
      * @return a query String build from this search parameters for HTML links
      */
     public String toQueryString() {
 
         StringBuffer result = new StringBuffer(128);
         result.append("?action=search");
-        if (getParsedQuery() != null) {
-            result.append("&parsedQuery=");
-            result.append(CmsEncoder.encodeParameter(getParsedQuery()));
-        } else {
-            result.append("&query=");
-            result.append(CmsEncoder.encodeParameter(getQuery()));
-        }
+        result.append("&query=");
+        result.append(CmsEncoder.encodeParameter(getQuery()));
 
         result.append("&matchesPerPage=");
         result.append(getMatchesPerPage());
@@ -1260,14 +1211,22 @@ public class CmsSearchParameters {
         return result.toString();
     }
 
-    private String toSeparatedString(List<String> stringList, char c) {
+    /**
+     * Concatenates the elements of the string list separated by the given separator character.<p>
+     *
+     * @param stringList the list
+     * @param separator the separator
+     *
+     * @return the concatenated string
+     */
+    private String toSeparatedString(List<String> stringList, char separator) {
 
         StringBuffer result = new StringBuffer();
         Iterator<String> it = stringList.iterator();
         while (it.hasNext()) {
             result.append(it.next());
             if (it.hasNext()) {
-                result.append(c);
+                result.append(separator);
             }
         }
         return result.toString();

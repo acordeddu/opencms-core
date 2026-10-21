@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -14,12 +14,12 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * Lesser General Public License for more details.
  *
- * For further information about Alkacon Software GmbH, please see the
- * company website: http://www.alkacon.com
+ * For further information about Alkacon Software GmbH & Co. KG, please see the
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -34,67 +34,38 @@ import org.opencms.file.CmsUser;
 import org.opencms.file.history.CmsHistoryPrincipal;
 import org.opencms.main.CmsException;
 import org.opencms.main.OpenCms;
-import org.opencms.test.OpenCmsTestCase;
-import org.opencms.test.OpenCmsTestProperties;
+import org.opencms.test.OpenCmsTestRunner;
 
-import junit.extensions.TestSetup;
-import junit.framework.Test;
-import junit.framework.TestSuite;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.MethodOrderer;
+import org.junit.jupiter.api.Order;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInfo;
+import org.junit.jupiter.api.TestMethodOrder;
 
 /**
  * Tests for <code>{@link org.opencms.security.CmsPrincipal}</code> (and it's subclasses).<p>
  */
-public class TestCmsPrincipal extends OpenCmsTestCase {
+@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
+public class TestCmsPrincipal extends OpenCmsTestRunner {
 
     /**
-     * Default JUnit constructor.<p>
-     * 
-     * @param arg0 JUnit parameters
+     * @see org.opencms.test.OpenCmsTestRunner#$openCmsSetUp(org.junit.jupiter.api.TestInfo)
      */
-    public TestCmsPrincipal(String arg0) {
+    @Override
+    @BeforeAll
+    public void $openCmsSetUp(TestInfo testInfo) {
 
-        super(arg0);
-    }
-
-    /**
-     * Test suite for this test class.<p>
-     * 
-     * @return the test suite
-     */
-    public static Test suite() {
-
-        OpenCmsTestProperties.initialize(org.opencms.test.AllTests.TEST_PROPERTIES_PATH);
-
-        TestSuite suite = new TestSuite();
-        suite.setName(TestCmsPrincipal.class.getName());
-
-        suite.addTest(new TestCmsPrincipal("testBasicReadOperation"));
-        suite.addTest(new TestCmsPrincipal("testUserHistory"));
-        suite.addTest(new TestCmsPrincipal("testGroupHistory"));
-
-        TestSetup wrapper = new TestSetup(suite) {
-
-            @Override
-            protected void setUp() {
-
-                setupOpenCms("simpletest", "/");
-            }
-
-            @Override
-            protected void tearDown() {
-
-                removeOpenCms();
-            }
-        };
-
-        return wrapper;
+        setupOpenCms(testInfo, "simpletest", "/");
     }
 
     /**
      * Tests basic principal read operation.<p>
-     * 
+     *
      * @throws Exception if the test fails
      */
+    @Test
+    @Order(1)
     public void testBasicReadOperation() throws Exception {
 
         echo("Testing basic principal read operation");
@@ -160,9 +131,11 @@ public class TestCmsPrincipal extends OpenCmsTestCase {
 
     /**
      * Test group history.<p>
-     * 
+     *
      * @throws Throwable if something goes wrong
      */
+    @Test
+    @Order(3)
     public void testGroupHistory() throws Throwable {
 
         CmsObject cms = getCmsObject();
@@ -186,10 +159,72 @@ public class TestCmsPrincipal extends OpenCmsTestCase {
     }
 
     /**
+     * Tests prefix methods.<p>
+     *
+     * @throws Exception if the test fails
+     */
+    @Test
+    @Order(4)
+    public void testPrefixMethods() throws Exception {
+
+        // User checks
+        assertTrue(CmsUser.hasPrefix("USER.hans"), "User prefix check with correct user name 1 failed");
+        assertTrue(CmsUser.hasPrefix("  USER.hans"), "User prefix check with correct user name 2 failed");
+        assertTrue(CmsUser.hasPrefix("USER.hans   "), "User prefix check with correct user name 3 failed");
+        assertTrue(CmsUser.hasPrefix("User.hans   "), "User prefix check with correct user name 4 failed");
+        assertTrue(
+            CmsUser.removePrefix("USER.hans").equals("hans"),
+            "User prefix removal with correct user name failed");
+        assertTrue(
+            CmsUser.removePrefix("   USER.hans").equals("hans"),
+            "User prefix removal with correct user name failed");
+        assertFalse(CmsUser.hasPrefix(null), "User prefix check with null failed");
+        assertFalse(CmsUser.hasPrefix(""), "User prefix check with empty String failed");
+        assertFalse(CmsUser.hasPrefix("USERhans"), "User prefix check with wrong user name 1 failed");
+        assertFalse(CmsUser.hasPrefix("USERS.hans"), "User prefix check with wrong user name 2 failed");
+
+        // Group checks
+        assertTrue(CmsGroup.hasPrefix("GROUP.Users"), "Group prefix check with correct group name 1 failed");
+        assertTrue(CmsGroup.hasPrefix("  GROUP.Users"), "Group prefix check with correct group name 2 failed");
+        assertTrue(CmsGroup.hasPrefix("GROUP.Users   "), "Group prefix check with correct group name 3 failed");
+        assertTrue(CmsGroup.hasPrefix("Group.Users   "), "Group prefix check with correct group name 4 failed");
+        assertTrue(
+            CmsGroup.removePrefix("GROUP.Users").equals("Users"),
+            "Group prefix removal with correct group name failed");
+        assertTrue(
+            CmsGroup.removePrefix("   GROUP.Users").equals("Users"),
+            "Group prefix removal with correct group name failed");
+        assertFalse(CmsGroup.hasPrefix(null), "Group prefix check with null failed");
+        assertFalse(CmsGroup.hasPrefix(""), "Group prefix check with empty String failed");
+        assertFalse(CmsGroup.hasPrefix("GROUPUsers"), "Group prefix check with wrong group name 1 failed");
+        assertFalse(CmsGroup.hasPrefix("GROUPS.Users"), "Group prefix check with wrong group name 2 failed");
+        assertFalse(CmsGroup.hasPrefix("SGROUPS.Users"), "Group prefix check with wrong group name 3 failed");
+
+        // Role checks
+        assertTrue(CmsRole.hasPrefix("ROLE.EDITOR"), "Role prefix check with correct role name 1 failed");
+        assertTrue(CmsRole.hasPrefix("  ROLE.EDITOR"), "Role prefix check with correct role name 2 failed");
+        assertTrue(CmsRole.hasPrefix("ROLE.EDITOR   "), "Role prefix check with correct role name 3 failed");
+        assertTrue(CmsRole.hasPrefix("Role.EDITOR   "), "Role prefix check with correct role name 3 failed");
+        assertTrue(
+            CmsRole.removePrefix("ROLE.EDITOR").equals("EDITOR"),
+            "Role prefix removal with correct role name failed");
+        assertTrue(
+            CmsRole.removePrefix("   ROLE.EDITOR").equals("EDITOR"),
+            "Role prefix removal with correct role name failed");
+        assertFalse(CmsRole.hasPrefix(null), "Role prefix check with null failed");
+        assertFalse(CmsRole.hasPrefix(""), "Role prefix check with empty String failed");
+        assertFalse(CmsRole.hasPrefix("ROLEEDITOR"), "Role prefix check with wrong role name 1 failed");
+        assertFalse(CmsRole.hasPrefix("ROLES.EDITOR"), "Role prefix check with wrong role name 2 failed");
+        assertFalse(CmsRole.hasPrefix("SROLES.EDITOR"), "Role prefix check with wrong role name 3 failed");
+    }
+
+    /**
      * Test user history.<p>
-     * 
+     *
      * @throws Throwable if something goes wrong
      */
+    @Test
+    @Order(2)
     public void testUserHistory() throws Throwable {
 
         CmsObject cms = getCmsObject();

@@ -1,0 +1,238 @@
+/**
+ * The font definitions.
+ */
+
+/** The font family for everything. */
+@def fontFamily Open Sans, sans-serif;
+
+@def fontFamilyMono monospace;
+/** The normal font size. */
+@def fontSize 14px;
+/** The small font size. */
+@def fontSizeSmall 12px;
+/** The big font size. */
+@def fontSizeBig 17px;
+
+@def lineHeight 18px;
+@def lineHeightSmall 14px;
+@def lineHeightBig 22px;
+
+@def inputHeight 30px;
+@def inputInnerHeight 28px;
+
+
+/**
+ * The text color definitions.
+ */
+
+/** The default text color. */
+@def textColor #474747;
+/** The text color for the caption of dialogs. */
+@def textColorCaption #FAFAFB;
+/** The text color for buttons that have a dark background. */
+@def textColorDarkButton #FAFAFB;
+/** The text color for buttons that have a light background. */
+@def textColorLightButton #474747;
+/** The text color for buttons that are disabled. */
+@def textColorDisabledButton #999;
+/** The disabled text color. Use it for any inactive or disabled texts e.g. input components. */
+@def textColorDisabled #999999;
+/** The new text color. Use it only for displaying texts of new resources. */
+@def textColorNew #144382;
+/** The changed text color. Use it only for displaying texts of changed resources. */
+@def textColorChanged #B31B34;
+/** The important text color. Use it only for displaying important text. */
+@def textColorImportant #B31B34;
+
+@def textColorHighlight #356EE1;
+
+@def colorWarning #ffa826;
+
+@def colorError #B31B34;
+
+@def textColorEditorLabel #7788AA;
+
+/** The toolbar width. */
+@def toolbarWidth 930px;
+/** The default content space. */
+@def defaultSpace 6px;
+
+/**
+ * The border color definitions.
+ */
+
+/** The default border color. */
+@def borderColor #C9C9C9;
+/** The border color for list items. */
+@def borderColorListItem #CCC;
+/** The border color for the dialog's top. */
+@def borderColorTopDialog #606161;
+/** The border color for the dialogs. */
+@def borderColorDialog #000000;
+/** The background color for the dialog's border (5px dark). */
+@def backgroundColorDialogBorder #1F232A;
+/** The highlight border color. Use it for highlighting special UI components e.g. errors. */
+@def borderColorHighlight #B31B34;
+/** The default border radius. */
+@def borderRadius 4px;
+/** The default border radius for buttons. */
+@def borderRadiusButton 4px;
+
+@def borderColorEditor #7788AA;
+
+
+/**
+ * The background color definitions.
+ */
+ 
+/** 
+ * The dialog/popup background color. Use it for UI components that should have the same
+ * background color as the dialog/popup itself for example the CmsFieldset.
+ */
+@def backgroundColorDialog #FFFFFF;
+/** The menu background color. Use it for menu backgrounds. NOTE: This color is also used for the CmsTabbedPanel. */
+@def backgroundColorMenu #FAFAFD;
+/** The backgroundColor for a list item. */
+@def backgroundColorListItem #F0F0F2;
+/** The disabled background color. Use it for disabled UI components. */
+@def backgroundColorDisabled #E0E0E2;
+/** The overlay background color. Use it for overlays. */
+@def backgroundColorOverlay #E0E0E2;
+/** The info background color. Use it for user informations like error messages. */
+@def backgroundColorInfo #FAFAFD;
+/** The popup shadow background color. Use it for creating popup shadows. */
+@def backgroundColorPopupShadow #AAAAAA;
+/** The highlight background color. Use it for hover effects like select box or menu hovering. */
+@def backgroundColorHighlight #E0EDFE;
+/** The input error background color. Use this color for input components if the validation goes wrong. */
+@def backgroundColorInputError #FFCCCC;
+/** This constant defines the background color of a empty group container. */
+@def backgroundColorEmptyContainer #AACCFF;
+/** This constant defines the background color of the sitemap editor. */
+@def backgroundColorSitemap #E1E1E1;
+/** This constant defines the background color of the sitemap entry that is highlighted. */
+@def backgroundColorSitemapHighlight #CCFFFF;
+/** Background color for sitemap entries marked as expired or not released. */
+@def backgroundColorSitemapExpired #D8DEEA;
+
+@def buttonColorRed #b31b34;
+@def buttonColorCyan #1bb39a;
+@def buttonColorBlue #144382;
+@def buttonColorOrange #fc9700;
+@def buttonColorGray #7f8691;
+
+
+/**
+ * The following constants define background colors for transparent background images.
+ * They should be used to style the color of elements that have a state. 
+ */
+/** This constant defines the background color for elements that use the soft standard background image. */
+@def backgroundColorSoft #E0E0E2;
+/** This constant defines the background color for elements have the standard state. */
+@def backgroundColorStateStandard #E0E0E2;
+/** This constant defines the background color for elements have the disabled state. */
+@def backgroundColorStateDisabled #E3E3E3;
+/** This constant defines the background color for elements have the hover state. */
+@def backgroundColorStateHover #CCCCCC;
+/** This constant defines the background color for elements have the active state. */
+@def backgroundColorStateActive #E0E0E0;
+/** This constant defines the background color for elements have the changed state. */
+@def backgroundColorStateChanged #FE9F9F;
+/** This constant defines the background color for elements have the new state. */
+@def backgroundColorStateNew #445E80;
+/** This constant defines the background color for elements have the sub sitemap state. */
+@def backgroundColorStateSubSitemap #FEFEDB;
+
+/**
+ * The shadow definitions.
+ */
+@def boxShadow 0 2px 10px rgba(0, 0, 0, 0.1), 0 16px 80px -6px rgba(0, 0, 0, 0.15), 0 0 0 1px rgba(0, 0, 0, 0.09);
+
+/**
+ * Overlay opacity.
+ **/
+@def overlayOpacity 0.8;
+
+
+/**
+ * Background gradients.
+ */
+ 
+ @def gradientListItem linear-gradient(to bottom, #FFFFFF 0%, #FFFFFF 48%, #F0F0F2 52%, #F0F0F2 100%);
+ 
+ @def gradientInvalid repeating-linear-gradient(45deg, transparent, transparent 10px, rgba(240, 240, 242, 1) 10px, rgba(240, 240, 242, 1) 20px);
+ 
+ @def gradientPlaceholder repeating-linear-gradient(45deg, #000000, #000000 10px, #FCFFFF 10px, #FFFFFF 20px);
+/**
+ * The dialog header background. 
+ */
+@def gradientDialogHeader linear-gradient(to bottom, #3E4654 2%, #1F232A 98%, #1F232A);
+/** The form dialog background gradient. */
+@def gradientFormDialog linear-gradient(to right, #FFFFFF 0%, #FAFAFD 80%, #F0F0F2 100%);  
+@def gradientFormDialogFocus linear-gradient(to right,  #F0F0F2 0%, #F0F0F2 80%, #FAFAFD 100%);  
+@def gradientFormDialogColor #F0F0F2;
+@def gradientFormDialogFocusColor #E0E0E2;
+
+/**
+ * The notification color definitions.
+ */
+
+/** The text color for an error message. */
+@def notificationErrorColor #021324;
+/** The background for an error message. */
+@def notificationErrorBg #FFCCCC;
+/** The border color for a error message. */
+@def notificationErrorBorder #B31B34;
+/** The text color for a warning message. */
+@def notificationWarningColor #021324;
+/** The background for a warning message. */
+@def notificationWarningBg #FFF3D2;
+/** The border color for a warning message. */
+@def notificationWarningBorder #AC7C00;
+/** The text color for a normal message. */
+@def notificationNormalColor #021324;
+/** The background for a normal message. */
+@def notificationNormalBg #FFFCF8;
+/** The border color for a normal message. */
+@def notificationNormalBorder #FFF1A8;
+
+
+/**
+ * The date box color definitions.
+ */
+
+/** The font size for a day. */
+@def dateboxDayFontSize 11px;
+/** The background color for the weekend days. */
+@def dateboxWeekendBg #E0E0E2;
+/** The text color for the todays day. */
+@def dateboxTodayColor #B31B34;
+/** A day in another month. */
+@def dateboxAnotherMonthBg #666666;
+/** The currently selected day. */
+@def dateboxSelectedDayBg #CCCCCC;
+/** The currently hovered day. */
+@def dateboxHoveredDayBg #E0EDFE;
+
+/**
+ * The used z-index values for popups, drag operations, highlighting etc.
+ */
+ 
+ /** Used for popups and overlays. */
+@def zIndexPopup 300000;
+
+@def zIndexFramePopup 310000;
+
+@def zIndexToolbar 200000;
+
+@def zIndexGroupContainer 190000;
+/** Used during drag and drop, and for tooltips. Should be greater than zIndexPopup. */
+@def zIndexDND 350000;
+/** Used for highlighting. */
+@def zIndexHighlighting 140000;
+/** Used for positioned UI elements. */
+@def zIndexInline 100000;
+@def zIndexPlacementLayer 100000; 
+/** For the menu. */ 
+@def zIndexMenu 160000;
+

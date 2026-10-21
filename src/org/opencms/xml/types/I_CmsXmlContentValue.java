@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -14,12 +14,12 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * Lesser General Public License for more details.
  *
- * For further information about Alkacon Software GmbH, please see the
- * company website: http://www.alkacon.com
+ * For further information about Alkacon Software GmbH & Co. KG, please see the
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -28,6 +28,8 @@
 package org.opencms.xml.types;
 
 import org.opencms.file.CmsObject;
+import org.opencms.file.CmsResource;
+import org.opencms.file.types.CmsResourceTypeXmlContent;
 import org.opencms.xml.I_CmsXmlDocument;
 
 import java.util.Locale;
@@ -36,131 +38,311 @@ import org.dom4j.Element;
 
 /**
  * Provides access to the value of a specific XML content node.<p>
- * 
- * @since 6.0.0 
+ *
+ * @since 6.0.0
  */
 public interface I_CmsXmlContentValue extends I_CmsXmlSchemaType {
 
     /**
+     * Search content configuration for the value.
+     * The configuration determines how the conent's value should be added to the indexed content fields.
+     */
+    public static class CmsSearchContentConfig {
+
+        /** Configuration for not adding the value to the content fields. */
+        public static final CmsSearchContentConfig FALSE = new CmsSearchContentConfig(SearchContentType.FALSE, null);
+        /** Configuration for adding the extraction of the content linked by the value to the content fields. */
+        public static final CmsSearchContentConfig CONTENT = new CmsSearchContentConfig(
+            SearchContentType.CONTENT,
+            null);
+        /** Configuration for triggering re-indexing if the resource linked by the value to the content fields changes. */
+        public static final CmsSearchContentConfig UPDATE = new CmsSearchContentConfig(SearchContentType.UPDATE, null);
+        /** Configuration for adding the value unchanged to the content fields. */
+        public static final CmsSearchContentConfig TRUE = new CmsSearchContentConfig(SearchContentType.TRUE, null);
+        /** The search content type. */
+        private SearchContentType m_type;
+        /** The adjustment implementation for the value. */
+        private String m_adjustmentClass;
+
+        /**
+         * Constructs a new search content configuration.
+         * @param type the search content type
+         * @param adjustmentClass the adjustment implementation
+         */
+        private CmsSearchContentConfig(SearchContentType type, String adjustmentClass) {
+
+            m_type = type;
+            m_adjustmentClass = adjustmentClass;
+        }
+
+        /**
+         * Returns a flag, indicating if the the re-index relation should be added.
+         * @param config the search content config
+         * @return true, iff the re-indexing relation should be added.
+         */
+        public static boolean addReIndexRelation(CmsSearchContentConfig config) {
+
+            return null == config ? false : SearchContentType.addReIndexRelation(config.getSearchContentType());
+        }
+
+        /**
+         * Returns the configuration for the search content type.
+         * @param searchContentType the type to get the configuration for
+         * @return the configuration for the type
+         */
+        public static CmsSearchContentConfig get(SearchContentType searchContentType) {
+
+            return get(searchContentType, null);
+        }
+
+        /**
+         * Returns the configuration for the combination of search content type and adjustment class.
+         * @param searchContentType the type to get the configuration for
+         * @param adjustmentClass the adjustment class
+         * @return the configuration for the type/adjustment combination.
+         */
+        public static CmsSearchContentConfig get(SearchContentType searchContentType, String adjustmentClass) {
+
+            if (searchContentType == null) {
+                return adjustmentClass == null
+                ? null
+                : new CmsSearchContentConfig(SearchContentType.TRUE, adjustmentClass);
+            }
+            switch (searchContentType) {
+                case FALSE:
+                    return FALSE;
+                case TRUE:
+                    return adjustmentClass == null
+                    ? TRUE
+                    : new CmsSearchContentConfig(SearchContentType.TRUE, adjustmentClass);
+                case CONTENT:
+                    return CONTENT;
+                case UPDATE:
+                    return UPDATE;
+                default:
+                    return null;
+            }
+        }
+
+        /**
+         * @return the adjustment class.
+         */
+        public String getAdjustmentClass() {
+
+            return m_adjustmentClass;
+        }
+
+        /**
+         * @return the search content type.
+         */
+        public SearchContentType getSearchContentType() {
+
+            return m_type;
+        }
+
+        /**
+         * Checks if the re-index relation can be added for resources of the provided type.
+         * @param res the resource to add the relation to.
+         * @return true, iff the relation can be added.
+         */
+        public boolean isResourceSuitableForReIndexRelation(CmsResource res) {
+
+            switch (getSearchContentType()) {
+                case CONTENT:
+                    return CmsResourceTypeXmlContent.isXmlContent(res);
+                default:
+                    return true;
+            }
+        }
+    }
+
+    /**
+     * The available search types for element searchsetting.
+     */
+    public static enum SearchContentType {
+
+        /** Do not merge the value of the field into the content field. */
+        FALSE,
+        /** Merge the value of the field into the content field. */
+        TRUE,
+        /** Merge the extracted content of the resource linked by the element into the content field. */
+        CONTENT,
+        /** Do not merge the value of the field into the content field, but re-index if the resource linked in this field changed. */
+        UPDATE;
+
+        /**
+         * Returns a flag, indicating if the the re-index relation should be added.
+         * @param type the search content type
+         * @return true, iff the re-indexing relation should be added.
+         */
+        public static boolean addReIndexRelation(SearchContentType type) {
+
+            if (null == type) {
+                return false;
+            }
+            switch (type) {
+                case CONTENT:
+                case UPDATE:
+                    return true;
+                default:
+                    return false;
+            }
+        }
+
+        /**
+         * Converts the String into a SearchContentType. Returns <code>null</code> if conversion is not possible.
+         * @param type the search content type as String.
+         * @return the search content type specified by the provided String, or <code>null</code> if the String did not specify any search content type.
+         */
+        public static SearchContentType fromString(String type) {
+
+            if (null == type) {
+                return null;
+            }
+            switch (type.toLowerCase()) {
+                case "false":
+                    return FALSE;
+                case "true":
+                    return TRUE;
+                case "content":
+                    return CONTENT;
+                case "update":
+                    return UPDATE;
+                default:
+                    return null;
+            }
+        }
+    }
+
+    /**
      * Returns the XML content instance this value belongs to.<p>
-     * 
+     *
      * @return the XML content instance this value belongs to
      */
     I_CmsXmlDocument getDocument();
 
     /**
      * Returns the original XML element of this XML content value.<p>
-     * 
+     *
      * @return the original XML element of this XML content value
      */
     Element getElement();
 
     /**
-     * Returns the node index of this XML content value in the source XML document, 
+     * Returns the node index of this XML content value in the source XML document,
      * starting with 0, with special handling of elements in choice groups.<p>
-     * 
-     * This is useful in case there are more than one elements 
+     *
+     * This is useful in case there are more than one elements
      * with the same XML node name in the source XML document.<p>
-     * 
-     * Elements in XML choice groups will share the same number space, so a choice 
+     *
+     * Elements in XML choice groups will share the same number space, so a choice
      * sequence will be numbered like this:
-     * <code>Title[1], Text[2], Title[3], Image[4]</code><p> 
-     * 
+     * <code>Title[1], Text[2], Title[3], Image[4]</code><p>
+     *
      * @return the index of this XML content node in the source document with special handling of elements in choice groups
-     * 
+     *
      * @see #getXmlIndex()
      */
     int getIndex();
 
     /**
      * Returns the locale of this XML content value was generated for.<p>
-     * 
+     *
      * @return the locale of this XML content value was generated for
      */
     Locale getLocale();
 
     /**
      * Returns the total number of XML elements of this type that currently exist in the source document.<p>
-     * 
+     *
      * @return the total number of XML elements of this type that currently exist in the source document
      */
     int getMaxIndex();
 
     /**
      * Returns the path of this XML content value in the source document.<p>
-     * 
+     *
      * @return the path of this XML content value in the source document
      */
     String getPath();
 
     /**
      * Returns the value of this XML content node as a plain text String.<p>
-     * 
+     *
      * Plain text in this context means a pure textual representation
      * of the content (i.e. without html tags).
      * The plain text may be <code>null</code>, too, if there is no sound or useful
      * textual representation (i.e. color values).<p>
-     * 
+     *
      * @param cms an initialized instance of a CmsObject
-     * 
+     *
      * @return the value of this XML content node as a plain text String
      */
     String getPlainText(CmsObject cms);
 
     /**
+     * Returns the search content type for the value. Default implementation uses the historic isSearchable() method.
+     * @return the search content type
+     */
+    default CmsSearchContentConfig getSearchContentConfig() {
+
+        return new CmsSearchContentConfig(isSearchable() ? SearchContentType.TRUE : SearchContentType.FALSE, null);
+    }
+
+    /**
      * Returns the value of this XML content node as a String.<p>
-     * 
+     *
      * @param cms an initialized instance of a CmsObject
-     * 
+     *
      * @return the value of this XML content node as a String
      */
     String getStringValue(CmsObject cms);
 
     /**
-     * Returns the node index of this XML content value in the source XML document, 
+     * Returns the node index of this XML content value in the source XML document,
      * starting with 0, based on the XML ordering.<p>
-     * 
+     *
      * Elements in choice groups will be numbered like this:
-     * <code>Title[1], Text[1], Title[2], Image[1]</code><p> 
-     * 
+     * <code>Title[1], Text[1], Title[2], Image[1]</code><p>
+     *
      * @return the index of this XML content node in the source document with special handling of elements in choice groups
-     * 
+     *
      * @see #getIndex()
      */
     int getXmlIndex();
 
     /**
-     * Returns <code>true</code> in case this value is searchable by default with 
-     * the integrated full text search.<p> 
-     * 
+     * Returns <code>true</code> in case this value is searchable by default with
+     * the integrated full text search.<p>
+     *
      * @return <code>true</code> in case this value is searchable by default
      */
     boolean isSearchable();
 
     /**
-     * Moves this XML content value one position down in the source document, if possible.<p> 
-     * 
+     * Moves this XML content value one position down in the source document, if possible.<p>
+     *
      * If the XML content value is already the first in it's sequence, it is not moved.<p>
      */
     void moveDown();
 
     /**
      * Moves this XML content value one position up in the source document, if possible.<p>
-     * 
+     *
      * If the XML content value is already the last in it's sequence, it is not moved.<p>
      */
     void moveUp();
 
     /**
-     * Sets the provided String as value of this XML content node.<p>  
-     * 
+     * Sets the provided String as value of this XML content node.<p>
+     *
      * This method does provide processing of the content based on the
-     * users current OpenCms context. This can be used e.g. for link 
+     * users current OpenCms context. This can be used e.g. for link
      * extraction and replacement in the content.<p>
-     * 
+     *
      * @param cms an initialized instance of a CmsObject
-     * @param value the value to set 
-     * 
+     * @param value the value to set
+     *
      */
     void setStringValue(CmsObject cms, String value);
 }

@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -15,11 +15,11 @@
  * Lesser General Public License for more details.
  *
  * For further information about Alkacon Software, please see the
- * company website: http://www.alkacon.com
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -27,21 +27,25 @@
 
 package org.opencms.ade.containerpage.client.ui;
 
+import org.opencms.ade.containerpage.client.CmsContainerpageController;
 import org.opencms.ade.containerpage.client.CmsContainerpageHandler;
 import org.opencms.ade.containerpage.client.CmsFavoritesDNDController;
 import org.opencms.ade.containerpage.client.Messages;
 import org.opencms.ade.containerpage.client.ui.css.I_CmsLayoutBundle;
+import org.opencms.gwt.client.rpc.CmsRpcAction;
 import org.opencms.gwt.client.ui.A_CmsToolbarMenu;
 import org.opencms.gwt.client.ui.CmsListItem;
 import org.opencms.gwt.client.ui.CmsTabbedPanel;
+import org.opencms.gwt.client.ui.CmsToolbarPopup;
 import org.opencms.gwt.client.ui.I_CmsButton;
-import org.opencms.gwt.client.ui.css.I_CmsImageBundle;
 import org.opencms.gwt.client.util.CmsDebugLog;
 
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
+import com.google.gwt.core.client.Scheduler;
+import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.event.logical.shared.SelectionEvent;
 import com.google.gwt.event.logical.shared.SelectionHandler;
@@ -51,7 +55,7 @@ import com.google.gwt.user.client.ui.Widget;
 
 /**
  * The clip-board tool-bar menu.<p>
- * 
+ *
  * @since 8.0.0
  */
 public class CmsToolbarClipboardMenu extends A_CmsToolbarMenu<CmsContainerpageHandler> {
@@ -72,19 +76,24 @@ public class CmsToolbarClipboardMenu extends A_CmsToolbarMenu<CmsContainerpageHa
     private CmsRecentTab m_recent;
 
     /** The favorite and recent list tabs. */
-    private CmsTabbedPanel<Widget> m_tabs;
+    CmsTabbedPanel<A_CmsClipboardTab> m_tabs;
 
     /**
      * Constructor.<p>
-     * 
+     *
      * @param handler the container-page handler
      */
     public CmsToolbarClipboardMenu(CmsContainerpageHandler handler) {
 
-        super(I_CmsButton.ButtonData.CLIPBOARD, handler);
+        super(I_CmsButton.ButtonData.CLIPBOARD_BUTTON, handler);
 
         m_content = new FlowPanel();
-        m_tabs = new CmsTabbedPanel<Widget>();
+        m_tabs = new CmsTabbedPanel<A_CmsClipboardTab>();
+        m_favorites = new CmsFavoriteTab(this);
+        m_recent = new CmsRecentTab();
+
+        m_tabs.add(m_favorites, Messages.get().key(Messages.GUI_TAB_FAVORITES_TITLE_0));
+        m_tabs.add(m_recent, Messages.get().key(Messages.GUI_TAB_RECENT_TITLE_0));
         m_tabs.addSelectionHandler(new SelectionHandler<Integer>() {
 
             /**
@@ -95,15 +104,24 @@ public class CmsToolbarClipboardMenu extends A_CmsToolbarMenu<CmsContainerpageHa
                 if (m_isEditingFavorites) {
                     m_favorites.saveFavorites();
                 }
+                CmsContainerpageController.get().saveClipboardTab(event.getSelectedItem().intValue());
+                Scheduler.get().scheduleDeferred(new ScheduledCommand() {
+
+                    public void execute() {
+
+                        updateSize();
+                    }
+                });
+
             }
         });
-        m_favorites = new CmsFavoriteTab(this);
-        m_recent = new CmsRecentTab();
 
-        m_tabs.add(m_favorites, Messages.get().key(Messages.GUI_TAB_FAVORITES_TITLE_0));
-        m_tabs.add(m_recent, Messages.get().key(Messages.GUI_TAB_RECENT_TITLE_0));
         SimplePanel tabsContainer = new SimplePanel();
         tabsContainer.addStyleName(I_CmsLayoutBundle.INSTANCE.containerpageCss().menuTabContainer());
+        int dialogHeight = CmsToolbarPopup.getAvailableHeight();
+        int dialogWidth = CmsToolbarPopup.getAvailableWidth();
+        tabsContainer.setHeight(dialogHeight + "px");
+        getPopup().setWidth(dialogWidth);
         tabsContainer.add(m_tabs);
         m_content.add(tabsContainer);
         setMenuWidget(m_content);
@@ -112,7 +130,7 @@ public class CmsToolbarClipboardMenu extends A_CmsToolbarMenu<CmsContainerpageHa
 
     /**
      * Adds an element to the favorite list widget.<p>
-     * 
+     *
      * @param listItem the item widget
      */
     public void addToFavorites(CmsListItem listItem) {
@@ -122,7 +140,7 @@ public class CmsToolbarClipboardMenu extends A_CmsToolbarMenu<CmsContainerpageHa
 
     /**
      * Adds an element to the recent list widget.<p>
-     * 
+     *
      * @param listItem the item widget
      */
     public void addToRecent(CmsListItem listItem) {
@@ -157,8 +175,7 @@ public class CmsToolbarClipboardMenu extends A_CmsToolbarMenu<CmsContainerpageHa
         while (it.hasNext()) {
 
             CmsMenuListItem element = (CmsMenuListItem)it.next();
-            element.setMoveIconStyle(I_CmsImageBundle.INSTANCE.style().changeOrderIcon(), Messages.get().key(
-                Messages.GUI_BUTTON_CHANGE_ORDER_TEXT_0));
+            element.hideEditButton();
             element.showRemoveButton();
         }
     }
@@ -168,9 +185,28 @@ public class CmsToolbarClipboardMenu extends A_CmsToolbarMenu<CmsContainerpageHa
      */
     public void onToolbarActivate() {
 
-        Document.get().getBody().addClassName(I_CmsButton.ButtonData.CLIPBOARD.getIconClass());
+        Document.get().getBody().addClassName(I_CmsButton.ButtonData.CLIPBOARD_BUTTON.getIconClass());
         getHandler().loadFavorites();
         getHandler().loadRecent();
+        CmsRpcAction<Integer> tabAction = new CmsRpcAction<Integer>() {
+
+            @Override
+            public void execute() {
+
+                start(1, false);
+                CmsContainerpageController.get().getContainerpageService().loadClipboardTab(this);
+            }
+
+            @Override
+            protected void onResponse(Integer result) {
+
+                stop(false);
+                m_tabs.selectTab(result.intValue(), false);
+                updateSize();
+            }
+
+        };
+        tabAction.execute();
     }
 
     /**
@@ -181,7 +217,7 @@ public class CmsToolbarClipboardMenu extends A_CmsToolbarMenu<CmsContainerpageHa
         if (m_isEditingFavorites) {
             m_favorites.saveFavorites();
         }
-        Document.get().getBody().removeClassName(I_CmsButton.ButtonData.CLIPBOARD.getIconClass());
+        Document.get().getBody().removeClassName(I_CmsButton.ButtonData.CLIPBOARD_BUTTON.getIconClass());
     }
 
     /**
@@ -192,6 +228,26 @@ public class CmsToolbarClipboardMenu extends A_CmsToolbarMenu<CmsContainerpageHa
         m_isEditingFavorites = false;
         getHandler().enableFavoriteEditing(false, m_dndController);
         getHandler().loadFavorites();
+    }
+
+    /**
+     * Replaces old versions of the given item with the new one.<p>
+     *
+     * @param listItem the list item
+     */
+    public void replaceFavoriteItem(CmsListItem listItem) {
+
+        m_favorites.replaceItem(listItem);
+    }
+
+    /**
+     * Replaces old versions of the given item with the new one.<p>
+     *
+     * @param listItem the list item
+     */
+    public void replaceRecentItem(CmsListItem listItem) {
+
+        m_recent.replaceItem(listItem);
     }
 
     /**
@@ -207,14 +263,29 @@ public class CmsToolbarClipboardMenu extends A_CmsToolbarMenu<CmsContainerpageHa
             try {
                 CmsMenuListItem element = (CmsMenuListItem)it.next();
                 element.hideRemoveButton();
-                element.setMoveIconStyle(
-                    I_CmsImageBundle.INSTANCE.style().moveIcon(),
-                    org.opencms.gwt.client.Messages.get().key(org.opencms.gwt.client.Messages.GUI_TOOLBAR_MOVE_TO_0));
+                element.showEditButton();
                 clientIds.add(element.getId());
             } catch (ClassCastException e) {
                 CmsDebugLog.getInstance().printLine("Could not cast widget");
             }
         }
         getHandler().saveFavoriteList(clientIds);
+    }
+
+    /**
+     * Updates the popup size according to the tab contents.<p>
+     */
+    public void updateSize() {
+
+        int availableHeight = CmsToolbarPopup.getAvailableHeight();
+        int dialogWidth = CmsToolbarPopup.getAvailableWidth();
+
+        A_CmsClipboardTab tab = m_tabs.getWidget(m_tabs.getSelectedIndex());
+        int requiredHeight = tab.getRequiredHeight() + 31;
+        int dialogHeight = availableHeight > requiredHeight ? requiredHeight : availableHeight;
+        m_tabs.getParent().setHeight(dialogHeight + "px");
+        getPopup().setWidth(dialogWidth);
+        tab.getList().truncate("CLIPBOARD_TM", dialogWidth - 40);
+        tab.getScrollPanel().onResizeDescendant();
     }
 }

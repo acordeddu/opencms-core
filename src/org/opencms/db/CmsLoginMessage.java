@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -14,12 +14,12 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * Lesser General Public License for more details.
  *
- * For further information about Alkacon Software GmbH, please see the
- * company website: http://www.alkacon.com
+ * For further information about Alkacon Software GmbH & Co. KG, please see the
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -28,17 +28,23 @@
 package org.opencms.db;
 
 import org.opencms.main.CmsIllegalArgumentException;
+import org.opencms.main.CmsLog;
 import org.opencms.main.CmsRuntimeException;
-import org.opencms.util.CmsStringUtil;
+import org.opencms.ui.components.CmsRichTextArea;
 
 import java.util.GregorianCalendar;
 
+import org.apache.commons.logging.Log;
+
 /**
  * A message to display when a user logs in to the system.<p>
- * 
+ *
  * @since 6.0.0
  */
 public class CmsLoginMessage {
+
+    /** Logger for this class. */
+    private static final Log LOG = CmsLog.getLog(CmsLoginMessage.class);
 
     /** The default end time (if none has been set). This is December 31, 2039. */
     public static final long DEFAULT_TIME_END = new GregorianCalendar(2039, 11, 31).getTimeInMillis();
@@ -65,7 +71,7 @@ public class CmsLoginMessage {
     private long m_timeStart;
 
     /**
-     * Creates a new login message with all default values.<p> 
+     * Creates a new login message with all default values.<p>
      */
     public CmsLoginMessage() {
 
@@ -75,7 +81,7 @@ public class CmsLoginMessage {
 
     /**
      * Creates a new login message with the given parameters.<p>
-     * 
+     *
      * @param timeStart the time when to start displaying this message
      * @param timeEnd the time when to finish displaying this message
      * @param message the message to display
@@ -92,7 +98,7 @@ public class CmsLoginMessage {
 
     /**
      * Creates a new login message with the given parameters.<p>
-     * 
+     *
      * @param message the message to display
      * @param loginForbidden controls if logins are forbidden while this message is active
      */
@@ -149,10 +155,10 @@ public class CmsLoginMessage {
 
     /**
      * Returns <code>true</code> if this message is currently active.<p>
-     * 
-     * A message is active if it is enabled and 
+     *
+     * A message is active if it is enabled and
      * the current time is after the message start time and before the message end time.<p>
-     * 
+     *
      * @return <code>true</code> if this message is currently active
      */
     public boolean isActive() {
@@ -177,11 +183,11 @@ public class CmsLoginMessage {
     /**
      * Returns <code>true</code> if logins are currently forbidden according to the settings
      * of this message.<p>
-     * 
+     *
      * This checks the time settings using <code>{@link #isActive()}</code> and
-     * <code>{@link #isEnabled()}</code> as well as the 
+     * <code>{@link #isEnabled()}</code> as well as the
      * <code>{@link #isLoginForbidden()}</code> flag.<p>
-     * 
+     *
      * @return <code>true</code> if logins are currently forbidden according to the settings of this message
      */
     public boolean isLoginCurrentlyForbidden() {
@@ -229,10 +235,10 @@ public class CmsLoginMessage {
     public void setMessage(String message) {
 
         checkFrozen();
-        if (isEnabled() && CmsStringUtil.isEmptyOrWhitespaceOnly(message)) {
+        if (isEnabled() && (message == null)) {
             throw new CmsIllegalArgumentException(Messages.get().container(Messages.ERR_LOGIN_MESSAGE_BAD_MESSAGE_0));
         }
-        m_message = message;
+        m_message = CmsRichTextArea.cleanHtml(message, true);
     }
 
     /**
@@ -244,9 +250,8 @@ public class CmsLoginMessage {
 
         checkFrozen();
         if (timeEnd < 0) {
-            throw new CmsIllegalArgumentException(Messages.get().container(
-                Messages.ERR_LOGIN_MESSAGE_BAD_TIME_1,
-                new Long(timeEnd)));
+            throw new CmsIllegalArgumentException(
+                Messages.get().container(Messages.ERR_LOGIN_MESSAGE_BAD_TIME_1, Long.valueOf(timeEnd)));
         }
         if (timeEnd == 0) {
             timeEnd = DEFAULT_TIME_END;
@@ -266,9 +271,8 @@ public class CmsLoginMessage {
 
         checkFrozen();
         if (timeStart < 0) {
-            throw new CmsIllegalArgumentException(Messages.get().container(
-                Messages.ERR_LOGIN_MESSAGE_BAD_TIME_1,
-                new Long(timeStart)));
+            throw new CmsIllegalArgumentException(
+                Messages.get().container(Messages.ERR_LOGIN_MESSAGE_BAD_TIME_1, Long.valueOf(timeStart)));
         }
         if (timeStart == 0) {
             timeStart = DEFAULT_TIME_START;
@@ -278,7 +282,7 @@ public class CmsLoginMessage {
 
     /**
      * Checks if this message is frozen.<p>
-     * 
+     *
      * @throws CmsRuntimeException in case the message is already frozen
      */
     protected void checkFrozen() throws CmsRuntimeException {

@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -15,11 +15,11 @@
  * Lesser General Public License for more details.
  *
  * For further information about Alkacon Software, please see the
- * company website: http://www.alkacon.com
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -30,9 +30,11 @@ package org.opencms.util;
 import java.net.URI;
 import java.net.URISyntaxException;
 
-/** 
+import org.apache.http.client.utils.URIBuilder;
+
+/**
  * Splits an URI String into separate components.<p>
- * 
+ *
  * An URI is splitted into a <code>prefix</code>, a <code>anchor</code> and a <code>query</code> part.
  */
 public class CmsUriSplitter {
@@ -49,7 +51,10 @@ public class CmsUriSplitter {
     /** Indicates if 'strict' URI parsing was used. */
     private boolean m_isStrict;
 
-    /** The prefix part of the URI, for example <code>http://www.opencms.org/some/path/</code>. */
+    /** The URI protocol, for example <code>http</code> or <code>https</code>. */
+    private String m_protocol;
+
+    /** The prefix part of the URI, for example <code>https://www.opencms.org/some/path/</code>. */
     private String m_prefix;
 
     /** The query part of the URI, for example <code>a=b&c=d</code>. */
@@ -62,23 +67,23 @@ public class CmsUriSplitter {
     private String m_uri;
 
     /**
-     * Creates a splitted URI using the default (not strict) parsing mode.<p>
-     *  
+     * Creates a splitted URI using the strict parsing mode.<p>
+     *
      * @param uri the URI to split
      */
     public CmsUriSplitter(String uri) {
 
-        this(uri, false);
+        this(uri, true);
     }
 
     /**
      * Creates a splitted URI using the given parsing mode.<p>
-     * 
-     * Using 'strict' parsing mode, all requirements for an URI are checked. 
+     *
+     * Using 'strict' parsing mode, all requirements for an URI are checked.
      * If 'strict' is set to <code>false</code>, then only some simple parsing rules are applied,
      * in which case the result may not be 100% valid (but still usable).
      * If 'strict' parsing generates an error, then simple parsing is used as a fallback.<p>
-     *    
+     *
      * @param uri the URI to split
      * @param strict if <code>true</code>, then 'strict' parsing mode is used, otherwise a relaxed URI parsing is done
      */
@@ -87,69 +92,52 @@ public class CmsUriSplitter {
         m_uri = uri;
         m_errorFree = true;
         m_isStrict = strict;
-
+        // use strict parsing
         if (strict) {
-
-            // use strict parsing 
             try {
                 URI u = new URI(uri);
-                m_prefix = ((u.getScheme() != null) ? u.getScheme() + ":" : "") + u.getRawSchemeSpecificPart();
+                m_protocol = u.getScheme();
+                URI tempUri = new URIBuilder(u).setCustomQuery(null).setFragment(null).build();
+                m_prefix = tempUri.toASCIIString();
                 m_anchor = u.getRawFragment();
                 m_query = u.getRawQuery();
-                if (m_prefix != null) {
-                    int i = m_prefix.indexOf('?');
-                    if (i != -1) {
-                        m_query = m_prefix.substring(i + 1);
-                        m_prefix = m_prefix.substring(0, i);
-                    }
-                }
-                if (m_anchor != null) {
-                    int i = m_anchor.indexOf('?');
-                    if (i != -1) {
-                        m_query = m_anchor.substring(i + 1);
-                        m_anchor = m_anchor.substring(0, i);
-                    }
-                }
             } catch (Exception exc) {
                 // may be thrown by URI constructor if URI is invalid
                 strict = false;
                 m_errorFree = false;
             }
         }
-
-        if ((!strict) && (uri != null)) {
-
+        if (!strict && (uri != null)) {
             // use simple parsing
             StringBuffer prefix = new StringBuffer(uri.length());
-            StringBuffer anchor = EMPTY_BUFFER;
             StringBuffer query = EMPTY_BUFFER;
-
+            StringBuffer anchor = EMPTY_BUFFER;
             int len = uri.length();
             int cur = 0;
-
             for (int i = 0; i < len; i++) {
                 char c = uri.charAt(i);
-                if (c == '#') {
+                if ((cur == 0) && (c == ':')) {
+                    m_protocol = prefix.toString();
+                }
+                if (c == '#') { // always reset anchor buffer
                     // start of anchor
-                    cur = 1;
+                    cur = 2;
                     anchor = new StringBuffer(uri.length());
                     continue;
                 }
-                if (c == '?') {
-                    // start of query
-                    cur = 2;
-                    // ensure a duplicate query part is 'flushed' (same behavior as strict parser)
+                if ((c == '?') && (cur != 2)) { // only reset query buffer if we're not already in the anchor
+                    cur = 1;
                     query = new StringBuffer(uri.length());
                     continue;
                 }
                 switch (cur) {
                     case 1:
-                        // append to anchor
-                        anchor.append(c);
-                        break;
-                    case 2:
                         // append to query
                         query.append(c);
+                        break;
+                    case 2:
+                        // append to anchor
+                        anchor.append(c);
                         break;
                     default:
                         // append to prefix
@@ -168,6 +156,27 @@ public class CmsUriSplitter {
                 m_query = query.toString();
             }
         }
+
+    }
+
+    /**
+     * Checks if the given URI is well formed.<p>
+     *
+     * @param uri the URI to check
+     *
+     * @return <code>true</code> if the given URI is well formed
+     */
+    @SuppressWarnings("unused")
+    public static boolean isValidUri(String uri) {
+
+        boolean result = false;
+        try {
+            new URI(uri);
+            result = true;
+        } catch (Exception e) {
+            // nothing to do
+        }
+        return result;
     }
 
     /**
@@ -181,13 +190,16 @@ public class CmsUriSplitter {
         }
         if (obj instanceof CmsUriSplitter) {
             CmsUriSplitter other = (CmsUriSplitter)obj;
-            if (((m_prefix == null) && (other.m_prefix != null)) && (!other.m_prefix.equals(m_prefix))) {
+            if (!((m_protocol == other.m_protocol) || ((m_protocol != null) && m_protocol.equals(other.m_protocol)))) {
                 return false;
             }
-            if (((m_anchor == null) && (other.m_anchor != null)) && (!other.m_anchor.equals(m_anchor))) {
+            if (!((m_prefix == other.m_prefix) || ((m_prefix != null) && m_prefix.equals(other.m_prefix)))) {
                 return false;
             }
-            if (((m_query == null) && (other.m_query != null)) && (!other.m_query.equals(m_query))) {
+            if (!((m_anchor == other.m_anchor) || ((m_anchor != null) && m_anchor.equals(other.m_anchor)))) {
+                return false;
+            }
+            if (!((m_query == other.m_query) || ((m_query != null) && m_query.equals(other.m_query)))) {
                 return false;
             }
             return true;
@@ -196,9 +208,9 @@ public class CmsUriSplitter {
     }
 
     /**
-     * Returns the anchor part of the uri, for example <code>someanchor</code>, 
+     * Returns the anchor part of the uri, for example <code>someanchor</code>,
      * or <code>null</code> if no anchor is available.<p>
-     * 
+     *
      * @return the anchor part of the uri
      */
     public String getAnchor() {
@@ -207,9 +219,9 @@ public class CmsUriSplitter {
     }
 
     /**
-     * Returns the prefix part of the uri, for example <code>http://www.opencms.org/some/path/</code>, 
+     * Returns the prefix part of the uri, for example <code>https://www.opencms.org/some/path/</code>,
      * or <code>null</code> if no prefix is available.<p>
-     * 
+     *
      * @return the prefix part of the uri
      */
     public String getPrefix() {
@@ -218,9 +230,19 @@ public class CmsUriSplitter {
     }
 
     /**
-     * Returns the query part of the uri, for example <code>a=b&c=d</code>, 
+     * Returns the URI protocol, for example <code>http</code> or <code>https</code>.<p>
+     *
+     * @return the URI protocol
+     */
+    public String getProtocol() {
+
+        return m_protocol;
+    }
+
+    /**
+     * Returns the query part of the uri, for example <code>a=b&amp;c=d</code>,
      * or <code>null</code> if no query is available.<p>
-     * 
+     *
      * @return the query part of the uri
      */
     public String getQuery() {
@@ -229,10 +251,10 @@ public class CmsUriSplitter {
     }
 
     /**
-     * Returns the suffix part of the uri, a combination of query and anchor, 
-     * for example <code>?a=b&c=d#someanchor</code>, 
+     * Returns the suffix part of the uri, a combination of query and anchor,
+     * for example <code>?a=b&amp;c=d#someanchor</code>,
      * or the empty String if no suffix is available.<p>
-     * 
+     *
      * @return the suffix part of the uri
      */
     public String getSuffix() {
@@ -254,7 +276,7 @@ public class CmsUriSplitter {
 
     /**
      * Returns the URI String passed to this URI splitter.<p>
-     * 
+     *
      * @return the URI String passed to this URI splitter
      */
     public String getUri() {
@@ -282,10 +304,10 @@ public class CmsUriSplitter {
     }
 
     /**
-     * Returns <code>true</code> if the URI was parsed error free in 'strict' mode, 
-     * or if the simple mode was used.<p> 
-     * 
-     * @return <code>true</code> if the URI was parsed error free in 'strict' mode, 
+     * Returns <code>true</code> if the URI was parsed error free in 'strict' mode,
+     * or if the simple mode was used.<p>
+     *
+     * @return <code>true</code> if the URI was parsed error free in 'strict' mode,
      *      or if the simple mode was used
      */
     public boolean isErrorFree() {
@@ -295,13 +317,13 @@ public class CmsUriSplitter {
 
     /**
      * Returns an URI object created from the original input String.<p>
-     * 
-     * This method will do a "best effort" to convert the original input String to a legal URI. 
+     *
+     * This method will do a "best effort" to convert the original input String to a legal URI.
      * Most notably, it will be able to handle original input Strings that contain a space " "
      * and other usually illegal characters.<p>
-     * 
+     *
      * @return an URI object created from the original input String
-     * 
+     *
      * @throws URISyntaxException in case no URI object can be created from the original input String
      */
     public URI toURI() throws URISyntaxException {

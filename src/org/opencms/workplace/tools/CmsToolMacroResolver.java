@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -14,12 +14,12 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * Lesser General Public License for more details.
  *
- * For further information about Alkacon Software GmbH, please see the
- * company website: http://www.alkacon.com
+ * For further information about Alkacon Software GmbH & Co. KG, please see the
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -41,7 +41,7 @@ import java.util.List;
 
 /**
  * Resolves special macros for the admin view.<p>
- * 
+ *
  * Supported macros are:<p>
  * <ul>
  *   <li>admin.userName|id</li>
@@ -52,7 +52,7 @@ import java.util.List;
  *   <li>admin.ouType|fqn</li>
  *   <li>admin.roleName|id</li>
  * </ul><p>
- * @since 6.0.0 
+ * @since 6.0.0
  */
 public class CmsToolMacroResolver implements I_CmsMacroResolver {
 
@@ -91,14 +91,14 @@ public class CmsToolMacroResolver implements I_CmsMacroResolver {
         KEY_ROLENAME};
 
     /** The admin commands wrapped in a List. */
-    public static final List VALUE_NAMES = Collections.unmodifiableList(Arrays.asList(VALUE_NAME_ARRAY));
+    public static final List<String> VALUE_NAMES = Collections.unmodifiableList(Arrays.asList(VALUE_NAME_ARRAY));
 
     /** The workplace class for falling back, and use the cms context. */
     private CmsWorkplace m_wp;
 
     /**
      * Default private constructor.<p>
-     * 
+     *
      * @param wp the workplace instance
      */
     public CmsToolMacroResolver(CmsWorkplace wp) {
@@ -108,17 +108,17 @@ public class CmsToolMacroResolver implements I_CmsMacroResolver {
 
     /**
      * Resolves the macros in the given input using the provided parameters.<p>
-     * 
+     *
      * A macro in the form <code>${key}</code> in the content is replaced with it's assigned value
-     * returned by the <code>{@link I_CmsMacroResolver#getMacroValue(String)}</code> method of the given 
+     * returned by the <code>{@link I_CmsMacroResolver#getMacroValue(String)}</code> method of the given
      * <code>{@link I_CmsMacroResolver}</code> instance.<p>
-     * 
+     *
      * If a macro is found that can not be mapped to a value by the given macro resolver,
      * it is left untouched in the input.<p>
-     * 
+     *
      * @param input the input in which to resolve the macros
      * @param wp the workplace class for falling back
-     * 
+     *
      * @return the input with the macros resolved
      */
     public static String resolveMacros(String input, CmsWorkplace wp) {
@@ -138,9 +138,9 @@ public class CmsToolMacroResolver implements I_CmsMacroResolver {
         macro = macro.substring(CmsToolMacroResolver.PREFIX_ADMIN.length());
         String id = null;
         // validate macro command
-        Iterator it = VALUE_NAMES.iterator();
+        Iterator<String> it = VALUE_NAMES.iterator();
         while (it.hasNext()) {
-            String cmd = it.next().toString();
+            String cmd = it.next();
             if (macro.startsWith(cmd)) {
                 id = macro.substring(cmd.length());
                 macro = cmd;
@@ -184,11 +184,19 @@ public class CmsToolMacroResolver implements I_CmsMacroResolver {
     }
 
     /**
+     * @see org.opencms.util.I_CmsMacroResolver#isKeepEmptyMacros()
+     */
+    public boolean isKeepEmptyMacros() {
+
+        return false;
+    }
+
+    /**
      * Resolves the macros in the given input.<p>
-     * 
-     * Calls <code>{@link #resolveMacros(String)}</code> until no more macros can 
-     * be resolved in the input. This way "nested" macros in the input are resolved as well.<p> 
-     * 
+     *
+     * Calls <code>{@link #resolveMacros(String)}</code> until no more macros can
+     * be resolved in the input. This way "nested" macros in the input are resolved as well.<p>
+     *
      * @see org.opencms.util.I_CmsMacroResolver#resolveMacros(java.lang.String)
      */
     public String resolveMacros(String input) {
@@ -207,13 +215,5 @@ public class CmsToolMacroResolver implements I_CmsMacroResolver {
         }
         // return the result
         return result;
-    }
-
-    /**
-     * @see org.opencms.util.I_CmsMacroResolver#isKeepEmptyMacros()
-     */
-    public boolean isKeepEmptyMacros() {
-
-        return false;
     }
 }

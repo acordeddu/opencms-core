@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -14,12 +14,12 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * Lesser General Public License for more details.
  *
- * For further information about Alkacon Software GmbH, please see the
- * company website: http://www.alkacon.com
+ * For further information about Alkacon Software GmbH & Co. KG, please see the
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -27,7 +27,9 @@
 
 package org.opencms.workplace.tools.accounts;
 
+import org.opencms.file.CmsGroup;
 import org.opencms.jsp.CmsJspActionElement;
+import org.opencms.security.CmsRole;
 import org.opencms.util.CmsStringUtil;
 import org.opencms.widgets.CmsGroupWidget;
 import org.opencms.widgets.CmsSelectWidget;
@@ -49,7 +51,7 @@ import javax.servlet.jsp.PageContext;
 
 /**
  * Dialog to export user data.<p>
- * 
+ *
  * @since 6.7.1
  */
 public class CmsUserDataExportDialog extends A_CmsUserDataImexportDialog {
@@ -59,7 +61,7 @@ public class CmsUserDataExportDialog extends A_CmsUserDataImexportDialog {
 
     /**
      * Public constructor with JSP action element.<p>
-     * 
+     *
      * @param jsp an initialized JSP action element
      */
     public CmsUserDataExportDialog(CmsJspActionElement jsp) {
@@ -69,7 +71,7 @@ public class CmsUserDataExportDialog extends A_CmsUserDataImexportDialog {
 
     /**
      * Public constructor with JSP variables.<p>
-     * 
+     *
      * @param context the JSP page context
      * @param req the JSP request
      * @param res the JSP response
@@ -82,26 +84,28 @@ public class CmsUserDataExportDialog extends A_CmsUserDataImexportDialog {
     /**
      * @see org.opencms.workplace.tools.accounts.A_CmsUserDataImexportDialog#actionCommit()
      */
+    @Override
     public void actionCommit() throws IOException, ServletException {
 
-        List errors = new ArrayList();
+        List<Throwable> errors = new ArrayList<Throwable>();
 
-        Map params = new HashMap();
-        params.put(A_CmsOrgUnitDialog.PARAM_OUFQN, getParamOufqn());
-        params.put(CmsDialog.PARAM_CLOSELINK, getParamCloseLink());
-        params.put(CmsToolDialog.PARAM_STYLE, CmsToolDialog.STYLE_NEW);
+        Map<String, String[]> params = new HashMap<String, String[]>();
+        params.put(A_CmsOrgUnitDialog.PARAM_OUFQN, new String[] {getParamOufqn()});
+        params.put(CmsDialog.PARAM_CLOSELINK, new String[] {getParamCloseLink()});
+        params.put(CmsToolDialog.PARAM_STYLE, new String[] {CmsToolDialog.STYLE_NEW});
         getToolManager().jspForwardPage(this, getDownloadPath(), params);
         setCommitErrors(errors);
     }
 
     /**
      * Creates the dialog HTML for all defined widgets of the named dialog (page).<p>
-     * 
+     *
      * This overwrites the method from the super class to create a layout variation for the widgets.<p>
-     * 
+     *
      * @param dialog the dialog (page) to get the HTML for
      * @return the dialog HTML for all defined widgets of the named dialog (page)
      */
+    @Override
     protected String createDialogHtml(String dialog) {
 
         StringBuffer result = new StringBuffer(1024);
@@ -134,22 +138,20 @@ public class CmsUserDataExportDialog extends A_CmsUserDataImexportDialog {
     /**
      * @see org.opencms.workplace.tools.accounts.A_CmsUserDataImexportDialog#defineWidgets()
      */
+    @Override
     protected void defineWidgets() {
 
         initExportObject();
         setKeyPrefix(KEY_PREFIX);
 
-        addWidget(new CmsWidgetDialogParameter(
-            this,
-            "groups",
-            PAGES[0],
-            new CmsGroupWidget(null, null, getParamOufqn())));
+        addWidget(
+            new CmsWidgetDialogParameter(this, "groups", PAGES[0], new CmsGroupWidget(null, null, getParamOufqn())));
         addWidget(new CmsWidgetDialogParameter(this, "roles", PAGES[0], new CmsSelectWidget(getSelectRoles())));
     }
 
     /**
      * Returns the download path.<p>
-     * 
+     *
      * @return the download path
      */
     protected String getDownloadPath() {
@@ -160,6 +162,7 @@ public class CmsUserDataExportDialog extends A_CmsUserDataImexportDialog {
     /**
      * @see org.opencms.workplace.tools.accounts.A_CmsUserDataImexportDialog#getPageArray()
      */
+    @Override
     protected String[] getPageArray() {
 
         return PAGES;
@@ -168,34 +171,36 @@ public class CmsUserDataExportDialog extends A_CmsUserDataImexportDialog {
     /**
      * Initializes the message info object to work with depending on the dialog state and request parameters.<p>
      */
+    @SuppressWarnings("unchecked")
     protected void initExportObject() {
 
         try {
             if (CmsStringUtil.isEmpty(getParamAction()) || CmsDialog.DIALOG_INITIAL.equals(getParamAction())) {
                 // create a new list
-                setGroups(new ArrayList());
-                setRoles(new ArrayList());
+                setGroups(new ArrayList<CmsGroup>());
+                setRoles(new ArrayList<CmsRole>());
             } else {
                 // this is not the initial call, get the message info object from session
-                setGroups((List)((Map)getDialogObject()).get("groups"));
-                setRoles((List)((Map)getDialogObject()).get("roles"));
+                setGroups((List<CmsGroup>)((Map<?, ?>)getDialogObject()).get("groups"));
+                setRoles((List<CmsRole>)((Map<?, ?>)getDialogObject()).get("roles"));
             }
         } catch (Exception e) {
             // create a new list
-            setGroups(new ArrayList());
-            setRoles(new ArrayList());
+            setGroups(new ArrayList<CmsGroup>());
+            setRoles(new ArrayList<CmsRole>());
         }
     }
 
     /**
      * @see org.opencms.workplace.CmsWorkplace#initWorkplaceRequestValues(org.opencms.workplace.CmsWorkplaceSettings, javax.servlet.http.HttpServletRequest)
      */
+    @Override
     protected void initWorkplaceRequestValues(CmsWorkplaceSettings settings, HttpServletRequest request) {
 
         // initialize parameters and dialog actions in super implementation
         super.initWorkplaceRequestValues(settings, request);
 
-        HashMap objectsMap = new HashMap();
+        HashMap<String, List<?>> objectsMap = new HashMap<String, List<?>>();
         objectsMap.put("groups", getGroups());
         objectsMap.put("roles", getRoles());
 

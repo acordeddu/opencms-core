@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -14,12 +14,12 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * Lesser General Public License for more details.
  *
- * For further information about Alkacon Software GmbH, please see the
- * company website: http://www.alkacon.com
+ * For further information about Alkacon Software GmbH & Co. KG, please see the
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -31,6 +31,7 @@ import org.opencms.db.CmsPublishList;
 import org.opencms.db.CmsPublishedResource;
 import org.opencms.db.CmsResourceState;
 import org.opencms.file.history.CmsHistoryFile;
+import org.opencms.file.history.I_CmsHistoryResource;
 import org.opencms.file.types.CmsResourceTypeFolder;
 import org.opencms.file.types.CmsResourceTypeImage;
 import org.opencms.file.types.CmsResourceTypePlain;
@@ -43,10 +44,8 @@ import org.opencms.main.CmsMultiException;
 import org.opencms.main.OpenCms;
 import org.opencms.publish.CmsPublishJobFinished;
 import org.opencms.report.CmsShellReport;
-import org.opencms.test.OpenCmsTestCase;
-import org.opencms.test.OpenCmsTestLogAppender;
-import org.opencms.test.OpenCmsTestProperties;
 import org.opencms.test.OpenCmsTestResourceFilter;
+import org.opencms.test.OpenCmsTestRunner;
 import org.opencms.xml.page.CmsXmlPage;
 import org.opencms.xml.page.CmsXmlPageFactory;
 
@@ -54,301 +53,38 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
 
-import junit.extensions.TestSetup;
-import junit.framework.Test;
-import junit.framework.TestSuite;
+import org.apache.logging.log4j.core.appender.OpenCmsTestLogAppender;
+
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.MethodOrderer;
+import org.junit.jupiter.api.Order;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInfo;
+import org.junit.jupiter.api.TestMethodOrder;
 
 /**
  * Unit tests for OpenCms publishing.<p>
  */
-public class TestPublishing extends OpenCmsTestCase {
+@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
+public class TestPublishing extends OpenCmsTestRunner {
 
     /**
-     * Default JUnit constructor.<p>
-     * 
-     * @param arg0 JUnit parameters
+     * @see org.opencms.test.OpenCmsTestRunner#$openCmsSetUp(org.junit.jupiter.api.TestInfo)
      */
-    public TestPublishing(String arg0) {
+    @Override
+    @BeforeAll
+    public void $openCmsSetUp(TestInfo testInfo) {
 
-        super(arg0);
-    }
-
-    /**
-     * Test suite for this test class.<p>
-     * 
-     * @return the test suite
-     */
-    public static Test suite() {
-
-        OpenCmsTestProperties.initialize(org.opencms.test.AllTests.TEST_PROPERTIES_PATH);
-
-        TestSuite suite = new TestSuite();
-        suite.setName(TestPublishing.class.getName());
-
-        suite.addTest(new TestPublishing("testPublishQueueIssue1"));
-        suite.addTest(new TestPublishing("testPublishQueueIssue2"));
-        suite.addTest(new TestPublishing("testPublishQueueIssue3"));
-        suite.addTest(new TestPublishing("testPublishResourceGalore"));
-        suite.addTest(new TestPublishing("testPublishResourceWithRelatedGalore"));
-        suite.addTest(new TestPublishing("testPublishProjectGalore"));
-        suite.addTest(new TestPublishing("testPublishStructureProperty"));
-        suite.addTest(new TestPublishing("testPublishResourceProperty"));
-        suite.addTest(new TestPublishing("testPublishSiblings"));
-        suite.addTest(new TestPublishing("testPublishCopySibling"));
-        suite.addTest(new TestPublishing("testPublishNewFiles"));
-        suite.addTest(new TestPublishing("testPublishNewFilesInNewFolder"));
-        suite.addTest(new TestPublishing("testPublishChangedFiles"));
-        suite.addTest(new TestPublishing("testPublishLockedFiles"));
-        suite.addTest(new TestPublishing("testPublishFolderWithLockedFiles"));
-        suite.addTest(new TestPublishing("testPublishDeletedFiles"));
-        suite.addTest(new TestPublishing("testPublishProjectLastmodified"));
-        suite.addTest(new TestPublishing("testPublishProjectLastmodifiedFolder"));
-        suite.addTest(new TestPublishing("testPublishTemporaryProject"));
-        suite.addTest(new TestPublishing("testPublishMovedFiles"));
-        suite.addTest(new TestPublishing("testPublishRelatedFiles"));
-        suite.addTest(new TestPublishing("testPublishRelatedFilesInFolder"));
-        suite.addTest(new TestPublishing("testPublishRelatedFilesInNewFolder"));
-        suite.addTest(new TestPublishing("testPublishContentDate"));
-        suite.addTest(new TestPublishing("testPublishDeletedSiblings"));
-        suite.addTest(new TestPublishing("testPublishDeletedSiblings2"));
-        suite.addTest(new TestPublishing("testPublishReplacedFile"));
-
-        TestSetup wrapper = new TestSetup(suite) {
-
-            @Override
-            protected void setUp() {
-
-                setupOpenCms("simpletest", "/");
-            }
-
-            @Override
-            protected void tearDown() {
-
-                removeOpenCms();
-            }
-        };
-
-        return wrapper;
-    }
-
-    /**
-     * Test an issue with the publish queue when trying to publish a folder that has already a subresource that is being published.<p>
-     * 
-     * SECOND TRY:
-     * - modify and lock a file, publish the file
-     * - lock the folder, modify a second file, publish the folder
-     * 
-     * @throws Throwable if something goes wrong
-     */
-    public void testPublishQueueIssue2() throws Throwable {
-
-        CmsObject cms = getCmsObject();
-        echo("Testing publishing a folder with a subresource in the publish queue, second try");
-
-        // stop the publish engine to ensure that the file will not be published before we try to publish the folder
-        OpenCms.getPublishManager().stopPublishing();
-
-        // touch and publish a file in a folder
-        String folder = "/folder1/subfolder11/subsubfolder111/";
-        String file = folder + "image.gif";
-        cms.lockResource(file);
-        cms.setDateLastModified(file, System.currentTimeMillis(), false);
-        OpenCms.getPublishManager().publishResource(cms, file);
-
-        // check the publish queue
-        assertEquals(1, OpenCms.getPublishManager().getPublishQueue().size());
-
-        // touch a second file and publish the folder
-        String file2 = folder + "text.txt";
-        cms.lockResource(folder);
-        cms.setDateLastModified(file2, System.currentTimeMillis(), false);
-        OpenCms.getPublishManager().publishResource(cms, folder);
-
-        // check the publish queue
-        assertEquals(2, OpenCms.getPublishManager().getPublishQueue().size());
-
-        // start the publish engine
-        OpenCms.getPublishManager().startPublishing();
-        OpenCms.getPublishManager().waitWhileRunning();
-
-        // check the publish queue
-        assertEquals(0, OpenCms.getPublishManager().getPublishQueue().size());
-
-        // check publish reports
-        List history = OpenCms.getPublishManager().getPublishHistory();
-        CmsPublishJobFinished publishJob = (CmsPublishJobFinished)history.get(history.size() - 2);
-        String reportContents = new String(OpenCms.getPublishManager().getReportContents(publishJob));
-        // check if the report states that the destination was published successfully
-        if (!reportContents.matches("(?s)" + "(.*)" + file + "(.*)" + "o.k." + "(.*)")) {
-            System.err.println(reportContents);
-            fail("publish report contains errors");
-        }
-        publishJob = (CmsPublishJobFinished)history.get(history.size() - 1);
-        reportContents = new String(OpenCms.getPublishManager().getReportContents(publishJob));
-        // check if the report states that the destination was published successfully
-        if (!reportContents.matches("(?s)" + "(.*)" + file2 + "(.*)" + "o.k." + "(.*)")) {
-            System.err.println(reportContents);
-            fail("publish report contains errors");
-        }
-
-        cms.unlockResource(folder);
-        // check the published files
-        assertState(cms, file, CmsResourceState.STATE_UNCHANGED);
-        assertLock(cms, file, CmsLockType.UNLOCKED);
-        assertState(cms, file2, CmsResourceState.STATE_UNCHANGED);
-        assertLock(cms, file2, CmsLockType.UNLOCKED);
-        assertState(cms, folder, CmsResourceState.STATE_UNCHANGED);
-        assertLock(cms, folder, CmsLockType.UNLOCKED);
-    }
-
-    /**
-     * Test an issue with the publish queue when trying to publish a folder that has already a subresource that is being published.<p>
-     * 
-     * THIRD TRY:
-     * - modify and lock a file, publish the file
-     * - modify and lock the folder, publish the folder
-     * 
-     * @throws Throwable if something goes wrong
-     */
-    public void testPublishQueueIssue3() throws Throwable {
-
-        CmsObject cms = getCmsObject();
-        echo("Testing publishing a folder with a subresource in the publish queue, third try");
-
-        // stop the publish engine to ensure that the file will not be published before we try to publish the folder
-        OpenCms.getPublishManager().stopPublishing();
-
-        // touch and publish a file in a folder
-        String folder = "/folder1/subfolder11/subsubfolder111/";
-        String file = folder + "image.gif";
-        cms.lockResource(file);
-        cms.setDateLastModified(file, System.currentTimeMillis(), false);
-        OpenCms.getPublishManager().publishResource(cms, file);
-
-        // check the publish queue
-        assertEquals(1, OpenCms.getPublishManager().getPublishQueue().size());
-
-        // touch a second file and publish the folder
-        cms.lockResource(folder);
-        String file2 = folder + "text.txt";
-        cms.setDateLastModified(file2, System.currentTimeMillis(), false);
-        cms.setDateLastModified(folder, System.currentTimeMillis(), false);
-        OpenCms.getPublishManager().publishResource(cms, folder);
-
-        // check the publish queue
-        assertEquals(2, OpenCms.getPublishManager().getPublishQueue().size());
-
-        // start the publish engine
-        OpenCms.getPublishManager().startPublishing();
-        OpenCms.getPublishManager().waitWhileRunning();
-
-        // check the publish queue
-        assertEquals(0, OpenCms.getPublishManager().getPublishQueue().size());
-
-        // check publish reports
-        List history = OpenCms.getPublishManager().getPublishHistory();
-        CmsPublishJobFinished publishJob = (CmsPublishJobFinished)history.get(history.size() - 2);
-        String reportContents = new String(OpenCms.getPublishManager().getReportContents(publishJob));
-        // check if the report states that the destination was published successfully
-        if (!reportContents.matches("(?s)" + "(.*)" + file + "(.*)" + "o.k." + "(.*)")) {
-            System.err.println(reportContents);
-            fail("publish report contains errors");
-        }
-        publishJob = (CmsPublishJobFinished)history.get(history.size() - 1);
-        reportContents = new String(OpenCms.getPublishManager().getReportContents(publishJob));
-        // check if the report states that the destination was published successfully
-        if (!reportContents.matches("(?s)" + "(.*)" + file2 + "(.*)" + "o.k." + "(.*)")) {
-            System.err.println(reportContents);
-            fail("publish report contains errors");
-        }
-        if (!reportContents.matches("(?s)" + "(.*)" + folder + "(.*)" + "o.k." + "(.*)")) {
-            System.err.println(reportContents);
-            fail("publish report contains errors");
-        }
-
-        // check the published resources
-        assertState(cms, folder, CmsResourceState.STATE_UNCHANGED);
-        assertLock(cms, folder, CmsLockType.UNLOCKED);
-        assertState(cms, file, CmsResourceState.STATE_UNCHANGED);
-        assertLock(cms, file, CmsLockType.UNLOCKED);
-        assertState(cms, file2, CmsResourceState.STATE_UNCHANGED);
-        assertLock(cms, file2, CmsLockType.UNLOCKED);
-    }
-
-    /**
-     * Test an issue with the publish queue when trying to publish a folder that has already a subresource that is being published.<p>
-     * 
-     * FIRST TRY:
-     * - modify and lock a file, publish the file
-     * - modify and lock a second file, publish the folder
-     * 
-     * @throws Throwable if something goes wrong
-     */
-    public void testPublishQueueIssue1() throws Throwable {
-
-        CmsObject cms = getCmsObject();
-        echo("Testing publishing a folder with a subresource in the publish queue, first try");
-
-        // stop the publish engine to ensure that the file will not be published before we try to publish the folder
-        OpenCms.getPublishManager().stopPublishing();
-
-        // touch and publish a file in a folder
-        String folder = "/folder1/subfolder11/subsubfolder111/";
-        String file = folder + "image.gif";
-        cms.lockResource(file);
-        cms.setDateLastModified(file, System.currentTimeMillis(), false);
-        OpenCms.getPublishManager().publishResource(cms, file);
-
-        // check the publish queue
-        assertEquals(1, OpenCms.getPublishManager().getPublishQueue().size());
-
-        // touch a second file and publish the file
-        String file2 = folder + "text.txt";
-        cms.lockResource(file2);
-        cms.setDateLastModified(file2, System.currentTimeMillis(), false);
-        OpenCms.getPublishManager().publishResource(cms, folder);
-
-        // check the publish queue
-        assertEquals(2, OpenCms.getPublishManager().getPublishQueue().size());
-
-        // start the publish engine
-        OpenCms.getPublishManager().startPublishing();
-        OpenCms.getPublishManager().waitWhileRunning();
-
-        // check the publish queue
-        assertEquals(0, OpenCms.getPublishManager().getPublishQueue().size());
-
-        // check publish reports
-        List history = OpenCms.getPublishManager().getPublishHistory();
-        CmsPublishJobFinished publishJob = (CmsPublishJobFinished)history.get(history.size() - 2);
-        String reportContents = new String(OpenCms.getPublishManager().getReportContents(publishJob));
-        // check if the report states that the destination was published successfully
-        if (!reportContents.matches("(?s)" + "(.*)" + file + "(.*)" + "o.k." + "(.*)")) {
-            System.err.println(reportContents);
-            fail("publish report contains errors");
-        }
-        publishJob = (CmsPublishJobFinished)history.get(history.size() - 1);
-        reportContents = new String(OpenCms.getPublishManager().getReportContents(publishJob));
-        // check if the report states that the destination was published successfully
-        if (!reportContents.matches("(?s)" + "(.*)" + file2 + "(.*)" + "o.k." + "(.*)")) {
-            System.err.println(reportContents);
-            fail("publish report contains errors");
-        }
-
-        // check the published resources
-        assertState(cms, folder, CmsResourceState.STATE_UNCHANGED);
-        assertLock(cms, folder, CmsLockType.UNLOCKED);
-        assertState(cms, file, CmsResourceState.STATE_UNCHANGED);
-        assertLock(cms, file, CmsLockType.UNLOCKED);
-        assertState(cms, file2, CmsResourceState.STATE_UNCHANGED);
-        assertLock(cms, file2, CmsLockType.UNLOCKED);
+        setupOpenCms(testInfo, "simpletest", "/");
     }
 
     /**
      * Test publishing changed files.<p>
-     * 
+     *
      * @throws Throwable if something goes wrong
      */
+    @Test
+    @Order(13)
     public void testPublishChangedFiles() throws Throwable {
 
         CmsObject cms = getCmsObject();
@@ -367,7 +103,7 @@ public class TestPublishing extends OpenCmsTestCase {
         CmsProperty prop3;
         CmsProperty prop4;
 
-        // make changes to the resources 
+        // make changes to the resources
         // do not need to make any changes to resource3 and resource4 as they are
         // siblings of resource2!
 
@@ -467,9 +203,11 @@ public class TestPublishing extends OpenCmsTestCase {
 
     /**
      * Tests the behaviour during publishing depending on the content date.<p>
-     * 
+     *
      * @throws Throwable if something goes wrong
      */
+    @Test
+    @Order(24)
     public void testPublishContentDate() throws Throwable {
 
         CmsObject cms = getCmsObject();
@@ -482,6 +220,7 @@ public class TestPublishing extends OpenCmsTestCase {
         synchronized (this) {
             wait(50);
         }
+        @SuppressWarnings("deprecation")
         CmsResource offlineResource = cms.createResource(resName, CmsResourceTypePlain.getStaticTypeId(), null, null);
         CmsFile offlineFile = cms.readFile(offlineResource);
         offlineFile.setContents("abc".getBytes());
@@ -658,14 +397,16 @@ public class TestPublishing extends OpenCmsTestCase {
 
     /**
      * Tests the publishing of a fresh created sibling.<p>
-     * 
+     *
      * take a modified resource:
-     * - create a sibling of it 
-     * - publish only the sibling 
+     * - create a sibling of it
+     * - publish only the sibling
      * - compare online/offline versions of the sibling
-     * 
+     *
      * @throws Throwable if something goes wrong
      */
+    @Test
+    @Order(10)
     public void testPublishCopySibling() throws Throwable {
 
         CmsObject cms = getCmsObject();
@@ -689,17 +430,19 @@ public class TestPublishing extends OpenCmsTestCase {
 
         cms.getRequestContext().setCurrentProject(cms.readProject(CmsProject.ONLINE_PROJECT_ID));
         assertEquals(
-            "File is unchanged and online date last modified is not the same as offline",
             newTime,
-            cms.readResource(destination).getDateLastModified());
+            cms.readResource(destination).getDateLastModified(),
+            "File is unchanged and online date last modified is not the same as offline");
         assertState(cms, destination, CmsResource.STATE_UNCHANGED);
     }
 
     /**
      * Test publishing deleted files.<p>
-     * 
+     *
      * @throws Throwable if something goes wrong
      */
+    @Test
+    @Order(16)
     public void testPublishDeletedFiles() throws Throwable {
 
         CmsObject cms = getCmsObject();
@@ -716,7 +459,7 @@ public class TestPublishing extends OpenCmsTestCase {
         // publish a deleted resource without siblings
         //
 
-        // delete the resources 
+        // delete the resources
         cms.lockResource(resource1);
         cms.deleteResource(resource1, CmsResource.DELETE_PRESERVE_SIBLINGS);
         cms.unlockResource(resource1);
@@ -735,10 +478,10 @@ public class TestPublishing extends OpenCmsTestCase {
 
         cms.getRequestContext().setCurrentProject(offlineProject);
 
-        // publish a deleted resource with siblings, 
+        // publish a deleted resource with siblings,
         // delete the siblings also, but publish only the resource itself
 
-        // delete the resources 
+        // delete the resources
         cms.lockResource(resource2);
         cms.deleteResource(resource2, CmsResource.DELETE_REMOVE_SIBLINGS);
         cms.unlockResource(resource2);
@@ -752,7 +495,7 @@ public class TestPublishing extends OpenCmsTestCase {
         OpenCms.getPublishManager().waitWhileRunning();
 
         // the files must be unlocked
-        List lockedResources = cms.getLockedResources("/folder2", CmsLockFilter.FILTER_ALL);
+        List<String> lockedResources = cms.getLockedResources("/folder2", CmsLockFilter.FILTER_ALL);
         assertTrue(lockedResources.isEmpty());
 
         // the online file must be deleted
@@ -810,15 +553,17 @@ public class TestPublishing extends OpenCmsTestCase {
 
     /**
      * Tests the publishing of deleted siblings.<p>
-     * 
+     *
      * take 2 siblings (s1 and s2):
-     *  - delete one 
-     *  - publish the deleted one 
+     *  - delete one
+     *  - publish the deleted one
      *  - the remaining sibling should be readable in online project
      *  - the deleted sibling should be eligible for restoration
-     * 
+     *
      * @throws Throwable if something goes wrong
      */
+    @Test
+    @Order(25)
     public void testPublishDeletedSiblings() throws Throwable {
 
         CmsObject cms = getCmsObject();
@@ -829,6 +574,7 @@ public class TestPublishing extends OpenCmsTestCase {
         echo("testing publishing of deleted siblings");
 
         // create the siblings
+        @SuppressWarnings("deprecation")
         CmsResource src = cms.createResource(source, CmsResourceTypePlain.getStaticTypeId());
         CmsFile file = cms.readFile(src);
         file.setContents("test text".getBytes());
@@ -878,7 +624,7 @@ public class TestPublishing extends OpenCmsTestCase {
         assertEquals(new String("test text".getBytes()), new String(cms.readFile(source).getContents()));
         cms.getRequestContext().setCurrentProject(offline);
 
-        List list = cms.readDeletedResources("/", false);
+        List<I_CmsHistoryResource> list = cms.readDeletedResources("/", false);
         CmsHistoryFile histFile = (CmsHistoryFile)list.get(0);
         assertEquals(cms.getRequestContext().addSiteRoot(sibling), histFile.getRootPath());
         assertEquals(2, histFile.getVersion());
@@ -915,15 +661,18 @@ public class TestPublishing extends OpenCmsTestCase {
 
     /**
      * Tests the publishing of deleted siblings, 2nd issue.<p>
-     * 
+     *
      * take 2 siblings (s1 and s2):
      *  - delete all
      *  - publish all
      *  - non of them should be readable
      *  - both siblings should be eligible for restoration
-     * 
+     *
      * @throws Throwable if something goes wrong
      */
+    @Test
+    @Order(26)
+    @SuppressWarnings("deprecation")
     public void testPublishDeletedSiblings2() throws Throwable {
 
         CmsObject cms = getCmsObject();
@@ -980,7 +729,7 @@ public class TestPublishing extends OpenCmsTestCase {
         assertFalse(cms.existsResource(source, CmsResourceFilter.ALL));
         cms.getRequestContext().setCurrentProject(offline);
 
-        List list = cms.readDeletedResources(folder, false);
+        List<I_CmsHistoryResource> list = cms.readDeletedResources(folder, false);
         assertEquals(2, list.size());
         CmsHistoryFile histFile = (CmsHistoryFile)list.get(0);
         assertEquals(cms.getRequestContext().addSiteRoot(source), histFile.getRootPath());
@@ -996,9 +745,11 @@ public class TestPublishing extends OpenCmsTestCase {
 
     /**
      * Test publishing a folder with locked files.<p>
-     * 
+     *
      * @throws Throwable if something goes wrong
      */
+    @Test
+    @Order(15)
     public void testPublishFolderWithLockedFiles() throws Throwable {
 
         CmsObject cms = getCmsObject();
@@ -1040,9 +791,11 @@ public class TestPublishing extends OpenCmsTestCase {
 
     /**
      * Test publishing changed files.<p>
-     * 
+     *
      * @throws Throwable if something goes wrong
      */
+    @Test
+    @Order(14)
     public void testPublishLockedFiles() throws Throwable {
 
         CmsObject cms = getCmsObject();
@@ -1057,7 +810,7 @@ public class TestPublishing extends OpenCmsTestCase {
         String resource1 = "/folder2/image1_new.gif";
         String resource2 = "/folder2/image1_sibling1.gif";
 
-        // make changes to the resources 
+        // make changes to the resources
         // do not need to make any changes to resource3 and resource4 as they are
         // siblings of resource2!
 
@@ -1111,9 +864,11 @@ public class TestPublishing extends OpenCmsTestCase {
 
     /**
      * Test publishing moved files.<p>
-     * 
+     *
      * @throws Throwable if something goes wrong
      */
+    @Test
+    @Order(20)
     public void testPublishMovedFiles() throws Throwable {
 
         CmsObject cms = getCmsObject();
@@ -1125,7 +880,7 @@ public class TestPublishing extends OpenCmsTestCase {
         CmsProject onlineProject = cms.readProject("Online");
         CmsProject offlineProject = cms.readProject("Offline");
 
-        // move the resource 
+        // move the resource
         cms.lockResource(resource1);
         cms.moveResource(resource1, target1);
         cms.unlockResource(target1);
@@ -1141,7 +896,7 @@ public class TestPublishing extends OpenCmsTestCase {
         OpenCms.getPublishManager().waitWhileRunning();
 
         // check publish resource state
-        List pubResources = cms.readPublishedResources(publishList.getPublishHistoryId());
+        List<?> pubResources = cms.readPublishedResources(publishList.getPublishHistoryId());
         assertEquals(2, pubResources.size());
         CmsPublishedResource pubRes = (CmsPublishedResource)pubResources.get(0);
         assertEquals(cms.getRequestContext().addSiteRoot(resource1), pubRes.getRootPath());
@@ -1191,9 +946,11 @@ public class TestPublishing extends OpenCmsTestCase {
 
     /**
      * Test publishing new files.<p>
-     * 
+     *
      * @throws Throwable if something goes wrong
      */
+    @Test
+    @Order(11)
     public void testPublishNewFiles() throws Throwable {
 
         CmsObject cms = getCmsObject();
@@ -1220,7 +977,7 @@ public class TestPublishing extends OpenCmsTestCase {
         storeResources(cms, destination4);
 
         // unlock all new resources
-        // do not neet do unlock destination3 as it is a sibling of destination2     
+        // do not neet do unlock destination3 as it is a sibling of destination2
         cms.unlockResource(destination1);
         cms.unlockResource(destination2);
 
@@ -1312,9 +1069,12 @@ public class TestPublishing extends OpenCmsTestCase {
 
     /**
      * Test publishing files within a new unpublished folder.<p>
-     * 
+     *
      * @throws Throwable if something goes wrong
      */
+    @Test
+    @Order(12)
+    @SuppressWarnings("deprecation")
     public void testPublishNewFilesInNewFolder() throws Throwable {
 
         CmsObject cms = getCmsObject();
@@ -1417,9 +1177,11 @@ public class TestPublishing extends OpenCmsTestCase {
 
     /**
      * Test publishing a project with an iteration.<p>
-     * 
+     *
      * @throws Throwable if something goes wrong
      */
+    @Test
+    @Order(6)
     public void testPublishProjectGalore() throws Throwable {
 
         CmsObject cms = getCmsObject();
@@ -1435,21 +1197,24 @@ public class TestPublishing extends OpenCmsTestCase {
         }
         OpenCms.getPublishManager().waitWhileRunning();
 
-        List pubHistory = OpenCms.getPublishManager().getPublishHistory();
+        List<?> pubHistory = OpenCms.getPublishManager().getPublishHistory();
         assertEquals(10, pubHistory.size());
         CmsPublishJobFinished pubJob = (CmsPublishJobFinished)pubHistory.get(0);
         assertEquals(13 + 51, pubJob.getSize()); // folders + files
         for (int i = 1; i < 10; i++) {
             pubJob = (CmsPublishJobFinished)pubHistory.get(i);
-            assertEquals("pubJob: " + i, 0, pubJob.getSize());
+            assertEquals(0, pubJob.getSize(), "pubJob: " + i);
         }
     }
 
     /**
      * Tests publishing resources within a distinct project.<p>
-     * 
+     *
      * @throws Throwable if something goes wrong
      */
+    @Test
+    @Order(17)
+    @SuppressWarnings("deprecation")
     public void testPublishProjectLastmodified() throws Throwable {
 
         CmsObject cms = getCmsObject();
@@ -1537,9 +1302,11 @@ public class TestPublishing extends OpenCmsTestCase {
 
     /**
      * Tests publishing a folder containing resources modified within a distinct project.<p>
-     * 
+     *
      * @throws Throwable if something goes wrong
      */
+    @Test
+    @Order(18)
     public void testPublishProjectLastmodifiedFolder() throws Throwable {
 
         CmsObject cms = getCmsObject();
@@ -1569,10 +1336,231 @@ public class TestPublishing extends OpenCmsTestCase {
     }
 
     /**
-     * Test publishing of related files.<p>
-     * 
+     * Test an issue with the publish queue when trying to publish a folder that has already a subresource that is being published.<p>
+     *
+     * FIRST TRY:
+     * - modify and lock a file, publish the file
+     * - modify and lock a second file, publish the folder
+     *
      * @throws Throwable if something goes wrong
      */
+    @Test
+    @Order(1)
+    public void testPublishQueueIssue1() throws Throwable {
+
+        CmsObject cms = getCmsObject();
+        echo("Testing publishing a folder with a subresource in the publish queue, first try");
+
+        // stop the publish engine to ensure that the file will not be published before we try to publish the folder
+        OpenCms.getPublishManager().stopPublishing();
+
+        // touch and publish a file in a folder
+        String folder = "/folder1/subfolder11/subsubfolder111/";
+        String file = folder + "image.gif";
+        cms.lockResource(file);
+        cms.setDateLastModified(file, System.currentTimeMillis(), false);
+        OpenCms.getPublishManager().publishResource(cms, file);
+
+        // check the publish queue
+        assertEquals(1, OpenCms.getPublishManager().getPublishQueue().size());
+
+        // touch a second file and publish the file
+        String file2 = folder + "text.txt";
+        cms.lockResource(file2);
+        cms.setDateLastModified(file2, System.currentTimeMillis(), false);
+        OpenCms.getPublishManager().publishResource(cms, folder);
+
+        // check the publish queue
+        assertEquals(2, OpenCms.getPublishManager().getPublishQueue().size());
+
+        // start the publish engine
+        OpenCms.getPublishManager().startPublishing();
+        OpenCms.getPublishManager().waitWhileRunning();
+
+        // check the publish queue
+        assertEquals(0, OpenCms.getPublishManager().getPublishQueue().size());
+
+        // check publish reports
+        List<?> history = OpenCms.getPublishManager().getPublishHistory();
+        CmsPublishJobFinished publishJob = (CmsPublishJobFinished)history.get(history.size() - 2);
+        String reportContents = new String(OpenCms.getPublishManager().getReportContents(publishJob));
+        // check if the report states that the destination was published successfully
+        if (!reportContents.matches("(?s)" + "(.*)" + file + "(.*)" + "o.k." + "(.*)")) {
+            System.err.println(reportContents);
+            fail("publish report contains errors");
+        }
+        publishJob = (CmsPublishJobFinished)history.get(history.size() - 1);
+        reportContents = new String(OpenCms.getPublishManager().getReportContents(publishJob));
+        // check if the report states that the destination was published successfully
+        if (!reportContents.matches("(?s)" + "(.*)" + file2 + "(.*)" + "o.k." + "(.*)")) {
+            System.err.println(reportContents);
+            fail("publish report contains errors");
+        }
+
+        // check the published resources
+        assertState(cms, folder, CmsResourceState.STATE_UNCHANGED);
+        assertLock(cms, folder, CmsLockType.UNLOCKED);
+        assertState(cms, file, CmsResourceState.STATE_UNCHANGED);
+        assertLock(cms, file, CmsLockType.UNLOCKED);
+        assertState(cms, file2, CmsResourceState.STATE_UNCHANGED);
+        assertLock(cms, file2, CmsLockType.UNLOCKED);
+    }
+
+    /**
+     * Test an issue with the publish queue when trying to publish a folder that has already a subresource that is being published.<p>
+     *
+     * SECOND TRY:
+     * - modify and lock a file, publish the file
+     * - lock the folder, modify a second file, publish the folder
+     *
+     * @throws Throwable if something goes wrong
+     */
+    @Test
+    @Order(2)
+    public void testPublishQueueIssue2() throws Throwable {
+
+        CmsObject cms = getCmsObject();
+        echo("Testing publishing a folder with a subresource in the publish queue, second try");
+
+        // stop the publish engine to ensure that the file will not be published before we try to publish the folder
+        OpenCms.getPublishManager().stopPublishing();
+
+        // touch and publish a file in a folder
+        String folder = "/folder1/subfolder11/subsubfolder111/";
+        String file = folder + "image.gif";
+        cms.lockResource(file);
+        cms.setDateLastModified(file, System.currentTimeMillis(), false);
+        OpenCms.getPublishManager().publishResource(cms, file);
+
+        // check the publish queue
+        assertEquals(1, OpenCms.getPublishManager().getPublishQueue().size());
+
+        // touch a second file and publish the folder
+        String file2 = folder + "text.txt";
+        cms.lockResource(folder);
+        cms.setDateLastModified(file2, System.currentTimeMillis(), false);
+        OpenCms.getPublishManager().publishResource(cms, folder);
+
+        // check the publish queue
+        assertEquals(2, OpenCms.getPublishManager().getPublishQueue().size());
+
+        // start the publish engine
+        OpenCms.getPublishManager().startPublishing();
+        OpenCms.getPublishManager().waitWhileRunning();
+
+        // check the publish queue
+        assertEquals(0, OpenCms.getPublishManager().getPublishQueue().size());
+
+        // check publish reports
+        List<?> history = OpenCms.getPublishManager().getPublishHistory();
+        CmsPublishJobFinished publishJob = (CmsPublishJobFinished)history.get(history.size() - 2);
+        String reportContents = new String(OpenCms.getPublishManager().getReportContents(publishJob));
+        // check if the report states that the destination was published successfully
+        if (!reportContents.matches("(?s)" + "(.*)" + file + "(.*)" + "o.k." + "(.*)")) {
+            System.err.println(reportContents);
+            fail("publish report contains errors");
+        }
+        publishJob = (CmsPublishJobFinished)history.get(history.size() - 1);
+        reportContents = new String(OpenCms.getPublishManager().getReportContents(publishJob));
+        // check if the report states that the destination was published successfully
+        if (!reportContents.matches("(?s)" + "(.*)" + file2 + "(.*)" + "o.k." + "(.*)")) {
+            System.err.println(reportContents);
+            fail("publish report contains errors");
+        }
+
+        cms.unlockResource(folder);
+        // check the published files
+        assertState(cms, file, CmsResourceState.STATE_UNCHANGED);
+        assertLock(cms, file, CmsLockType.UNLOCKED);
+        assertState(cms, file2, CmsResourceState.STATE_UNCHANGED);
+        assertLock(cms, file2, CmsLockType.UNLOCKED);
+        assertState(cms, folder, CmsResourceState.STATE_UNCHANGED);
+        assertLock(cms, folder, CmsLockType.UNLOCKED);
+    }
+
+    /**
+     * Test an issue with the publish queue when trying to publish a folder that has already a subresource that is being published.<p>
+     *
+     * THIRD TRY:
+     * - modify and lock a file, publish the file
+     * - modify and lock the folder, publish the folder
+     *
+     * @throws Throwable if something goes wrong
+     */
+    @Test
+    @Order(3)
+    public void testPublishQueueIssue3() throws Throwable {
+
+        CmsObject cms = getCmsObject();
+        echo("Testing publishing a folder with a subresource in the publish queue, third try");
+
+        // stop the publish engine to ensure that the file will not be published before we try to publish the folder
+        OpenCms.getPublishManager().stopPublishing();
+
+        // touch and publish a file in a folder
+        String folder = "/folder1/subfolder11/subsubfolder111/";
+        String file = folder + "image.gif";
+        cms.lockResource(file);
+        cms.setDateLastModified(file, System.currentTimeMillis(), false);
+        OpenCms.getPublishManager().publishResource(cms, file);
+
+        // check the publish queue
+        assertEquals(1, OpenCms.getPublishManager().getPublishQueue().size());
+
+        // touch a second file and publish the folder
+        cms.lockResource(folder);
+        String file2 = folder + "text.txt";
+        cms.setDateLastModified(file2, System.currentTimeMillis(), false);
+        cms.setDateLastModified(folder, System.currentTimeMillis(), false);
+        OpenCms.getPublishManager().publishResource(cms, folder);
+
+        // check the publish queue
+        assertEquals(2, OpenCms.getPublishManager().getPublishQueue().size());
+
+        // start the publish engine
+        OpenCms.getPublishManager().startPublishing();
+        OpenCms.getPublishManager().waitWhileRunning();
+
+        // check the publish queue
+        assertEquals(0, OpenCms.getPublishManager().getPublishQueue().size());
+
+        // check publish reports
+        List<?> history = OpenCms.getPublishManager().getPublishHistory();
+        CmsPublishJobFinished publishJob = (CmsPublishJobFinished)history.get(history.size() - 2);
+        String reportContents = new String(OpenCms.getPublishManager().getReportContents(publishJob));
+        // check if the report states that the destination was published successfully
+        if (!reportContents.matches("(?s)" + "(.*)" + file + "(.*)" + "o.k." + "(.*)")) {
+            System.err.println(reportContents);
+            fail("publish report contains errors");
+        }
+        publishJob = (CmsPublishJobFinished)history.get(history.size() - 1);
+        reportContents = new String(OpenCms.getPublishManager().getReportContents(publishJob));
+        // check if the report states that the destination was published successfully
+        if (!reportContents.matches("(?s)" + "(.*)" + file2 + "(.*)" + "o.k." + "(.*)")) {
+            System.err.println(reportContents);
+            fail("publish report contains errors");
+        }
+        if (!reportContents.matches("(?s)" + "(.*)" + folder + "(.*)" + "o.k." + "(.*)")) {
+            System.err.println(reportContents);
+            fail("publish report contains errors");
+        }
+
+        // check the published resources
+        assertState(cms, folder, CmsResourceState.STATE_UNCHANGED);
+        assertLock(cms, folder, CmsLockType.UNLOCKED);
+        assertState(cms, file, CmsResourceState.STATE_UNCHANGED);
+        assertLock(cms, file, CmsLockType.UNLOCKED);
+        assertState(cms, file2, CmsResourceState.STATE_UNCHANGED);
+        assertLock(cms, file2, CmsLockType.UNLOCKED);
+    }
+
+    /**
+     * Test publishing of related files.<p>
+     *
+     * @throws Throwable if something goes wrong
+     */
+    @Test
+    @Order(21)
     public void testPublishRelatedFiles() throws Throwable {
 
         CmsObject cms = getCmsObject();
@@ -1580,7 +1568,7 @@ public class TestPublishing extends OpenCmsTestCase {
 
         String resName = "index.html";
 
-        // touch the file to publish        
+        // touch the file to publish
         cms.lockResource(resName);
         cms.setDateLastModified(resName, System.currentTimeMillis(), false);
         CmsResource resource = cms.readResource(resName, CmsResourceFilter.DEFAULT);
@@ -1644,9 +1632,11 @@ public class TestPublishing extends OpenCmsTestCase {
 
     /**
      * Test publishing of related files taken a whole folder structure.<p>
-     * 
+     *
      * @throws Throwable if something goes wrong
      */
+    @Test
+    @Order(22)
     public void testPublishRelatedFilesInFolder() throws Throwable {
 
         CmsObject cms = getCmsObject();
@@ -1654,7 +1644,7 @@ public class TestPublishing extends OpenCmsTestCase {
 
         String resName = "/folder1/";
 
-        // touch the file to publish        
+        // touch the file to publish
         cms.lockResource(resName);
         cms.setDateLastModified(resName, System.currentTimeMillis(), true);
         CmsResource resource = cms.readResource(resName, CmsResourceFilter.DEFAULT);
@@ -1690,9 +1680,12 @@ public class TestPublishing extends OpenCmsTestCase {
 
     /**
      * Test publishing of related files in an unpublished folder.<p>
-     * 
+     *
      * @throws Throwable if something goes wrong
      */
+    @Test
+    @Order(23)
+    @SuppressWarnings("deprecation")
     public void testPublishRelatedFilesInNewFolder() throws Throwable {
 
         CmsObject cms = getCmsObject();
@@ -1702,7 +1695,7 @@ public class TestPublishing extends OpenCmsTestCase {
         String fileName = "/testFolder/testFile.gif";
         String srcName = "sourceTest.html";
 
-        // create folder and file        
+        // create folder and file
         cms.createResource(folderName, CmsResourceTypeFolder.RESOURCE_TYPE_ID);
         cms.createResource(fileName, CmsResourceTypeImage.getStaticTypeId());
 
@@ -1761,9 +1754,12 @@ public class TestPublishing extends OpenCmsTestCase {
 
     /**
      * Test publishing a replaced file.<p>
-     * 
+     *
      * @throws Throwable if something goes wrong
      */
+    @Test
+    @Order(27)
+    @SuppressWarnings("deprecation")
     public void testPublishReplacedFile() throws Throwable {
 
         CmsObject cms = getCmsObject();
@@ -1802,9 +1798,11 @@ public class TestPublishing extends OpenCmsTestCase {
 
     /**
      * Test publishing a single resource with an iteration.<p>
-     * 
+     *
      * @throws Throwable if something goes wrong
      */
+    @Test
+    @Order(4)
     public void testPublishResourceGalore() throws Throwable {
 
         CmsObject cms = getCmsObject();
@@ -1821,26 +1819,28 @@ public class TestPublishing extends OpenCmsTestCase {
         }
         OpenCms.getPublishManager().waitWhileRunning();
 
-        List pubHistory = OpenCms.getPublishManager().getPublishHistory();
+        List<?> pubHistory = OpenCms.getPublishManager().getPublishHistory();
         assertEquals(10, pubHistory.size());
         CmsPublishJobFinished pubJob = (CmsPublishJobFinished)pubHistory.get(0);
         assertEquals(1, pubJob.getSize());
         for (int i = 1; i < 10; i++) {
             pubJob = (CmsPublishJobFinished)pubHistory.get(i);
-            assertEquals("pubJob: " + i, 0, pubJob.getSize());
+            assertEquals(0, pubJob.getSize(), "pubJob: " + i);
         }
     }
 
     /**
      * Tests the publishing of resource property.<p>
-     * 
+     *
      * take 2 siblings (s1 and s2):
      * - change a shared property of s1
      * - s2 will be marked as changed also
      * - direct publishing s1, should also change s2
-     * 
+     *
      * @throws Throwable if something goes wrong
      */
+    @Test
+    @Order(8)
     public void testPublishResourceProperty() throws Throwable {
 
         CmsObject cms = getCmsObject();
@@ -1861,7 +1861,7 @@ public class TestPublishing extends OpenCmsTestCase {
         storeResources(cms, source);
         storeResources(cms, sibling);
 
-        List pubList = OpenCms.getPublishManager().getPublishList(cms).getFileList();
+        List<?> pubList = OpenCms.getPublishManager().getPublishList(cms).getFileList();
         assertEquals(pubList.size(), 2);
         assertEquals(((CmsResource)pubList.get(0)).getRootPath(), cms.getRequestContext().addSiteRoot(source));
         assertEquals(((CmsResource)pubList.get(1)).getRootPath(), cms.getRequestContext().addSiteRoot(sibling));
@@ -1882,9 +1882,11 @@ public class TestPublishing extends OpenCmsTestCase {
 
     /**
      * Test publishing a resource with related resources with an iteration.<p>
-     * 
+     *
      * @throws Throwable if something goes wrong
      */
+    @Test
+    @Order(5)
     public void testPublishResourceWithRelatedGalore() throws Throwable {
 
         CmsObject cms = getCmsObject();
@@ -1920,26 +1922,28 @@ public class TestPublishing extends OpenCmsTestCase {
         }
         OpenCms.getPublishManager().waitWhileRunning();
 
-        List pubHistory = OpenCms.getPublishManager().getPublishHistory();
+        List<?> pubHistory = OpenCms.getPublishManager().getPublishHistory();
         assertEquals(10, pubHistory.size());
         CmsPublishJobFinished pubJob = (CmsPublishJobFinished)pubHistory.get(0);
         assertEquals(pubList.size(), pubJob.getSize());
         for (int i = 1; i < 10; i++) {
             pubJob = (CmsPublishJobFinished)pubHistory.get(i);
-            assertEquals("pubJob: " + i, 0, pubJob.getSize());
+            assertEquals(0, pubJob.getSize(), "pubJob: " + i);
         }
     }
 
     /**
      * Tests the publishing of structure/shared properties.<p>
-     * 
+     *
      * take 2 siblings (s1 and s2):
-     * - change a individual property of s1 
-     * - change a shared property of s2 
+     * - change a individual property of s1
+     * - change a shared property of s2
      * - direct publishing s2, should not change s1
-     * 
+     *
      * @throws Throwable if something goes wrong
      */
+    @Test
+    @Order(9)
     public void testPublishSiblings() throws Throwable {
 
         CmsObject cms = getCmsObject();
@@ -1965,7 +1969,7 @@ public class TestPublishing extends OpenCmsTestCase {
         storeResources(cms, source);
         storeResources(cms, sibling);
 
-        List pubList = OpenCms.getPublishManager().getPublishList(cms).getFileList();
+        List<?> pubList = OpenCms.getPublishManager().getPublishList(cms).getFileList();
         assertEquals(pubList.size(), 2);
         assertEquals(((CmsResource)pubList.get(0)).getRootPath(), cms.getRequestContext().addSiteRoot(source));
         assertEquals(((CmsResource)pubList.get(1)).getRootPath(), cms.getRequestContext().addSiteRoot(sibling));
@@ -1995,14 +1999,16 @@ public class TestPublishing extends OpenCmsTestCase {
 
     /**
      * Tests the publishing of structure property.<p>
-     * 
+     *
      * take 2 siblings (s1 and s2):
      * - change a individual property of s1
      * - s2 remains unchanged
      * - direct publishing s1, should not change s2
-     * 
+     *
      * @throws Throwable if something goes wrong
      */
+    @Test
+    @Order(7)
     public void testPublishStructureProperty() throws Throwable {
 
         CmsObject cms = getCmsObject();
@@ -2030,7 +2036,7 @@ public class TestPublishing extends OpenCmsTestCase {
         storeResources(cms, source);
         storeResources(cms, sibling);
 
-        List pubList = OpenCms.getPublishManager().getPublishList(cms).getFileList();
+        List<?> pubList = OpenCms.getPublishManager().getPublishList(cms).getFileList();
         assertEquals(pubList.size(), 1);
         assertEquals(((CmsResource)pubList.get(0)).getRootPath(), cms.getRequestContext().addSiteRoot(sibling));
         assertFilter(cms, cms.readResource(sibling), OpenCmsTestResourceFilter.FILTER_EQUAL);
@@ -2044,9 +2050,12 @@ public class TestPublishing extends OpenCmsTestCase {
 
     /**
      * Test publishing a temporary project.<p>
-     * 
+     *
      * @throws Throwable if something goes wrong
      */
+    @Test
+    @Order(19)
+    @SuppressWarnings("deprecation")
     public void testPublishTemporaryProject() throws Throwable {
 
         CmsObject cms = getCmsObject();
@@ -2081,12 +2090,13 @@ public class TestPublishing extends OpenCmsTestCase {
         try {
             cms.readResource(source);
         } catch (CmsException e) {
-            fail("Resource "
-                + source
-                + " not found in project "
-                + cms.getRequestContext().getCurrentProject().toString()
-                + ":"
-                + e);
+            fail(
+                "Resource "
+                    + source
+                    + " not found in project "
+                    + cms.getRequestContext().getCurrentProject().toString()
+                    + ":"
+                    + e);
         }
 
         // now try to read the resource in the online project
@@ -2094,12 +2104,13 @@ public class TestPublishing extends OpenCmsTestCase {
         try {
             cms.readResource(source);
         } catch (CmsException e) {
-            fail("Resource "
-                + source
-                + " not found in project "
-                + cms.getRequestContext().getCurrentProject().toString()
-                + ":"
-                + e);
+            fail(
+                "Resource "
+                    + source
+                    + " not found in project "
+                    + cms.getRequestContext().getCurrentProject().toString()
+                    + ":"
+                    + e);
         }
 
         // check if the state of the resource is ok
@@ -2121,9 +2132,9 @@ public class TestPublishing extends OpenCmsTestCase {
 
     /**
      * Returns a project for testing purposes.<p>
-     * 
+     *
      * @param cms the cms object
-     * 
+     *
      * @return a project for testing purposes
      */
     private CmsProject getTestProject(CmsObject cms) {

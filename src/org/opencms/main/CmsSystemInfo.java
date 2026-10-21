@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -14,12 +14,12 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * Lesser General Public License for more details.
  *
- * For further information about Alkacon Software GmbH, please see the
- * company website: http://www.alkacon.com
+ * For further information about Alkacon Software GmbH & Co. KG, please see the
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -27,31 +27,105 @@
 
 package org.opencms.main;
 
+import org.opencms.file.CmsObject;
 import org.opencms.i18n.CmsEncoder;
+import org.opencms.jsp.util.I_CmsJspDeviceSelector;
 import org.opencms.mail.CmsMailSettings;
 import org.opencms.util.CmsFileUtil;
 import org.opencms.util.CmsStringUtil;
 
 import java.io.File;
+import java.util.Collections;
+import java.util.Map;
 import java.util.Properties;
+import java.util.TreeMap;
+import java.util.jar.JarFile;
 
 /**
- * Provides access to system wide "read only" information.<p>
- * 
- * Regarding the naming conventions used, this comes straight from the Servlet Spec v2.4:<p>
- *   
- * <i>SRV.3.1 Introduction to the ServletContext Interface<br>
- * [...] A ServletContext is rooted at a known path within a web server. For example
- * a servlet context could be located at http://www.mycorp.com/catalog. All
- * requests that begin with the /catalog request path, known as the <b>context path</b>, are
- * routed to the <b>web application</b> associated with the ServletContext.</i><p>   
- * 
- * @since 6.0.0 
+ * Provides access to system wide "read only" information about the running OpenCms instance.<p>
+ *
+ * Contains information about:
+ * <ul>
+ * <li>version and build number</li>
+ * <li>server name</li>
+ * <li>mail settings</li>
+ * <li>configuration paths</li>
+ * <li>default character encoding</li>
+ * <li>...and more.</li>
+ * </ul>
+ *
+ * @since 6.0.0
  */
 public class CmsSystemInfo {
 
+    /**
+     * Wrapper class used to access build information.<p>
+     */
+    public class BuildInfoItem {
+
+        /** The key name. */
+        private String m_keyName;
+
+        /** The nice name for display. */
+        private String m_niceName;
+
+        /** The build information value. */
+        private String m_value;
+
+        /**
+         * Creates a new instance wrapping a build info string array.<p>
+         *
+         * @param value the value
+         * @param niceName the nice name
+         * @param keyName the key name
+         */
+        public BuildInfoItem(String value, String niceName, String keyName) {
+
+            m_value = value;
+            m_niceName = niceName;
+            m_keyName = keyName;
+        }
+
+        /**
+         * Gets the key name for this build info item.<p>
+         *
+         * @return the value
+         */
+        public String getKeyName() {
+
+            return m_keyName;
+        }
+
+        /**
+         * Gets the nice name for this build info item.<p>
+         *
+         * @return the nice name
+         */
+        public String getNiceName() {
+
+            return m_niceName;
+        }
+
+        /**
+         * Gets the value for this build info item.<p>
+         *
+         * @return the value
+         */
+        public String getValue() {
+
+            return m_value;
+        }
+    }
+
     /** Name of the config folder property provides as Java VM parameter -Dopencms.config=.*/
     public static final String CONFIG_FOLDER_PROPERTY = "opencms.config";
+
+    /** Relative path to persistence.xml file. */
+    public static final String FILE_PERSISTENCE = "classes"
+        + File.separatorChar
+        + "META-INF"
+        + File.separatorChar
+        + "persistence.xml";
 
     /** The name of the opencms.properties file. */
     public static final String FILE_PROPERTIES = "opencms.properties";
@@ -71,24 +145,35 @@ public class CmsSystemInfo {
     /** Path to the "WEB-INF" folder relative to the directory of the application. */
     public static final String FOLDER_WEBINF = "WEB-INF" + File.separatorChar;
 
-    /** Relative path to persistence.xml file. */
-    public static final String FILE_PERSISTENCE = "classes"
-        + File.separatorChar
-        + "META-INF"
-        + File.separatorChar
-        + "persistence.xml";
+    /** The workplace UI servlet name. */
+    public static final String WORKPLACE_PATH = "/workplace";
 
     /** Default encoding. */
     private static final String DEFAULT_ENCODING = CmsEncoder.ENCODING_UTF_8;
 
+    /** Static version id to use if version.properties can not be read. */
+    private static final String DEFAULT_VERSION_ID = "Static";
+
     /** Static version number to use if version.properties can not be read. */
-    private static final String DEFAULT_VERSION_NUMBER = "8.0.x";
+    private static final String DEFAULT_VERSION_NUMBER = "9.x.y";
+
+    /** The VFS config files folder. */
+    public static final String VFS_CONFIG_FOLDER = "/system/config/";
+
+    /** The folder to contain configuration file overrides. */
+    public static final String VFS_CONFIG_OVERRIDE_FOLDER = VFS_CONFIG_FOLDER + "overrides/";
+
+    /** The list of additional version information that was contained in the version.properties file. */
+    private Map<String, BuildInfoItem> m_buildInfo;
 
     /** The absolute path to the "opencms.properties" configuration file (in the "real" file system). */
     private String m_configurationFileRfsPath;
 
     /** Default encoding, can be set in opencms-system.xml. */
     private String m_defaultEncoding;
+
+    /** The device selector instance. */
+    private I_CmsJspDeviceSelector m_deviceSelector;
 
     /** Indicates if the version history is enabled. */
     private boolean m_historyEnabled;
@@ -117,6 +202,9 @@ public class CmsSystemInfo {
     /** The absolute path to the persistence.xml file (in the "real" file system). */
     private String m_persistenceFileRfsPath;
 
+    /** True if detail contents are restricted to detail pages from the same site. */
+    private boolean m_restrictDetailContents;
+
     /** The name of the OpenCms server. */
     private String m_serverName;
 
@@ -126,8 +214,14 @@ public class CmsSystemInfo {
     /** The startup time of this OpenCms instance. */
     private long m_startupTime;
 
+    /** The static resource version parameter. */
+    private String m_staticResourcePathFragment;
+
     /** The version identifier of this OpenCms installation, contains "OpenCms/" and the version number. */
     private String m_version;
+
+    /** The version ID of this OpenCms installation, usually set by the build system. */
+    private String m_versionId;
 
     /** The version number of this OpenCms installation. */
     private String m_versionNumber;
@@ -148,8 +242,94 @@ public class CmsSystemInfo {
     }
 
     /**
+     * Returns an absolute path (to a directory or a file in the "real" file system) from a path relative to
+     * the web application folder of OpenCms.<p>
+     *
+     * If the provided path is already absolute, then it is returned unchanged.
+     * If the provided path is a folder, the result will always end with a folder separator.<p>
+     *
+     * @param path the path (relative) to generate an absolute path from
+     * @return an absolute path (to a directory or a file) from a path relative to the web application folder of OpenCms
+     */
+    public String getAbsoluteRfsPathRelativeToWebApplication(String path) {
+
+        if ((path == null) || (getWebApplicationRfsPath() == null)) {
+            return null;
+        }
+        // check for absolute path is system depended, let's just use the standard check
+        File f = new File(path);
+        if (f.isAbsolute()) {
+            // apparently this is an absolute path already
+            path = f.getAbsolutePath();
+            if (f.isDirectory() && !path.endsWith(File.separator)) {
+                // make sure all folder paths end with a separator
+                path = path.concat(File.separator);
+            }
+            return path;
+        }
+        return CmsFileUtil.normalizePath(getWebApplicationRfsPath() + path);
+    }
+
+    /**
+     * Returns an absolute path (to a directory or a file in the "real" file system) from a path relative to
+     * the "WEB-INF" folder of the OpenCms web application.<p>
+     *
+     * If the provided path is already absolute, then it is returned unchanged.<p>
+     *
+     * @param path the path (relative) to generate an absolute path from
+     * @return an absolute path (to a directory or a file) from a path relative to the "WEB-INF" folder
+     */
+    public String getAbsoluteRfsPathRelativeToWebInf(String path) {
+
+        if (path == null) {
+            return null;
+        }
+        // check for absolute path is system depended, let's just use the standard check
+        File f = new File(path);
+        if (f.isAbsolute()) {
+            // apparently this is an absolute path already
+            return f.getAbsolutePath();
+        }
+        return CmsFileUtil.normalizePath(getWebInfRfsPath() + path);
+    }
+
+    /**
+     * Returns the map of additional build information that was contained in the version.properties file.<p>
+     *
+     * The values are String arrays of length 2. First in this array is the actual value,
+     * and second the "nice name" for the value that can be used to display the value somewhere.
+     * In case no nice name was provided, the second value will repeat the key name.<p>
+     *
+     * @return the map of additional build information that was contained in the version.properties file
+     *
+     * @since 9.5.0
+     */
+    public Map<String, BuildInfoItem> getBuildInfo() {
+
+        return m_buildInfo;
+    }
+
+    /**
+     * Returns the path to a configuration file.<p>
+     * This will either be a file below /system/config/ or in case an override file exists below /system/config/overrides/.<p>
+     *
+     * @param cms the cms ontext
+     * @param configFile the config file path within /system/config/
+     *
+     * @return the file path
+     */
+    public String getConfigFilePath(CmsObject cms, String configFile) {
+
+        String path = CmsStringUtil.joinPaths(VFS_CONFIG_OVERRIDE_FOLDER, configFile);
+        if (!cms.existsResource(path)) {
+            path = CmsStringUtil.joinPaths(VFS_CONFIG_FOLDER, configFile);
+        }
+        return path;
+    }
+
+    /**
      * Gets the path of the opencms config folder.<p>
-     * Per default this is the "/WEB-INF/config/ folder. 
+     * Per default this is the "/WEB-INF/config/ folder.
      * If configured with the "-Dopencms.config=..." java startup parameter, OpenCms can access an external config
      * folder outside its webapplication.
      * @return complete rfs path to the config folder.
@@ -165,60 +345,8 @@ public class CmsSystemInfo {
     }
 
     /**
-     * Returns an absolute path (to a directory or a file in the "real" file system) from a path relative to 
-     * the web application folder of OpenCms.<p> 
-     * 
-     * If the provided path is already absolute, then it is returned unchanged.
-     * If the provided path is a folder, the result will always end with a folder separator.<p>
-     * 
-     * @param path the path (relative) to generate an absolute path from
-     * @return an absolute path (to a directory or a file) from a path relative to the web application folder of OpenCms
-     */
-    public String getAbsoluteRfsPathRelativeToWebApplication(String path) {
-
-        if ((path == null) || (getWebApplicationRfsPath() == null)) {
-            return null;
-        }
-        // check for absolute path is system depended, let's just use the standard check  
-        File f = new File(path);
-        if (f.isAbsolute()) {
-            // apparently this is an absolute path already
-            path = f.getAbsolutePath();
-            if (f.isDirectory() && !path.endsWith(File.separator)) {
-                // make sure all folder paths end with a separator
-                path = path.concat(File.separator);
-            }
-            return path;
-        }
-        return CmsFileUtil.normalizePath(getWebApplicationRfsPath() + path);
-    }
-
-    /**
-     * Returns an absolute path (to a directory or a file in the "real" file system) from a path relative to 
-     * the "WEB-INF" folder of the OpenCms web application.<p> 
-     * 
-     * If the provided path is already absolute, then it is returned unchanged.<p>
-     * 
-     * @param path the path (relative) to generate an absolute path from
-     * @return an absolute path (to a directory or a file) from a path relative to the "WEB-INF" folder
-     */
-    public String getAbsoluteRfsPathRelativeToWebInf(String path) {
-
-        if (path == null) {
-            return null;
-        }
-        // check for absolute path is system depended, let's just use the standard check  
-        File f = new File(path);
-        if (f.isAbsolute()) {
-            // apparently this is an absolute path already
-            return f.getAbsolutePath();
-        }
-        return CmsFileUtil.normalizePath(getWebInfRfsPath() + path);
-    }
-
-    /**
      * Returns the absolute path to the "opencms.properties" configuration file (in the "real" file system).<p>
-     * 
+     *
      * @return the absolute path to the "opencms.properties" configuration file
      */
     public String getConfigurationFileRfsPath() {
@@ -230,30 +358,17 @@ public class CmsSystemInfo {
     }
 
     /**
-     * Returns the absolute path to the "persistence.xml" file (in the "real" file system).<p>
-     * 
-     * @return the absolute path to the "persistence.xml" configuration file
-     */
-    public String getPersistenceFileRfsPath() {
-
-        if (m_persistenceFileRfsPath == null) {
-            m_persistenceFileRfsPath = getAbsoluteRfsPathRelativeToWebInf(FILE_PERSISTENCE);
-        }
-        return m_persistenceFileRfsPath;
-    }
-
-    /**
-     * Returns the web application context path, e.g. "" (empty String) if the web application 
-     * is the default web application (usually "ROOT"), or "/opencms" if the web application 
+     * Returns the web application context path, e.g. "" (empty String) if the web application
+     * is the default web application (usually "ROOT"), or "/opencms" if the web application
      * is called "opencms".<p>
-     * 
+     *
      * <i>From the Java Servlet Specification v2.4:</i><br>
      * <b>Context Path:</b> The path prefix associated with the ServletContext that this
      * servlet is a part of. If this context is the "default" context rooted at the base of
      * the web server's URL name space, this path will be an empty string. Otherwise,
      * if the context is not rooted at the root of the server's name space, the path starts
      * with a "/" character but does not end with a "/" character.<p>
-     *  
+     *
      * @return the web application context path
      * @see #getWebApplicationName()
      * @see #getServletPath()
@@ -266,11 +381,11 @@ public class CmsSystemInfo {
 
     /**
      * Return the OpenCms default character encoding.<p>
-     * 
+     *
      * The default is set in the opencms-system.xml file.
-     * If this is not set in opencms-system.xml the default 
+     * If this is not set in opencms-system.xml the default
      * is "UTF-8".<p>
-     * 
+     *
      * @return the default encoding, e.g. "UTF-8" or "ISO-8859-1"
      */
     public String getDefaultEncoding() {
@@ -280,7 +395,7 @@ public class CmsSystemInfo {
 
     /**
      * Returns the default web application name (usually "ROOT").<p>
-     * 
+     *
      * @return the default web application name
      */
     public String getDefaultWebApplicationName() {
@@ -289,10 +404,20 @@ public class CmsSystemInfo {
     }
 
     /**
+     * Gets the device selector.<p>
+     *
+     * @return the device selector
+     */
+    public I_CmsJspDeviceSelector getDeviceSelector() {
+
+        return m_deviceSelector;
+    }
+
+    /**
      * Returns the maximum number of versions that are kept per file in the VFS version history.<p>
-     * 
+     *
      * If the version history is disabled, this setting has no effect.<p>
-     * 
+     *
      * @return the maximum number of versions that are kept per file
      * @see #isHistoryEnabled()
      */
@@ -302,9 +427,11 @@ public class CmsSystemInfo {
     }
 
     /**
-     * Returns the number of versions in the VFS version history that should be 
+     * Returns the number of versions in the VFS version history that should be
      * kept after a resource is deleted.<p>
-     * 
+     *
+     * For resources in folders where the history.removedeleted property is set to "true", this setting is ignored.
+     *
      * @return the number versions in the VFS version history for deleted resources
      */
     public int getHistoryVersionsAfterDeletion() {
@@ -323,11 +450,26 @@ public class CmsSystemInfo {
     }
 
     /**
-     * Returns the filename of the log file (in the "real" file system).<p>
-     * 
+     * Returns the absolute path to the folder of the main OpenCms log file
+     * (in the "real" file system).<p>
+     *
      * If the method returns <code>null</code>, this means that the log
      * file is not managed by OpenCms.<p>
-     * 
+     *
+     * @return the absolute path to the folder of the main OpenCms log file (in
+     * the "real" file system)
+     */
+    public String getLogFileRfsFolder() {
+
+        return CmsLog.getLogFileRfsFolder();
+    }
+
+    /**
+     * Returns the filename of the log file (in the "real" file system).<p>
+     *
+     * If the method returns <code>null</code>, this means that the log
+     * file is not managed by OpenCms.<p>
+     *
      * @return the filename of the log file (in the "real" file system)
      */
     public String getLogFileRfsPath() {
@@ -337,7 +479,7 @@ public class CmsSystemInfo {
 
     /**
      * Returns the settings for the internal OpenCms email service.<p>
-     * 
+     *
      * @return the settings for the internal OpenCms email service
      */
     public CmsMailSettings getMailSettings() {
@@ -347,7 +489,7 @@ public class CmsSystemInfo {
 
     /**
      * Returns the project in which time stamps for the content notification are read.<p>
-     * 
+     *
      * @return the project in which time stamps for the content notification are read
      */
     public String getNotificationProject() {
@@ -357,7 +499,7 @@ public class CmsSystemInfo {
 
     /**
      * Returns the duration after which responsible resource owners will be notified about out-dated content (in days).<p>
-     * 
+     *
      * @return the duration after which responsible resource owners will be notified about out-dated content
      */
     public int getNotificationTime() {
@@ -367,10 +509,10 @@ public class CmsSystemInfo {
 
     /**
      * Returns the OpenCms request context, e.g. "/opencms/opencms".<p>
-     * 
+     *
      * The OpenCms context will always start with a "/" and never have a trailing "/".
      * The OpenCms context is identical to <code>getContexPath() + getServletPath()</code>.<p>
-     * 
+     *
      * @return the OpenCms request context, e.g. "/opencms/opencms"
      * @see #getContextPath()
      * @see #getServletPath()
@@ -382,7 +524,7 @@ public class CmsSystemInfo {
 
     /**
      * Returns the absolute path to the "packages" folder (in the "real" file system).<p>
-     * 
+     *
      * @return the absolute path to the "packages" folder
      */
     public String getPackagesRfsPath() {
@@ -394,8 +536,21 @@ public class CmsSystemInfo {
     }
 
     /**
+     * Returns the absolute path to the "persistence.xml" file (in the "real" file system).<p>
+     *
+     * @return the absolute path to the "persistence.xml" configuration file
+     */
+    public String getPersistenceFileRfsPath() {
+
+        if (m_persistenceFileRfsPath == null) {
+            m_persistenceFileRfsPath = getAbsoluteRfsPathRelativeToWebInf(FILE_PERSISTENCE);
+        }
+        return m_persistenceFileRfsPath;
+    }
+
+    /**
      * Returns the time this OpenCms instance is running in milliseconds.<p>
-     * 
+     *
      * @return the time this OpenCms instance is running in milliseconds
      */
     public long getRuntime() {
@@ -405,12 +560,12 @@ public class CmsSystemInfo {
 
     /**
      * Returns the OpenCms server name, e.g. "OpenCmsServer".<p>
-     * 
+     *
      * The server name is set in <code>opencms.properties</code>.
      * It is not related to any DNS name the server might also have.
      * The server name is useful e.g. in a cluster to distinguish different servers,
      * or if you compare log files from multiple servers.<p>
-     * 
+     *
      * @return the OpenCms server name
      */
     public String getServerName() {
@@ -429,14 +584,14 @@ public class CmsSystemInfo {
     }
 
     /**
-     * Returns the OpenCms servlet path, e.g. "/opencms".<p> 
-     * 
+     * Returns the OpenCms servlet path, e.g. "/opencms".<p>
+     *
      * <i>From the Java Servlet Specification v2.4:</i><br>
      * <b>Servlet Path:</b> The path section that directly corresponds to the mapping
      * which activated this request. This path starts with a?/? character except in the
      * case where the request is matched with the ?/*? pattern, in which case it is the
      * empty string.<p>
-     * 
+     *
      * @return the OpenCms servlet path
      * @see #getContextPath()
      * @see #getWebApplicationName()
@@ -458,8 +613,23 @@ public class CmsSystemInfo {
     }
 
     /**
+     * Returns the context for static resources served from the class path, e.g. "/opencms/opencms/handleStatic".<p>
+     *
+     * @return the static resource context
+     */
+    public String getStaticResourceContext() {
+
+        if (m_staticResourcePathFragment == null) {
+            m_staticResourcePathFragment = CmsStaticResourceHandler.getStaticResourceContext(
+                OpenCms.getStaticExportManager().getVfsPrefix(),
+                getVersionNumber());
+        }
+        return m_staticResourcePathFragment;
+    }
+
+    /**
      * Returns the identifier "OpenCms/" plus the OpenCms version number.<p>
-     * 
+     *
      * This information is used for example to identify OpenCms in HTTP response headers.<p>
      *
      * @return the identifier "OpenCms/" plus the OpenCms version number
@@ -470,10 +640,26 @@ public class CmsSystemInfo {
     }
 
     /**
-     * Returns the version number of this OpenCms system, for example <code>8.0.0</code>.<p>
+     * Returns the version ID of this OpenCms system.<p>
+     *
+     * The version ID is usually set dynamically by the build system.
+     * It can be used to identify intermediate builds when the main
+     * version number has not changed.<p>
+     *
+     * @return the version ID of this OpenCms system
+     *
+     * @since 9.5.0
+     */
+    public String getVersionId() {
+
+        return m_versionId;
+    }
+
+    /**
+     * Returns the version number of this OpenCms system, for example <code>9.5.0</code>.<p>
      *
      * @return the version number of this OpenCms system
-     * 
+     *
      * @since 7.0.2
      */
     public String getVersionNumber() {
@@ -481,13 +667,13 @@ public class CmsSystemInfo {
         return m_versionNumber;
     }
 
-    /** 
-     * Returns the OpenCms web application name, e.g. "opencms" or "ROOT" (no leading or trailing "/").<p> 
-     * 
+    /**
+     * Returns the OpenCms web application name, e.g. "opencms" or "ROOT" (no leading or trailing "/").<p>
+     *
      * The web application name is stored for informational purposes only.
-     * If you want to construct an URI, use either {@link #getContextPath()} and 
+     * If you want to construct an URI, use either {@link #getContextPath()} and
      * {@link #getServletPath()}, or for links to the OpenCms VFS use {@link  #getOpenCmsContext()}.<p>
-     * 
+     *
      * @return the OpenCms web application name
      * @see #getContextPath()
      * @see #getServletPath()
@@ -500,7 +686,7 @@ public class CmsSystemInfo {
 
     /**
      * Returns the OpenCms web application folder in the servlet container.<p>
-     * 
+     *
      * @return the OpenCms web application folder in the servlet container
      */
     public String getWebApplicationRfsPath() {
@@ -508,7 +694,7 @@ public class CmsSystemInfo {
         return m_servletContainerSettings.getWebApplicationRfsPath();
     }
 
-    /** 
+    /**
      * Returns the OpenCms web application "WEB-INF" directory path.<p>
      *
      * @return the OpenCms web application "WEB-INF" directory path
@@ -519,8 +705,23 @@ public class CmsSystemInfo {
     }
 
     /**
-     * Returns if the VFS version history is enabled.<p> 
-     * 
+     * Returns the OpenCms workplace request context, e.g. "/opencms/workplace".<p>
+     *
+     * The OpenCms workplace context will always start with a "/" and never have a trailing "/".
+     * The OpenCms context is identical to <code>getContexPath() + WORKPLACE_PATH</code>.<p>
+     *
+     * @return the OpenCms request context, e.g. "/opencms/workplace"
+     * @see #getContextPath()
+     * @see #WORKPLACE_PATH
+     */
+    public String getWorkplaceContext() {
+
+        return getContextPath() + WORKPLACE_PATH;
+    }
+
+    /**
+     * Returns if the VFS version history is enabled.<p>
+     *
      * @return if the VFS version history is enabled
      */
     public boolean isHistoryEnabled() {
@@ -529,8 +730,18 @@ public class CmsSystemInfo {
     }
 
     /**
+     * Return true if detail contents are restricted to detail pages from the same site.<p>
+     *
+     * @return true if detail contents are restricted to detail pages from the same site
+     */
+    public boolean isRestrictDetailContents() {
+
+        return m_restrictDetailContents;
+    }
+
+    /**
      * Sets the project in which time stamps for the content notification are read.<p>
-     * 
+     *
      * @param notificationProject the project in which time stamps for the content notification are read
      */
     public void setNotificationProject(String notificationProject) {
@@ -540,7 +751,7 @@ public class CmsSystemInfo {
 
     /**
      * Sets the duration after which responsible resource owners will be notified about out-dated content (in days).<p>
-     * 
+     *
      * @param notificationTime the duration after which responsible resource owners will be notified about out-dated content
      */
     public void setNotificationTime(int notificationTime) {
@@ -550,12 +761,15 @@ public class CmsSystemInfo {
 
     /**
      * VFS version history settings are set here.<p>
-     * 
+     *
      * @param historyEnabled if true the history is enabled
      * @param historyVersions the maximum number of versions that are kept per VFS resource
      * @param historyVersionsAfterDeletion the maximum number of versions that are kept for deleted resources
      */
-    public void setVersionHistorySettings(boolean historyEnabled, int historyVersions, int historyVersionsAfterDeletion) {
+    public void setVersionHistorySettings(
+        boolean historyEnabled,
+        int historyVersions,
+        int historyVersionsAfterDeletion) {
 
         m_historyEnabled = historyEnabled;
         m_historyVersions = historyVersions;
@@ -566,9 +780,9 @@ public class CmsSystemInfo {
         }
     }
 
-    /** 
+    /**
      * Sets the OpenCms web application "WEB-INF" directory path (in the "real" file system).<p>
-     * 
+     *
      * @param settings container specific information needed for this system info
      */
     protected void init(CmsServletContainerSettings settings) {
@@ -577,8 +791,35 @@ public class CmsSystemInfo {
     }
 
     /**
+     * Overrides the configured Java EE version using the servlet container version.<p>
+     *
+     * @param major the servlet major version
+     * @param minor the servlet minor version
+     */
+    protected void initJavaEeVersion(int major, int minor) {
+
+        final BuildInfoItem item = m_buildInfo.get("javaee");
+        if (item != null) {
+            // Temporary correction of the configured build information from the running container.
+            final String version = switch (major + "." + minor) {
+                case "3.0" -> "6 (javax)";
+                case "3.1" -> "7 (javax)";
+                case "4.0" -> "8 (javax)";
+                case "5.0" -> "9 (jakarta)";
+                case "6.0" -> "10 (jakarta)";
+                case "6.1" -> "11 (jakarta)";
+                case "6.2" -> "12 (jakarta)";
+                default -> null;
+            };
+            if (version != null) {
+                item.m_value = version;
+            }
+        }
+    }
+
+    /**
      * Sets the default encoding, called after the configuration files have been read.<p>
-     *  
+     *
      * @param encoding the default encoding to set
      */
     protected void setDefaultEncoding(String encoding) {
@@ -587,6 +828,16 @@ public class CmsSystemInfo {
         if (CmsLog.INIT.isInfoEnabled()) {
             CmsLog.INIT.info(Messages.get().getBundle().key(Messages.LOG_SET_DEFAULT_ENCODING_1, m_defaultEncoding));
         }
+    }
+
+    /**
+     * Sets the device selector.<p>
+     *
+     * @param selector the device selector to set
+     */
+    protected void setDeviceSelector(I_CmsJspDeviceSelector selector) {
+
+        m_deviceSelector = selector;
     }
 
     /**
@@ -601,7 +852,7 @@ public class CmsSystemInfo {
 
     /**
      * Sets the settings for the internal OpenCms email service.<p>
-     * 
+     *
      * @param mailSettings the settings for the internal OpenCms email service to set
      */
     protected void setMailSettings(CmsMailSettings mailSettings) {
@@ -610,13 +861,23 @@ public class CmsSystemInfo {
     }
 
     /**
+     * Sets the value of the 'restrict detail contents' option.<p>
+     *
+     * @param restrictDetailContents the new value for the option
+     */
+    protected void setRestrictDetailContents(boolean restrictDetailContents) {
+
+        m_restrictDetailContents = restrictDetailContents;
+    }
+
+    /**
      * Sets the server name.<p>
-     * 
+     *
      * The server name is set in <code>opencms.properties</code>.
      * It is not related to any DNS name the server might also have.
      * The server name is useful e.g. in a cluster to distinguish different servers,
      * or if you compare log files from multiple servers.<p>
-     *  
+     *
      * @param serverName the server name to set
      */
     protected void setServerName(String serverName) {
@@ -628,25 +889,54 @@ public class CmsSystemInfo {
     }
 
     /**
-     * Initializes the version for this OpenCms, will be called by 
+     * Initializes the version for this OpenCms, will be called by
      * {@link OpenCmsServlet} or {@link CmsShell} upon system startup.<p>
      */
     private void initVersion() {
 
         // initialize version information with static defaults
         m_versionNumber = DEFAULT_VERSION_NUMBER;
-        // set OpenCms version identifier with default values
+        m_versionId = DEFAULT_VERSION_ID;
         m_version = "OpenCms/" + m_versionNumber;
+        m_buildInfo = Collections.emptyMap();
         // read the version-informations from properties
         Properties props = new Properties();
         try {
             props.load(this.getClass().getClassLoader().getResourceAsStream("org/opencms/main/version.properties"));
         } catch (Throwable t) {
-            // ignore this exception - no properties found
+            // no properties found - we just use the defaults
             return;
         }
+        // initialize OpenCms version information from the property values
         m_versionNumber = props.getProperty("version.number", DEFAULT_VERSION_NUMBER);
-        // set OpenCms version identifier with property values
+        m_versionId = props.getProperty("version.id", DEFAULT_VERSION_ID);
         m_version = "OpenCms/" + m_versionNumber;
+        m_buildInfo = new TreeMap<String, BuildInfoItem>();
+
+        // iterate the properties and generate the build information from the entries
+        for (String key : props.stringPropertyNames()) {
+            if (!"version.number".equals(key) && !"version.id".equals(key) && !key.startsWith("nicename")) {
+                String value = props.getProperty(key);
+                String nicename = props.getProperty("nicename." + key, key);
+                if ("build.date".equals(key) && CmsStringUtil.isEmptyOrWhitespaceOnly(value)) {
+                    try (JarFile jarFile = new JarFile(
+                        new File(getClass().getProtectionDomain().getCodeSource().getLocation().toURI()))) {
+                        m_buildInfo.put(
+                            key,
+                            new BuildInfoItem(
+                                jarFile.getManifest().getMainAttributes().getValue("Build-Time") + " (manual build)",
+                                nicename,
+                                key));
+                    } catch (Exception e) {
+                        // when running test cases there is no JAR file
+                        m_buildInfo.put(key, new BuildInfoItem("(not set, manual build)", nicename, key));
+                    }
+                } else {
+                    m_buildInfo.put(key, new BuildInfoItem(value, nicename, key));
+                }
+            }
+        }
+        // make the map unmodifiable
+        m_buildInfo = Collections.unmodifiableMap(m_buildInfo);
     }
 }

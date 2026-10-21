@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -15,11 +15,11 @@
  * Lesser General Public License for more details.
  *
  * For further information about Alkacon Software, please see the
- * company website: http://www.alkacon.com
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -37,10 +37,10 @@ import java.util.Set;
 
 /**
  * Returns the constant Object the map was initialized with for all {@link #get(Object)} calls,
- * regardless of what the actual key is.<p> 
- * 
+ * regardless of what the actual key is.<p>
+ *
  * @since 7.0.2
- * 
+ *
  * @param <K> the type of keys maintained by this map
  * @param <V> the type of mapped values
  */
@@ -56,15 +56,18 @@ public class CmsConstantMap<K, V> implements Map<K, V> {
         Boolean.TRUE);
 
     /** Constant Map that always returns an empty list. */
-    public static final Map<String, List<CmsJspContentAccessValueWrapper>> CONSTANT_EMPTY_LIST_MAP = new CmsConstantMap(
+    public static final Map<String, List<CmsJspContentAccessValueWrapper>> CONSTANT_EMPTY_LIST_MAP = new CmsConstantMap<String, List<CmsJspContentAccessValueWrapper>>(
         Collections.EMPTY_LIST);
+
+    /** Constant Map that always returns an empty list. */
+    public static final Map<String, String> CONSTANT_EMPTY_STRING_MAP = new CmsConstantMap<String, String>("".intern());
 
     /** The constant Object this map always returns. */
     private V m_constant;
 
     /**
-     * Creates a new constant Map.<p> 
-     * 
+     * Creates a new constant Map.<p>
+     *
      * @param constant the constant to return for all {@link #get(Object)} calls.<p>
      */
     public CmsConstantMap(V constant) {
@@ -115,7 +118,7 @@ public class CmsConstantMap<K, V> implements Map<K, V> {
             return true;
         }
         if (obj instanceof CmsConstantMap) {
-            return m_constant.equals(((CmsConstantMap)obj).m_constant);
+            return m_constant.equals(((CmsConstantMap<?, ?>)obj).m_constant);
         }
         return false;
     }

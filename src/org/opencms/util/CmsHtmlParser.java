@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -14,19 +14,18 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * Lesser General Public License for more details.
  *
- * For further information about Alkacon Software GmbH, please see the
- * company website: http://www.alkacon.com
+ * For further information about Alkacon Software GmbH & Co. KG, please see the
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
 package org.opencms.util;
-
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -47,17 +46,14 @@ import org.htmlparser.visitors.NodeVisitor;
  * Base utility class for OpenCms <code>{@link org.htmlparser.visitors.NodeVisitor}</code>
  * implementations, which provides some often used utility functions.
  * <p>
- * 
+ *
  * This base implementation is only a "pass through" class, that is the content is parsed, but the
  * generated result is exactly identical to the input.
  * <p>
- * 
+ *
  * @since 6.2.0
  */
 public class CmsHtmlParser extends NodeVisitor implements I_CmsHtmlNodeVisitor {
-
-    /** List of upper case tag name strings of tags that should not be auto-corrected if closing divs are missing. */
-    protected List<String> m_noAutoCloseTags;
 
     /** The array of supported tag names. */
     // important: don't change the order of these tags in the source, subclasses may expect the tags
@@ -88,6 +84,9 @@ public class CmsHtmlParser extends NodeVisitor implements I_CmsHtmlNodeVisitor {
     /** The list of supported tag names. */
     protected static final List<String> TAG_LIST = Arrays.asList(TAG_ARRAY);
 
+    /** List of upper case tag name strings of tags that should not be auto-corrected if closing divs are missing. */
+    protected List<String> m_noAutoCloseTags;
+
     /** Indicates if "echo" mode is on, that is all content is written to the result by default. */
     protected boolean m_echo;
 
@@ -109,7 +108,7 @@ public class CmsHtmlParser extends NodeVisitor implements I_CmsHtmlNodeVisitor {
     /**
      * Creates a new instance of the html converter.
      * <p>
-     * 
+     *
      * @param echo indicates if "echo" mode is on, that is all content is written to the result
      */
     public CmsHtmlParser(boolean echo) {
@@ -120,34 +119,21 @@ public class CmsHtmlParser extends NodeVisitor implements I_CmsHtmlNodeVisitor {
     }
 
     /**
-     * Internally degrades Composite tags that do have children in the DOM tree 
-     * to simple single tags. This allows to avoid auto correction of unclosed HTML tags.<p>
-     * 
-     * @return A node factory that will not autocorrect open tags specified via <code>{@link #setNoAutoCloseTags(List)}</code>
-     */
-    protected PrototypicalNodeFactory configureNoAutoCorrectionTags() {
-
-        PrototypicalNodeFactory factory = new PrototypicalNodeFactory();
-
-        String tagName;
-        Iterator<String> it = m_noAutoCloseTags.iterator();
-        CmsNoAutoCloseTag noAutoCloseTag;
-        while (it.hasNext()) {
-            tagName = it.next();
-            noAutoCloseTag = new CmsNoAutoCloseTag(new String[] {tagName});
-            // TODO: This might break in case registering / unregistering  will change from name based to tag-type based approach:
-            factory.unregisterTag(noAutoCloseTag);
-            factory.registerTag(noAutoCloseTag);
-        }
-        return factory;
-    }
-
-    /**
      * @see org.opencms.util.I_CmsHtmlNodeVisitor#getConfiguration()
      */
     public String getConfiguration() {
 
         return m_configuration;
+    }
+
+    /**
+     * Returns a list of upper case tag names for which parsing / visiting will not correct missing closing tags.<p>
+     *
+     * @return a List of upper case tag names for which parsing / visiting will not correct missing closing tags
+     */
+    public List<String> getNoAutoCloseTags() {
+
+        return m_noAutoCloseTags;
     }
 
     /**
@@ -161,9 +147,9 @@ public class CmsHtmlParser extends NodeVisitor implements I_CmsHtmlNodeVisitor {
     /**
      * Returns the HTML for the given tag itself (not the tag content).
      * <p>
-     * 
+     *
      * @param tag the tag to create the HTML for
-     * 
+     *
      * @return the HTML for the given tag
      */
     public String getTagHtml(Tag tag) {
@@ -189,10 +175,10 @@ public class CmsHtmlParser extends NodeVisitor implements I_CmsHtmlNodeVisitor {
         lexer.setPage(page);
         parser.setLexer(lexer);
 
-        if (m_noAutoCloseTags != null && m_noAutoCloseTags.size() > 0) {
-            // Degrade Composite tags that do have children in the DOM tree 
-            // to simple single tags: This allows to finish this tag with opened HTML tags without the effect 
-            // that html parser will generate the closing tags. 
+        if ((m_noAutoCloseTags != null) && (m_noAutoCloseTags.size() > 0)) {
+            // Degrade Composite tags that do have children in the DOM tree
+            // to simple single tags: This allows to finish this tag with opened HTML tags without the effect
+            // that html parser will generate the closing tags.
             PrototypicalNodeFactory factory = configureNoAutoCorrectionTags();
             lexer.setNodeFactory(factory);
         }
@@ -204,7 +190,7 @@ public class CmsHtmlParser extends NodeVisitor implements I_CmsHtmlNodeVisitor {
     }
 
     /**
-     * 
+     *
      * @see org.opencms.util.I_CmsHtmlNodeVisitor#setConfiguration(java.lang.String)
      */
     public void setConfiguration(String configuration) {
@@ -213,6 +199,24 @@ public class CmsHtmlParser extends NodeVisitor implements I_CmsHtmlNodeVisitor {
             m_configuration = configuration;
         }
 
+    }
+
+    /**
+     * Sets a list of upper case tag names for which parsing / visiting should not correct missing closing tags.<p>
+     *
+     * @param noAutoCloseTagList a list of upper case tag names for which parsing / visiting
+     *      should not correct missing closing tags to set.
+     */
+    public void setNoAutoCloseTags(List<String> noAutoCloseTagList) {
+
+        // ensuring upper case
+        m_noAutoCloseTags.clear();
+        if (noAutoCloseTagList != null) {
+            Iterator<String> it = noAutoCloseTagList.iterator();
+            while (it.hasNext()) {
+                m_noAutoCloseTags.add((it.next()).toUpperCase());
+            }
+        }
     }
 
     /**
@@ -261,9 +265,9 @@ public class CmsHtmlParser extends NodeVisitor implements I_CmsHtmlNodeVisitor {
 
     /**
      * Collapse HTML whitespace in the given String.<p>
-     * 
+     *
      * @param string the string to collapse
-     * 
+     *
      * @return the input String with all HTML whitespace collapsed
      */
     protected String collapse(String string) {
@@ -298,30 +302,25 @@ public class CmsHtmlParser extends NodeVisitor implements I_CmsHtmlNodeVisitor {
     }
 
     /**
-     * Returns a list of upper case tag names for which parsing / visiting will not correct missing closing tags.<p>
-     * 
-     * @return a List of upper case tag names for which parsing / visiting will not correct missing closing tags
+     * Internally degrades Composite tags that do have children in the DOM tree
+     * to simple single tags. This allows to avoid auto correction of unclosed HTML tags.<p>
+     *
+     * @return A node factory that will not autocorrect open tags specified via <code>{@link #setNoAutoCloseTags(List)}</code>
      */
-    public List<String> getNoAutoCloseTags() {
+    protected PrototypicalNodeFactory configureNoAutoCorrectionTags() {
 
-        return m_noAutoCloseTags;
-    }
+        PrototypicalNodeFactory factory = new PrototypicalNodeFactory();
 
-    /**
-     * Sets a list of upper case tag names for which parsing / visiting should not correct missing closing tags.<p> 
-     * 
-     * @param noAutoCloseTagList a list of upper case tag names for which parsing / visiting 
-     *      should not correct missing closing tags to set.
-     */
-    public void setNoAutoCloseTags(List<String> noAutoCloseTagList) {
-
-        // ensuring upper case
-        m_noAutoCloseTags.clear();
-        if (noAutoCloseTagList != null) {
-            Iterator<String> it = noAutoCloseTagList.iterator();
-            while (it.hasNext()) {
-                m_noAutoCloseTags.add((it.next()).toUpperCase());
-            }
+        String tagName;
+        Iterator<String> it = m_noAutoCloseTags.iterator();
+        CmsNoAutoCloseTag noAutoCloseTag;
+        while (it.hasNext()) {
+            tagName = it.next();
+            noAutoCloseTag = new CmsNoAutoCloseTag(new String[] {tagName});
+            // TODO: This might break in case registering / unregistering  will change from name based to tag-type based approach:
+            factory.unregisterTag(noAutoCloseTag);
+            factory.registerTag(noAutoCloseTag);
         }
+        return factory;
     }
 }

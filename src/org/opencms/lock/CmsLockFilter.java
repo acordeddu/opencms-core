@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -14,12 +14,12 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * Lesser General Public License for more details.
  *
- * For further information about Alkacon Software GmbH, please see the
- * company website: http://www.alkacon.com
+ * For further information about Alkacon Software GmbH & Co. KG, please see the
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -28,18 +28,24 @@
 package org.opencms.lock;
 
 import org.opencms.file.CmsUser;
+import org.opencms.main.CmsLog;
 import org.opencms.util.CmsUUID;
 
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
+import org.apache.commons.logging.Log;
+
 /**
  * A filter to retrieve the locks.<p>
- * 
- * @since 6.5.4 
+ *
+ * @since 6.5.4
  */
 public final class CmsLockFilter implements Cloneable {
+
+    /** Logger instance for this class. */
+    private static final Log LOG = CmsLog.getLog(CmsLockFilter.class);
 
     /** To filter all locks. */
     public static final CmsLockFilter FILTER_ALL = new CmsLockFilter(true).filterIncludeChildren();
@@ -79,7 +85,7 @@ public final class CmsLockFilter implements Cloneable {
 
     /**
      * Private constructor.<p>
-     * 
+     *
      * @param inherited if the this lock filter should checks inherited locks or not
      */
     private CmsLockFilter(boolean inherited) {
@@ -107,16 +113,26 @@ public final class CmsLockFilter implements Cloneable {
     }
 
     /**
-     * Returns an extended filter with the given user restriction.<p>
+     * Returns an extended filter that will extend the result to the given path and all its children.<p>
      *
-     * @param userId the user id to filter
-     *  
-     * @return an extended filter with the given user restriction
+     * @return an extended filter to search the subresources of the given path
      */
-    public CmsLockFilter filterNotOwnedByUserId(CmsUUID userId) {
+    public CmsLockFilter filterIncludeChildren() {
 
-        CmsLockFilter filter = (CmsLockFilter)this.clone();
-        filter.m_notOwnedByUserId = userId;
+        CmsLockFilter filter = (CmsLockFilter)clone();
+        filter.m_includeChildren = true;
+        return filter;
+    }
+
+    /**
+     * Returns an extended filter that will extend the result to the given path and all its parents.<p>
+     *
+     * @return an extended filter to search the subresources of the given path
+     */
+    public CmsLockFilter filterIncludeParents() {
+
+        CmsLockFilter filter = (CmsLockFilter)clone();
+        filter.m_includeParents = true;
         return filter;
     }
 
@@ -124,12 +140,26 @@ public final class CmsLockFilter implements Cloneable {
      * Returns an extended filter with the given user restriction.<p>
      *
      * @param user the user to filter
-     *  
+     *
+     * @return an extended filter with the given user restriction
+     */
+    public CmsLockFilter filterLockableByUser(CmsUser user) {
+
+        CmsLockFilter filter = (CmsLockFilter)clone();
+        filter.m_lockableByUser = user;
+        return filter;
+    }
+
+    /**
+     * Returns an extended filter with the given user restriction.<p>
+     *
+     * @param user the user to filter
+     *
      * @return an extended filter with the given user restriction
      */
     public CmsLockFilter filterNotLockableByUser(CmsUser user) {
 
-        CmsLockFilter filter = (CmsLockFilter)this.clone();
+        CmsLockFilter filter = (CmsLockFilter)clone();
         filter.m_notLockableByUser = user;
         return filter;
     }
@@ -137,26 +167,14 @@ public final class CmsLockFilter implements Cloneable {
     /**
      * Returns an extended filter with the given user restriction.<p>
      *
-     * @param user the user to filter
-     *  
+     * @param userId the user id to filter
+     *
      * @return an extended filter with the given user restriction
      */
-    public CmsLockFilter filterLockableByUser(CmsUser user) {
+    public CmsLockFilter filterNotOwnedByUserId(CmsUUID userId) {
 
-        CmsLockFilter filter = (CmsLockFilter)this.clone();
-        filter.m_lockableByUser = user;
-        return filter;
-    }
-
-    /**
-     * Returns an extended filter that will extend the result to the given path and all its children.<p>
-     * 
-     * @return an extended filter to search the subresources of the given path
-     */
-    public CmsLockFilter filterIncludeChildren() {
-
-        CmsLockFilter filter = (CmsLockFilter)this.clone();
-        filter.m_includeChildren = true;
+        CmsLockFilter filter = (CmsLockFilter)clone();
+        filter.m_notOwnedByUserId = userId;
         return filter;
     }
 
@@ -164,86 +182,54 @@ public final class CmsLockFilter implements Cloneable {
      * Returns an extended filter with the given user restriction.<p>
      *
      * @param userId the user id to filter
-     *  
+     *
      * @return an extended filter with the given user restriction
      */
     public CmsLockFilter filterOwnedByUserId(CmsUUID userId) {
 
-        CmsLockFilter filter = (CmsLockFilter)this.clone();
+        CmsLockFilter filter = (CmsLockFilter)clone();
         filter.m_ownedByUserId = userId;
         return filter;
     }
 
     /**
-     * Returns an extended filter that will extend the result to the given path and all its parents.<p>
-     * 
-     * @return an extended filter to search the subresources of the given path
-     */
-    public CmsLockFilter filterIncludeParents() {
-
-        CmsLockFilter filter = (CmsLockFilter)this.clone();
-        filter.m_includeParents = true;
-        return filter;
-    }
-
-    /**
      * Returns an extended filter with the given project restriction.<p>
-     * 
+     *
      * @param projectId the project to filter the locks with
-     *  
+     *
      * @return an extended filter with the given project restriction
      */
     public CmsLockFilter filterProject(CmsUUID projectId) {
 
-        CmsLockFilter filter = (CmsLockFilter)this.clone();
+        CmsLockFilter filter = (CmsLockFilter)clone();
         filter.m_projectId = projectId;
         return filter;
     }
 
     /**
-     * Returns an extended filter that also matches shared exclusive locks (siblings).<p> 
-     * 
+     * Returns an extended filter that also matches shared exclusive locks (siblings).<p>
+     *
      * @return an extended filter that also matches shared exclusive locks
      */
     public CmsLockFilter filterSharedExclusive() {
 
-        CmsLockFilter filter = (CmsLockFilter)this.clone();
+        CmsLockFilter filter = (CmsLockFilter)clone();
         filter.m_sharedExclusive = true;
         return filter;
     }
 
     /**
      * Returns an extended filter with the given type restriction.<p>
-     * 
+     *
      * @param type the lock type to filter
-     *  
+     *
      * @return an extended filter with the given type restriction
      */
     public CmsLockFilter filterType(CmsLockType type) {
 
-        CmsLockFilter filter = (CmsLockFilter)this.clone();
+        CmsLockFilter filter = (CmsLockFilter)clone();
         filter.m_types.add(type);
         return filter;
-    }
-
-    /**
-     * Returns the user that has to own the locks.<p>
-     *
-     * @return the user that has to own the locks
-     */
-    public CmsUUID getOwnedByUserId() {
-
-        return m_ownedByUserId;
-    }
-
-    /**
-     * Returns the user that has not to own the locks.<p>
-     *
-     * @return the user that has not to own the locks
-     */
-    public CmsUUID getNotOwnedByUserId() {
-
-        return m_notOwnedByUserId;
     }
 
     /**
@@ -264,6 +250,26 @@ public final class CmsLockFilter implements Cloneable {
     public CmsUser getNotLockableByUserId() {
 
         return m_notLockableByUser;
+    }
+
+    /**
+     * Returns the user that has not to own the locks.<p>
+     *
+     * @return the user that has not to own the locks
+     */
+    public CmsUUID getNotOwnedByUserId() {
+
+        return m_notOwnedByUserId;
+    }
+
+    /**
+     * Returns the user that has to own the locks.<p>
+     *
+     * @return the user that has to own the locks
+     */
+    public CmsUUID getOwnedByUserId() {
+
+        return m_ownedByUserId;
     }
 
     /**
@@ -288,7 +294,7 @@ public final class CmsLockFilter implements Cloneable {
 
     /**
      * Returns the include children flag.<p>
-     * 
+     *
      * @return if set the filter extends the result to the given path and all its children
      */
     public boolean isIncludeChildren() {
@@ -298,7 +304,7 @@ public final class CmsLockFilter implements Cloneable {
 
     /**
      * Returns the include parents flag.<p>
-     * 
+     *
      * @return if set the filter extends the result to the given path and all its parents
      */
     public boolean isIncludeParent() {
@@ -318,13 +324,48 @@ public final class CmsLockFilter implements Cloneable {
 
     /**
      * Matches the given lock against this filter and the given path.<p>
-     * 
+     *
      * @param rootPath the path to match the lock against
      * @param lock the lock to match
-     * 
+     *
      * @return <code>true</code> if the given lock matches
      */
     public boolean match(String rootPath, CmsLock lock) {
+
+        return match(rootPath, lock, false);
+    }
+
+    /**
+     * @see java.lang.Object#toString()
+     */
+    @Override
+    public String toString() {
+
+        StringBuffer str = new StringBuffer(128);
+        str.append("[");
+        str.append("children").append("=").append(m_includeChildren).append(", ");
+        str.append("parents").append("=").append(m_includeParents).append(", ");
+        str.append("types").append("=").append(m_types).append(", ");
+        str.append("includedUser").append("=").append(m_ownedByUserId).append(", ");
+        str.append("excludedUser").append("=").append(m_notOwnedByUserId).append(", ");
+        str.append("project").append("=").append(m_projectId).append(", ");
+        str.append("lockableBy").append("=").append(m_lockableByUser).append(", ");
+        str.append("notLockableBy").append("=").append(m_notLockableByUser).append(", ");
+        str.append("includeShared").append("=").append(m_sharedExclusive);
+        str.append("]");
+        return str.toString();
+    }
+
+    /**
+     * Matches the given lock against this filter and the given path.<p>
+     *
+     * @param rootPath the path to match the lock against
+     * @param lock the lock to match
+     * @param isRelatedCheck if we are currently in the recursive call for the related lock
+     *
+     * @return <code>true</code> if the given lock matches
+     */
+    protected boolean match(String rootPath, CmsLock lock, boolean isRelatedCheck) {
 
         boolean match = false;
         if (m_includeChildren) {
@@ -358,29 +399,12 @@ public final class CmsLockFilter implements Cloneable {
         }
         // check the related lock if available
         if (!match && !lock.getRelatedLock().isNullLock()) {
-            match = match(rootPath, lock.getRelatedLock());
+            if (!isRelatedCheck) {
+                match = match(rootPath, lock.getRelatedLock(), true);
+            } else {
+                LOG.warn("Invalid lock state for locks (" + lock + ", " + lock.getRelatedLock() + ")");
+            }
         }
         return match;
-    }
-
-    /**
-     * @see java.lang.Object#toString()
-     */
-    @Override
-    public String toString() {
-
-        StringBuffer str = new StringBuffer(128);
-        str.append("[");
-        str.append("children").append("=").append(m_includeChildren).append(", ");
-        str.append("parents").append("=").append(m_includeParents).append(", ");
-        str.append("types").append("=").append(m_types).append(", ");
-        str.append("includedUser").append("=").append(m_ownedByUserId).append(", ");
-        str.append("excludedUser").append("=").append(m_notOwnedByUserId).append(", ");
-        str.append("project").append("=").append(m_projectId).append(", ");
-        str.append("lockableBy").append("=").append(m_lockableByUser).append(", ");
-        str.append("notLockableBy").append("=").append(m_notLockableByUser).append(", ");
-        str.append("includeShared").append("=").append(m_sharedExclusive);
-        str.append("]");
-        return str.toString();
     }
 }

@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -15,11 +15,11 @@
  * Lesser General Public License for more details.
  *
  * For further information about Alkacon Software, please see the
- * company website: http://www.alkacon.com
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -29,21 +29,26 @@ package org.opencms.gwt.client;
 
 import org.opencms.gwt.client.rpc.CmsLog;
 import org.opencms.gwt.client.ui.CmsNotification;
-import org.opencms.gwt.client.ui.css.I_CmsImageBundle;
+import org.opencms.gwt.client.ui.css.I_CmsCellTableResources;
 import org.opencms.gwt.client.ui.css.I_CmsInputLayoutBundle;
 import org.opencms.gwt.client.ui.css.I_CmsLayoutBundle;
 import org.opencms.gwt.client.ui.css.I_CmsToolbarButtonLayoutBundle;
 import org.opencms.gwt.client.util.CmsClientStringUtil;
 
+import org.timepedia.exporter.client.ExporterUtil;
+
 import com.google.gwt.core.client.EntryPoint;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.shared.UmbrellaException;
 
+import elemental2.dom.DomGlobal;
+import jsinterop.base.JsPropertyMap;
+
 /**
  * Handles exception handling and more for entry points.<p>
- * 
+ *
  * @since 8.0.0
- * 
+ *
  * @see org.opencms.gwt.CmsLogService
  * @see org.opencms.gwt.shared.rpc.I_CmsLogService
  * @see org.opencms.gwt.shared.rpc.I_CmsLogServiceAsync
@@ -54,7 +59,7 @@ public abstract class A_CmsEntryPoint implements EntryPoint {
     private static boolean initializedClasses;
 
     /**
-     * Default constructor.<p> 
+     * Default constructor.<p>
      */
     protected A_CmsEntryPoint() {
 
@@ -67,7 +72,9 @@ public abstract class A_CmsEntryPoint implements EntryPoint {
     public void onModuleLoad() {
 
         enableRemoteExceptionHandler();
+        CmsMediaQueryRuleManager.initialize();
         I_CmsLayoutBundle bundle = I_CmsLayoutBundle.INSTANCE;
+        bundle.toolbarCss().ensureInjected();
         bundle.buttonCss().ensureInjected();
         bundle.contentEditorCss().ensureInjected();
         bundle.contextmenuCss().ensureInjected();
@@ -77,15 +84,12 @@ public abstract class A_CmsEntryPoint implements EntryPoint {
         bundle.dragdropCss().ensureInjected();
         bundle.floatDecoratedPanelCss().ensureInjected();
         bundle.generalCss().ensureInjected();
-        bundle.headerCss().ensureInjected();
         bundle.highlightCss().ensureInjected();
         bundle.linkWarningCss().ensureInjected();
         bundle.listItemWidgetCss().ensureInjected();
         bundle.listTreeCss().ensureInjected();
         bundle.stateCss().ensureInjected();
         bundle.tabbedPanelCss().ensureInjected();
-        bundle.toolbarCss().ensureInjected();
-        bundle.listItemCss().ensureInjected();
         bundle.availabilityCss().ensureInjected();
         bundle.fieldsetCss().ensureInjected();
         bundle.resourceStateCss().ensureInjected();
@@ -95,14 +99,17 @@ public abstract class A_CmsEntryPoint implements EntryPoint {
         bundle.menuButtonCss().ensureInjected();
         bundle.progressBarCss().ensureInjected();
         bundle.propertiesCss().ensureInjected();
+        bundle.globalWidgetCss().ensureInjected();
+        bundle.categoryDialogCss().ensureInjected();
+        bundle.colorSelectorCss().ensureInjected();
+        bundle.filterSelectCss().ensureInjected();
+        ExporterUtil.exportAll();
 
         I_CmsInputLayoutBundle.INSTANCE.inputCss().ensureInjected();
 
-        I_CmsImageBundle.INSTANCE.style().ensureInjected();
-        I_CmsImageBundle.INSTANCE.contextMenuIcons().ensureInjected();
-
         I_CmsToolbarButtonLayoutBundle.INSTANCE.toolbarButtonCss().ensureInjected();
-
+        I_CmsCellTableResources.INSTANCE.cellTableStyle().ensureInjected();
+        ((JsPropertyMap<Object>)DomGlobal.window).set("cmsJsFunctions", CmsJsFunctions.INSTANCE);
         initClasses();
     }
 
@@ -111,8 +118,8 @@ public abstract class A_CmsEntryPoint implements EntryPoint {
      */
     protected void enableRemoteExceptionHandler() {
 
-        if (!GWT.isScript()) {
-            // In hosted mode, uncaught exceptions are easier to debug 
+        if (GWT.isScript()) {
+            // In hosted mode, uncaught exceptions are easier to debug
             return;
         }
 
@@ -135,7 +142,7 @@ public abstract class A_CmsEntryPoint implements EntryPoint {
 
     /**
      * Helper method for initializing the classes implementing {@link I_CmsHasInit}.<p>
-     * 
+     *
      * Calling this method more than once will have no effect.<p>
      */
     private void initClasses() {

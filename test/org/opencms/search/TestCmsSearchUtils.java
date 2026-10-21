@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -14,12 +14,12 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * Lesser General Public License for more details.
  *
- * For further information about Alkacon Software GmbH, please see the
- * company website: http://www.alkacon.com
+ * For further information about Alkacon Software GmbH & Co. KG, please see the
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -27,83 +27,26 @@
 
 package org.opencms.search;
 
+import org.opencms.ade.galleries.shared.CmsGallerySearchScope;
 import org.opencms.search.fields.CmsSearchFieldConfiguration;
+import org.opencms.test.OpenCmsTestRunner;
 
+import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 
-import junit.framework.TestCase;
-
 import org.apache.lucene.document.DateTools;
+
+import org.junit.jupiter.api.Test;
 
 /**
  * Tests some search utilities that don't require an OpenCms context.<p>
  */
-public class TestCmsSearchUtils extends TestCase {
-
-    /**
-     * Default JUnit constructor.<p>
-     * 
-     * @param arg0 JUnit parameters
-     */
-    public TestCmsSearchUtils(String arg0) {
-
-        super(arg0);
-    }
-
-    /**
-     * Test for date range generation.<p>
-     * 
-     * @throws Exception in case the test fails
-     */
-    public void testDateRangeGeneration() throws Exception {
-
-        long startDate = DateTools.stringToTime("20060101");
-        long endDate = DateTools.stringToTime("20081231");
-        List<String> range = CmsSearchIndex.getDateRangeSpan(startDate, endDate);
-        printStringList(range);
-        assertEquals("Date range result list does not have required size", 85, range.size());
-
-        startDate = DateTools.stringToTime("20060101");
-        endDate = DateTools.stringToTime("20071231");
-        range = CmsSearchIndex.getDateRangeSpan(startDate, endDate);
-        printStringList(range);
-        assertEquals("Date range result list does not have required size", 84, range.size());
-
-        startDate = DateTools.stringToTime("20060101");
-        endDate = DateTools.stringToTime("20061231");
-        range = CmsSearchIndex.getDateRangeSpan(startDate, endDate);
-        printStringList(range);
-        assertEquals("Date range result list does not have required size", 72, range.size());
-
-        startDate = DateTools.stringToTime("20060101");
-        endDate = DateTools.stringToTime("20060131");
-        range = CmsSearchIndex.getDateRangeSpan(startDate, endDate);
-        printStringList(range);
-        assertEquals("Date range result list does not have required size", 31, range.size());
-
-        startDate = DateTools.stringToTime("20060131");
-        endDate = DateTools.stringToTime("20060201");
-        range = CmsSearchIndex.getDateRangeSpan(startDate, endDate);
-        printStringList(range);
-        assertEquals("Date range result list does not have required size", 2, range.size());
-
-        startDate = DateTools.stringToTime("20060201");
-        endDate = DateTools.stringToTime("20060301");
-        range = CmsSearchIndex.getDateRangeSpan(startDate, endDate);
-        printStringList(range);
-        assertEquals("Date range result list does not have required size", 29, range.size());
-
-        startDate = DateTools.stringToTime("20060201");
-        endDate = DateTools.stringToTime("20060201");
-        range = CmsSearchIndex.getDateRangeSpan(startDate, endDate);
-        printStringList(range);
-        assertEquals("Date range result list does not have required size", 1, range.size());
-    }
+public class TestCmsSearchUtils extends OpenCmsTestRunner {
 
     /**
      * Prints a list of String to System.out.<p>
-     * 
+     *
      * @param strings the String to print
      */
     protected static void printStringList(List<String> strings) {
@@ -117,10 +60,62 @@ public class TestCmsSearchUtils extends TestCase {
     }
 
     /**
+     * Test for date range generation.<p>
+     *
+     * @throws Exception in case the test fails
+     */
+    @Test
+    public void testDateRangeGeneration() throws Exception {
+
+        long startDate = DateTools.stringToTime("20060101");
+        long endDate = DateTools.stringToTime("20081231");
+        List<String> range = CmsSearchIndex.getDateRangeSpan(startDate, endDate);
+        printStringList(range);
+        assertEquals(85, range.size(), "Date range result list does not have required size");
+
+        startDate = DateTools.stringToTime("20060101");
+        endDate = DateTools.stringToTime("20071231");
+        range = CmsSearchIndex.getDateRangeSpan(startDate, endDate);
+        printStringList(range);
+        assertEquals(84, range.size(), "Date range result list does not have required size");
+
+        startDate = DateTools.stringToTime("20060101");
+        endDate = DateTools.stringToTime("20061231");
+        range = CmsSearchIndex.getDateRangeSpan(startDate, endDate);
+        printStringList(range);
+        assertEquals(72, range.size(), "Date range result list does not have required size");
+
+        startDate = DateTools.stringToTime("20060101");
+        endDate = DateTools.stringToTime("20060131");
+        range = CmsSearchIndex.getDateRangeSpan(startDate, endDate);
+        printStringList(range);
+        assertEquals(31, range.size(), "Date range result list does not have required size");
+
+        startDate = DateTools.stringToTime("20060131");
+        endDate = DateTools.stringToTime("20060201");
+        range = CmsSearchIndex.getDateRangeSpan(startDate, endDate);
+        printStringList(range);
+        assertEquals(2, range.size(), "Date range result list does not have required size");
+
+        startDate = DateTools.stringToTime("20060201");
+        endDate = DateTools.stringToTime("20060301");
+        range = CmsSearchIndex.getDateRangeSpan(startDate, endDate);
+        printStringList(range);
+        assertEquals(29, range.size(), "Date range result list does not have required size");
+
+        startDate = DateTools.stringToTime("20060201");
+        endDate = DateTools.stringToTime("20060201");
+        range = CmsSearchIndex.getDateRangeSpan(startDate, endDate);
+        printStringList(range);
+        assertEquals(1, range.size(), "Date range result list does not have required size");
+    }
+
+    /**
      * Test parent folder path term splitting.<p>
      *
      * @throws Exception if the test fails
      */
+    @Test
     public void testParentFolderTokenizer() throws Exception {
 
         assertEquals("/", CmsSearchFieldConfiguration.getParentFolderTokens(null));
@@ -130,5 +125,33 @@ public class TestCmsSearchUtils extends TestCase {
         assertEquals("/", CmsSearchFieldConfiguration.getParentFolderTokens("/sites"));
         assertEquals("/ /sites/ /sites/default/", CmsSearchFieldConfiguration.getParentFolderTokens("/sites/default/"));
         assertEquals("/ /sites/", CmsSearchFieldConfiguration.getParentFolderTokens("/sites/default"));
+    }
+
+    /**
+     * Test that the search roots computed for a scope carry the trailing slash the
+     * <code>parent-folders</code> index field requires.<p>
+     *
+     * Only the scopes that need no OpenCms context are checked here; the shared-folder scopes
+     * read the configured shared folder from the site manager.<p>
+     *
+     * @throws Exception if the test fails
+     */
+    @Test
+    public void testSearchRootsForScopeAreFolderPaths() throws Exception {
+
+        assertEquals(
+            Arrays.asList("/sites/default/"),
+            CmsSearchUtil.getSearchRootsForScope(CmsGallerySearchScope.site, "/sites/default", null));
+        assertEquals(
+            Arrays.asList("/sites/default/"),
+            CmsSearchUtil.getSearchRootsForScope(CmsGallerySearchScope.site, "/sites/default/", null));
+        assertEquals(
+            Arrays.asList("/sites/default/news/"),
+            CmsSearchUtil.getSearchRootsForScope(CmsGallerySearchScope.subSite, "/sites/default", "/news"));
+        // the root site has an empty site root, which addresses the whole VFS
+        assertEquals(Arrays.asList("/"), CmsSearchUtil.getSearchRootsForScope(CmsGallerySearchScope.site, "", null));
+        assertEquals(
+            Arrays.asList("/"),
+            CmsSearchUtil.getSearchRootsForScope(CmsGallerySearchScope.everything, "/sites/default", null));
     }
 }

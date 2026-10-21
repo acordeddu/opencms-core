@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -15,11 +15,11 @@
  * Lesser General Public License for more details.
  *
  * For further information about Alkacon Software, please see the
- * company website: http://www.alkacon.com
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -31,8 +31,8 @@ import java.util.ArrayList;
 
 /**
  * The search result list for the gallery search index.<p>
- * 
- * @since 8.0.0 
+ *
+ * @since 8.0.0
  */
 public class CmsGallerySearchResultList extends ArrayList<CmsGallerySearchResult> {
 
@@ -58,7 +58,7 @@ public class CmsGallerySearchResultList extends ArrayList<CmsGallerySearchResult
 
     /**
      * Creates a new result list with the specified initial capacity.<p>
-     * 
+     *
      * @param initialCapacity the initial capacity
      */
     public CmsGallerySearchResultList(int initialCapacity) {
@@ -68,8 +68,8 @@ public class CmsGallerySearchResultList extends ArrayList<CmsGallerySearchResult
 
     /**
      * Appends the results from another search result list.<p>
-     * 
-     * @param moreResults the second search result list 
+     *
+     * @param moreResults the second search result list
      */
     public void append(CmsGallerySearchResultList moreResults) {
 
@@ -78,11 +78,27 @@ public class CmsGallerySearchResultList extends ArrayList<CmsGallerySearchResult
     }
 
     /**
+     * Calculates the result pages.<p>
+     *
+     * @param pageIndex the index of the current page
+     * @param matchesPerPage the matches per page
+     */
+    public void calculatePages(int pageIndex, int matchesPerPage) {
+
+        m_pageIndex = pageIndex;
+        // calculate the number of pages for this search result
+        m_pageCount = m_hitCount / matchesPerPage;
+        if ((m_hitCount % matchesPerPage) != 0) {
+            m_pageCount++;
+        }
+    }
+
+    /**
      * Returns the hit count of all results found in the last search.<p>
-     * 
+     *
      * Since this list will only contain the result objects for the current display page,
      * the size of the list is usually much less then the hit count of all results found.<p>
-     * 
+     *
      * @return the hit count of all results found in the last search
      */
     public int getHitCount() {
@@ -94,7 +110,7 @@ public class CmsGallerySearchResultList extends ArrayList<CmsGallerySearchResult
      * Returns the total number of search result pages.<p>
      *
      * @return the total number of search result pages
-     * 
+     *
      * @see #getHitCount()
      * @see #getResultPage()
      */
@@ -107,7 +123,7 @@ public class CmsGallerySearchResultList extends ArrayList<CmsGallerySearchResult
      * Returns the index of the current result page.<p>
      *
      * @return the index of the current result page
-     * 
+     *
      * @see #getHitCount()
      * @see #getPageCount()
      */
@@ -127,21 +143,5 @@ public class CmsGallerySearchResultList extends ArrayList<CmsGallerySearchResult
     public void setHitCount(int hitCount) {
 
         m_hitCount = hitCount;
-    }
-
-    /**
-     * Calculates the result pages.<p>
-     * 
-     * @param pageIndex the index of the current page
-     * @param matchesPerPage the matches per page
-     */
-    protected void calculatePages(int pageIndex, int matchesPerPage) {
-
-        m_pageIndex = pageIndex;
-        // calculate the number of pages for this search result
-        m_pageCount = m_hitCount / matchesPerPage;
-        if ((m_hitCount % matchesPerPage) != 0) {
-            m_pageCount++;
-        }
     }
 }

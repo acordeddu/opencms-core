@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -14,12 +14,12 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * Lesser General Public License for more details.
  *
- * For further information about Alkacon Software GmbH, please see the
- * company website: http://www.alkacon.com
+ * For further information about Alkacon Software GmbH & Co. KG, please see the
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -28,7 +28,6 @@
 package org.opencms.db.generic;
 
 import org.opencms.db.CmsDbContext;
-import org.opencms.db.CmsDbPool;
 import org.opencms.file.CmsProject;
 import org.opencms.main.CmsLog;
 import org.opencms.main.CmsRuntimeException;
@@ -42,17 +41,20 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.util.concurrent.ConcurrentHashMap;
 
 import org.apache.commons.logging.Log;
 
 /**
  * Generic (ANSI-SQL) implementation of the SQL manager.<p>
- * 
- * @since 6.0.0 
+ *
+ * @since 6.0.0
  */
 public class CmsSqlManager extends org.opencms.db.CmsSqlManager {
 
@@ -65,11 +67,8 @@ public class CmsSqlManager extends org.opencms.db.CmsSqlManager {
     /** The filename/path of the SQL query properties. */
     private static final String QUERY_PROPERTIES = "org/opencms/db/generic/query.properties";
 
-    /** Serial version UID required for safe serialization. */
-    private static final long serialVersionUID = -5994026786008303964L;
-
     /** A map to cache queries with replaced search patterns. */
-    protected Map<String, String> m_cachedQueries;
+    protected ConcurrentHashMap<String, String> m_cachedQueries;
 
     /** The type ID of the driver (vfs, user, project or history) from where this SQL manager is referenced. */
     protected int m_driverType;
@@ -85,24 +84,60 @@ public class CmsSqlManager extends org.opencms.db.CmsSqlManager {
      */
     public CmsSqlManager() {
 
-        m_cachedQueries = new HashMap<String, String>();
+        this(Collections.<String> emptyList());
+    }
+
+    /**
+     * Creates a new SQL manager and loads additional SQL query property files after the generic queries.<p>
+     *
+     * @param additionalQueryProperties the additional SQL query property files to load
+     */
+    public CmsSqlManager(List<String> additionalQueryProperties) {
+
+        m_cachedQueries = new ConcurrentHashMap<String, String>();
         m_queries = new HashMap<String, String>();
         loadQueryProperties(QUERY_PROPERTIES);
+        loadAdditionalQueryProperties(additionalQueryProperties);
     }
 
     /**
      * Creates a new instance of a SQL manager.<p>
-     * 
+     *
      * @param classname the classname of the SQL manager
-     * 
+     *
      * @return a new instance of the SQL manager
      */
     public static org.opencms.db.generic.CmsSqlManager getInstance(String classname) {
 
+        return getInstance(classname, Collections.<String> emptyList());
+    }
+
+    /**
+     * Creates a new instance of a SQL manager and loads additional SQL query property files.<p>
+     *
+     * @param classname the classname of the SQL manager
+     * @param additionalQueryProperties the additional SQL query property files to load
+     *
+     * @return a new instance of the SQL manager
+     */
+    public static org.opencms.db.generic.CmsSqlManager getInstance(
+        String classname,
+        List<String> additionalQueryProperties) {
+
         org.opencms.db.generic.CmsSqlManager sqlManager;
 
         try {
-            Object objectInstance = Class.forName(classname).newInstance();
+            Class<?> sqlManagerClass = Class.forName(classname);
+            Object objectInstance;
+            try {
+                objectInstance = sqlManagerClass.getConstructor(List.class).newInstance(additionalQueryProperties);
+            } catch (NoSuchMethodException e) {
+                if ((additionalQueryProperties == null) || additionalQueryProperties.isEmpty()) {
+                    objectInstance = sqlManagerClass.newInstance();
+                } else {
+                    throw e;
+                }
+            }
             sqlManager = (org.opencms.db.generic.CmsSqlManager)objectInstance;
         } catch (Throwable t) {
             LOG.error(Messages.get().getBundle().key(Messages.LOG_SQL_MANAGER_INIT_FAILED_1, classname), t);
@@ -118,9 +153,9 @@ public class CmsSqlManager extends org.opencms.db.CmsSqlManager {
     }
 
     /**
-     * Replaces the project search pattern in SQL queries by the pattern _ONLINE_ or _OFFLINE_ depending on the 
-     * specified project ID.<p> 
-     * 
+     * Replaces the project search pattern in SQL queries by the pattern _ONLINE_ or _OFFLINE_ depending on the
+     * specified project ID.<p>
+     *
      * @param projectId the ID of the current project
      * @param query the SQL query
      * @return String the SQL query with the table key search pattern replaced
@@ -136,7 +171,7 @@ public class CmsSqlManager extends org.opencms.db.CmsSqlManager {
 
     /**
      * Attempts to close the connection, statement and result set after a statement has been executed.<p>
-     * 
+     *
      * @param dbc the current database context
      * @param con the JDBC connection
      * @param stmnt the statement
@@ -144,9 +179,13 @@ public class CmsSqlManager extends org.opencms.db.CmsSqlManager {
      */
     public void closeAll(CmsDbContext dbc, Connection con, Statement stmnt, ResultSet res) {
 
-        // NOTE: we have to close Connections/Statements that way, because a dbcp PoolablePreparedStatement
+        // NOTE: The following note is outdated, since we are now using HikariCP as a connection pool,
+        // which doesn't have prepared statement pooling. Closing the connection in a finally block or using
+        // the try-with-resources syntax is sufficient.
+
+        // NOTE: (outdated) we have to close Connections/Statements that way, because a dbcp PoolablePreparedStatement
         // is not a DelegatedStatement; for that reason its not removed from the trace of the connection when it is closed.
-        // So, the connection tries to close it again when the connection is closed itself; 
+        // So, the connection tries to close it again when the connection is closed itself;
         // as a result there is an error that forces the connection to be destroyed and not pooled
 
         if (dbc == null) {
@@ -154,7 +193,7 @@ public class CmsSqlManager extends org.opencms.db.CmsSqlManager {
         }
 
         try {
-            // first, close the result set          
+            // first, close the result set
             if (res != null) {
                 res.close();
             }
@@ -189,17 +228,17 @@ public class CmsSqlManager extends org.opencms.db.CmsSqlManager {
     }
 
     /**
-     * Retrieves the value of the designated column in the current row of this ResultSet object as 
+     * Retrieves the value of the designated column in the current row of this ResultSet object as
      * a byte array in the Java programming language.<p>
-     * 
-     * The bytes represent the raw values returned by the driver. Overwrite this method if another 
+     *
+     * The bytes represent the raw values returned by the driver. Overwrite this method if another
      * database server requires a different handling of byte attributes in tables.<p>
-     * 
+     *
      * @param res the result set
      * @param attributeName the name of the table attribute
-     * 
-     * @return byte[] the column value; if the value is SQL NULL, the value returned is null 
-     * 
+     *
+     * @return byte[] the column value; if the value is SQL NULL, the value returned is null
+     *
      * @throws SQLException if a database access error occurs
      */
     public byte[] getBytes(ResultSet res, String attributeName) throws SQLException {
@@ -209,13 +248,13 @@ public class CmsSqlManager extends org.opencms.db.CmsSqlManager {
 
     /**
      * Returns a JDBC connection from the connection pool.<p>
-     * 
+     *
      * Use this method to get a connection for reading/writing project independent data.<p>
-     * 
+     *
      * @param dbc the current database context
-     * 
+     *
      * @return a JDBC connection
-     * 
+     *
      * @throws SQLException if the project id is not supported
      */
     public Connection getConnection(CmsDbContext dbc) throws SQLException {
@@ -230,13 +269,13 @@ public class CmsSqlManager extends org.opencms.db.CmsSqlManager {
     /**
      * Returns a PreparedStatement for a JDBC connection specified by the key of a SQL query
      * and the CmsProject.<p>
-     * 
+     *
      * @param con the JDBC connection
      * @param project the specified CmsProject
      * @param queryKey the key of the SQL query
-     * 
-     * @return PreparedStatement a new PreparedStatement containing the pre-compiled SQL statement 
-     * 
+     *
+     * @return PreparedStatement a new PreparedStatement containing the pre-compiled SQL statement
+     *
      * @throws SQLException if a database access error occurs
      */
     public PreparedStatement getPreparedStatement(Connection con, CmsProject project, String queryKey)
@@ -248,13 +287,13 @@ public class CmsSqlManager extends org.opencms.db.CmsSqlManager {
     /**
      * Returns a PreparedStatement for a JDBC connection specified by the key of a SQL query
      * and the project-ID.<p>
-     * 
+     *
      * @param con the JDBC connection
      * @param projectId the ID of the specified CmsProject
      * @param queryKey the key of the SQL query
-     * 
-     * @return PreparedStatement a new PreparedStatement containing the pre-compiled SQL statement 
-     * 
+     *
+     * @return PreparedStatement a new PreparedStatement containing the pre-compiled SQL statement
+     *
      * @throws SQLException if a database access error occurs
      */
     public PreparedStatement getPreparedStatement(Connection con, CmsUUID projectId, String queryKey)
@@ -266,10 +305,10 @@ public class CmsSqlManager extends org.opencms.db.CmsSqlManager {
 
     /**
      * Returns a PreparedStatement for a JDBC connection specified by the key of a SQL query.<p>
-     * 
+     *
      * @param con the JDBC connection
      * @param queryKey the key of the SQL query
-     * @return PreparedStatement a new PreparedStatement containing the pre-compiled SQL statement 
+     * @return PreparedStatement a new PreparedStatement containing the pre-compiled SQL statement
      * @throws SQLException if a database access error occurs
      */
     public PreparedStatement getPreparedStatement(Connection con, String queryKey) throws SQLException {
@@ -280,30 +319,26 @@ public class CmsSqlManager extends org.opencms.db.CmsSqlManager {
 
     /**
      * Returns a PreparedStatement for a JDBC connection specified by the SQL query.<p>
-     * 
+     *
      * @param con the JDBC connection
      * @param query the SQL query
-     * @return PreparedStatement a new PreparedStatement containing the pre-compiled SQL statement 
+     * @return PreparedStatement a new PreparedStatement containing the pre-compiled SQL statement
      * @throws SQLException if a database access error occurs
      */
     public PreparedStatement getPreparedStatementForSql(Connection con, String query) throws SQLException {
 
-        // unfortunately, this wrapper is essential, because some JDBC driver 
-        // implementations don't accept the delegated objects of DBCP's connection pool. 
+        // unfortunately, this wrapper is essential, because some JDBC driver
+        // implementations don't accept the delegated objects of DBCP's connection pool.
         return con.prepareStatement(query);
     }
 
     /**
      * Initializes this SQL manager.<p>
-     * 
+     *
      * @param driverType the type ID of the driver (vfs,user,project or history) from where this SQL manager is referenced
      * @param poolUrl the pool URL to get connections from the JDBC driver manager
      */
     public void init(int driverType, String poolUrl) {
-
-        if (!poolUrl.startsWith(CmsDbPool.DBCP_JDBC_URL_PREFIX)) {
-            poolUrl = CmsDbPool.DBCP_JDBC_URL_PREFIX + poolUrl;
-        }
 
         m_driverType = driverType;
         m_poolUrl = poolUrl;
@@ -312,7 +347,7 @@ public class CmsSqlManager extends org.opencms.db.CmsSqlManager {
 
     /**
      * Searches for the SQL query with the specified key and CmsProject.<p>
-     * 
+     *
      * @param project the specified CmsProject
      * @param queryKey the key of the SQL query
      * @return the the SQL query in this property list with the specified key
@@ -324,11 +359,11 @@ public class CmsSqlManager extends org.opencms.db.CmsSqlManager {
 
     /**
      * Searches for the SQL query with the specified key and project-ID.<p>
-     * 
-     * For projectIds &ne; 0, the pattern {@link #QUERY_PROJECT_SEARCH_PATTERN} in table names of queries is 
-     * replaced with "_ONLINE_" or "_OFFLINE_" to choose the right database 
+     *
+     * For projectIds &ne; 0, the pattern {@link #QUERY_PROJECT_SEARCH_PATTERN} in table names of queries is
+     * replaced with "_ONLINE_" or "_OFFLINE_" to choose the right database
      * tables for SQL queries that are project dependent!
-     * 
+     *
      * @param projectId the ID of the specified CmsProject
      * @param queryKey the key of the SQL query
      * @return the the SQL query in this property list with the specified key
@@ -367,7 +402,7 @@ public class CmsSqlManager extends org.opencms.db.CmsSqlManager {
             query = CmsStringUtil.substitute(query, "\n", " ");
 
             if ((projectId != null) && !projectId.isNullUUID()) {
-                // a project ID = 0 is an internal indicator that a project-independent 
+                // a project ID = 0 is an internal indicator that a project-independent
                 // query was requested - further regex operations are not required then
                 query = CmsSqlManager.replaceProjectPattern(projectId, query);
             }
@@ -381,7 +416,7 @@ public class CmsSqlManager extends org.opencms.db.CmsSqlManager {
 
     /**
      * Searches for the SQL query with the specified key.<p>
-     * 
+     *
      * @param queryKey the SQL query key
      * @return the the SQL query in this property list with the specified key
      */
@@ -398,13 +433,13 @@ public class CmsSqlManager extends org.opencms.db.CmsSqlManager {
 
     /**
      * Sets the designated parameter to the given Java array of bytes.<p>
-     * 
-     * The driver converts this to an SQL VARBINARY or LONGVARBINARY (depending on the argument's 
-     * size relative to the driver's limits on VARBINARY values) when it sends it to the database. 
-     * 
+     *
+     * The driver converts this to an SQL VARBINARY or LONGVARBINARY (depending on the argument's
+     * size relative to the driver's limits on VARBINARY values) when it sends it to the database.
+     *
      * @param statement the PreparedStatement where the content is set
      * @param pos the first parameter is 1, the second is 2, ...
-     * @param content the parameter value 
+     * @param content the parameter value
      * @throws SQLException if a database access error occurs
      */
     public void setBytes(PreparedStatement statement, int pos, byte[] content) throws SQLException {
@@ -418,7 +453,7 @@ public class CmsSqlManager extends org.opencms.db.CmsSqlManager {
 
     /**
      * Replaces null or empty Strings with a String with one space character <code>" "</code>.<p>
-     * 
+     *
      * @param value the string to validate
      * @return the validate string or a String with one space character if the validated string is null or empty
      */
@@ -432,8 +467,25 @@ public class CmsSqlManager extends org.opencms.db.CmsSqlManager {
     }
 
     /**
+     * Loads additional Java properties hashes containing SQL queries.<p>
+     *
+     * @param additionalQueryProperties the additional SQL query property files to load
+     */
+    protected void loadAdditionalQueryProperties(List<String> additionalQueryProperties) {
+
+        if (additionalQueryProperties == null) {
+            return;
+        }
+        for (String propertyFilename : additionalQueryProperties) {
+            if (CmsStringUtil.isNotEmptyOrWhitespaceOnly(propertyFilename)) {
+                loadQueryProperties(propertyFilename);
+            }
+        }
+    }
+
+    /**
      * Loads a Java properties hash containing SQL queries.<p>
-     * 
+     *
      * @param propertyFilename the package/filename of the properties hash
      */
     protected void loadQueryProperties(String propertyFilename) {

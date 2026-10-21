@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -15,11 +15,11 @@
  * Lesser General Public License for more details.
  *
  * For further information about Alkacon Software, please see the
- * company website: http://www.alkacon.com
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -27,33 +27,31 @@
 
 package org.opencms.ade.upload;
 
-import org.opencms.ade.upload.shared.CmsUploadData;
-import org.opencms.ade.upload.shared.CmsUploadFileBean;
-import org.opencms.ade.upload.shared.CmsUploadProgessInfo;
-import org.opencms.ade.upload.shared.CmsUploadProgessInfo.UPLOAD_STATE;
-import org.opencms.ade.upload.shared.rpc.I_CmsUploadService;
+import org.opencms.file.CmsObject;
+import org.opencms.file.CmsResource;
 import org.opencms.file.CmsResourceFilter;
-import org.opencms.flex.CmsFlexController;
 import org.opencms.gwt.CmsGwtService;
-import org.opencms.main.OpenCms;
+import org.opencms.gwt.shared.CmsUploadFileBean;
+import org.opencms.gwt.shared.CmsUploadProgessInfo;
+import org.opencms.gwt.shared.CmsUploadProgessInfo.UPLOAD_STATE;
+import org.opencms.gwt.shared.rpc.I_CmsUploadService;
+import org.opencms.main.CmsException;
 import org.opencms.util.CmsUUID;
 
+import java.nio.file.InvalidPathException;
 import java.util.ArrayList;
 import java.util.List;
 
-import javax.servlet.http.HttpServletRequest;
-
-import org.apache.commons.fileupload.InvalidFileNameException;
-import org.apache.commons.fileupload.util.Streams;
+import org.apache.commons.fileupload2.core.DiskFileItem;
 
 /**
  * Handles all RPC services related to the upload dialog.<p>
- * 
+ *
  * @since 8.0.0
- * 
+ *
  * @see org.opencms.ade.upload.CmsUploadService
- * @see org.opencms.ade.upload.shared.rpc.I_CmsUploadService
- * @see org.opencms.ade.upload.shared.rpc.I_CmsUploadServiceAsync
+ * @see org.opencms.gwt.shared.rpc.I_CmsUploadService
+ * @see org.opencms.gwt.shared.rpc.I_CmsUploadServiceAsync
  */
 public class CmsUploadService extends CmsGwtService implements I_CmsUploadService {
 
@@ -61,22 +59,7 @@ public class CmsUploadService extends CmsGwtService implements I_CmsUploadServic
     private static final long serialVersionUID = -2235662141861687012L;
 
     /**
-     * Returns a new configured service instance.<p>
-     * 
-     * @param request the current request
-     * 
-     * @return a new service instance
-     */
-    public static CmsUploadService newInstance(HttpServletRequest request) {
-
-        CmsUploadService srv = new CmsUploadService();
-        srv.setCms(CmsFlexController.getCmsObject(request));
-        srv.setRequest(request);
-        return srv;
-    }
-
-    /**
-     * @see org.opencms.ade.upload.shared.rpc.I_CmsUploadService#cancelUpload()
+     * @see org.opencms.gwt.shared.rpc.I_CmsUploadService#cancelUpload()
      */
     public Boolean cancelUpload() {
 
@@ -85,8 +68,8 @@ public class CmsUploadService extends CmsGwtService implements I_CmsUploadServic
                 CmsUploadBean.SESSION_ATTRIBUTE_LISTENER_ID);
             CmsUploadListener listener = CmsUploadBean.getCurrentListener(listenerId);
             if ((listener != null) && !listener.isCanceled()) {
-                listener.cancelUpload(new CmsUploadException(Messages.get().getBundle().key(
-                    Messages.ERR_UPLOAD_USER_CANCELED_0)));
+                listener.cancelUpload(
+                    new CmsUploadException(Messages.get().getBundle().key(Messages.ERR_UPLOAD_USER_CANCELED_0)));
                 return Boolean.TRUE;
             }
         }
@@ -94,12 +77,13 @@ public class CmsUploadService extends CmsGwtService implements I_CmsUploadServic
     }
 
     /**
-     * @see org.opencms.ade.upload.shared.rpc.I_CmsUploadService#checkUploadFiles(java.util.List, java.lang.String)
+     * @see org.opencms.gwt.shared.rpc.I_CmsUploadService#checkUploadFiles(java.util.List, java.lang.String, boolean)
      */
-    public CmsUploadFileBean checkUploadFiles(List<String> fileNames, String targetFolder) {
+    public CmsUploadFileBean checkUploadFiles(List<String> fileNames, String targetFolder, boolean isRootPath) {
 
         List<String> existingResourceNames = new ArrayList<String>();
         List<String> invalidFileNames = new ArrayList<String>();
+        List<String> existingDeleted = new ArrayList<String>();
         boolean isActive = false;
 
         // check if there is an active upload
@@ -109,23 +93,27 @@ public class CmsUploadService extends CmsGwtService implements I_CmsUploadServic
             for (String fileName : fileNames) {
 
                 try {
-                    Streams.checkFileName(fileName);
-                    String newResName = CmsUploadBean.getNewResourceName(getCmsObject(), fileName, targetFolder);
-                    if (getCmsObject().existsResource(newResName, CmsResourceFilter.ALL)) {
-                        existingResourceNames.add(fileName);
+                    DiskFileItem.checkFileName(fileName);
+                    String newResName = CmsUploadBean.getNewResourceName(getCmsObject(), fileName, targetFolder, false);
+                    if (existsResource(newResName, isRootPath)) {
+                        if (isDeletedResource(newResName, isRootPath)) {
+                            existingDeleted.add(fileName);
+                        } else {
+                            existingResourceNames.add(fileName);
+                        }
                     }
-                } catch (InvalidFileNameException e) {
+                } catch (InvalidPathException e) {
                     invalidFileNames.add(fileName);
                 }
             }
         } else {
             isActive = true;
         }
-        return new CmsUploadFileBean(existingResourceNames, invalidFileNames, isActive);
+        return new CmsUploadFileBean(existingResourceNames, invalidFileNames, existingDeleted, isActive);
     }
 
     /**
-     * @see org.opencms.ade.upload.shared.rpc.I_CmsUploadService#getUploadProgressInfo()
+     * @see org.opencms.gwt.shared.rpc.I_CmsUploadService#getUploadProgressInfo()
      */
     public CmsUploadProgessInfo getUploadProgressInfo() {
 
@@ -142,12 +130,62 @@ public class CmsUploadService extends CmsGwtService implements I_CmsUploadServic
     }
 
     /**
-     * @see org.opencms.ade.upload.shared.rpc.I_CmsUploadService#prefetch()
+     * Checks if a resource already exists for the given path.<p>
+     *
+     * @param path the path
+     * @param rootPath in case the path is a root path
+     *
+     * @return true if a resource already exists
      */
-    public CmsUploadData prefetch() {
+    private boolean existsResource(String path, boolean rootPath) {
 
-        long uploadFileSizeLimit = OpenCms.getWorkplaceManager().getFileBytesMaxUploadSize(getCmsObject());
-        CmsUploadData data = new CmsUploadData(uploadFileSizeLimit);
-        return data;
+        CmsObject cms = getCmsObject();
+        if (rootPath) {
+            String origSiteRoot = cms.getRequestContext().getSiteRoot();
+            try {
+                cms.getRequestContext().setSiteRoot("");
+                if (cms.existsResource(path, CmsResourceFilter.ALL)) {
+                    return true;
+                }
+            } finally {
+                cms.getRequestContext().setSiteRoot(origSiteRoot);
+            }
+        } else {
+            if (cms.existsResource(path, CmsResourceFilter.ALL)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Checks if a the resource exists but is marked as deleted.<p>
+     *
+     * @param path the path
+     * @param rootPath in case the path is a root path
+     *
+     * @return true is the resource exists but is marked as deleted
+     */
+    private boolean isDeletedResource(String path, boolean rootPath) {
+
+        CmsObject cms = getCmsObject();
+        CmsResource res = null;
+        try {
+            if (rootPath) {
+                String origSiteRoot = cms.getRequestContext().getSiteRoot();
+                try {
+                    cms.getRequestContext().setSiteRoot("");
+                    res = cms.readResource(path, CmsResourceFilter.ALL);
+
+                } finally {
+                    cms.getRequestContext().setSiteRoot(origSiteRoot);
+                }
+            } else {
+                res = cms.readResource(path, CmsResourceFilter.ALL);
+            }
+        } catch (CmsException e) {
+            // ignore
+        }
+        return (res != null) && res.getState().isDeleted();
     }
 }

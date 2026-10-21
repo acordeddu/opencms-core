@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -14,12 +14,12 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * Lesser General Public License for more details.
  *
- * For further information about Alkacon Software GmbH, please see the
- * company website: http://www.alkacon.com
+ * For further information about Alkacon Software GmbH & Co. KG, please see the
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -43,10 +43,10 @@ import java.util.Map;
 import javax.servlet.http.HttpServletRequest;
 
 /**
- * Helper class that encapsulates all the code for the "new" 
+ * Helper class that encapsulates all the code for the "new"
  * style of the administration dialogs.<p>
- * 
- * @since 6.0.0 
+ *
+ * @since 6.0.0
  */
 public class CmsToolDialog extends CmsWorkplace {
 
@@ -68,6 +68,9 @@ public class CmsToolDialog extends CmsWorkplace {
     /** Request parameter value for the 'new' dialog style. */
     public static final String STYLE_NEW = "new";
 
+    /** The adminProject parameter name. */
+    public static final String PARAM_ADMIN_PROJECT = "adminProject";
+
     /** Base parameter value. */
     private String m_paramBase;
 
@@ -85,7 +88,7 @@ public class CmsToolDialog extends CmsWorkplace {
 
     /**
      * Default Constructor.<p>
-     * 
+     *
      * @param jsp the jsp action element
      */
     public CmsToolDialog(CmsJspActionElement jsp) {
@@ -95,9 +98,9 @@ public class CmsToolDialog extends CmsWorkplace {
 
     /**
      * Builds the standard javascript for submitting the dialog.<p>
-     * 
+     *
      * Should only be used by the <code>{@link CmsDialog#dialogScriptSubmit()}</code> method.<p>
-     * 
+     *
      * @return the standard javascript for submitting the dialog
      */
     public String dialogScriptSubmit() {
@@ -123,9 +126,9 @@ public class CmsToolDialog extends CmsWorkplace {
 
     /**
      * Generates the standard new style dialog title row, and tool grouping.<p>
-     * 
+     *
      * It is called by the <code>{@link org.opencms.workplace.CmsDialog#dialog(int, String)}</code> method.<p>
-     * 
+     *
      * @return a dialog window start / end segment
      */
     public String dialogTitle() {
@@ -134,13 +137,7 @@ public class CmsToolDialog extends CmsWorkplace {
         String toolPath = getCurrentToolPath();
         String parentPath = getParentPath();
         String rootKey = getToolManager().getCurrentRoot(this).getKey();
-        CmsTool parentTool = getToolManager().resolveAdminTool(rootKey, parentPath);
-        String upLevelLink = CmsToolManager.linkForToolPath(
-            getJsp(),
-            parentPath,
-            parentTool.getHandler().getParameters(this));
-        upLevelLink = CmsRequestUtil.appendParameter(upLevelLink, PARAM_FORCE, Boolean.TRUE.toString());
-        String parentName = getToolManager().resolveAdminTool(rootKey, parentPath).getHandler().getName();
+        String upLevelLink = computeUpLevelLink();
 
         html.append(getToolManager().generateNavBar(toolPath, this));
         // build title
@@ -151,17 +148,19 @@ public class CmsToolDialog extends CmsWorkplace {
         html.append(CmsEncoder.decode(CmsToolMacroResolver.resolveMacros(getAdminTool().getHandler().getName(), this)));
         html.append("\n\t\t\t</td>");
         // uplevel button only if needed
-        if (!getParentPath().equals(toolPath)) {
+        if ((upLevelLink != null) && !getParentPath().equals(toolPath)) {
+            String parentName = getToolManager().resolveAdminTool(rootKey, parentPath).getHandler().getName();
             html.append("\t\t\t<td class='uplevel'>\n\t\t\t\t");
-            html.append(A_CmsHtmlIconButton.defaultButtonHtml(
-                CmsHtmlIconButtonStyleEnum.SMALL_ICON_TEXT,
-                "id-up-level",
-                Messages.get().getBundle(getLocale()).key(Messages.GUI_ADMIN_VIEW_UPLEVEL_0),
-                parentName,
-                true,
-                "admin/images/up.png",
-                null,
-                "openPage('" + upLevelLink + "');"));
+            html.append(
+                A_CmsHtmlIconButton.defaultButtonHtml(
+                    CmsHtmlIconButtonStyleEnum.SMALL_ICON_TEXT,
+                    "id-up-level",
+                    Messages.get().getBundle(getLocale()).key(Messages.GUI_ADMIN_VIEW_UPLEVEL_0),
+                    parentName,
+                    true,
+                    "admin/images/up.png",
+                    null,
+                    "openPage('" + upLevelLink + "');"));
             html.append("\n\t\t\t</td>\n");
         }
         html.append("\t\t</tr>\n");
@@ -242,7 +241,7 @@ public class CmsToolDialog extends CmsWorkplace {
 
     /**
      * Returns the path to the parent tool.<p>
-     * 
+     *
      * @return tha path to the parent tool
      */
     public String getParentPath() {
@@ -252,7 +251,7 @@ public class CmsToolDialog extends CmsWorkplace {
 
     /**
      * Returns the tool manager.<p>
-     * 
+     *
      * @return the tool manager
      */
     public CmsToolManager getToolManager() {
@@ -262,12 +261,12 @@ public class CmsToolDialog extends CmsWorkplace {
 
     /**
      * Builds an block area for icons.<p>
-     * 
+     *
      * @param segment the HTML segment (START / END)
      * @param headline the headline String for the block
-
+     *
      * @return block area start / end segment
-     * 
+     *
      * @see CmsDialog#dialogBlock(int, String, boolean)
      */
     public String iconsBlockArea(int segment, String headline) {
@@ -296,9 +295,9 @@ public class CmsToolDialog extends CmsWorkplace {
 
     /**
      * Builds the end HTML for a block area with border in the dialog content area.<p>
-     * 
+     *
      * @return block area end segment
-     * 
+     *
      * @see CmsDialog#dialogBlockEnd()
      */
     public String iconsBlockAreaEnd() {
@@ -308,11 +307,11 @@ public class CmsToolDialog extends CmsWorkplace {
 
     /**
      * Builds the start HTML for a block area with border and optional subheadline in the dialog content area.<p>
-     * 
+     *
      * @param headline the headline String for the block
-     * 
+     *
      * @return block area start segment
-     * 
+     *
      * @see CmsDialog#dialogBlockStart(String)
      */
     public String iconsBlockAreaStart(String headline) {
@@ -322,14 +321,14 @@ public class CmsToolDialog extends CmsWorkplace {
 
     /**
      * Initializes the admin tool main view.<p>
-     * 
+     *
      * @return the new modified parameters array
-     * 
+     *
      * @throws CmsRoleViolationException in case the dialog is opened by a user without the necessary privileges
      */
-    public Map initAdminTool() throws CmsRoleViolationException {
+    public Map<String, String[]> initAdminTool() throws CmsRoleViolationException {
 
-        Map params = new HashMap(getParameterMap());
+        Map<String, String[]> params = new HashMap<String, String[]>(getParameterMap());
         // initialize
         getToolManager().initParams(this);
 
@@ -345,8 +344,9 @@ public class CmsToolDialog extends CmsWorkplace {
             // set close link
             if (CmsStringUtil.isEmptyOrWhitespaceOnly(wp.getParamCloseLink())) {
                 if (!getToolManager().getBaseToolPath(this).equals(getToolManager().getCurrentToolPath(this))) {
-                    Map args = getToolManager().resolveAdminTool(getParamRoot(), getParentPath()).getHandler().getParameters(
-                        wp);
+                    Map<String, String[]> args = getToolManager().resolveAdminTool(
+                        getParamRoot(),
+                        getParentPath()).getHandler().getParameters(wp);
                     wp.setParamCloseLink(CmsToolManager.linkForToolPath(getJsp(), getParentPath(), args));
                     params.put(CmsDialog.PARAM_CLOSELINK, new String[] {wp.getParamCloseLink()});
                 }
@@ -365,17 +365,18 @@ public class CmsToolDialog extends CmsWorkplace {
     /**
      * @see org.opencms.workplace.CmsWorkplace#pageBody(int, java.lang.String, java.lang.String)
      */
+    @Override
     public String pageBody(int segment, String className, String parameters) {
 
         if (!useNewStyle()) {
             return super.pageBody(segment, className, parameters);
         } else {
-            Map data = CmsStringUtil.extendAttribute(parameters, "onLoad", "bodyLoad();");
-            String onLoad = (String)data.get("value");
-            String myPars = (String)data.get("text");
+            Map<String, String> data = CmsStringUtil.extendAttribute(parameters, "onLoad", "bodyLoad();");
+            String onLoad = data.get("value");
+            String myPars = data.get("text");
             data = CmsStringUtil.extendAttribute(myPars, "onUnload", "bodyUnload();");
-            String onUnload = (String)data.get("value");
-            myPars = (String)data.get("text");
+            String onUnload = data.get("value");
+            myPars = data.get("text");
             if (segment == HTML_START) {
                 StringBuffer html = new StringBuffer(512);
                 html.append("</head>\n");
@@ -386,7 +387,8 @@ public class CmsToolDialog extends CmsWorkplace {
                 html.append(CmsStringUtil.isNotEmpty(className) ? " class='" + className + "'" : "");
                 html.append(CmsStringUtil.isNotEmpty(myPars) ? " " + myPars : "");
                 html.append(">\n");
-                html.append("\t<table border='0' cellspacing='0' cellpadding='0' id='loaderContainer' onClick='return false;'>\n");
+                html.append(
+                    "\t<table border='0' cellspacing='0' cellpadding='0' id='loaderContainer' onClick='return false;'>\n");
                 html.append("\t\t<tr><td id='loaderContainerH'><div id='loader'>\n");
                 html.append("\t\t\t<table border='0' cellpadding='0' cellspacing='0' width='100%'><tr><td>\n");
                 html.append("\t\t\t\t<p><img src='");
@@ -413,6 +415,7 @@ public class CmsToolDialog extends CmsWorkplace {
     /**
      * @see org.opencms.workplace.CmsWorkplace#pageHtmlStyle(int, java.lang.String, java.lang.String)
      */
+    @Override
     public String pageHtmlStyle(int segment, String title, String stylesheet) {
 
         if (!useNewStyle() || (segment != HTML_START)) {
@@ -420,7 +423,7 @@ public class CmsToolDialog extends CmsWorkplace {
         }
 
         StringBuffer html = new StringBuffer(512);
-        html.append("<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01 Transitional//EN\" \"http://www.w3.org/TR/html4/loose.dtd\">\n");
+        html.append("<!DOCTYPE html>\n");
         html.append("<html>\n");
         html.append("<head>\n");
         html.append("<meta http-equiv='Content-Type' content='text/html; charset=");
@@ -437,14 +440,23 @@ public class CmsToolDialog extends CmsWorkplace {
         html.append("<link rel='stylesheet' type='text/css' href='");
         html.append(getStyleUri(getJsp()));
         html.append("new_admin.css'>\n");
-        html.append("<script type='text/javascript' src='");
+        html.append("<script  src='");
         html.append(getSkinUri());
         html.append("admin/javascript/general.js'></script>\n");
-        html.append("<script type='text/javascript' src='");
+        html.append("<script  src='");
         html.append(getResourceUri());
         html.append("editors/xmlcontent/help.js'></script>\n\n");
-        html.append("<script type='text/javascript'>\n");
+        html.append("<script >\n");
         html.append("\tfunction bodyLoad() {\n");
+
+        // add a special CSS class in case we are in the new vaadin based workplace
+
+        html.append("\tif (this.name != \"admin_content\" && this.name != \"explorer_files\") {\n");
+        html.append("\t\tvar cssClass=document.body.getAttribute(\"class\");\n");
+        html.append("\t\tcssClass+=\" legacy-app\";\n");
+        html.append("\t\tdocument.body.setAttribute(\"class\",cssClass);\n");
+        html.append("\t}\n");
+
         html.append("\t\tsetContext(\"");
         html.append(CmsStringUtil.escapeJavaScript(resolveMacros(getAdminTool().getHandler().getHelpText())));
         html.append("\");\n");
@@ -515,9 +527,9 @@ public class CmsToolDialog extends CmsWorkplace {
 
     /**
      * Tests if we are working with the new administration dialog style.<p>
-     * 
+     *
      * The default is the new style, this parameter is not intended for external use.<p>
-     * 
+     *
      * @return <code>true</code> if using the new style
      */
     public boolean useNewStyle() {
@@ -526,8 +538,30 @@ public class CmsToolDialog extends CmsWorkplace {
     }
 
     /**
+     * Creates the link for the 'up' button.<p>
+     *
+     * @return the link for the 'up' button
+     */
+    protected String computeUpLevelLink() {
+
+        String parentPath = getParentPath();
+        String rootKey = getToolManager().getCurrentRoot(this).getKey();
+        CmsTool parentTool = getToolManager().resolveAdminTool(rootKey, parentPath);
+        String upLevelLink = null;
+        if (parentTool != null) {
+            upLevelLink = CmsToolManager.linkForToolPath(
+                getJsp(),
+                parentPath,
+                parentTool.getHandler().getParameters(this));
+            upLevelLink = CmsRequestUtil.appendParameter(upLevelLink, PARAM_FORCE, Boolean.TRUE.toString());
+        }
+        return upLevelLink;
+    }
+
+    /**
      * @see org.opencms.workplace.CmsWorkplace#initWorkplaceRequestValues(org.opencms.workplace.CmsWorkplaceSettings, javax.servlet.http.HttpServletRequest)
      */
+    @Override
     protected void initWorkplaceRequestValues(CmsWorkplaceSettings settings, HttpServletRequest request) {
 
         fillParamValues(request);

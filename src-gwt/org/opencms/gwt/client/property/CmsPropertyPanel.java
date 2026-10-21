@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -15,11 +15,11 @@
  * Lesser General Public License for more details.
  *
  * For further information about Alkacon Software, please see the
- * company website: http://www.alkacon.com
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -27,11 +27,16 @@
 
 package org.opencms.gwt.client.property;
 
+import org.opencms.gwt.client.I_CmsDescendantResizeHandler;
 import org.opencms.gwt.client.Messages;
 import org.opencms.gwt.client.ui.CmsFieldSet;
 import org.opencms.gwt.client.ui.CmsListItemWidget;
 import org.opencms.gwt.client.ui.CmsTabbedPanel;
+import org.opencms.gwt.client.ui.css.I_CmsInputLayoutBundle;
+import org.opencms.gwt.client.ui.input.CmsTextArea;
+import org.opencms.gwt.client.ui.input.CmsTextBox;
 import org.opencms.gwt.client.ui.input.I_CmsFormField;
+import org.opencms.gwt.client.ui.input.I_CmsFormWidget;
 import org.opencms.gwt.client.ui.input.form.A_CmsFormFieldPanel;
 import org.opencms.gwt.client.ui.input.form.CmsFormDialog;
 import org.opencms.gwt.client.ui.input.form.CmsInfoBoxFormFieldPanel;
@@ -40,6 +45,7 @@ import org.opencms.gwt.shared.CmsListInfoBean;
 import org.opencms.util.CmsStringUtil;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
@@ -52,16 +58,25 @@ import com.google.common.collect.Multimap;
 import com.google.common.collect.Sets;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.logical.shared.BeforeSelectionHandler;
+import com.google.gwt.event.logical.shared.SelectionEvent;
+import com.google.gwt.event.logical.shared.SelectionHandler;
+import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.Panel;
 import com.google.gwt.user.client.ui.Widget;
 
 /**
  * A tabbed form field container widget.<p>
- * 
+ *
  * @since 8.0.0
  */
 public class CmsPropertyPanel extends A_CmsFormFieldPanel {
+
+    /** CSS class for property tab contents. */
+    public static final String CLASS_PROPERTY_TAB = "propertyTab";
+
+    /** CSS class for temporarily hiding tab contents during the rendering process. */
+    public static final String CLASS_IS_RENDERING_FIELDS = "isRenderingFields";
 
     /** Layout data key. */
     public static final String LD_DISPLAY_VALUE = "displayValue";
@@ -82,7 +97,7 @@ public class CmsPropertyPanel extends A_CmsFormFieldPanel {
     public static final String TAB_SIMPLE = "simple";
 
     /** The tab panel. */
-    protected CmsTabbedPanel<Widget> m_tabPanel = new CmsTabbedPanel<Widget>();
+    protected CmsTabbedPanel<CmsScrollPanelWrapper> m_tabPanel = new CmsTabbedPanel<CmsScrollPanelWrapper>();
 
     /** Multimap of fields by field group. */
     private Multimap<String, I_CmsFormField> m_fieldsByGroup = ArrayListMultimap.create();
@@ -96,8 +111,8 @@ public class CmsPropertyPanel extends A_CmsFormFieldPanel {
     /** The "individual" tab. */
     private FlowPanel m_individualTab = new FlowPanel();
 
-    /** The tab wrapper for the individual tab. */
-    private FlowPanel m_individualTabWrapper = new FlowPanel();
+    /** Name of property which should be focused, used while rendering the extended tabs. */
+    private String m_markedProperty;
 
     /** Set of fields which should be displayed at the top of the "shared" tab. */
     private Set<String> m_sharedDisplay = Sets.newHashSet();
@@ -105,65 +120,72 @@ public class CmsPropertyPanel extends A_CmsFormFieldPanel {
     /** The "shared" tab. */
     private FlowPanel m_sharedTab = new FlowPanel();
 
-    /** The tab wrapper for the shared tab. */
-    private FlowPanel m_sharedTabWrapper = new FlowPanel();
-
     /** True if the "shared" tab should be shown. */
     private boolean m_showShared;
 
     /** The "simple" tab. */
     private FlowPanel m_simpleTab = new FlowPanel();
 
-    /** The tab wrapper for the simple tab. */
-    private FlowPanel m_simpleTabWrapper = new FlowPanel();
-
     /**
      * Creates a new instance.<p>
-     * 
-     * @param showShared true if the "shared" tab should be shown 
+     *
+     * @param showShared true if the "shared" tab should be shown
      * @param info the bean to use for displaying the info item
      */
     public CmsPropertyPanel(boolean showShared, CmsListInfoBean info) {
 
-        // TODO: replace with dynamic calculation
-        //m_tabPanel.getElement().getStyle().setProperty("minHeight", "300px");
-        //m_tabPanel.getElement().getStyle().setHeight(600, Unit.PX);
-        CmsListItemWidget liWidget = createListItemWidget(info);
-        m_simpleTabWrapper.add(liWidget);
-        m_simpleTabWrapper.add(m_simpleTab);
+        m_infoWidget = createListItemWidget(info);
+
         m_simpleTab.addStyleName(org.opencms.gwt.client.ui.css.I_CmsLayoutBundle.INSTANCE.generalCss().cornerAll());
-        m_simpleTab.addStyleName(org.opencms.gwt.client.ui.css.I_CmsLayoutBundle.INSTANCE.propertiesCss().vfsModeSimplePropertiesBox());
+        m_simpleTab.addStyleName(
+            org.opencms.gwt.client.ui.css.I_CmsLayoutBundle.INSTANCE.propertiesCss().vfsModeSimplePropertiesBox());
+        m_simpleTab.addStyleName(I_CmsInputLayoutBundle.INSTANCE.inputCss().formGradientBackground());
 
-        m_sharedTabWrapper.add(createListItemWidget(info));
-        m_sharedTabWrapper.add(m_sharedTab);
-
-        m_individualTabWrapper.add(createListItemWidget(info));
-        m_individualTabWrapper.add(m_individualTab);
-
-        m_simpleTabWrapper = CmsDomUtil.wrapScrollable(m_simpleTabWrapper);
-        m_sharedTabWrapper = CmsDomUtil.wrapScrollable(m_sharedTabWrapper);
-        m_individualTabWrapper = CmsDomUtil.wrapScrollable(m_individualTabWrapper);
+        for (FlowPanel tab : Arrays.asList(m_simpleTab, m_individualTab, m_sharedTab)) {
+            tab.addStyleName(CLASS_PROPERTY_TAB);
+        }
 
         m_groups.put(TAB_SIMPLE, m_simpleTab);
         m_groups.put(TAB_SHARED, m_sharedTab);
         m_groups.put(TAB_INDIVIDUAL, m_individualTab);
-
-        m_tabPanel.add(m_simpleTabWrapper, Messages.get().key(Messages.GUI_PROPERTY_TAB_SIMPLE_0));
+        CmsScrollPanelWrapper simpleWrapper = new CmsScrollPanelWrapper();
+        simpleWrapper.getListInfoContainer().add(m_infoWidget);
+        simpleWrapper.getScrollPanel().setWidget(m_simpleTab);
+        m_tabPanel.add(simpleWrapper, Messages.get().key(Messages.GUI_PROPERTY_TAB_SIMPLE_0));
         m_showShared = showShared;
         if (m_showShared) {
-            m_tabPanel.add(m_individualTabWrapper, Messages.get().key(Messages.GUI_PROPERTY_TAB_STRUCTURE_0));
-            m_tabPanel.add(m_sharedTabWrapper, Messages.get().key(Messages.GUI_PROPERTY_TAB_RESOURCE_0));
+            CmsScrollPanelWrapper individualWrapper = new CmsScrollPanelWrapper();
+            individualWrapper.getScrollPanel().setWidget(m_individualTab);
+            individualWrapper.getListInfoContainer().add(createListItemWidget(info));
+            m_tabPanel.add(individualWrapper, Messages.get().key(Messages.GUI_PROPERTY_TAB_STRUCTURE_0));
+            CmsScrollPanelWrapper sharedWrapper = new CmsScrollPanelWrapper();
+            sharedWrapper.getListInfoContainer().add(createListItemWidget(info));
+            sharedWrapper.getScrollPanel().setWidget(m_sharedTab);
+            m_tabPanel.add(sharedWrapper, Messages.get().key(Messages.GUI_PROPERTY_TAB_RESOURCE_0));
         } else {
-            m_tabPanel.add(m_individualTabWrapper, Messages.get().key(Messages.GUI_PROPERTY_TAB_COMPLETE_0));
+            CmsScrollPanelWrapper individualWrapper = new CmsScrollPanelWrapper();
+            individualWrapper.getScrollPanel().setWidget(m_individualTab);
+            individualWrapper.getListInfoContainer().add(createListItemWidget(info));
+            m_tabPanel.add(individualWrapper, Messages.get().key(Messages.GUI_PROPERTY_TAB_STRUCTURE_0));
         }
         initWidget(m_tabPanel);
+        addStyleName(org.opencms.gwt.client.ui.css.I_CmsLayoutBundle.INSTANCE.propertiesCss().propertyPanel());
+        m_tabPanel.addSelectionHandler(new SelectionHandler<Integer>() {
 
+            public void onSelection(SelectionEvent<Integer> event) {
+
+                Widget selectedTab = m_tabPanel.getWidget(event.getSelectedItem().intValue());
+                if (selectedTab instanceof I_CmsDescendantResizeHandler) {
+                    ((I_CmsDescendantResizeHandler)selectedTab).onResizeDescendant();
+                }
+            }
+        });
     }
 
     /**
      * Adds the {@link BeforeSelectionHandler} for the tab panel.<p>
-     *  
-     * @param handler the pre-selection handler 
+     *
+     * @param handler the pre-selection handler
      */
     public void addBeforeSelectionHandler(BeforeSelectionHandler<Integer> handler) {
 
@@ -172,8 +194,8 @@ public class CmsPropertyPanel extends A_CmsFormFieldPanel {
 
     /**
      * Clears the tab with the given id.<p>
-     *  
-     * @param tabId the id of the tab to clear 
+     *
+     * @param tabId the id of the tab to clear
      */
     public void clearTab(String tabId) {
 
@@ -191,33 +213,43 @@ public class CmsPropertyPanel extends A_CmsFormFieldPanel {
 
     /**
      * Renders a extended tab.<p>
-     * 
+     *
      * @param fields the fields to add
      * @param tab the tab
      */
     public void renderExtendedTab(Collection<I_CmsFormField> fields, FlowPanel tab) {
 
         List<CmsFieldSet> result = new ArrayList<CmsFieldSet>();
-
         tab.clear();
 
         String used = Messages.get().key(Messages.GUI_PROPERTY_BLOCK_USED_0);
         CmsFieldSet usedFieldSet = new CmsFieldSet();
+        usedFieldSet.addStyleName(I_CmsInputLayoutBundle.INSTANCE.inputCss().formGradientBackground());
         usedFieldSet.setLegend(used);
-        usedFieldSet.setAnimationDuration(50);
+        usedFieldSet.setAnimationDuration(0);
 
         String unused = Messages.get().key(Messages.GUI_PROPERTY_BLOCK_UNUSED_0);
         CmsFieldSet unusedFieldSet = new CmsFieldSet();
+        unusedFieldSet.addStyleName(I_CmsInputLayoutBundle.INSTANCE.inputCss().formGradientBackground());
         unusedFieldSet.setOpen(false);
         unusedFieldSet.setLegend(unused);
-        unusedFieldSet.setAnimationDuration(50);
-
+        unusedFieldSet.setAnimationDuration(0);
+        boolean reopen = false;
+        final String currentMarkedProperty = m_markedProperty;
+        m_markedProperty = null;
         for (I_CmsFormField field : fields) {
             if (isTop(field)) {
                 usedFieldSet.addContent(createRow(field));
             } else {
+                if ((currentMarkedProperty != null)
+                    && field.getLayoutData().get(LD_PROPERTY).equals(currentMarkedProperty)) {
+                    reopen = true;
+                }
                 unusedFieldSet.addContent(createRow(field));
             }
+        }
+        if (reopen) {
+            unusedFieldSet.setOpen(true);
         }
 
         if (usedFieldSet.getWidgetCount() > 0) {
@@ -237,6 +269,7 @@ public class CmsPropertyPanel extends A_CmsFormFieldPanel {
             }
             tab.add(fieldSet);
         }
+        CmsDomUtil.resizeAncestor(tab.getParent());
     }
 
     /**
@@ -255,12 +288,9 @@ public class CmsPropertyPanel extends A_CmsFormFieldPanel {
 
         // process individual tab
         m_individualDisplay = preprocessFields(individualTabFields);
-        renderExtendedTab(individualTabFields, m_individualTab);
-
         // process shared tab
         if (m_showShared) {
             m_sharedDisplay = preprocessFields(sharedTabfields);
-            renderExtendedTab(sharedTabfields, m_sharedTab);
         }
     }
 
@@ -270,6 +300,7 @@ public class CmsPropertyPanel extends A_CmsFormFieldPanel {
     @Override
     public void rerenderFields(String tab, Collection<I_CmsFormField> fields) {
 
+        m_tabPanel.addStyleName(CLASS_IS_RENDERING_FIELDS);
         m_fieldsByGroup.removeAll(tab);
         m_fieldsByGroup.putAll(tab, fields);
 
@@ -286,38 +317,128 @@ public class CmsPropertyPanel extends A_CmsFormFieldPanel {
                 renderExtendedTab(fields, m_sharedTab);
             }
         }
+        Timer timer = new Timer() {
+
+            @Override
+            public void run() {
+
+                m_tabPanel.removeStyleName(CLASS_IS_RENDERING_FIELDS);
+            }
+
+        };
+        timer.schedule(70);
+
+    }
+
+    /**
+     * Tries to restore the active field data.<p>
+     *
+     * @param fieldDataToBeRestored the field data which should be restored (may be null, in which case this method does nothing)
+     */
+    public void tryToRestoreFieldData(CmsActiveFieldData fieldDataToBeRestored) {
+
+        if (fieldDataToBeRestored == null) {
+            return;
+        }
+        m_markedProperty = null;
+        final String propName = fieldDataToBeRestored.getProperty();
+        final String tabName = fieldDataToBeRestored.getTab();
+        m_markedProperty = propName;
+        final int tabIndex;
+        if (TAB_INDIVIDUAL.equals(tabName)) {
+            tabIndex = 1;
+        } else if (TAB_SHARED.equals(tabName)) {
+            tabIndex = 2;
+        } else {
+            tabIndex = 0;
+        }
+
+        if ((tabIndex >= 0) && (tabIndex < m_tabPanel.getTabCount())) {
+            I_CmsFormField markedField = null;
+            m_tabPanel.selectTab(tabIndex);
+            @SuppressWarnings("synthetic-access")
+            Collection<I_CmsFormField> fieldsForTab = m_fieldsByGroup.get(tabName);
+            if ((fieldsForTab != null) && !fieldsForTab.isEmpty()) {
+                for (I_CmsFormField currentField : fieldsForTab) {
+                    if (currentField.getLayoutData().get(LD_PROPERTY).equals(propName)) {
+                        markedField = currentField;
+                        break;
+                    }
+                }
+            }
+            if (markedField != null) {
+                final I_CmsFormField constMarkedField = markedField;
+                Timer timer = new Timer() {
+
+                    @Override
+                    @SuppressWarnings("synthetic-access")
+                    public void run() {
+
+                        m_tabPanel.removeStyleName(CLASS_IS_RENDERING_FIELDS);
+                        focusField(constMarkedField);
+                    }
+
+                    private void focusField(final I_CmsFormField constMarkedField) {
+
+                        I_CmsFormWidget widget = constMarkedField.getWidget();
+                        if (widget instanceof CmsTextBox) {
+                            CmsTextBox box = (CmsTextBox)widget;
+                            box.selectAll();
+                            box.setFocus(true);
+                        } else if (widget instanceof CmsTextArea) {
+                            CmsTextArea textarea = ((CmsTextArea)widget);
+                            textarea.selectAll();
+                            textarea.setFocus(true);
+                        }
+                        Timer timer2 = new Timer() {
+
+                            @Override
+                            public void run() {
+
+                                ((Widget)widget).getElement().scrollIntoView();
+                            }
+                        };
+                        timer2.schedule(5);
+                    }
+
+                };
+                timer.schedule(70);
+            }
+        }
+
     }
 
     /**
      * Creates a list item widget from a list info bean.<p>
-     * 
-     * @param info the list info bean 
-     * 
-     * @return the list item widget 
+     *
+     * @param info the list info bean
+     *
+     * @return the list item widget
      */
     protected CmsListItemWidget createListItemWidget(CmsListInfoBean info) {
 
         CmsListItemWidget result = new CmsListItemWidget(info);
+
         result.truncate(CmsInfoBoxFormFieldPanel.TM_INFOBOX, CmsFormDialog.STANDARD_DIALOG_WIDTH - 50);
         return result;
     }
 
     /**
      * Returns the tabbed panel.<p>
-     * 
+     *
      * @return the tabbed panel
      */
-    protected CmsTabbedPanel<Widget> getTabPanel() {
+    protected CmsTabbedPanel<CmsScrollPanelWrapper> getTabPanel() {
 
         return m_tabPanel;
     }
 
     /**
      * Partitions a collection of fields by group.<p>
-     * 
-     * @param fields the collection of fields  
-     * 
-     * @return a multimap from groups to form fields 
+     *
+     * @param fields the collection of fields
+     *
+     * @return a multimap from groups to form fields
      */
     private Multimap<String, I_CmsFormField> getFieldsByGroup(Collection<I_CmsFormField> fields) {
 
@@ -331,10 +452,10 @@ public class CmsPropertyPanel extends A_CmsFormFieldPanel {
 
     /**
      * Returns true if the field should be displayed at the top of both the "individual" and "shared" tabs.<p>
-     * 
+     *
      * @param field the field to test
-     * 
-     * @return true if the field should be displayed at the top 
+     *
+     * @return true if the field should be displayed at the top
      */
     private boolean isTop(I_CmsFormField field) {
 
@@ -344,10 +465,10 @@ public class CmsPropertyPanel extends A_CmsFormFieldPanel {
 
     /**
      * Preprocesses the fields to find out which fields need to displayed at the top/bottom later.<p>
-     * 
-     * @param fields the fields 
-     * 
-     * @return the set of property names of the preprocessed fields 
+     *
+     * @param fields the fields
+     *
+     * @return the set of property names of the preprocessed fields
      */
     private Set<String> preprocessFields(Collection<I_CmsFormField> fields) {
 
@@ -364,7 +485,7 @@ public class CmsPropertyPanel extends A_CmsFormFieldPanel {
 
     /**
      * Renders the simple tab.<p>
-     * 
+     *
      * @param fields the fields to render
      */
     private void renderSimpleTab(Collection<I_CmsFormField> fields) {
@@ -372,5 +493,6 @@ public class CmsPropertyPanel extends A_CmsFormFieldPanel {
         for (I_CmsFormField field : fields) {
             m_simpleTab.add(createRow(field));
         }
+        CmsDomUtil.resizeAncestor(m_simpleTab.getParent());
     }
 }

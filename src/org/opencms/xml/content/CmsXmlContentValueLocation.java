@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -15,11 +15,11 @@
  * Lesser General Public License for more details.
  *
  * For further information about Alkacon Software, please see the
- * company website: http://www.alkacon.com
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -36,12 +36,17 @@ import org.opencms.xml.types.CmsXmlVfsFileValue;
 import org.opencms.xml.types.I_CmsXmlContentValue;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
 
+import com.google.common.collect.ComparisonChain;
+import com.google.common.collect.Lists;
+
 /**
  * Represents the concrete location of an XML content value.<p>
- * 
+ *
  * @since 8.0.0
  */
 public class CmsXmlContentValueLocation implements I_CmsXmlContentValueLocation {
@@ -51,8 +56,8 @@ public class CmsXmlContentValueLocation implements I_CmsXmlContentValueLocation 
 
     /**
      * Constructs a new XML content value location.<p>
-     * 
-     * @param value the XML content value 
+     *
+     * @param value the XML content value
      */
     public CmsXmlContentValueLocation(I_CmsXmlContentValue value) {
 
@@ -120,13 +125,35 @@ public class CmsXmlContentValueLocation implements I_CmsXmlContentValueLocation 
     public List<I_CmsXmlContentValueLocation> getSubValues(String subPath) {
 
         List<I_CmsXmlContentValueLocation> result = new ArrayList<I_CmsXmlContentValueLocation>();
+        String requiredLastElement = CmsXmlUtils.getLastXpathElement(subPath);
         Locale locale = m_value.getLocale();
-        List<I_CmsXmlContentValue> subValues = m_value.getDocument().getValues(
-            CmsXmlUtils.concatXpath(m_value.getPath(), subPath),
-            locale);
+        List<I_CmsXmlContentValue> subValues = Lists.newArrayList(
+            m_value.getDocument().getValues(CmsXmlUtils.concatXpath(m_value.getPath(), subPath), locale));
+
+        Collections.sort(subValues, new Comparator<I_CmsXmlContentValue>() {
+
+            public int compare(I_CmsXmlContentValue firstValue, I_CmsXmlContentValue secondValue) {
+
+                String firstPath = CmsXmlUtils.removeXpathIndex(firstValue.getPath());
+                String secondPath = CmsXmlUtils.removeXpathIndex(secondValue.getPath());
+                int firstIndex = CmsXmlUtils.getXpathIndexInt(firstValue.getPath());
+                int secondIndex = CmsXmlUtils.getXpathIndexInt(secondValue.getPath());
+                int comparisonResult = ComparisonChain.start().compare(firstPath, secondPath).compare(
+                    firstIndex,
+                    secondIndex).result();
+                return comparisonResult;
+            }
+        });
+
         for (I_CmsXmlContentValue subValue : subValues) {
             if (subValue != null) {
-                result.add(new CmsXmlContentValueLocation(subValue));
+                // if subPath is the path of one option of a choice element, getValues() will, strangely,
+                // return all values of the choice, regardless of their name, so we need to check
+                // the name by hand
+                String lastElement = CmsXmlUtils.getLastXpathElement(subValue.getPath());
+                if (lastElement.equals(requiredLastElement)) {
+                    result.add(new CmsXmlContentValueLocation(subValue));
+                }
             }
         }
         return result;
@@ -134,8 +161,8 @@ public class CmsXmlContentValueLocation implements I_CmsXmlContentValueLocation 
 
     /**
      * Returns the content value at the given location.<p>
-     * 
-     * @return the content value at the given location 
+     *
+     * @return the content value at the given location
      */
     public I_CmsXmlContentValue getValue() {
 

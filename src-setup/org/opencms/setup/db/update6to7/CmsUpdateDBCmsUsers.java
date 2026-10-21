@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -14,12 +14,12 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * Lesser General Public License for more details.
  *
- * For further information about Alkacon Software GmbH, please see the
- * company website: http://www.alkacon.com
+ * For further information about Alkacon Software GmbH & Co. KG, please see the
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -48,7 +48,7 @@ import java.util.Map;
 /**
  * This class makes an update of the CMS_USERS table splitting it up into CMS_USERS and CMS_USERDATA.<p>
  * Unnecessary colums from CMS_USERS will be deleted and the new column USER_DATECREATED is added.
- * 
+ *
  * @since 7.0.0
  */
 public class CmsUpdateDBCmsUsers extends A_CmsUpdateDBPart {
@@ -118,14 +118,108 @@ public class CmsUpdateDBCmsUsers extends A_CmsUpdateDBPart {
 
     /**
      * Default constructor.<p>
-     * 
-     * @throws IOException if the default sql queries property file could not be read 
+     *
+     * @throws IOException if the default sql queries property file could not be read
      */
     public CmsUpdateDBCmsUsers()
     throws IOException {
 
         super();
         loadQueryProperties(getPropertyFileLocation() + QUERY_PROPERTY_FILE);
+    }
+
+    /**
+     * Adds the new column USER_DATECREATED to the CMS_USERS table.<p>
+     *
+     * @param dbCon the db connection interface
+     *
+     * @throws SQLException if something goes wrong
+     */
+    protected void addUserDateCreated(CmsSetupDb dbCon) throws SQLException {
+
+        System.out.println(new Exception().getStackTrace()[0].toString());
+        // Add the column to the table if necessary
+        if (!dbCon.hasTableOrColumn(CMS_USERS_TABLE, USER_DATECREATED)) {
+            String addUserDateCreated = readQuery(QUERY_ADD_USER_DATECREATED_COLUMN);
+            dbCon.updateSqlStatement(addUserDateCreated, null, null);
+
+            String setUserDateCreated = readQuery(QUERY_SET_USER_DATECREATED);
+            List<Object> param = new ArrayList<Object>();
+            // Set the creation date to the current time
+            param.add(Long.valueOf(System.currentTimeMillis()));
+
+            dbCon.updateSqlStatement(setUserDateCreated, null, param);
+        } else {
+            System.out.println("column " + USER_DATECREATED + " in table " + CMS_USERS_TABLE + " already exists");
+        }
+    }
+
+    /**
+     * Adds all webusers to the new previously created webusers group.<p>
+     *
+     * @param dbCon the db connection interface
+     * @param id the id of the new webusers group
+     *
+     * @throws SQLException if something goes wrong
+     */
+    protected void addWebusersToGroup(CmsSetupDb dbCon, CmsUUID id) throws SQLException {
+
+        String sql = readQuery(QUERY_ADD_WEBUSERS_TO_GROUP);
+        Map<String, String> replacements = new HashMap<String, String>();
+        replacements.put("${GROUP_ID}", id.toString());
+        dbCon.updateSqlStatement(sql, replacements, null);
+    }
+
+    /**
+     * Checks if the CMS_USERDATA table exists.<p>
+     *
+     * @param dbCon the db connection interface
+     *
+     * @return true if it exists, false if not.
+     */
+    protected boolean checkUserDataTable(CmsSetupDb dbCon) {
+
+        System.out.println(new Exception().getStackTrace()[0].toString());
+        return dbCon.hasTableOrColumn(CHECK_CMS_USERDATA, null);
+    }
+
+    /**
+     * Creates the CMS_USERDATA table if it does not exist yet.<p>
+     *
+     * @param dbCon the db connection interface
+     *
+     * @throws SQLException if soemthing goes wrong
+     */
+    protected void createUserDataTable(CmsSetupDb dbCon) throws SQLException {
+
+        System.out.println(new Exception().getStackTrace()[0].toString());
+        String createStatement = readQuery(QUERY_CREATE_TABLE_USERDATA);
+        dbCon.updateSqlStatement(createStatement, null, null);
+    }
+
+    /**
+     * creates a new group for the webusers.<p>
+     *
+     * @param dbCon the db connection interface
+     *
+     * @return the id of the new generated group
+     *
+     * @throws SQLException if something goes wrong
+     */
+    protected CmsUUID createWebusersGroup(CmsSetupDb dbCon) throws SQLException {
+
+        String sql = readQuery(QUERY_CREATE_WEBUSERS_GROUP);
+        List<Object> params = new ArrayList<Object>();
+        CmsUUID id = new CmsUUID();
+        params.add(id.toString());
+        params.add(CmsUUID.getNullUUID().toString());
+        params.add("allWebusersFromUpgrade6to7");
+        params.add(
+            "This group was created by the OpenCms Upgrade Wizard to facilitate the handling of former called WebUsers, can be deleted if needed.");
+        params.add(Integer.valueOf(0));
+        params.add("/");
+        dbCon.updateSqlStatement(sql, null, params);
+        return id;
     }
 
     /**
@@ -146,7 +240,7 @@ public class CmsUpdateDBCmsUsers extends A_CmsUpdateDBPart {
             e.printStackTrace();
         }
         try {
-            // Check if the CMS_USERDATA table exists            
+            // Check if the CMS_USERDATA table exists
             if (!checkUserDataTable(dbCon)) {
                 createUserDataTable(dbCon); // Could throw Exception during table creation
 
@@ -207,104 +301,11 @@ public class CmsUpdateDBCmsUsers extends A_CmsUpdateDBPart {
     }
 
     /**
-     * Adds the new column USER_DATECREATED to the CMS_USERS table.<p> 
-     * 
-     * @param dbCon the db connection interface
-     * 
-     * @throws SQLException if something goes wrong 
-     */
-    protected void addUserDateCreated(CmsSetupDb dbCon) throws SQLException {
-
-        System.out.println(new Exception().getStackTrace()[0].toString());
-        // Add the column to the table if necessary
-        if (!dbCon.hasTableOrColumn(CMS_USERS_TABLE, USER_DATECREATED)) {
-            String addUserDateCreated = readQuery(QUERY_ADD_USER_DATECREATED_COLUMN);
-            dbCon.updateSqlStatement(addUserDateCreated, null, null);
-
-            String setUserDateCreated = readQuery(QUERY_SET_USER_DATECREATED);
-            List<Object> param = new ArrayList<Object>();
-            // Set the creation date to the current time
-            param.add(new Long(System.currentTimeMillis()));
-
-            dbCon.updateSqlStatement(setUserDateCreated, null, param);
-        } else {
-            System.out.println("column " + USER_DATECREATED + " in table " + CMS_USERS_TABLE + " already exists");
-        }
-    }
-
-    /**
-     * Adds all webusers to the new previously created webusers group.<p>
-     * 
-     * @param dbCon the db connection interface
-     * @param id the id of the new webusers group
-     * 
-     * @throws SQLException if something goes wrong 
-     */
-    protected void addWebusersToGroup(CmsSetupDb dbCon, CmsUUID id) throws SQLException {
-
-        String sql = readQuery(QUERY_ADD_WEBUSERS_TO_GROUP);
-        Map<String, String> replacements = new HashMap<String, String>();
-        replacements.put("${GROUP_ID}", id.toString());
-        dbCon.updateSqlStatement(sql, replacements, null);
-    }
-
-    /**
-     * Checks if the CMS_USERDATA table exists.<p> 
-     * 
-     * @param dbCon the db connection interface
-     * 
-     * @return true if it exists, false if not.
-     */
-    protected boolean checkUserDataTable(CmsSetupDb dbCon) {
-
-        System.out.println(new Exception().getStackTrace()[0].toString());
-        return dbCon.hasTableOrColumn(CHECK_CMS_USERDATA, null);
-    }
-
-    /**
-     * Creates the CMS_USERDATA table if it does not exist yet.<p>
-     *  
-     * @param dbCon the db connection interface
-     * 
-     * @throws SQLException if soemthing goes wrong
-     */
-    protected void createUserDataTable(CmsSetupDb dbCon) throws SQLException {
-
-        System.out.println(new Exception().getStackTrace()[0].toString());
-        String createStatement = readQuery(QUERY_CREATE_TABLE_USERDATA);
-        dbCon.updateSqlStatement(createStatement, null, null);
-    }
-
-    /**
-     * creates a new group for the webusers.<p>
-     * 
-     * @param dbCon the db connection interface
-     * 
-     * @return the id of the new generated group
-     * 
-     * @throws SQLException if something goes wrong 
-     */
-    protected CmsUUID createWebusersGroup(CmsSetupDb dbCon) throws SQLException {
-
-        String sql = readQuery(QUERY_CREATE_WEBUSERS_GROUP);
-        List<Object> params = new ArrayList<Object>();
-        CmsUUID id = new CmsUUID();
-        params.add(id.toString());
-        params.add(CmsUUID.getNullUUID().toString());
-        params.add("allWebusersFromUpgrade6to7");
-        params.add("This group was created by the OpenCms Upgrade Wizard to facilitate the handling of former called WebUsers, can be deleted if needed.");
-        params.add(new Integer(0));
-        params.add("/");
-        dbCon.updateSqlStatement(sql, null, params);
-        return id;
-    }
-
-    /**
      * Removes the columns USER_INFO, USER_ADDRESS, USER_DESCRIPTION and USER_TYPE from the CMS_USERS table.<p>
-     * 
+     *
      * @param dbCon the db connection interface
-     * 
-     * @throws SQLException if something goes wrong 
+     *
+     * @throws SQLException if something goes wrong
      */
     protected void removeUnnecessaryColumns(CmsSetupDb dbCon) throws SQLException {
 
@@ -340,7 +341,7 @@ public class CmsUpdateDBCmsUsers extends A_CmsUpdateDBPart {
 
     /**
      * Writes the additional user infos to the database.<p>
-     * 
+     *
      * @param dbCon the db connection interface
      * @param id the user id
      * @param additionalInfo the additional info of the user
@@ -359,9 +360,9 @@ public class CmsUpdateDBCmsUsers extends A_CmsUpdateDBPart {
 
     /**
      * Writes one set of additional user info (key and its value) to the CMS_USERDATA table.<p>
-     * 
+     *
      * @param dbCon the db connection interface
-     * @param id the user id 
+     * @param id the user id
      * @param key the data key
      * @param value the data value
      */

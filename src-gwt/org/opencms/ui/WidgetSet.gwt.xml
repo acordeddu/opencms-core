@@ -1,0 +1,42 @@
+<module>
+	<!-- Inherit the default widget set -->
+	<inherits name="com.vaadin.DefaultWidgetSet" />
+	<inherits name="org.opencms.GwtBaseCommon" />
+	<inherits name="org.opencms.ade.publish.PublishDialogCommon" />
+	<inherits name="org.opencms.ade.galleries.GalleryCommon" />
+	<inherits name="org.tepi.filtertable.WidgetSet" />
+	
+	<entry-point class="org.opencms.ui.client.CmsWidgetSetEntryPoint" />
+	
+	<collapse-property name="modernie" values="*" />
+	
+	<source path="client" />
+	<source path="shared" />
+	<super-source path="client/super_src/" /> 
+	
+	<replace-with class="org.opencms.ui.client.CmsLoadingIndicator">
+    	<when-type-is class="com.vaadin.client.VLoadingIndicator"/>
+    </replace-with>
+    
+    <replace-with class="org.opencms.ui.client.CmsVNotification">
+    	<when-type-is class="com.vaadin.client.ui.VNotification" />
+    </replace-with>
+    <replace-with class="org.opencms.ui.client.CmsVMenuBar">
+    	<when-type-is class="com.vaadin.client.ui.VMenuBar" />
+    </replace-with>
+    <replace-with class="org.opencms.ui.client.CmsVPopupView">
+    	<when-type-is class="com.vaadin.client.ui.VPopupView" />
+    </replace-with>
+    
+    <replace-with class="org.opencms.ui.client.CmsVDragAndDropWrapper">
+    	<when-type-is class="com.vaadin.client.ui.VDragAndDropWrapper" />
+    </replace-with>
+    
+    <replace-with class="org.opencms.ui.client.CmsVUI">
+    	<when-type-is class="com.vaadin.client.ui.VUI" />
+    </replace-with>
+    
+    <replace-with class="org.opencms.ui.client.CmsRpcManager">
+    	<when-type-is class="com.vaadin.client.communication.RpcManager" />
+    </replace-with>
+</module>

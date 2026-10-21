@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -14,12 +14,12 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * Lesser General Public License for more details.
  *
- * For further information about Alkacon Software GmbH, please see the
- * company website: http://www.alkacon.com
+ * For further information about Alkacon Software GmbH & Co. KG, please see the
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -53,7 +53,7 @@ import org.htmlparser.util.ParserException;
  * Implements the <code>&lt;cms:parse&gt;&lt;/cms:parse&gt;</code> tag to allow parsing of nested
  * HTML with the {@link org.opencms.jsp.parse.A_CmsConfiguredHtmlParser}} implementation specified by the "parserClass" attribute.
  * <p>
- * 
+ *
  * @since 6.1.3
  */
 public class CmsJspTagParse extends BodyTagSupport {
@@ -73,6 +73,9 @@ public class CmsJspTagParse extends BodyTagSupport {
     /** Serial version UID required for safe serialization. */
     private static final long serialVersionUID = -6541745426202242240L;
 
+    /** Indicates the parse action should be disabled to allow inline editing in the container page editor. */
+    private boolean m_allowInlineEdit;
+
     /** The visitor / parser class name to use. */
     private String m_configuredParserClassname;
 
@@ -84,9 +87,9 @@ public class CmsJspTagParse extends BodyTagSupport {
 
     /**
      * @see javax.servlet.jsp.tagext.Tag#doEndTag()
-     * 
+     *
      * @return EVAL_PAGE
-     * 
+     *
      * @throws JspException in case something goes wrong
      */
     @Override
@@ -94,76 +97,94 @@ public class CmsJspTagParse extends BodyTagSupport {
 
         ServletRequest req = pageContext.getRequest();
         A_CmsConfiguredHtmlParser parser;
-
-        // This will always be true if the page is called through OpenCms
-        if (CmsFlexController.isCmsRequest(req)) {
-            String content = "";
+        if (m_allowInlineEdit && CmsJspTagEditable.isEditableRequest(req)) {
+            // during inline editing the content should not be parsed
             try {
-                if (CmsStringUtil.isEmpty(m_configuredParserClassname)) {
-                    if (LOG.isErrorEnabled()) {
-                        LOG.error(Messages.get().getBundle().key(
-                            Messages.GUI_ERR_TAG_ATTRIBUTE_MISSING_2,
-                            new Object[] {TAG_NAME, ATT_VISITOR_CLASS}));
-                    }
-
+                getBodyContent().writeOut(pageContext.getOut());
+                release();
+            } catch (Exception ex) {
+                release();
+                if (LOG.isErrorEnabled()) {
+                    LOG.error(Messages.get().getBundle().key(Messages.ERR_PROCESS_TAG_1, TAG_NAME), ex);
                 }
-                // wrong attribute visitorClass -> content will remain empty, but no exception is
-                // thrown
+                // this is severe
+                throw new JspException(ex);
+            }
+        } else {
+            // This will always be true if the page is called through OpenCms
+            if (CmsFlexController.isCmsRequest(req)) {
+                String content = "";
                 try {
-                    // load
-                    Class<?> cl = Class.forName(m_configuredParserClassname);
-                    // Instantiate
-                    Object instance = cl.newInstance();
-                    // cast
-                    parser = (A_CmsConfiguredHtmlParser)instance;
-                    parser.setParam(m_param);
-                    // cms object:
-                    CmsFlexController controller = CmsFlexController.getController(req);
-                    CmsObject cms = controller.getCmsObject();
-                    parser.setCmsObject(cms);
-                    content = parseTagAction(getBodyContent().getString(), pageContext, parser);
+                    if (CmsStringUtil.isEmpty(m_configuredParserClassname)) {
+                        if (LOG.isErrorEnabled()) {
+                            LOG.error(
+                                Messages.get().getBundle().key(
+                                    Messages.GUI_ERR_TAG_ATTRIBUTE_MISSING_2,
+                                    new Object[] {TAG_NAME, ATT_VISITOR_CLASS}));
+                        }
 
-                } catch (Exception e) {
-                    if (LOG.isErrorEnabled()) {
-                        LOG.error(
-                            Messages.get().getBundle().key(
-                                Messages.GUI_ERR_TAG_ATTRIBUTE_INVALID_3,
-                                new Object[] {TAG_NAME, ATT_VISITOR_CLASS, A_CmsConfiguredHtmlParser.class.getName()}),
-                            e);
                     }
-                    e.printStackTrace(System.err);
-                }
+                    // wrong attribute visitorClass -> content will remain empty, but no exception is
+                    // thrown
+                    try {
+                        // load
+                        Class<?> cl = Class.forName(m_configuredParserClassname);
+                        // Instantiate
+                        Object instance = cl.newInstance();
+                        // cast
+                        parser = (A_CmsConfiguredHtmlParser)instance;
+                        parser.setParam(m_param);
+                        // cms object:
+                        CmsFlexController controller = CmsFlexController.getController(req);
+                        CmsObject cms = controller.getCmsObject();
+                        parser.setCmsObject(cms);
+                        content = parseTagAction(getBodyContent().getString(), pageContext, parser);
 
-            } finally {
-                try {
-                    getBodyContent().clear();
-                    getBodyContent().print(content);
-                    getBodyContent().writeOut(pageContext.getOut());
-                    release();
-
-                } catch (Exception ex) {
-                    release();
-                    if (LOG.isErrorEnabled()) {
-                        LOG.error(Messages.get().getBundle().key(Messages.ERR_PROCESS_TAG_1, TAG_NAME), ex);
+                    } catch (Exception e) {
+                        if (LOG.isErrorEnabled()) {
+                            LOG.error(
+                                Messages.get().getBundle().key(
+                                    Messages.GUI_ERR_TAG_ATTRIBUTE_INVALID_3,
+                                    new Object[] {
+                                        TAG_NAME,
+                                        ATT_VISITOR_CLASS,
+                                        A_CmsConfiguredHtmlParser.class.getName()}),
+                                e);
+                        }
+                        e.printStackTrace(System.err);
                     }
-                    // this is severe
-                    throw new JspException(ex);
+
+                } finally {
+                    try {
+                        getBodyContent().clear();
+                        getBodyContent().print(content);
+                        getBodyContent().writeOut(pageContext.getOut());
+                        release();
+
+                    } catch (Exception ex) {
+                        release();
+                        if (LOG.isErrorEnabled()) {
+                            LOG.error(Messages.get().getBundle().key(Messages.ERR_PROCESS_TAG_1, TAG_NAME), ex);
+                        }
+                        // this is severe
+                        throw new JspException(ex);
+                    }
+
                 }
 
             }
-
         }
         return EVAL_PAGE;
     }
 
     /**
      * Getter for the attribute "noAutoCloseTags" of the &lt;cms:parse&gt; tag.<p>
-     *  
-     * Returns a <code>String</code> that consists of the comma-separated upper case tag names for which this 
+     *
+     * Returns a <code>String</code> that consists of the comma-separated upper case tag names for which this
      * tag will not correct missing closing tags. <p>
-     * 
-     * @return a String that consists of the comma-separated upper case tag names for which this 
-     *      tag will not correct missing closing tags. 
+     *
+     * @return a String that consists of the comma-separated upper case tag names for which this
+     *      tag will not correct missing closing tags.
      */
     public String getNoAutoCloseTags() {
 
@@ -179,7 +200,7 @@ public class CmsJspTagParse extends BodyTagSupport {
 
     /**
      * Returns the param.<p>
-     * 
+     *
      * @return the param
      */
     public String getParam() {
@@ -190,7 +211,7 @@ public class CmsJspTagParse extends BodyTagSupport {
     /**
      * Returns the fully qualified class name of the {@link A_CmsConfiguredHtmlParser} class to use
      * for parsing.<p>
-     * 
+     *
      * @return the parserrClass
      */
     public String getParserClass() {
@@ -199,14 +220,24 @@ public class CmsJspTagParse extends BodyTagSupport {
     }
 
     /**
+     * Returns if the parse action should be disabled to allow inline editing in the container page editor.<p>
+     *
+     * @return <code>true</code> if the parse action should be disabled to allow inline editing in the container page editor
+     */
+    public boolean isAllowInlineEdit() {
+
+        return m_allowInlineEdit;
+    }
+
+    /**
      * Internal action method.<p>
-     * 
+     *
      * Parses (and potentially transforms) a HTMl content block.<p>
-     * 
+     *
      * @param content the content to be parsed / transformed
      * @param context needed for getting the encoding / the locale
      * @param parser the visitor / parser to use
-     * 
+     *
      * @return the transformed content
      */
     public String parseTagAction(String content, PageContext context, A_CmsConfiguredHtmlParser parser) {
@@ -216,9 +247,10 @@ public class CmsJspTagParse extends BodyTagSupport {
 
         if (parser == null) {
             if (LOG.isErrorEnabled()) {
-                LOG.error(Messages.get().getBundle(cmsContext.getLocale()).key(
-                    Messages.GUI_ERR_TAG_ATTRIBUTE_MISSING_2,
-                    new Object[] {TAG_NAME, ATT_VISITOR_CLASS}));
+                LOG.error(
+                    Messages.get().getBundle(cmsContext.getLocale()).key(
+                        Messages.GUI_ERR_TAG_ATTRIBUTE_MISSING_2,
+                        new Object[] {TAG_NAME, ATT_VISITOR_CLASS}));
             }
             result = content;
         } else {
@@ -274,12 +306,22 @@ public class CmsJspTagParse extends BodyTagSupport {
     }
 
     /**
+     * Sets if the parse action should be disabled to allow inline editing in the container page editor.<p>
+     *
+     * @param allowInlineEdit <code>true</code> to allow inline editing
+     */
+    public void setAllowInlineEdit(boolean allowInlineEdit) {
+
+        m_allowInlineEdit = allowInlineEdit;
+    }
+
+    /**
      * Setter for the attribute "noAutoCloseTags" of the &lt;cms:parse&gt; tag.<p>
-     *  
-     * Awaits a <code>String</code> that consists of the comma-separated upper case tag names for which this 
+     *
+     * Awaits a <code>String</code> that consists of the comma-separated upper case tag names for which this
      * tag should not correct missing closing tags.<p>
-     * 
-     * @param noAutoCloseTagList a <code>String</code> that consists of the comma-separated upper case tag names for which this 
+     *
+     * @param noAutoCloseTagList a <code>String</code> that consists of the comma-separated upper case tag names for which this
      *      tag should not correct missing closing tags
      */
     public void setNoAutoCloseTags(String noAutoCloseTagList) {
@@ -290,7 +332,7 @@ public class CmsJspTagParse extends BodyTagSupport {
 
     /**
      * Sets the param.<p>
-     * 
+     *
      * @param param the param to set
      */
     public void setParam(String param) {
@@ -301,7 +343,7 @@ public class CmsJspTagParse extends BodyTagSupport {
     /**
      * Sets the fully qualified class name of the {@link A_CmsConfiguredHtmlParser} class to use for
      * parsing.<p>
-     * 
+     *
      * @param parserClass the fully qualified class name of the {@link A_CmsConfiguredHtmlParser}
      *            class to use for parsing
      */

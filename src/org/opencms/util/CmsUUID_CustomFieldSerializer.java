@@ -1,8 +1,8 @@
-/* 
+/*
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -14,12 +14,12 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * Lesser General Public License for more details.
  *
- * For further information about Alkacon Software GmbH, please see the
- * company website: http://www.alkacon.com
+ * For further information about Alkacon Software GmbH & Co. KG, please see the
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -32,9 +32,9 @@ import com.google.gwt.user.client.rpc.SerializationStreamReader;
 import com.google.gwt.user.client.rpc.SerializationStreamWriter;
 
 /**
- * GWT serializer for {@link CmsUUID}.<p> 
- * 
- * @since 8.0.0 
+ * GWT serializer for {@link CmsUUID}.<p>
+ *
+ * @since 8.0.0
  */
 public final class CmsUUID_CustomFieldSerializer {
 
@@ -43,12 +43,12 @@ public final class CmsUUID_CustomFieldSerializer {
      */
     private CmsUUID_CustomFieldSerializer() {
 
-        // prevent instantiation 
+        // prevent instantiation
     }
 
     /**
-     * Deserializes additional fields.<p> 
-     * 
+     * Deserializes additional fields.<p>
+     *
      * @param streamReader the reader
      * @param instance the instance
      */
@@ -59,11 +59,11 @@ public final class CmsUUID_CustomFieldSerializer {
 
     /**
      * Creates a new instance.<p>
-     * 
+     *
      * @param streamReader the reader
-     * 
+     *
      * @return a new instance
-     * 
+     *
      * @throws SerializationException if something goes wrong
      */
     public static CmsUUID instantiate(SerializationStreamReader streamReader) throws SerializationException {
@@ -73,10 +73,10 @@ public final class CmsUUID_CustomFieldSerializer {
 
     /**
      * Serializes the given instance.<p>
-     * 
+     *
      * @param streamWriter the writer
      * @param instance the instance to serialize
-     * 
+     *
      * @throws SerializationException if something goes wrong
      */
     public static void serialize(SerializationStreamWriter streamWriter, CmsUUID instance)

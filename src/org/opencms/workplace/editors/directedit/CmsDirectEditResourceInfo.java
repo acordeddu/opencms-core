@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -15,11 +15,11 @@
  * Lesser General Public License for more details.
  *
  * For further information about Alkacon Software, please see the
- * company website: http://www.alkacon.com
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -32,11 +32,11 @@ import org.opencms.lock.CmsLock;
 
 /**
  * Contains information about a resource that is direct edited.<p>
- * 
- * For example, the information in this class allows implementations 
- * of a {@link I_CmsDirectEditProvider} to render HTML 
+ *
+ * For example, the information in this class allows implementations
+ * of a {@link I_CmsDirectEditProvider} to render HTML
  * with extended information about the resource displayed on the buttons.<p>
- * 
+ *
  * @since 6.2.3
  */
 public class CmsDirectEditResourceInfo {
@@ -55,9 +55,9 @@ public class CmsDirectEditResourceInfo {
     CmsResource m_resource;
 
     /**
-     * Creates a new direct edit resource info container without any 
+     * Creates a new direct edit resource info container without any
      * specific information about the resource to be direct edited.<p>
-     * 
+     *
      * @param permissions the direct edit permissions of the resource
      */
     public CmsDirectEditResourceInfo(CmsDirectEditPermissions permissions) {
@@ -67,7 +67,7 @@ public class CmsDirectEditResourceInfo {
 
     /**
      * Creates a new direct edit resource info container.<p>
-     * 
+     *
      * @param permissions the direct edit permissions of the resource
      * @param resource the resource that is to be direct edited
      * @param lock the lock on the direct edit resource

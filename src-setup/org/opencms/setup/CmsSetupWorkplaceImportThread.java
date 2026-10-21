@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -14,12 +14,12 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * Lesser General Public License for more details.
  *
- * For further information about Alkacon Software GmbH, please see the
- * company website: http://www.alkacon.com
+ * For further information about Alkacon Software GmbH & Co. KG, please see the
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -35,11 +35,12 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.PipedOutputStream;
 import java.io.PrintStream;
+import java.util.Arrays;
 
 /**
  * Used for the workplace setup in the OpenCms setup wizard.<p>
- * 
- * @since 6.0.0 
+ *
+ * @since 6.0.0
  */
 public class CmsSetupWorkplaceImportThread extends Thread {
 
@@ -64,9 +65,9 @@ public class CmsSetupWorkplaceImportThread extends Thread {
     /** Flag to signalize if a workplace import is needed or not. */
     private boolean m_workplaceImportNeeded;
 
-    /** 
+    /**
      * Constructor.<p>
-     * 
+     *
      * @param setupBean the initialized setup bean
      */
     public CmsSetupWorkplaceImportThread(CmsSetupBean setupBean) {
@@ -83,7 +84,7 @@ public class CmsSetupWorkplaceImportThread extends Thread {
 
     /**
      * Returns the logging thread.<p>
-     * 
+     *
      * @return the logging thread
      */
     public CmsSetupLoggingThread getLoggingThread() {
@@ -91,10 +92,10 @@ public class CmsSetupWorkplaceImportThread extends Thread {
         return m_loggingThread;
     }
 
-    /** 
+    /**
      * Returns the status of the logging thread.<p>
-     * 
-     * @return the status of the logging thread 
+     *
+     * @return the status of the logging thread
      */
     public boolean isFinished() {
 
@@ -102,7 +103,7 @@ public class CmsSetupWorkplaceImportThread extends Thread {
     }
 
     /**
-     * Kills this Thread as well as the included logging Thread.<p> 
+     * Kills this Thread as well as the included logging Thread.<p>
      */
     public void kill() {
 
@@ -118,7 +119,7 @@ public class CmsSetupWorkplaceImportThread extends Thread {
 
     /**
      * Write somthing to System.out during setup.<p>
-     * 
+     *
      * @param str the string to write
      */
     public void printToStdOut(String str) {
@@ -132,15 +133,15 @@ public class CmsSetupWorkplaceImportThread extends Thread {
     @Override
     public void run() {
 
-        // save the original out and err stream 
+        // save the original out and err stream
         m_tempOut = System.out;
         m_tempErr = System.err;
         try {
-            // redirect the streams 
+            // redirect the streams
             System.setOut(new PrintStream(m_pipedOut));
             System.setErr(new PrintStream(m_pipedOut));
 
-            // start the logging thread 
+            // start the logging thread
             m_loggingThread.start();
 
             if (m_workplaceImportNeeded) {
@@ -150,7 +151,7 @@ public class CmsSetupWorkplaceImportThread extends Thread {
                     m_setupBean.getServletMapping(),
                     m_setupBean.getDefaultWebApplication(),
                     "${user}@${project}>",
-                    m_setupBean);
+                    Arrays.asList(m_setupBean));
             }
 
             try {
@@ -158,42 +159,47 @@ public class CmsSetupWorkplaceImportThread extends Thread {
                     if (CmsLog.INIT.isInfoEnabled()) {
                         // log welcome message, the full package name is required because
                         // two different Message classes are used
-                        CmsLog.INIT.info(org.opencms.main.Messages.get().getBundle().key(
-                            org.opencms.main.Messages.INIT_DOT_0));
-                        CmsLog.INIT.info(org.opencms.main.Messages.get().getBundle().key(
-                            org.opencms.main.Messages.INIT_DOT_0));
-                        CmsLog.INIT.info(org.opencms.main.Messages.get().getBundle().key(
-                            org.opencms.main.Messages.INIT_DOT_0));
-                        CmsLog.INIT.info(org.opencms.setup.Messages.get().getBundle().key(
-                            org.opencms.setup.Messages.INIT_WELCOME_SETUP_0));
-                        CmsLog.INIT.info(org.opencms.setup.Messages.get().getBundle().key(
-                            org.opencms.setup.Messages.INIT_IMPORT_WORKPLACE_START_0));
-                        CmsLog.INIT.info(org.opencms.main.Messages.get().getBundle().key(
-                            org.opencms.main.Messages.INIT_DOT_0));
-                        CmsLog.INIT.info(org.opencms.main.Messages.get().getBundle().key(
-                            org.opencms.main.Messages.INIT_DOT_0));
+                        CmsLog.INIT.info(
+                            org.opencms.main.Messages.get().getBundle().key(org.opencms.main.Messages.INIT_DOT_0));
+                        CmsLog.INIT.info(
+                            org.opencms.main.Messages.get().getBundle().key(org.opencms.main.Messages.INIT_DOT_0));
+                        CmsLog.INIT.info(
+                            org.opencms.main.Messages.get().getBundle().key(org.opencms.main.Messages.INIT_DOT_0));
+                        CmsLog.INIT.info(
+                            org.opencms.setup.Messages.get().getBundle().key(
+                                org.opencms.setup.Messages.INIT_WELCOME_SETUP_0));
+                        CmsLog.INIT.info(
+                            org.opencms.setup.Messages.get().getBundle().key(
+                                org.opencms.setup.Messages.INIT_IMPORT_WORKPLACE_START_0));
+                        CmsLog.INIT.info(
+                            org.opencms.main.Messages.get().getBundle().key(org.opencms.main.Messages.INIT_DOT_0));
+                        CmsLog.INIT.info(
+                            org.opencms.main.Messages.get().getBundle().key(org.opencms.main.Messages.INIT_DOT_0));
                         for (int i = 0; i < org.opencms.main.Messages.COPYRIGHT_BY_ALKACON.length; i++) {
                             CmsLog.INIT.info(". " + org.opencms.main.Messages.COPYRIGHT_BY_ALKACON[i]);
                         }
-                        CmsLog.INIT.info(org.opencms.main.Messages.get().getBundle().key(
-                            org.opencms.main.Messages.INIT_DOT_0));
-                        CmsLog.INIT.info(org.opencms.main.Messages.get().getBundle().key(
-                            org.opencms.main.Messages.INIT_DOT_0));
-                        CmsLog.INIT.info(org.opencms.main.Messages.get().getBundle().key(
-                            org.opencms.main.Messages.INIT_LINE_0));
+                        CmsLog.INIT.info(
+                            org.opencms.main.Messages.get().getBundle().key(org.opencms.main.Messages.INIT_DOT_0));
+                        CmsLog.INIT.info(
+                            org.opencms.main.Messages.get().getBundle().key(org.opencms.main.Messages.INIT_DOT_0));
+                        CmsLog.INIT.info(
+                            org.opencms.main.Messages.get().getBundle().key(org.opencms.main.Messages.INIT_LINE_0));
 
                     }
                     if (m_workplaceImportNeeded) {
-                        m_shell.start(new FileInputStream(new File(m_setupBean.getWebAppRfsPath()
-                            + CmsSetupDb.SETUP_DATA_FOLDER
-                            + "cmssetup.txt")));
+                        m_shell.execute(
+                            new FileInputStream(
+                                new File(
+                                    m_setupBean.getWebAppRfsPath() + CmsSetupDb.SETUP_DATA_FOLDER + "cmssetup.txt")));
                     } else {
-                        System.out.println(org.opencms.setup.Messages.get().getBundle().key(
-                            org.opencms.setup.Messages.INIT_NO_WORKPLACE_IMPORT_NEEDED_0));
+                        System.out.println(
+                            org.opencms.setup.Messages.get().getBundle().key(
+                                org.opencms.setup.Messages.INIT_NO_WORKPLACE_IMPORT_NEEDED_0));
                     }
                     if (CmsLog.INIT.isInfoEnabled()) {
-                        CmsLog.INIT.info(org.opencms.setup.Messages.get().getBundle().key(
-                            org.opencms.setup.Messages.INIT_IMPORT_WORKPLACE_FINISHED_0));
+                        CmsLog.INIT.info(
+                            org.opencms.setup.Messages.get().getBundle().key(
+                                org.opencms.setup.Messages.INIT_IMPORT_WORKPLACE_FINISHED_0));
                     }
                 } catch (FileNotFoundException e) {
                     e.printStackTrace();

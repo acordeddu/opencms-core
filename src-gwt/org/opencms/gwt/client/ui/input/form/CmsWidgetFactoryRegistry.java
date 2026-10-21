@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -15,11 +15,11 @@
  * Lesser General Public License for more details.
  *
  * For further information about Alkacon Software, please see the
- * company website: http://www.alkacon.com
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -33,10 +33,12 @@ import org.opencms.gwt.client.ui.input.I_CmsFormWidget;
 import java.util.HashMap;
 import java.util.Map;
 
+import com.google.common.base.Optional;
+
 /**
  * This singleton class is used for registering all widget factories.<p>
- *  
- *  @since 8.0.0 
+ *
+ *  @since 8.0.0
  *
  */
 public final class CmsWidgetFactoryRegistry implements I_CmsFormWidgetMultiFactory {
@@ -57,8 +59,8 @@ public final class CmsWidgetFactoryRegistry implements I_CmsFormWidgetMultiFacto
 
     /**
      * Returns the singleton instance of this class.<p>
-     * 
-     * @return the singleton instance of this class 
+     *
+     * @return the singleton instance of this class
      */
     public static CmsWidgetFactoryRegistry instance() {
 
@@ -68,15 +70,18 @@ public final class CmsWidgetFactoryRegistry implements I_CmsFormWidgetMultiFacto
         return instance;
     }
 
-    /** 
+    /**
      * Creates a new widget based on a type string and widget parameters.<p>
-     * 
-     * @param key the type string 
+     *
+     * @param key the type string
      * @param widgetParams the widget configuration parameters
-     *  
-     * @return the newly created widget  
+     *
+     * @return the newly created widget
      */
-    public I_CmsFormWidget createFormWidget(String key, Map<String, String> widgetParams) {
+    public I_CmsFormWidget createFormWidget(
+        String key,
+        Map<String, String> widgetParams,
+        Optional<String> defaultValue) {
 
         if (key == null) {
             key = "";
@@ -86,15 +91,15 @@ public final class CmsWidgetFactoryRegistry implements I_CmsFormWidgetMultiFacto
             // if the given widget type is not found, fall back to text box widget
             factory = m_widgetFactories.get(CmsTextBox.WIDGET_TYPE);
         }
-        return factory.createWidget(widgetParams);
+        return factory.createWidget(widgetParams, defaultValue);
 
     }
 
     /**
      * Registers a new widget factory for a given widget type key.<p>
-     * 
-     * @param key the widget type key 
-     *  
+     *
+     * @param key the widget type key
+     *
      * @param factory the new factory for the key
      */
     public void registerFactory(String key, I_CmsFormWidgetFactory factory) {

@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -14,12 +14,12 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * Lesser General Public License for more details.
  *
- * For further information about Alkacon Software GmbH, please see the
- * company website: http://www.alkacon.com
+ * For further information about Alkacon Software GmbH & Co. KG, please see the
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -39,8 +39,8 @@ import java.util.Properties;
 
 /**
  * Represent a part of the database update process.<p>
- * 
- * @since 6.9.2 
+ *
+ * @since 6.9.2
  */
 public abstract class A_CmsUpdateDBPart implements I_CmsUpdateDBPart {
 
@@ -94,7 +94,7 @@ public abstract class A_CmsUpdateDBPart implements I_CmsUpdateDBPart {
 
     /**
      * Searches for the SQL query with the specified key.<p>
-     * 
+     *
      * @param queryKey the SQL query key
      * @return the the SQL query in this property list with the specified key
      */
@@ -111,7 +111,7 @@ public abstract class A_CmsUpdateDBPart implements I_CmsUpdateDBPart {
 
     /**
      * Returns the default property file location.<p>
-     * 
+     *
      * @return the default property file location
      */
     protected String getPropertyFileLocation() {
@@ -121,9 +121,9 @@ public abstract class A_CmsUpdateDBPart implements I_CmsUpdateDBPart {
 
     /**
      * Does the hard work.<p>
-     * 
+     *
      * @param setupDb the db connection interface
-     * 
+     *
      * @throws SQLException if something goes wrong
      */
     protected abstract void internalExecute(CmsSetupDb setupDb) throws SQLException;
@@ -140,10 +140,10 @@ public abstract class A_CmsUpdateDBPart implements I_CmsUpdateDBPart {
 
     /**
      * Loads a Java properties hash containing SQL queries.<p>
-     * 
+     *
      * @param propertyFilename the package/filename of the properties hash
-     * 
-     * @throws IOException if the sql queries property file could not be read 
+     *
+     * @throws IOException if the sql queries property file could not be read
      */
     protected void loadQueryProperties(String propertyFilename) throws IOException {
 

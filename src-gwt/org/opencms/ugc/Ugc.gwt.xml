@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module rename-to="ugc">
+	<inherits name="org.opencms.GwtBaseCommon" />
+	<source path="client" />
+	<source path="shared" />
+	<entry-point class="org.opencms.ugc.client.CmsUgcEntryPoint" />
+	<set-property name="user.agent" value="gecko1_8,safari" />
+	
+	<!-- Build only one permutation -->
+	<collapse-all-properties />
+    <add-linker name="xsiframe" />
+</module>

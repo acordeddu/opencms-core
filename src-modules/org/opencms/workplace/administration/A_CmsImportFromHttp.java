@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -14,12 +14,12 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * Lesser General Public License for more details.
  *
- * For further information about Alkacon Software GmbH, please see the
- * company website: http://www.alkacon.com
+ * For further information about Alkacon Software GmbH & Co. KG, please see the
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -51,12 +51,12 @@ import javax.servlet.jsp.JspException;
 import javax.servlet.jsp.JspWriter;
 import javax.servlet.jsp.PageContext;
 
-import org.apache.commons.fileupload.FileItem;
+import org.apache.commons.fileupload2.core.DiskFileItem;
 
 /**
  * Abstract class to upload a zip file containing VFS resources with HTTP upload.<p>
- * 
- * @since 6.0.0 
+ *
+ * @since 6.0.0
  */
 public abstract class A_CmsImportFromHttp extends CmsDialog {
 
@@ -74,7 +74,7 @@ public abstract class A_CmsImportFromHttp extends CmsDialog {
 
     /**
      * Public constructor with JSP action element.<p>
-     * 
+     *
      * @param jsp an initialized JSP action element
      */
     public A_CmsImportFromHttp(CmsJspActionElement jsp) {
@@ -84,7 +84,7 @@ public abstract class A_CmsImportFromHttp extends CmsDialog {
 
     /**
      * Public constructor with JSP variables.<p>
-     * 
+     *
      * @param context the JSP page context
      * @param req the JSP request
      * @param res the JSP response
@@ -96,7 +96,7 @@ public abstract class A_CmsImportFromHttp extends CmsDialog {
 
     /**
      * Performs the import operation after "OK" has been pressed.<p>
-     * 
+     *
      * @throws IOException in case of errors forwarding to the required result page
      * @throws ServletException in case of errors forwarding to the required result page
      */
@@ -104,7 +104,7 @@ public abstract class A_CmsImportFromHttp extends CmsDialog {
 
     /**
      * Performs the dialog actions depending on the initialized action and displays the dialog form.<p>
-     * 
+     *
      * @throws JspException if dialog actions fail
      * @throws IOException if writing to the JSP out fails, or in case of errors forwarding to the required result page
      * @throws ServletException in case of errors forwarding to the required result page
@@ -127,6 +127,7 @@ public abstract class A_CmsImportFromHttp extends CmsDialog {
                     break;
                 }
 
+                //$FALL-THROUGH$
             case ACTION_DEFAULT:
             default:
                 // ACTION: show dialog (default)
@@ -138,14 +139,14 @@ public abstract class A_CmsImportFromHttp extends CmsDialog {
 
     /**
      * Gets the return uri for this dialog.<p>
-     * 
+     *
      * @return return uri for this dialog
      */
     public abstract String getDialogReturnUri();
 
     /**
      * Gets the localized import message text for the input form.<p>
-     * 
+     *
      * @return localized import message text  for the input form
      */
     public abstract String getImportMessage();
@@ -162,7 +163,7 @@ public abstract class A_CmsImportFromHttp extends CmsDialog {
 
     /**
      * Gets the localized start text for the input form.<p>
-     * 
+     *
      * @return localized start text for the input form
      */
     public abstract String getStarttext();
@@ -178,33 +179,22 @@ public abstract class A_CmsImportFromHttp extends CmsDialog {
     }
 
     /**
-     * Html code for the additional parameters.<p>
-     * 
-     * @return html code 
-     */
-    protected String getAdditionalParameters() {
-
-        // do nothing
-        return "";
-    }
-
-    /**
      * Gets a database import file from the client and copies it to the server.<p>
      *
      * @param destination the destination of the file on the server
-     * 
+     *
      * @return the name of the file or null if something went wrong when importing the file
-     * 
+     *
      * @throws CmsIllegalArgumentException if the specified file name is invalid
      * @throws CmsRfsException if generating folders or files on the server fails
      */
     protected String copyFileToServer(String destination) throws CmsIllegalArgumentException, CmsRfsException {
 
         // get the file item from the multipart request
-        Iterator i = getMultiPartFileItems().iterator();
-        FileItem fi = null;
+        Iterator<DiskFileItem> i = getMultiPartFileItems().iterator();
+        DiskFileItem fi = null;
         while (i.hasNext()) {
-            fi = (FileItem)i.next();
+            fi = i.next();
             if (fi.getName() != null) {
                 // found the file object, leave iteration
                 break;
@@ -219,21 +209,27 @@ public abstract class A_CmsImportFromHttp extends CmsDialog {
         if ((fi != null) && CmsStringUtil.isNotEmptyOrWhitespaceOnly(fi.getName())) {
             // file name has been specified, upload the file
             fileName = fi.getName();
-            byte[] content = fi.get();
-            fi.delete();
+            byte[] content = null;
+            try {
+                content = fi.get();
+                fi.delete();
+            } catch (IOException e) {
+                throw new CmsRfsException(Messages.get().container(Messages.ERR_FILE_NOT_WRITTEN_0, e));
+            }
             // get the file name without folder information
             fileName = CmsResource.getName(fileName.replace('\\', '/'));
             // first create the folder if it does not exist
-            File discFolder = new File(OpenCms.getSystemInfo().getAbsoluteRfsPathRelativeToWebInf(
-                OpenCms.getSystemInfo().getPackagesRfsPath() + File.separator));
+            File discFolder = new File(
+                OpenCms.getSystemInfo().getAbsoluteRfsPathRelativeToWebInf(
+                    OpenCms.getSystemInfo().getPackagesRfsPath() + File.separator));
             if (!discFolder.exists()) {
                 if (!discFolder.mkdir()) {
                     throw new CmsRfsException(Messages.get().container(Messages.ERR_FOLDER_NOT_CREATED_0));
                 }
             }
             // write the file into the packages folder of the OpenCms server
-            File discFile = new File(OpenCms.getSystemInfo().getAbsoluteRfsPathRelativeToWebInf(
-                destination + File.separator + fileName));
+            File discFile = new File(
+                OpenCms.getSystemInfo().getAbsoluteRfsPathRelativeToWebInf(destination + File.separator + fileName));
             try {
                 // write the new file to disk
                 OutputStream s = new FileOutputStream(discFile);
@@ -255,7 +251,7 @@ public abstract class A_CmsImportFromHttp extends CmsDialog {
 
     /**
      * Creates the HTML for the error message if validation errors were found.<p>
-     * 
+     *
      * @return the HTML for the error message if validation errors were found
      */
     protected String createDialogErrorMessage() {
@@ -285,7 +281,7 @@ public abstract class A_CmsImportFromHttp extends CmsDialog {
 
     /**
      * Returns the HTML to build the input form of the upload dialog.<p>
-     * 
+     *
      * @return the HTML to build the input form of the upload dialog
      */
     protected String defaultActionHtml() {
@@ -332,6 +328,17 @@ public abstract class A_CmsImportFromHttp extends CmsDialog {
     }
 
     /**
+     * Html code for the additional parameters.<p>
+     *
+     * @return html code
+     */
+    protected String getAdditionalParameters() {
+
+        // do nothing
+        return "";
+    }
+
+    /**
      * Returns the dialog exception.<p>
      *
      * @return the dialog exception
@@ -344,11 +351,13 @@ public abstract class A_CmsImportFromHttp extends CmsDialog {
     /**
      * @see org.opencms.workplace.CmsWorkplace#initMessages()
      */
+    @Override
     protected abstract void initMessages();
 
     /**
      * @see org.opencms.workplace.CmsWorkplace#initWorkplaceRequestValues(org.opencms.workplace.CmsWorkplaceSettings, javax.servlet.http.HttpServletRequest)
      */
+    @Override
     protected void initWorkplaceRequestValues(CmsWorkplaceSettings settings, HttpServletRequest request) {
 
         // set the dialog type
@@ -357,7 +366,7 @@ public abstract class A_CmsImportFromHttp extends CmsDialog {
         // fill the parameter values in the get/set methods
         fillParamValues(request);
 
-        // set the action for the JSP switch 
+        // set the action for the JSP switch
         if (DIALOG_OK.equals(getParamAction())) {
             // ok button pressed
             setAction(ACTION_OK);
@@ -365,7 +374,7 @@ public abstract class A_CmsImportFromHttp extends CmsDialog {
             // cancel button pressed
             setAction(ACTION_CANCEL);
         } else {
-            // first dialog call, set the default action               
+            // first dialog call, set the default action
             setAction(ACTION_DEFAULT);
         }
     }

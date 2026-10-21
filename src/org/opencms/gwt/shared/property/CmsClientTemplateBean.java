@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -15,11 +15,11 @@
  * Lesser General Public License for more details.
  *
  * For further information about Alkacon Software, please see the
- * company website: http://www.alkacon.com
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -31,7 +31,7 @@ import com.google.gwt.user.client.rpc.IsSerializable;
 
 /**
  * Sitemap initialization data.<p>
- * 
+ *
  * @since 8.0
  */
 public class CmsClientTemplateBean implements IsSerializable {
@@ -61,7 +61,7 @@ public class CmsClientTemplateBean implements IsSerializable {
 
     /**
      * Constructor.<p>
-     * 
+     *
      * @param title the title
      * @param description the description
      * @param sitePath the site path
@@ -77,12 +77,12 @@ public class CmsClientTemplateBean implements IsSerializable {
 
     /**
      * Returns a dummy template object which represents an empty selection.<p>
-     * 
-     * @return a dummy template object 
+     *
+     * @return a dummy template object
      */
     public static CmsClientTemplateBean getNullTemplate() {
 
-        String imagePath = "/system/modules/org.opencms.ade.sitemap/pages/notemplate.png";
+        String imagePath = "/system/workplace/resources/commons/notemplate.png";
         CmsClientTemplateBean result = new CmsClientTemplateBean("No template", "", "", imagePath);
         result.setShowWeakText(true);
         return result;
@@ -130,7 +130,7 @@ public class CmsClientTemplateBean implements IsSerializable {
 
     /**
      * Returns true if the template should be shown with weak text.<p>
-     * 
+     *
      * @return true if the template should be shown with weak text
      */
     public boolean isShowWeakText() {
@@ -140,7 +140,7 @@ public class CmsClientTemplateBean implements IsSerializable {
 
     /**
      * Sets the display of weak text to true or false.<p>
-     * 
+     *
      * @param showWeakText if true, the template should be displayed with weak text
      */
     public void setShowWeakText(boolean showWeakText) {

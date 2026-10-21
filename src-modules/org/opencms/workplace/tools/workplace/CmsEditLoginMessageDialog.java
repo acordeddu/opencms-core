@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -14,12 +14,12 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * Lesser General Public License for more details.
  *
- * For further information about Alkacon Software GmbH, please see the
- * company website: http://www.alkacon.com
+ * For further information about Alkacon Software GmbH & Co. KG, please see the
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -27,7 +27,7 @@
 
 package org.opencms.workplace.tools.workplace;
 
-import org.opencms.configuration.CmsSystemConfiguration;
+import org.opencms.configuration.CmsVariablesConfiguration;
 import org.opencms.db.CmsLoginMessage;
 import org.opencms.jsp.CmsJspActionElement;
 import org.opencms.main.OpenCms;
@@ -47,14 +47,14 @@ import javax.servlet.jsp.PageContext;
 
 /**
  * Dialog to edit the login message of the OpenCms Workplace.<p>
- * 
- * @since 6.0.0 
+ *
+ * @since 6.0.0
  */
 public class CmsEditLoginMessageDialog extends CmsWidgetDialog {
 
     /** localized messages Keys prefix. */
     public static final String KEY_PREFIX = "loginmsg";
-    
+
     /** Defines which pages are valid for this dialog. */
     public static final String[] PAGES = {"page1"};
 
@@ -63,7 +63,7 @@ public class CmsEditLoginMessageDialog extends CmsWidgetDialog {
 
     /**
      * Public constructor with JSP action element.<p>
-     * 
+     *
      * @param jsp an initialized JSP action element
      */
     public CmsEditLoginMessageDialog(CmsJspActionElement jsp) {
@@ -73,7 +73,7 @@ public class CmsEditLoginMessageDialog extends CmsWidgetDialog {
 
     /**
      * Public constructor with JSP variables.<p>
-     * 
+     *
      * @param context the JSP page context
      * @param req the JSP request
      * @param res the JSP response
@@ -86,15 +86,16 @@ public class CmsEditLoginMessageDialog extends CmsWidgetDialog {
     /**
      * Commits the edited login message to the login manager.<p>
      */
+    @Override
     public void actionCommit() {
 
-        List errors = new ArrayList();
+        List<Throwable> errors = new ArrayList<Throwable>();
 
         try {
             // set the edited message
             OpenCms.getLoginManager().setLoginMessage(getCms(), m_loginMessage);
             // update the system configuration
-            OpenCms.writeConfiguration(CmsSystemConfiguration.class);
+            OpenCms.writeConfiguration(CmsVariablesConfiguration.class);
             // clear the message object
             setDialogObject(null);
         } catch (Throwable t) {
@@ -107,12 +108,13 @@ public class CmsEditLoginMessageDialog extends CmsWidgetDialog {
 
     /**
      * Creates the dialog HTML for all defined widgets of the named dialog (page).<p>
-     * 
+     *
      * This overwrites the method from the super class to create a layout variation for the widgets.<p>
-     * 
+     *
      * @param dialog the dialog (page) to get the HTML for
      * @return the dialog HTML for all defined widgets of the named dialog (page)
      */
+    @Override
     protected String createDialogHtml(String dialog) {
 
         StringBuffer result = new StringBuffer(1024);
@@ -144,40 +146,44 @@ public class CmsEditLoginMessageDialog extends CmsWidgetDialog {
     /**
      * Creates the list of widgets for this dialog.<p>
      */
+    @Override
     protected void defineWidgets() {
 
         // initialize the object to use for the dialog
         initLoginMessageObject();
 
         setKeyPrefix(KEY_PREFIX);
-        
+
         // required to read the default values for the optional context parameters for the widgets
         CmsLoginMessage def = new CmsLoginMessage();
 
         addWidget(new CmsWidgetDialogParameter(m_loginMessage, "enabled", PAGES[0], new CmsCheckboxWidget()));
         addWidget(new CmsWidgetDialogParameter(m_loginMessage, "message", PAGES[0], new CmsTextareaWidget()));
         addWidget(new CmsWidgetDialogParameter(m_loginMessage, "loginForbidden", PAGES[0], new CmsCheckboxWidget()));
-        addWidget(new CmsWidgetDialogParameter(
-            m_loginMessage,
-            "timeStart",
-            String.valueOf(def.getTimeStart()),
-            PAGES[0],
-            new CmsCalendarWidget(),
-            0,
-            1));
-        addWidget(new CmsWidgetDialogParameter(
-            m_loginMessage,
-            "timeEnd",
-            String.valueOf(def.getTimeEnd()),
-            PAGES[0],
-            new CmsCalendarWidget(),
-            0,
-            1));
+        addWidget(
+            new CmsWidgetDialogParameter(
+                m_loginMessage,
+                "timeStart",
+                String.valueOf(def.getTimeStart()),
+                PAGES[0],
+                new CmsCalendarWidget(),
+                0,
+                1));
+        addWidget(
+            new CmsWidgetDialogParameter(
+                m_loginMessage,
+                "timeEnd",
+                String.valueOf(def.getTimeEnd()),
+                PAGES[0],
+                new CmsCalendarWidget(),
+                0,
+                1));
     }
 
     /**
      * @see org.opencms.workplace.CmsWidgetDialog#getPageArray()
      */
+    @Override
     protected String[] getPageArray() {
 
         return PAGES;
@@ -204,6 +210,7 @@ public class CmsEditLoginMessageDialog extends CmsWidgetDialog {
     /**
      * @see org.opencms.workplace.CmsWorkplace#initMessages()
      */
+    @Override
     protected void initMessages() {
 
         // add specific dialog resource bundle
@@ -215,6 +222,7 @@ public class CmsEditLoginMessageDialog extends CmsWidgetDialog {
     /**
      * @see org.opencms.workplace.CmsWorkplace#initWorkplaceRequestValues(org.opencms.workplace.CmsWorkplaceSettings, javax.servlet.http.HttpServletRequest)
      */
+    @Override
     protected void initWorkplaceRequestValues(CmsWorkplaceSettings settings, HttpServletRequest request) {
 
         // initialize parameters and dialog actions in super implementation

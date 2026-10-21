@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -15,11 +15,11 @@
  * Lesser General Public License for more details.
  *
  * For further information about Alkacon Software, please see the
- * company website: http://www.alkacon.com
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -31,7 +31,7 @@ import org.opencms.util.CmsUUID;
 
 /**
  * A bean class containing both a path and a UUID which should be stored in an XML file value.<p>
- * 
+ *
  * @since 8.0.0
  */
 public class CmsVfsFileValueBean {
@@ -42,9 +42,9 @@ public class CmsVfsFileValueBean {
     /** The path. */
     private String m_path;
 
-    /** 
+    /**
      * Constructor.<p>
-     * 
+     *
      * @param path the path
      * @param id the UUID
      */
@@ -57,7 +57,7 @@ public class CmsVfsFileValueBean {
 
     /**
      * Gets the UUID of this bean.<p>
-     * 
+     *
      * @return a UUID
      */
     public CmsUUID getId() {
@@ -67,8 +67,8 @@ public class CmsVfsFileValueBean {
 
     /**
      * Gets the path of this bean.<p>
-     * 
-     * @return a path 
+     *
+     * @return a path
      */
     public String getPath() {
 

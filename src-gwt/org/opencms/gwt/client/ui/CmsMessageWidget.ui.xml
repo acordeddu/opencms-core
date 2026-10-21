@@ -4,30 +4,36 @@
 	<ui:style>
 		table.main{
 			display: block;
+			table-layout: fixed;
 		}
-		table.main td.icon{
-			background-repeat: no-repeat;
-			background-position: 50% 50%;
+		table.main tr td.iconCol{
 			vertical-align: middle;
 			padding: 0px;
 			width: 60px;
-			float: none;
-			display: table-cell;
+			text-align: center;
+			height: 90px;
 		}
-		table.main td.message{
+		table.main div.message{
 			vertical-align: middle;
-			padding: 15px 15px 15px 0px;
-			overflow: auto;
+			padding: 15px 15px 15px 15px;
 			position: relative;
+			max-height: 150px;
 		}
-		table.main td.message > p:first-child {
+		table.main div.message > p:first-child {
 			margin-top: 0px;
 		}
-		table.main td.message > p {
+		table.main div.message > p {
 			margin-top: 5px;
 		}
+	
+		.outercontainer {
+			overflow-x: auto;
+		}
 	</ui:style>
-	<table class="{style.main} {resources.generalCss.cornerAll}">
-		<tr><td ui:field="m_icon" class="{style.icon}"></td><td ui:field="m_message" class="{style.message}"></td></tr>
+	<div class="{style.outercontainer} {resources.generalCss.cornerAll}" >
+	<table class="{style.main} ">
+		<colgroup><col class="{style.iconCol}" /><col /></colgroup>
+		<tr><td class="{style.iconCol}" ui:field="m_iconCell"></td><td><div ui:field="m_message" class="{style.message}"></div></td></tr>
 	</table>
+	</div>
 </ui:UiBinder>

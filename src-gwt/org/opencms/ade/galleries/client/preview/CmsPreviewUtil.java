@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -15,11 +15,11 @@
  * Lesser General Public License for more details.
  *
  * For further information about Alkacon Software, please see the
- * company website: http://www.alkacon.com
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -37,7 +37,7 @@ import com.google.gwt.core.client.JsArrayString;
 
 /**
  * Utility class for resource preview.<p>
- * 
+ *
  * @since 8.0.0
  */
 public final class CmsPreviewUtil {
@@ -87,7 +87,7 @@ public final class CmsPreviewUtil {
 
     /**
      * Enables the dialog OK button within the rich text editor (FCKEditor, CKEditor, ...).<p>
-     * 
+     *
      * @param enabled <code>true</code> to enable the button
      */
     public static native void enableEditorOk(boolean enabled)/*-{
@@ -97,9 +97,9 @@ public final class CmsPreviewUtil {
 
     /**
      * Exports the functions of {@link org.opencms.ade.galleries.client.preview.I_CmsResourcePreview}
-     * to the window object for use via JSNI.<p> 
-     * 
-     * @param previewName the preview name 
+     * to the window object for use via JSNI.<p>
+     *
+     * @param previewName the preview name
      * @param preview the preview
      */
     public static native void exportFunctions(String previewName, I_CmsResourcePreview<?> preview) /*-{
@@ -110,7 +110,7 @@ public final class CmsPreviewUtil {
 
     /**
      * Returns the xml-content field id.<p>
-     * 
+     *
      * @return the field id
      */
     public static native String getFieldId() /*-{
@@ -119,7 +119,7 @@ public final class CmsPreviewUtil {
 
     /**
      * Returns the available image format names for gallery widget mode.<p>
-     * 
+     *
      * @return the available image format names
      */
     public static String[] getFormatNames() {
@@ -137,7 +137,7 @@ public final class CmsPreviewUtil {
 
     /**
      * Returns the available image formats for gallery widget mode.<p>
-     * 
+     *
      * @return the available image formats
      */
     public static String[] getFormats() {
@@ -155,10 +155,10 @@ public final class CmsPreviewUtil {
 
     /**
      * Returns all available information of the selected image tag, or null, if no image is selected.<p>
-     * 
+     *
      * @return a map with the following keys:<p>
      *          alt, class, height, hspace, linkPath, linkTarget, longDesc, style, title, vspace, width<p>
-     * 
+     *
      *          all keys represent a tag attribute by the same name, only linkPath and linkTarget contain
      *          information on an surrounding link tag
      */
@@ -169,38 +169,38 @@ public final class CmsPreviewUtil {
 
     /**
      * Returns the availability of enhanced image options.<p>
-     * 
+     *
      * @return <code>true</code> if enhanced image options are available
      */
     public static native boolean hasEnhancedImageOptions() /*-{
         return $wnd[@org.opencms.ade.galleries.client.preview.CmsPreviewUtil::KEY_HAS_ENHANCED_IMAGE_OPTIONS]
-                ();
+                () ? true : false;
     }-*/;
 
     /**
      * Returns if the gallery widget is used in advanced mode.<p>
-     * 
+     *
      * @return <code>true</code> if format selector should be shown
      */
     public static native boolean isAdvancedWidget()/*-{
         var id = $wnd[@org.opencms.ade.galleries.shared.I_CmsGalleryProviderConstants::KEY_HASH_ID];
         var additional = $wnd.parent['cms_additional_' + id];
-        if (additional) {
-            return additional['isAdvancedWidget'];
+        if (additional && additional['isAdvancedWidget']) {
+            return true;
         }
         return false;
     }-*/;
 
     /**
      * Returns if the image format selector should be shown within gallery widget mode.<p>
-     * 
+     *
      * @return <code>true</code> if format selector should be shown
      */
     public static native boolean isShowFormats()/*-{
         var id = $wnd[@org.opencms.ade.galleries.shared.I_CmsGalleryProviderConstants::KEY_HASH_ID];
         var additional = $wnd.parent['cms_additional_' + id];
         if (additional) {
-            return additional['useFormats'];
+            return additional[@org.opencms.ade.galleries.shared.I_CmsGalleryProviderConstants::CONFIG_USE_FORMATS];
         }
         return false;
     }-*/;
@@ -215,7 +215,7 @@ public final class CmsPreviewUtil {
 
     /**
      * Sets the image tag within the rich text editor (FCKEditor, CKEditor, ...).<p>
-     * 
+     *
      * @param path the image path
      * @param attributes the image tag attributes
      */
@@ -230,7 +230,7 @@ public final class CmsPreviewUtil {
 
     /**
      * Sets the image link within the rich text editor (FCKEditor, CKEditor, ...).<p>
-     * 
+     *
      * @param path the image path
      * @param attributes the image tag attributes
      * @param linkPath the link path
@@ -247,7 +247,7 @@ public final class CmsPreviewUtil {
 
     /**
      * Sets the resource link within the rich text editor (FCKEditor, CKEditor, ...).<p>
-     * 
+     *
      * @param path the link path
      * @param title the link title
      * @param target the link target attribute
@@ -259,9 +259,9 @@ public final class CmsPreviewUtil {
 
     /**
      * Sets the path of the selected resource in the input field of the xmlcontent.<p>
-     * 
-     * Widget mode: Use this function inside the xmlcontent. 
-     * 
+     *
+     * Widget mode: Use this function inside the xmlcontent.
+     *
      * @param path the path to the selected resource
      */
     public static native void setResourcePath(String path) /*-{
@@ -278,14 +278,17 @@ public final class CmsPreviewUtil {
             } catch (e) {
             }
         }
-        $wnd.parent.cmsCloseDialog(fieldId);
+
+        $wnd.setTimeout(function() {
+            $wnd.parent.cmsCloseDialog(fieldId);
+        }, 10);
     }-*/;
 
     /**
      * Sets the path of the selected resource in the input field of the xmlcontent.<p>
-     * 
-     * Widget mode: Use this function inside the xmlcontent. 
-     * 
+     *
+     * Widget mode: Use this function inside the xmlcontent.
+     *
      * @param path the path to the selected resource
      * @param scale the scale parameter
      * @param formatName the selected format name
@@ -305,7 +308,7 @@ public final class CmsPreviewUtil {
                         + fieldId);
                 if (formatBox != null && formatBox.options != null) {
                     var selectIndex = -1;
-                    for ( var i = 0; i < formatBox.options.length; i++) {
+                    for (var i = 0; i < formatBox.options.length; i++) {
                         if (formatBox.options[i].value == formatName) {
                             formatBox.selectedIndex = i;
                             break;
@@ -339,40 +342,51 @@ public final class CmsPreviewUtil {
             } catch (e) {
             }
         }
-        $wnd.parent.cmsCloseDialog(fieldId);
+        $wnd.setTimeout(function() {
+            $wnd.parent.cmsCloseDialog(fieldId);
+        }, 10);
+    }-*/;
+
+    /**
+     * Returns if the select button should be shown.<p>
+     *
+     * @return <code>true</code> if the select button should be shown
+     */
+    public static native boolean shouldShowSelectButton()/*-{
+        return "true" == $wnd[@org.opencms.ade.galleries.shared.I_CmsGalleryProviderConstants::KEY_SHOW_SELECT];
     }-*/;
 
     /**
      * Returns the image format names.<p>
-     * 
+     *
      * @return the image format names
      */
     private static native JsArrayString nativeGetFormatNames()/*-{
         var id = $wnd[@org.opencms.ade.galleries.shared.I_CmsGalleryProviderConstants::KEY_HASH_ID];
         var additional = $wnd.parent['cms_additional_' + id];
         if (additional) {
-            return additional['imageFormatNames'];
+            return additional[@org.opencms.ade.galleries.shared.I_CmsGalleryProviderConstants::CONFIG_IMAGE_FORMAT_NAMES];
         }
         return null;
     }-*/;
 
     /**
      * Returns the available image formats for gallery widget mode.<p>
-     * 
+     *
      * @return the available image formats
      */
     private static native JsArrayString nativeGetFormats()/*-{
         var id = $wnd[@org.opencms.ade.galleries.shared.I_CmsGalleryProviderConstants::KEY_HASH_ID];
         var additional = $wnd.parent['cms_additional_' + id];
         if (additional) {
-            return additional['imageFormats'];
+            return additional[@org.opencms.ade.galleries.shared.I_CmsGalleryProviderConstants::CONFIG_IMAGE_FORMATS];
         }
         return null;
     }-*/;
 
     /**
     * Calls the integrator's set image function to set the image tag within the rich text editor (FCKEditor, CKEditor, ...).<p>
-    * 
+    *
     * @param path the image path
     * @param attributes the image tag attributes
     */
@@ -386,7 +400,7 @@ public final class CmsPreviewUtil {
 
     /**
      * Calls the integrator's set image link function to set the image link within the rich text editor (FCKEditor, CKEditor, ...).<p>
-     * 
+     *
      * @param path the image path
      * @param attributes the image tag attributes
      * @param linkPath the link path
@@ -399,7 +413,7 @@ public final class CmsPreviewUtil {
 
     /**
      * Calls the integrator's set link function to set the resource link within the rich text editor (FCKEditor, CKEditor, ...).<p>
-     * 
+     *
      * @param path the link path
      * @param title the link title
      * @param target the link target attribute

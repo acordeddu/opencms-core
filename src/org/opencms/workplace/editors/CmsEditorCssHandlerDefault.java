@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -14,12 +14,12 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * Lesser General Public License for more details.
  *
- * For further information about Alkacon Software GmbH, please see the
- * company website: http://www.alkacon.com
+ * For further information about Alkacon Software GmbH & Co. KG, please see the
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -27,36 +27,111 @@
 
 package org.opencms.workplace.editors;
 
+import org.opencms.ade.configuration.CmsADEConfigData;
 import org.opencms.file.CmsObject;
 import org.opencms.file.CmsPropertyDefinition;
+import org.opencms.loader.CmsTemplateContextManager;
+import org.opencms.loader.I_CmsTemplateContextProvider;
 import org.opencms.main.CmsException;
 import org.opencms.main.CmsLog;
+import org.opencms.main.OpenCms;
 import org.opencms.util.CmsStringUtil;
 
 import org.apache.commons.logging.Log;
 
 /**
  * A default editor CSS handler to obtain the CSS style sheet path from the template property value of the template itself.<p>
- * 
- * @since 6.9.2 
+ *
+ * @since 6.9.2
  */
 public class CmsEditorCssHandlerDefault implements I_CmsEditorCssHandler {
 
     /** The log object for this class. */
     private static final Log LOG = CmsLog.getLog(CmsEditorCssHandlerDefault.class);
 
+    /** Sitemap attribute that can be used to configure the editor stylesheet. */
+    public static final String ATTR_TEMPLATE_EDITOR_CSS = "template.editor.css";
+
+    /** Request context attribute used to pass the editor stylesheet (normally defined as a meta tag) to the CSS handler. */
+    public static final String ATTRIBUTE_EDITOR_STYLESHEET = "cms-editor-stylesheet";
+
     /**
      * @see org.opencms.workplace.editors.I_CmsEditorCssHandler#getUriStyleSheet(org.opencms.file.CmsObject, java.lang.String)
      */
     public String getUriStyleSheet(CmsObject cms, String editedResourcePath) {
 
+        String editContext = (String)(cms.getRequestContext().getAttribute(CmsXmlContentEditor.ATTRIBUTE_EDITCONTEXT));
         String result = "";
+        if (!CmsStringUtil.isEmptyOrWhitespaceOnly(editContext)) {
+            // prefer the style sheet of the edit context (usually this will be a container page)
+            result = internalGetUriStyleSheet(cms, editContext);
+        }
+        if (CmsStringUtil.isEmptyOrWhitespaceOnly(result)) {
+            result = internalGetUriStyleSheet(cms, editedResourcePath);
+        }
+        return result;
+    }
+
+    /**
+     * @see org.opencms.workplace.editors.I_CmsEditorCssHandler#matches(org.opencms.file.CmsObject, java.lang.String)
+     */
+    public boolean matches(CmsObject cms, String editedResourcePath) {
+
+        // this returns always true, as it is the default CSS handler
+        return true;
+    }
+
+    /**
+     * Finds the style sheet by reading the template property of the template for a given path.<p>
+     *
+     * @param cms the current CMS context
+     * @param editedResourcePath the resource path
+     *
+     * @return the CSS uri from the template for the given path
+     */
+    private String internalGetUriStyleSheet(CmsObject cms, String editedResourcePath) {
+
+        if (editedResourcePath == null) {
+            return "";
+        }
+        String result = "";
+
+        Object attr = cms.getRequestContext().getAttribute(ATTRIBUTE_EDITOR_STYLESHEET);
+        if (attr instanceof String) {
+            String editorStylesheet = (String)attr;
+            return editorStylesheet;
+        }
+
+        try {
+            CmsADEConfigData config = OpenCms.getADEManager().lookupConfigurationWithCache(
+                cms,
+                cms.getRequestContext().addSiteRoot(editedResourcePath));
+            String cssPathFromSitemapConfig = config.getAttribute(ATTR_TEMPLATE_EDITOR_CSS, null);
+            if ((cssPathFromSitemapConfig != null) && cms.existsResource(cssPathFromSitemapConfig)) {
+                return cssPathFromSitemapConfig;
+            }
+        } catch (Exception e) {
+            LOG.error(e.getLocalizedMessage(), e);
+        }
+
         try {
             // determine the path of the template
             String templatePath = "";
             try {
-                templatePath = cms.readPropertyObject(editedResourcePath, CmsPropertyDefinition.PROPERTY_TEMPLATE, true).getValue(
-                    "");
+                templatePath = cms.readPropertyObject(
+                    editedResourcePath,
+                    CmsPropertyDefinition.PROPERTY_TEMPLATE,
+                    true).getValue("");
+                if (CmsTemplateContextManager.isProvider(templatePath)) {
+                    I_CmsTemplateContextProvider provider = OpenCms.getTemplateContextManager().getTemplateContextProvider(
+                        templatePath);
+                    if (provider != null) {
+                        String providerResult = provider.getEditorStyleSheet(cms, editedResourcePath);
+                        if (providerResult != null) {
+                            return providerResult;
+                        }
+                    }
+                }
             } catch (CmsException e) {
                 if (LOG.isWarnEnabled()) {
                     LOG.warn(Messages.get().getBundle().key(Messages.LOG_READ_TEMPLATE_PROP_FAILED_0), e);
@@ -73,15 +148,6 @@ public class CmsEditorCssHandlerDefault implements I_CmsEditorCssHandler {
             }
         }
         return result;
-    }
-
-    /**
-     * @see org.opencms.workplace.editors.I_CmsEditorCssHandler#matches(org.opencms.file.CmsObject, java.lang.String)
-     */
-    public boolean matches(CmsObject cms, String editedResourcePath) {
-
-        // this returns always true, as it is the default CSS handler
-        return true;
     }
 
 }

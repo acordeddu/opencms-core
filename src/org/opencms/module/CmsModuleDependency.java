@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -14,12 +14,12 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * Lesser General Public License for more details.
  *
- * For further information about Alkacon Software GmbH, please see the
- * company website: http://www.alkacon.com
+ * For further information about Alkacon Software GmbH & Co. KG, please see the
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -27,17 +27,22 @@
 
 package org.opencms.module;
 
+import java.io.Serializable;
+
 /**
  * Describes an OpenCms module dependency.<p>
- * 
+ *
  * Module dependencies are checked if a module is imported or deleted.
- * If a module A requires certain resources (like Java classes) 
+ * If a module A requires certain resources (like Java classes)
  * from another module B, a should be made dependend on B.<p>
- 
- * 
- * @since 6.0.0 
+ *
+ *
+ * @since 6.0.0
  */
-public class CmsModuleDependency implements Comparable<Object> {
+public class CmsModuleDependency implements Comparable<Object>, Serializable {
+
+    /** The serial version id. */
+    private static final long serialVersionUID = -464911120361037953L;
 
     /** The hash code of the module dependency. */
     private int m_hashCode;
@@ -50,7 +55,7 @@ public class CmsModuleDependency implements Comparable<Object> {
 
     /**
      * Generates a new, empty module dependency.<p>
-     * 
+     *
      */
     public CmsModuleDependency() {
 
@@ -64,7 +69,7 @@ public class CmsModuleDependency implements Comparable<Object> {
 
     /**
      * Generates a new module dependency.<p>
-     * 
+     *
      * @param moduleName the name of the module dependency
      * @param minVersion the minimum version of the dependency
      */
@@ -76,6 +81,15 @@ public class CmsModuleDependency implements Comparable<Object> {
 
         // pre - calculate the hash code
         m_hashCode = m_name.concat(m_version.toString()).hashCode();
+    }
+
+    /**
+     * @see java.lang.Object#clone()
+     */
+    @Override
+    public Object clone() {
+
+        return new CmsModuleDependency(m_name, new CmsModuleVersion(m_version.getVersion()));
     }
 
     /**
@@ -100,7 +114,7 @@ public class CmsModuleDependency implements Comparable<Object> {
 
     /**
      * Checks if this module depedency depends on another given module dependency.<p>
-     * 
+     *
      * @param other the other dependency to check against
      * @return true if this module depedency depends on the given module dependency
      */
@@ -161,7 +175,7 @@ public class CmsModuleDependency implements Comparable<Object> {
     }
 
     /** Sets the name of a module dependency.<p>
-     * 
+     *
      * @param value the name of a module dependency
      */
     public void setName(String value) {
@@ -170,7 +184,7 @@ public class CmsModuleDependency implements Comparable<Object> {
     }
 
     /** Sets the version of a module dependency.<p>
-     * 
+     *
      * @param value the version of a module dependency
      */
     public void setVersion(CmsModuleVersion value) {

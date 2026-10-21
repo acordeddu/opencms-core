@@ -1,0 +1,124 @@
+.highlightBox{
+	position: absolute;
+	z-index: value("constants.css.zIndexHighlighting");
+	background: transparent;
+}
+
+.highlightBox {
+	opacity: 0.7;
+}
+
+.highlightBox div{
+	position: absolute;
+	top: 0px;
+	left: 0px;
+}
+
+.highlightBox .borderLeft, .highlightBox .borderRight{
+	width: 2px;
+}
+
+.highlightBox .borderTop, .highlightBox .borderBottom{
+	height: 2px
+}
+
+.highlightBox .midpointSeparator {
+	height: 1px;
+}
+
+.animated .borderLeft{
+	animation: moveDown 1s linear normal infinite;
+}
+	
+.animated .borderRight{
+	animation: moveDown 1s linear reverse infinite;
+}
+	
+.animated .borderTop, .animated .midpointSeparator {
+	animation: moveRight 1s linear reverse infinite;
+}
+	
+.animated .borderBottom{
+	animation: moveRight 1s linear normal infinite;
+}	
+	
+@keyframes moveRight {
+	0% {background-position: 0px 50%;}
+	100% {background-position: 16px 50%;}
+}
+
+@keyframes moveDown {
+	0% {background-position: 50% 8px;}
+	100% {background-position: 50% 24px;}
+}
+
+.colorSolidGrey .borderLeft, .colorSolidGrey .borderRight, .colorSolidGrey .borderTop, .colorSolidGrey .borderBottom{
+	background: rgba(181,189,200,1);
+}
+
+.colorGrey .borderLeft, .colorGrey .borderRight{
+	background: linear-gradient(
+  		to bottom,
+  		rgba(181,189,200,1) ,
+  		rgba(181,189,200,1)  50%,
+  		rgba(255,255,255,0.5) 50%,
+  		rgba(255,255,255,0.5)
+	);
+	background-size: 100% 16px;
+}
+
+.colorGrey .borderTop, .colorGrey .borderBottom, .colorGrey .midpointSeparator {
+	background: linear-gradient(
+  		to right,
+  		rgba(181,189,200,1) ,
+  		rgba(181,189,200,1)  50%,
+  		rgba(255,255,255,0.5) 50%,
+  		rgba(255,255,255,0.5)
+	);
+	background-size: 16px  100%;
+}
+
+
+.colorRed .borderLeft, .colorRed .borderRight{
+	background: linear-gradient(
+  		to bottom,
+  		rgba(179,27,52,1),
+  		rgba(179,27,52,1) 50%,
+		rgba(255,255,255,0.5) 50%,
+  		rgba(255,255,255,0.5)
+	);
+	background-size: 100% 16px;
+}
+
+.colorRed .borderTop, .colorRed .borderBottom, .colorRed .midpointSeparator {
+	background: linear-gradient(
+  		to right,
+  		rgba(179,27,52,1),
+  		rgba(179,27,52,1) 50%,
+		rgba(255,255,255,0.5) 50%,
+  		rgba(255,255,255,0.5)
+	);
+	background-size: 16px  100%;
+}
+
+.colorBlue .borderLeft, .colorBlue .borderRight{
+	background: linear-gradient(
+  		to bottom,
+  		rgba(135,224,253,1),
+  		rgba(135,224,253,1)  50%,
+  		rgba(255,255,255,0.5) 50%,
+		rgba(255,255,255,0.5)
+	);
+	background-size: 100% 16px;
+}
+
+.colorBlue .borderTop, .colorBlue .borderBottom, .colorBlue .midpointSeparator {
+	background: linear-gradient(
+  		to right,
+  		rgba(135,224,253,1),
+  		rgba(135,224,253,1)  50%,
+  		rgba(255,255,255,0.5) 50%,
+		rgba(255,255,255,0.5)
+	);
+	background-size: 16px  100%;
+}

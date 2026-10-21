@@ -1,4 +1,4 @@
-<!-- 
+<!--
 # The root configuration node is called <opencms> for all OpenCms configurations.
 -->
 <!ELEMENT opencms (search)>
@@ -7,24 +7,44 @@
 # In this node the global search options are configured.
 -->
 <!ELEMENT search (
-	cache?,
-	directory,
-	timeout,
-	offlineUpdateFrequency?,
-	forceunlock?,
-	excerpt,
-	extractionCacheMaxAge?,
-	maxModificationsBeforeCommit?,
-	highlighter,
-	documenttypes,
-	analyzers,
-	indexes,
-	indexsources,
-	fieldconfigurations?
+    solr?,
+    cache?,
+    directory,
+    timeout,
+    offlineUpdateFrequency?,
+    maxIndexWaitTime?,
+    forceunlock?,
+    excerpt,
+    extractionCacheMaxAge?,
+    maxModificationsBeforeCommit?,
+    highlighter,
+    documenttypes,
+    analyzers,
+    indexes,
+    indexsources,
+    fieldconfigurations?
 )>
 <!ATTLIST search
-	class CDATA #IMPLIED
+    class CDATA #IMPLIED
 >
+
+<!--
+# Configuration node for the Solr Server
+-->
+<!ELEMENT solr (
+    home?,
+    configfile?,
+    commitWithinMs?,
+    maxProcessedResults?
+)>
+<!ATTLIST solr
+    enabled (true|false|TRUE|FALSE) #REQUIRED
+    serverUrl CDATA #IMPLIED
+>
+<!ELEMENT home (#PCDATA)>
+<!ELEMENT configfile (#PCDATA)>
+<!ELEMENT commitWithinMs (#PCDATA)>
+<!ELEMENT maxProcessedResults (#PCDATA)>
 
 <!--
 # the size of the search result LFU map.
@@ -47,7 +67,12 @@
 <!ELEMENT offlineUpdateFrequency (#PCDATA)>
 
 <!--
-# The state of unlocking during the indexing threads (always|never|onlyfull), 
+# Time in milliseconds to wait maximally for the update of offline indexes after edit operations.
+-->
+<!ELEMENT maxIndexWaitTime (#PCDATA)>
+
+<!--
+# The state of unlocking during the indexing threads (always|never|onlyfull),
 # default is onlyfull.
 -->
 <!ELEMENT forceunlock (#PCDATA)>
@@ -77,15 +102,16 @@
 
 <!--
 # Document types specify which factory class is used to pull the
-# content of an OpenCms document into a Lucene index document. The factory class 
-# gets triggered for OpenCms documents matching the configured resource type 
+# content of an OpenCms document into a Lucene index document. The factory class
+# gets triggered for OpenCms documents matching the configured resource type
 # and/or mimetype combination in a document factory node.
 -->
 <!ELEMENT documenttype (
-	name,
-	class,
-	mimetypes,
-	resourcetypes
+    name,
+    class,
+    param*,
+    mimetypes,
+    resourcetypes
 )>
 
 <!--
@@ -107,9 +133,9 @@
 # with trimmed endings etc.
 -->
 <!ELEMENT analyzer (
-	class,
-	stemmer*,
-	locale
+    class,
+    stemmer*,
+    locale
 )>
 
 <!--
@@ -123,13 +149,13 @@
 # Configuration of a search index definition.
 -->
 <!ELEMENT index (
-	name,
-	rebuild,
-	project,
-	locale,
-	configuration?,
-	sources,
-	param*
+    name,
+    rebuild,
+    project,
+    locale,
+    configuration?,
+    sources,
+    param*
 )>
 <!ATTLIST index class CDATA #IMPLIED>
 
@@ -155,8 +181,8 @@
 <!ELEMENT configuration (#PCDATA)>
 
 <!--
-# The same index sources as "sources" above but linked from global search configuration 
-# (CmsSearchManager) instead from a "index" element. 
+# The same index sources as "sources" above but linked from global search configuration
+# (CmsSearchManager) instead from a "index" element.
 -->
 <!ELEMENT indexsources (indexsource*)>
 
@@ -164,10 +190,10 @@
 # Configuration of an search index content source in OpenCms
 -->
 <!ELEMENT indexsource (
-	name,
-	indexer,
-	resources,
-	documenttypes-indexed
+    name,
+    indexer,
+    resources,
+    documenttypes-indexed
 )>
 
 <!--
@@ -209,12 +235,12 @@
 # A field configuration, this can be used with many indexes by referencing the name.
 -->
 <!ELEMENT fieldconfiguration (
-	name,
-	description?,
-	fields
+    name,
+    description?,
+    fields?
 )>
 <!ATTLIST fieldconfiguration
-	class CDATA #IMPLIED
+    class CDATA #IMPLIED
 >
 
 <!--
@@ -224,27 +250,32 @@
 
 <!--
 # A field is made up as a list of mappings, plus the attributes that describe how to create the field.
+# Most of the attributes (except "name") are only of interest for non-Solr indexes, where the field is
+# added via OpenCms.
+# For Solr indexes, you can use the feature to add mappings to specific fields, which should be particularly
+# interesting for dynamic mappings.
 -->
 <!ELEMENT field (mapping+) >
-<!ATTLIST field 
-	name CDATA #REQUIRED
-	display CDATA #IMPLIED
-	store (true|false|TRUE|FALSE|yes|no|YES|NO|compress|COMPRESS) #REQUIRED
-	index (true|false|TRUE|FALSE|no|NO|tokenized|untokenized) #REQUIRED
-	excerpt (true|false|TRUE|FALSE) #IMPLIED
-	analyzer CDATA #IMPLIED
-	boost CDATA #IMPLIED
-	default CDATA #IMPLIED
+<!ATTLIST field
+    name CDATA #REQUIRED
+    display CDATA #IMPLIED
+    store (true|false|TRUE|FALSE|yes|no|YES|NO|compress|COMPRESS) "true"
+    index (true|false|TRUE|FALSE|no|NO|tokenized|untokenized) "true"
+    excerpt (true|false|TRUE|FALSE) #IMPLIED
+    analyzer CDATA #IMPLIED
+    boost CDATA #IMPLIED
+    default CDATA #IMPLIED
+    type CDATA #IMPLIED
 >
 
 <!--
 # Finally, the description of an individual mapping from a VFS resource piece of content to the current field.
 -->
 <!ELEMENT mapping (#PCDATA) >
-<!ATTLIST mapping 
-	type (content|property|property-search|item|dynamic|attribute) #REQUIRED
-	default CDATA #IMPLIED
-	class CDATA #IMPLIED
+<!ATTLIST mapping
+    type (content|property|property-search|item|dynamic|attribute) #REQUIRED
+    default CDATA #IMPLIED
+    class CDATA #IMPLIED
 >
 
 <!--

@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -14,12 +14,12 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * Lesser General Public License for more details.
  *
- * For further information about Alkacon Software GmbH, please see the
- * company website: http://www.alkacon.com
+ * For further information about Alkacon Software GmbH & Co. KG, please see the
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -41,14 +41,21 @@ import java.util.List;
 
 /**
  * Runs various tests to give users infos about whether their system is compatible to OpenCms.<p>
- * 
- * @since 6.0.0 
+ *
+ * @since 6.0.0
  */
 public class CmsSetupTests {
 
+    /** Flag indicating tests where successful. */
     private boolean m_green;
+
+    /** Flag indicating tests where not successful. */
     private boolean m_red;
+
+    /** The test results. */
     private List<CmsSetupTestResult> m_testResults;
+
+    /** Indicating there should be a warning. */
     private boolean m_yellow;
 
     /**
@@ -61,7 +68,7 @@ public class CmsSetupTests {
 
     /**
      * Returns a list of all available tests.<p>
-     * 
+     *
      * @return a list of all available tests
      */
     public List<I_CmsSetupTest> getAllTests() {
@@ -81,7 +88,7 @@ public class CmsSetupTests {
 
     /**
      * Returns the test results.<p>
-     * 
+     *
      * @return the test results
      */
     public List<CmsSetupTestResult> getTestResults() {
@@ -91,7 +98,7 @@ public class CmsSetupTests {
 
     /**
      * Returns true, if the conditions in all tests were fulfilled.<p>
-     * 
+     *
      * @return true, if the conditions in all tests were fulfilled
      */
     public boolean isGreen() {
@@ -102,7 +109,7 @@ public class CmsSetupTests {
     /**
      * Returns true if one of the tests found a violated condition.
      * It is assumed that it will be impossible to run OpenCms.<p>
-     * 
+     *
      * @return true if one of the tests violates a condition
      */
     public boolean isRed() {
@@ -113,7 +120,7 @@ public class CmsSetupTests {
     /**
      * Returns true if one of the tests found a questionable condition.
      * It is possible that OpenCms will not run.<p>
-     * 
+     *
      * @return true if one of the tests found a questionable condition
      */
     public boolean isYellow() {
@@ -123,10 +130,21 @@ public class CmsSetupTests {
 
     /**
      * Runs all tests.<p>
-     * 
+     *
      * @param setupBean the CmsSetup bean of the setup wizard
      */
     public void runTests(CmsSetupBean setupBean) {
+
+        runTests(setupBean, null);
+    }
+
+    /**
+     * Runs all tests.<p>
+     *
+     * @param setupBean the CmsSetup bean of the setup wizard
+     * @param serverInfo optional server info, if not present the server info is retrieved from the bean
+     */
+    public void runTests(CmsSetupBean setupBean, String serverInfo) {
 
         boolean hasRed = false;
         boolean hasYellow = false;
@@ -170,11 +188,15 @@ public class CmsSetupTests {
             setGreen();
         }
 
-        // save the detected software component versions in a text file
-        writeVersionInfo(
-            setupBean.getServletConfig().getServletContext().getServerInfo(),
-            System.getProperty("java.version"),
-            setupBean.getWebAppRfsPath());
+        if (serverInfo == null) {
+            // save the detected software component versions in a text file
+            writeVersionInfo(
+                setupBean.getServletConfig().getServletContext().getServerInfo(),
+                System.getProperty("java.version"),
+                setupBean.getWebAppRfsPath());
+        } else {
+            writeVersionInfo(serverInfo, System.getProperty("java.version"), setupBean.getWebAppRfsPath());
+        }
     }
 
     /**
@@ -232,8 +254,9 @@ public class CmsSetupTests {
             dOut = new PrintWriter(fOut);
             dOut.println();
             dOut.println("############### currently used configuration ################");
-            dOut.println("Date:                "
-                + DateFormat.getDateTimeInstance().format(new java.util.Date(System.currentTimeMillis())));
+            dOut.println(
+                "Date:                "
+                    + DateFormat.getDateTimeInstance().format(new java.util.Date(System.currentTimeMillis())));
             dOut.println("Used JDK:            " + usedJDK);
             dOut.println("Used Servlet Engine: " + thisEngine);
             dOut.close();

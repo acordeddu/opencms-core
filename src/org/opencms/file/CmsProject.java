@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -14,12 +14,12 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * Lesser General Public License for more details.
  *
- * For further information about Alkacon Software GmbH, please see the
- * company website: http://www.alkacon.com
+ * For further information about Alkacon Software GmbH & Co. KG, please see the
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -33,15 +33,16 @@ import org.opencms.util.A_CmsModeIntEnumeration;
 import org.opencms.util.CmsStringUtil;
 import org.opencms.util.CmsUUID;
 
+import java.io.Serializable;
 import java.util.List;
 
 /**
- * Describes an OpenCms project, 
+ * Describes an OpenCms project,
  * which contains a set of VFS resources that are being worked on at the same time.<p>
- * 
- * @since 6.0.0 
+ *
+ * @since 6.0.0
  */
-public class CmsProject implements Cloneable, Comparable<CmsProject> {
+public class CmsProject implements Cloneable, Comparable<CmsProject>, Serializable {
 
     /**
      *  Enumeration class for project types.<p>
@@ -54,12 +55,15 @@ public class CmsProject implements Cloneable, Comparable<CmsProject> {
         /** Project type temporary. */
         protected static final CmsProjectType MODE_PROJECT_TEMPORARY = new CmsProjectType(1);
 
+        /** Project type 'workflow'. */
+        protected static final CmsProjectType MODE_PROJECT_WORKFLOW = new CmsProjectType(2);
+
         /** Serializable version id. */
         private static final long serialVersionUID = -8701314451776599534L;
 
         /**
          * Private constructor.<p>
-         * 
+         *
          * @param mode the copy mode integer representation
          */
         private CmsProjectType(int mode) {
@@ -69,9 +73,9 @@ public class CmsProject implements Cloneable, Comparable<CmsProject> {
 
         /**
          * Returns the copy mode object from the old copy mode integer.<p>
-         * 
+         *
          * @param mode the old copy mode integer
-         * 
+         *
          * @return the copy mode object
          */
         public static CmsProjectType valueOf(int mode) {
@@ -81,9 +85,24 @@ public class CmsProject implements Cloneable, Comparable<CmsProject> {
                     return CmsProjectType.MODE_PROJECT_NORMAL;
                 case 1:
                     return CmsProjectType.MODE_PROJECT_TEMPORARY;
+                case 2:
+                    return CmsProjectType.MODE_PROJECT_WORKFLOW;
                 default:
                     return CmsProjectType.MODE_PROJECT_NORMAL;
             }
+        }
+
+        /**
+         * Returns the default flags which should be set when a new project of this type is created.<p>
+         *
+         * @return the default flags for the project type
+         */
+        public int getDefaultFlags() {
+
+            //            if (getMode() == CmsProjectType.MODE_PROJECT_WORKFLOW.getMode()) {
+            //                return PROJECT_FLAG_HIDDEN;
+            //            }
+            return PROJECT_FLAG_NONE;
         }
     }
 
@@ -99,11 +118,20 @@ public class CmsProject implements Cloneable, Comparable<CmsProject> {
     /** Indicates that a normal project. */
     public static final int PROJECT_FLAG_NONE = 0;
 
+    /** Indicates that a project should be hidden from the workplace project selector, but should otherwise behave the same as normal projects. */
+    public static final int PROJECT_HIDDEN_IN_SELECTOR = 8;
+
     /** Indicates a normal project. */
     public static final CmsProjectType PROJECT_TYPE_NORMAL = CmsProjectType.MODE_PROJECT_NORMAL;
 
     /** Indicates a temporary project that is deleted after it is published. */
     public static final CmsProjectType PROJECT_TYPE_TEMPORARY = CmsProjectType.MODE_PROJECT_TEMPORARY;
+
+    /** The project type for a workflow project. */
+    public static final CmsProjectType PROJECT_TYPE_WORKFLOW = CmsProjectType.MODE_PROJECT_WORKFLOW;
+
+    /** The serial version id. */
+    private static final long serialVersionUID = -4552095577282894706L;
 
     /** The creation date of this project. */
     private long m_dateCreated;
@@ -142,7 +170,7 @@ public class CmsProject implements Cloneable, Comparable<CmsProject> {
 
     /**
      * Creates a new CmsProject.<p>
-     *  
+     *
      * @param projectId the id to use for this project
      * @param projectFqn the name for this project
      * @param description the description for this project
@@ -177,7 +205,7 @@ public class CmsProject implements Cloneable, Comparable<CmsProject> {
 
     /**
      * Throws a runtime exception if name is empty.<p>
-     * 
+     *
      * @param name the project name to check
      */
     public static void checkProjectName(String name) {
@@ -190,7 +218,7 @@ public class CmsProject implements Cloneable, Comparable<CmsProject> {
     /**
      * Checks if the full resource name (including the site root) of a resource matches
      * any of the project resources of a project.<p>
-     * 
+     *
      * @param projectResources a List of project resources as Strings
      * @param resource the resource to check
      * @return true, if the resource is "inside" the project resources
@@ -204,7 +232,7 @@ public class CmsProject implements Cloneable, Comparable<CmsProject> {
     /**
      * Checks if the full resource name (including the site root) of a resource matches
      * any of the project resources of a project.<p>
-     * 
+     *
      * @param projectResources a List of project resources as Strings
      * @param resourcename the resource to check
      * @return true, if the resource is "inside" the project resources
@@ -230,7 +258,7 @@ public class CmsProject implements Cloneable, Comparable<CmsProject> {
 
     /**
      * Returns true if the given project id is the online project id.<p>
-     *  
+     *
      * @param projectId the project id to check
      * @return true if the given project id is the online project id
      */
@@ -259,7 +287,7 @@ public class CmsProject implements Cloneable, Comparable<CmsProject> {
 
     /**
      * Compares this instance to another given object instance of this class .<p>
-     * 
+     *
      * @param o the other given object instance to compare with
      * @return integer value for sorting the objects
      */
@@ -326,6 +354,16 @@ public class CmsProject implements Cloneable, Comparable<CmsProject> {
     public CmsUUID getGroupId() {
 
         return m_groupUsersId;
+    }
+
+    /**
+     * Returns the id of this project.<p>
+     *
+     * @return the id of this project
+     */
+    public CmsUUID getId() {
+
+        return m_id;
     }
 
     /**
@@ -414,7 +452,7 @@ public class CmsProject implements Cloneable, Comparable<CmsProject> {
      * Returns the delete After Publishing flag.<p>
      *
      * @return the delete After Publishing flag
-     * 
+     *
      * @see #getType()
      */
     public boolean isDeleteAfterPublishing() {
@@ -426,7 +464,7 @@ public class CmsProject implements Cloneable, Comparable<CmsProject> {
      * Returns the 'hidden' flag.<p>
      *
      * @return the 'hidden' flag
-     * 
+     *
      * @see #getFlags()
      */
     public boolean isHidden() {
@@ -435,13 +473,33 @@ public class CmsProject implements Cloneable, Comparable<CmsProject> {
     }
 
     /**
+     * Checks if the project should be hidden from the project selector in the workplace.<p>
+     *
+     * @return true if the project should not appear in the workplace's project selector
+     */
+    public boolean isHiddenFromSelector() {
+
+        return isWorkflowProject() || (0 != (getFlags() & PROJECT_HIDDEN_IN_SELECTOR));
+    }
+
+    /**
      * Returns <code>true</code> if this project is the Online project.<p>
-     * 
+     *
      * @return <code>true</code> if this project is the Online project
      */
     public boolean isOnlineProject() {
 
         return isOnlineProject(m_id);
+    }
+
+    /**
+     * Returns true if this is a workflow project.<p>
+     *
+     * @return true if this is a workflow project
+     */
+    public boolean isWorkflowProject() {
+
+        return getType().getMode() == PROJECT_TYPE_WORKFLOW.getMode();
     }
 
     /**
@@ -487,7 +545,7 @@ public class CmsProject implements Cloneable, Comparable<CmsProject> {
 
     /**
      * Sets the 'hidden' flag.<p>
-     * 
+     *
      * @param value the value to set
      */
     public void setHidden(boolean value) {
@@ -521,7 +579,7 @@ public class CmsProject implements Cloneable, Comparable<CmsProject> {
 
     /**
      * Sets the owner id of this project.<p>
-     * 
+     *
      * @param id the id of the new owner
      */
     public void setOwnerId(CmsUUID id) {

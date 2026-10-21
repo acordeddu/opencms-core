@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -14,12 +14,12 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * Lesser General Public License for more details.
  *
- * For further information about Alkacon Software GmbH, please see the
- * company website: http://www.alkacon.com
+ * For further information about Alkacon Software GmbH & Co. KG, please see the
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -30,6 +30,7 @@ package org.opencms.jsp.decorator;
 import org.opencms.file.CmsFile;
 import org.opencms.file.CmsObject;
 import org.opencms.file.CmsResource;
+import org.opencms.i18n.CmsLocaleManager;
 import org.opencms.main.CmsException;
 import org.opencms.main.CmsLog;
 import org.opencms.util.CmsStringUtil;
@@ -44,14 +45,14 @@ import org.apache.commons.logging.Log;
 
 /**
  * The CmsDecorationMap is the object representation of a single decoartion file.<p>
- * 
+ *
  * The semicolon seperated elements of the decoartion file are stored in a map. <p>
  * The map uses the decoration as keys and CmsDecorationObjects as values.<p>
  * Multiple CmsDecorationMaps form a CmsDecorationBundle.
- * 
- * @since 6.1.3 
+ *
+ * @since 6.1.3
  */
-public class CmsDecorationMap implements Comparable {
+public class CmsDecorationMap implements Comparable<CmsDecorationMap> {
 
     /** The seperator for the CSV file. */
     public static final String CSV_SEPERATOR = "|";
@@ -60,7 +61,7 @@ public class CmsDecorationMap implements Comparable {
     private static final Log LOG = CmsLog.getLog(CmsDecorationMap.class);
 
     /** The map to store all elements in. */
-    private Map m_decorationMap;
+    private Map<String, CmsDecorationObject> m_decorationMap;
 
     /** The decorator defintion to be used for this decoration map. */
     private CmsDecorationDefintion m_decoratorDefinition;
@@ -73,7 +74,7 @@ public class CmsDecorationMap implements Comparable {
 
     /**
      * Constructor, creates a new, empty CmsDecorationMap.<p>
-     * 
+     *
      * @param decDef the CmsDecorationDefintion to be used in this decoration map
      * @param name The name of the decoration map
      * @param locale the locale for this decoration map
@@ -83,12 +84,12 @@ public class CmsDecorationMap implements Comparable {
         m_decoratorDefinition = decDef;
         m_name = name;
         m_locale = locale;
-        m_decorationMap = new HashMap();
+        m_decorationMap = new HashMap<String, CmsDecorationObject>();
     }
 
     /**
      * Constructor, creates a new CmsDecorationMap.<p>
-     * 
+     *
      * @param cms the CmsObject
      * @param res the resource to extrace the decorations from
      * @param decDef the CmsDecorationDefintion to be used in this decoration map
@@ -107,18 +108,15 @@ public class CmsDecorationMap implements Comparable {
     /**
      * @see java.lang.Comparable#compareTo(java.lang.Object)
      */
-    public int compareTo(Object o) {
+    public int compareTo(CmsDecorationMap o) {
 
-        int compValue = 0;
-        if (o instanceof CmsDecorationMap) {
-            compValue = m_name.compareTo(((CmsDecorationMap)o).getName());
-        }
-        return compValue;
+        return m_name.compareTo(o.getName());
     }
 
     /**
      * @see java.lang.Object#equals(java.lang.Object)
      */
+    @Override
     public boolean equals(Object obj) {
 
         if (obj == this) {
@@ -135,7 +133,7 @@ public class CmsDecorationMap implements Comparable {
      *
      * @return the decorationMap
      */
-    public Map getDecorationMap() {
+    public Map<String, CmsDecorationObject> getDecorationMap() {
 
         return m_decorationMap;
     }
@@ -163,6 +161,7 @@ public class CmsDecorationMap implements Comparable {
     /**
      * @see java.lang.Object#hashCode()
      */
+    @Override
     public int hashCode() {
 
         return m_name.hashCode();
@@ -173,7 +172,7 @@ public class CmsDecorationMap implements Comparable {
      *
      * @param decorationMap the decorationMap to set
      */
-    public void setDecorationMap(Map decorationMap) {
+    public void setDecorationMap(Map<String, CmsDecorationObject> decorationMap) {
 
         m_decorationMap = decorationMap;
     }
@@ -181,6 +180,7 @@ public class CmsDecorationMap implements Comparable {
     /**
      * @see java.lang.Object#toString()
      */
+    @Override
     public String toString() {
 
         StringBuffer buf = new StringBuffer();
@@ -197,7 +197,7 @@ public class CmsDecorationMap implements Comparable {
 
     /**
      * Extracts the locale from the decoration filename.<p>
-     * 
+     *
      *@return locale extraced form filename or null
      */
     private Locale extractLocale() {
@@ -209,7 +209,7 @@ public class CmsDecorationMap implements Comparable {
             if (localeName.lastIndexOf(".") > -1) {
                 localeName = localeName.substring(0, localeName.lastIndexOf("."));
             }
-            loc = new Locale(localeName);
+            loc = CmsLocaleManager.getLocale(localeName);
         }
 
         return loc;
@@ -217,22 +217,20 @@ public class CmsDecorationMap implements Comparable {
 
     /**
      *  Fills the decoration map with values from the decoation file.<p>
-     *  
+     *
      * @param cms the CmsObject
      * @param res the decoration file
      * @return decoration map, using decoration as key and decoration description as value
      * @throws CmsException if something goes wrong
      */
-    private Map fillMap(CmsObject cms, CmsResource res) throws CmsException {
+    private Map<String, CmsDecorationObject> fillMap(CmsObject cms, CmsResource res) throws CmsException {
 
         if (LOG.isDebugEnabled()) {
-            LOG.debug(Messages.get().getBundle().key(
-                Messages.LOG_DECORATION_MAP_FILL_MAP_2,
-                m_name,
-                m_decoratorDefinition));
+            LOG.debug(
+                Messages.get().getBundle().key(Messages.LOG_DECORATION_MAP_FILL_MAP_2, m_name, m_decoratorDefinition));
         }
 
-        Map decMap = new HashMap();
+        Map<String, CmsDecorationObject> decMap = new HashMap<String, CmsDecorationObject>();
         // upgrade the resource to get the file content
         CmsFile file = cms.readFile(res);
         // get all the entries
@@ -248,24 +246,26 @@ public class CmsDecorationMap implements Comparable {
         }
 
         if (LOG.isDebugEnabled()) {
-            LOG.debug(Messages.get().getBundle().key(
-                Messages.LOG_DECORATION_MAP_FILL_MAP_DELIMITER_2,
-                res.getName(),
-                CmsStringUtil.escapeJavaScript(delimiter)));
+            LOG.debug(
+                Messages.get().getBundle().key(
+                    Messages.LOG_DECORATION_MAP_FILL_MAP_DELIMITER_2,
+                    res.getName(),
+                    CmsStringUtil.escapeJavaScript(delimiter)));
         }
 
-        List entries = CmsStringUtil.splitAsList(unparsedContent, delimiter);
+        List<String> entries = CmsStringUtil.splitAsList(unparsedContent, delimiter);
 
         if (LOG.isDebugEnabled()) {
-            LOG.debug(Messages.get().getBundle().key(
-                Messages.LOG_DECORATION_MAP_FILL_MAP_SPLIT_LIST_2,
-                res.getName(),
-                entries));
+            LOG.debug(
+                Messages.get().getBundle().key(
+                    Messages.LOG_DECORATION_MAP_FILL_MAP_SPLIT_LIST_2,
+                    res.getName(),
+                    entries));
         }
-        Iterator i = entries.iterator();
+        Iterator<String> i = entries.iterator();
         while (i.hasNext()) {
             try {
-                String entry = (String)i.next();
+                String entry = i.next();
                 // extract key and value
                 if (CmsStringUtil.isNotEmpty(entry)) {
                     int speratator = entry.indexOf(CSV_SEPERATOR);
@@ -280,10 +280,11 @@ public class CmsDecorationMap implements Comparable {
                                 m_locale);
                             decMap.put(key, decObj);
                             if (LOG.isDebugEnabled()) {
-                                LOG.debug(Messages.get().getBundle().key(
-                                    Messages.LOG_DECORATION_MAP_ADD_DECORATION_OBJECT_2,
-                                    decObj,
-                                    key));
+                                LOG.debug(
+                                    Messages.get().getBundle().key(
+                                        Messages.LOG_DECORATION_MAP_ADD_DECORATION_OBJECT_2,
+                                        decObj,
+                                        key));
                             }
                         }
                     }

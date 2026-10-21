@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (C) Alkacon Software (http://www.alkacon.com)
+ * Copyright (C) Alkacon Software (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -15,11 +15,11 @@
  * Lesser General Public License for more details.
  *
  * For further information about Alkacon Software, please see the
- * company website: http://www.alkacon.com
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -27,13 +27,18 @@
 
 package org.opencms.widgets;
 
+import org.opencms.file.CmsObject;
+import org.opencms.file.CmsResource;
 import org.opencms.file.types.I_CmsResourceType;
+import org.opencms.i18n.CmsMessages;
 import org.opencms.loader.CmsResourceManager;
 import org.opencms.main.OpenCms;
+import org.opencms.xml.types.A_CmsXmlContentValue;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Locale;
 
 import com.google.common.base.Joiner;
 
@@ -52,13 +57,64 @@ public class CmsTypeComboWidget extends CmsComboWidget {
 
     /**
      * Constructor with a configuration parameter.<p>
-     * @param config the configuration string 
+     * @param config the configuration string
      */
     public CmsTypeComboWidget(String config) {
 
         super();
         super.setConfiguration(createConfiguration());
 
+    }
+
+    /**
+     * @see org.opencms.widgets.I_CmsADEWidget#getConfiguration(org.opencms.file.CmsObject, org.opencms.xml.types.A_CmsXmlContentValue, org.opencms.i18n.CmsMessages, org.opencms.file.CmsResource, java.util.Locale)
+     */
+    @Override
+    public String getConfiguration(
+        CmsObject cms,
+        A_CmsXmlContentValue schemaType,
+        CmsMessages messages,
+        CmsResource resource,
+        Locale contentLocale) {
+
+        return CmsSelectWidgetOption.createConfigurationString(
+            CmsSelectWidgetOption.parseOptions(createConfiguration()));
+    }
+
+    /**
+     * @see org.opencms.widgets.I_CmsADEWidget#getCssResourceLinks(org.opencms.file.CmsObject)
+     */
+    @Override
+    public List<String> getCssResourceLinks(CmsObject cms) {
+
+        return null;
+    }
+
+    /**
+     * @see org.opencms.widgets.I_CmsADEWidget#getInitCall()
+     */
+    @Override
+    public String getInitCall() {
+
+        return null;
+    }
+
+    /**
+     * @see org.opencms.widgets.I_CmsADEWidget#getJavaScriptResourceLinks(org.opencms.file.CmsObject)
+     */
+    @Override
+    public List<String> getJavaScriptResourceLinks(CmsObject cms) {
+
+        return null;
+    }
+
+    /**
+     * @see org.opencms.widgets.I_CmsADEWidget#isInternal()
+     */
+    @Override
+    public boolean isInternal() {
+
+        return true;
     }
 
     /**
@@ -81,14 +137,14 @@ public class CmsTypeComboWidget extends CmsComboWidget {
 
     /**
      * Internal method to create the configuration string from the available types.<p>
-     * 
-     * @return the configuration string 
+     *
+     * @return the configuration string
      */
     private String createConfiguration() {
 
         CmsResourceManager resManager = OpenCms.getResourceManager();
         if (resManager == null) {
-            // can happen during the OpenCms startup 
+            // can happen during the OpenCms startup
             return "";
         }
         List<I_CmsResourceType> resTypes = resManager.getResourceTypes();

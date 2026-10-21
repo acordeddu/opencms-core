@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -14,12 +14,12 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * Lesser General Public License for more details.
  *
- * For further information about Alkacon Software GmbH, please see the
- * company website: http://www.alkacon.com
+ * For further information about Alkacon Software GmbH & Co. KG, please see the
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -41,6 +41,7 @@ import org.opencms.util.CmsStringUtil;
 import org.opencms.xml.CmsXmlGenericWrapper;
 import org.opencms.xml.I_CmsXmlDocument;
 import org.opencms.xml.page.CmsXmlPage;
+import org.opencms.xml.xml2json.I_CmsJsonFormattableValue;
 
 import java.util.Iterator;
 import java.util.Locale;
@@ -53,10 +54,10 @@ import org.htmlparser.util.ParserException;
 
 /**
  * Describes the XML content type "OpenCmsHtml".<p>
- * 
- * @since 6.0.0 
+ *
+ * @since 6.0.0
  */
-public class CmsXmlHtmlValue extends A_CmsXmlContentValue {
+public class CmsXmlHtmlValue extends A_CmsXmlContentValue implements I_CmsJsonFormattableValue {
 
     /** The name of this type as used in the XML schema. */
     public static final String TYPE_NAME = "OpenCmsHtml";
@@ -89,7 +90,7 @@ public class CmsXmlHtmlValue extends A_CmsXmlContentValue {
 
     /**
      * Creates a new XML content value of type "OpenCmsHtml".<p>
-     * 
+     *
      * @param document the XML content instance this value belongs to
      * @param element the XML element that contains this value
      * @param locale the locale this value is created for
@@ -101,7 +102,7 @@ public class CmsXmlHtmlValue extends A_CmsXmlContentValue {
 
     /**
      * Creates a new XML content value of type "OpenCmsHtml".<p>
-     * 
+     *
      * @param document the XML content instance this value belongs to
      * @param element the XML element that contains this value
      * @param locale the locale this value is created for
@@ -114,7 +115,7 @@ public class CmsXmlHtmlValue extends A_CmsXmlContentValue {
 
     /**
      * Creates a new schema type descriptor for the type "OpenCmsHtml".<p>
-     * 
+     *
      * @param name the name of the XML node containing the value according to the XML schema
      * @param minOccurs minimum number of occurrences of this type according to the XML schema
      * @param maxOccurs maximum number of occurrences of this type according to the XML schema
@@ -163,7 +164,7 @@ public class CmsXmlHtmlValue extends A_CmsXmlContentValue {
 
     /**
      * Returns the link table of this XML page element.<p>
-     * 
+     *
      * @return the link table of this XML page element
      */
     public CmsLinkTable getLinkTable() {
@@ -188,7 +189,7 @@ public class CmsXmlHtmlValue extends A_CmsXmlContentValue {
 
         if (m_plainTextValue == null) {
             try {
-                m_plainTextValue = CmsHtmlExtractor.extractText(this.getStringValue(cms), m_document.getEncoding());
+                m_plainTextValue = CmsHtmlExtractor.extractText(getStringValue(cms), m_document.getEncoding());
             } catch (Exception exc) {
                 m_plainTextValue = NULL_VALUE;
             }
@@ -197,6 +198,24 @@ public class CmsXmlHtmlValue extends A_CmsXmlContentValue {
             return null;
         }
         return m_plainTextValue;
+    }
+
+    /**
+     * Gets the raw content of the 'content' element directly, without any macro replacement.
+     *
+     * <p>This is mostly useful for translation applications, where we want to translate the HTML but do not care about links, embedded base64 images, etc.
+     *
+     *
+     * @return the raw content
+     */
+    public String getRawContent() {
+
+        Element data = m_element.element(CmsXmlPage.NODE_CONTENT);
+        if (data != null) {
+            return data.getText();
+        } else {
+            return null;
+        }
     }
 
     /**
@@ -240,6 +259,21 @@ public class CmsXmlHtmlValue extends A_CmsXmlContentValue {
     }
 
     /**
+     * Sets the value of the content element directly, without any macro replacement.
+     *
+     * <p>This is mostly useful for translation applications, where we want to translate the HTML but do not care about links, embedded base64 images, etc. -
+     * if the translated HTML preserves the same macros, they will keep matching the
+     *
+     * @param rawContent the raw content to set
+     */
+    public void setRawContent(String rawContent) {
+
+        Element contentElem = ensureContentElement();
+        contentElem.setText(rawContent);
+        m_stringValue = null;
+    }
+
+    /**
      * @see org.opencms.xml.types.I_CmsXmlContentValue#setStringValue(org.opencms.file.CmsObject, java.lang.String)
      */
     public void setStringValue(CmsObject cms, String value) {
@@ -252,6 +286,11 @@ public class CmsXmlHtmlValue extends A_CmsXmlContentValue {
         linkProcessor = m_document.getLinkProcessor(cms, new CmsLinkTable());
 
         String finalValue = value;
+        if (finalValue != null) {
+            // nested CDATA tags are not allowed, so replace CDATA tags with their contents
+            finalValue = finalValue.replaceAll("(?s)// <!\\[CDATA\\[(.*?)// \\]\\]>", "$1"); // special case for embedded Javascript
+            finalValue = finalValue.replaceAll("(?s)<!\\[CDATA\\[(.*?)\\]\\]>", "$1");
+        }
         if (encoding != null) {
             // ensure all chars in the given content are valid chars for the selected charset
             finalValue = CmsEncoder.adjustHtmlEncoding(finalValue, encoding);
@@ -262,11 +301,11 @@ public class CmsXmlHtmlValue extends A_CmsXmlContentValue {
         if (CmsHtmlConverter.isConversionEnabled(contentConversion)) {
             CmsHtmlConverter converter = new CmsHtmlConverter(encoding, contentConversion);
             finalValue = converter.convertToStringSilent(finalValue);
+            finalValue = fixNullCharacters(finalValue);
         }
-
         if (linkProcessor != null) {
             try {
-                // replace links in HTML by macros and fill link table      
+                // replace links in HTML by macros and fill link table
                 finalValue = linkProcessor.replaceLinks(finalValue);
             } catch (Exception exc) {
                 throw new CmsRuntimeException(Messages.get().container(Messages.ERR_HTML_DATA_PROCESSING_0), exc);
@@ -297,16 +336,65 @@ public class CmsXmlHtmlValue extends A_CmsXmlContentValue {
     }
 
     /**
+     * @see org.opencms.xml.xml2json.I_CmsJsonFormattableValue#toJson(org.opencms.file.CmsObject)
+     */
+    public Object toJson(CmsObject cms) {
+
+        return getStringValue(cms);
+    }
+
+    /**
+     * If this value already has a content element, returns it, otherwise create it and move the text from the current element to the content subelement.
+     * @return
+     */
+    protected Element ensureContentElement() {
+
+        Element data = m_element.element(CmsXmlPage.NODE_CONTENT);
+        if (data == null) {
+            String content = m_element.getText();
+            m_element.clearContent();
+            int index = m_element.getParent().elements(m_element.getQName()).indexOf(m_element);
+            m_element.addAttribute(CmsXmlPage.ATTRIBUTE_NAME, getName() + index);
+            m_element.addElement(CmsXmlPage.NODE_LINKS);
+            m_element.addElement(CmsXmlPage.NODE_CONTENT).addCDATA(content);
+            data = m_element.element(CmsXmlPage.NODE_CONTENT);
+        }
+        return data;
+    }
+
+    /**
+     * JTidy sometimes erroneouslsy produces HTML containing 'null' characters (Unicode code point 0), which are
+     * invalid in an XML document. Until we find a way to prevent JTidy doing that, we remove the null characters
+     * from the HTML, and log a warning.<p>
+     *
+     * @param jtidyOutput the JTidy output
+     * @return the output with null characters removed
+     */
+    protected String fixNullCharacters(String jtidyOutput) {
+
+        String outputWithoutNullChars = jtidyOutput.replaceAll("\u0000", "");
+        if (jtidyOutput.length() != outputWithoutNullChars.length()) {
+            String context = "";
+            if (m_document.getFile() != null) {
+                context = "(file=" + m_document.getFile().getRootPath() + ")";
+            }
+            LOG.warn("HTML cleanup produced invalid null characters in output. " + context);
+            LOG.debug("HTML cleanup output = " + jtidyOutput);
+        }
+        return outputWithoutNullChars;
+    }
+
+    /**
      * Creates the String value for this HTML value element.<p>
-     * 
+     *
      * @param cms an initialized instance of a CmsObject
      * @param document the XML document this value belongs to
-     * 
+     *
      * @return the String value for this HTML value element
      */
     private String createStringValue(CmsObject cms, I_CmsXmlDocument document) {
 
-        Element data = m_element.element(CmsXmlPage.NODE_CONTENT);
+        Element data = ensureContentElement();
         Attribute enabled = m_element.attribute(CmsXmlPage.ATTRIBUTE_ENABLED);
 
         String content = "";

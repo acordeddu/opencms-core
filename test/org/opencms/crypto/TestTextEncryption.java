@@ -1,0 +1,89 @@
+/*
+ * This library is part of OpenCms -
+ * the Open Source Content Management System
+ *
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Lesser General Public License for more details.
+ *
+ * For further information about Alkacon Software GmbH & Co. KG, please see the
+ * company website: https://www.alkacon.com
+ *
+ * For further information about OpenCms, please see the
+ * project website: https://www.opencms.org
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ */
+
+package org.opencms.crypto;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
+
+import org.junit.jupiter.api.MethodOrderer;
+import org.junit.jupiter.api.Order;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestMethodOrder;
+
+/**
+ * Tests for text en/decryption.
+ */
+@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
+public class TestTextEncryption {
+
+    /**
+     * This is mostly an integration test to show that the crypto libraries work.
+     */
+    @Test
+    @Order(1)
+    public void testAES() throws Exception {
+
+        String key1 = "key1";
+        String key2 = "key2";
+        CmsAESTextEncryption enc1 = new CmsAESTextEncryption(key1);
+        CmsAESTextEncryption enc2 = new CmsAESTextEncryption(key2);
+        String plaintext = "foo bar baz";
+        String encrypted1 = enc1.encrypt(plaintext);
+        String encrypted2 = enc2.encrypt(plaintext);
+        assertNotEquals(plaintext, encrypted1);
+        assertNotEquals(plaintext, encrypted2);
+        assertNotEquals(encrypted1, encrypted2);
+        assertEquals(plaintext, enc1.decrypt(encrypted1));
+        assertEquals(plaintext, enc2.decrypt(encrypted2));
+    }
+
+    /**
+     * Test for AES in CBC mode.
+     */
+    @Test
+    @Order(2)
+    public void testAESCBC() throws Exception {
+
+        String key1 = "key1";
+        String key2 = "key2";
+        CmsAESCBCTextEncryption enc1 = new CmsAESCBCTextEncryption(key1);
+        CmsAESCBCTextEncryption enc2 = new CmsAESCBCTextEncryption(key2);
+        String plaintext = "foo bar baz";
+        String encrypted1 = enc1.encrypt(plaintext);
+        String encrypted2 = enc2.encrypt(plaintext);
+        assertNotEquals(plaintext, encrypted1);
+        assertNotEquals(plaintext, encrypted2);
+        assertNotEquals(encrypted1, encrypted2);
+        assertEquals(plaintext, enc1.decrypt(encrypted1));
+        assertEquals(plaintext, enc2.decrypt(encrypted2));
+
+        // multiple encryptions of the same input give different results
+        assertNotEquals(enc1.encrypt(plaintext), enc1.encrypt(plaintext));
+    }
+
+}

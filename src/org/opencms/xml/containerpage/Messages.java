@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -14,12 +14,12 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * Lesser General Public License for more details.
  *
- * For further information about Alkacon Software GmbH, please see the
- * company website: http://www.alkacon.com
+ * For further information about Alkacon Software GmbH & Co. KG, please see the
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -31,9 +31,9 @@ import org.opencms.i18n.A_CmsMessageBundle;
 import org.opencms.i18n.I_CmsMessageBundle;
 
 /**
- * Convenience class to access the localized messages of this OpenCms package.<p> 
- * 
- * @since 6.0.0 
+ * Convenience class to access the localized messages of this OpenCms package.<p>
+ *
+ * @since 6.0.0
  */
 public final class Messages extends A_CmsMessageBundle {
 
@@ -53,6 +53,9 @@ public final class Messages extends A_CmsMessageBundle {
     public static final String ERR_DUPLICATE_NAME_1 = "ERR_DUPLICATE_NAME_1";
 
     /** Message constant for key in the resource bundle. */
+    public static final String ERR_ELEMENT_GROUP_REFERENCES_ANOTHER_GROUP_2 = "ERR_ELEMENT_GROUP_REFERENCES_ANOTHER_GROUP_2";
+
+    /** Message constant for key in the resource bundle. */
     public static final String ERR_FORMATTER_JSP_DONT_EXIST_1 = "ERR_FORMATTER_JSP_DONT_EXIST_1";
 
     /** Message constant for key in the resource bundle. */
@@ -68,10 +71,19 @@ public final class Messages extends A_CmsMessageBundle {
     public static final String ERR_READ_ELEMENT_PROPERTY_CONFIGURATION_1 = "ERR_READ_ELEMENT_PROPERTY_CONFIGURATION_1";
 
     /** Message constant for key in the resource bundle. */
-    public static final String ERR_READING_ELEMENT_FROM_REQUEST_0 = "ERR_READING_ELEMENT_FROM_REQUEST_0";
+    public static final String ERR_READING_ELEMENT_FROM_REQUEST_1 = "ERR_READING_ELEMENT_FROM_REQUEST_1";
 
     /** Message constant for key in the resource bundle. */
     public static final String ERR_READING_FORMATTER_INFO_FROM_REQUEST_0 = "ERR_READING_FORMATTER_INFO_FROM_REQUEST_0";
+
+    /** Message constant for key in the resource bundle .*/
+    public static final String GUI_CANT_EDIT_FUNCTIONS_0 = "GUI_CANT_EDIT_FUNCTIONS_0";
+
+    /** Message constant for key in the resource bundle .*/
+    public static final String GUI_REDIRECT_SUBLEVEL_TITLE_0 = "GUI_REDIRECT_SUBLEVEL_TITLE_0";
+
+    /** Message constant for key in the resource bundle .*/
+    public static final String GUI_REDIRECT_TITLE_1 = "GUI_REDIRECT_TITLE_1";
 
     /** Message constant for key in the resource bundle. */
     public static final String LOG_CONTAINER_PAGE_LOCALE_NOT_FOUND_2 = "LOG_CONTAINER_PAGE_LOCALE_NOT_FOUND_2";
@@ -101,6 +113,9 @@ public final class Messages extends A_CmsMessageBundle {
     public static final String LOG_DEBUG_CACHE_SET_ONLINE_2 = "LOG_DEBUG_CACHE_SET_ONLINE_2";
 
     /** Message constant for key in the resource bundle. */
+    public static final String LOG_WARN_ELEMENT_GROUP_INSIDE_ELEMENT_GROUP_0 = "LOG_WARN_ELEMENT_GROUP_INSIDE_ELEMENT_GROUP_0";
+
+    /** Message constant for key in the resource bundle. */
     public static final String LOG_WARN_NO_FORMATTERS_DEFINED_1 = "LOG_WARN_NO_FORMATTERS_DEFINED_1";
 
     /** Message constant for key in the resource bundle. */
@@ -122,7 +137,7 @@ public final class Messages extends A_CmsMessageBundle {
 
     /**
      * Returns an instance of this localized message accessor.<p>
-     * 
+     *
      * @return an instance of this localized message accessor
      */
     public static I_CmsMessageBundle get() {
@@ -132,7 +147,7 @@ public final class Messages extends A_CmsMessageBundle {
 
     /**
      * Returns the bundle name for this OpenCms package.<p>
-     * 
+     *
      * @return the bundle name for this OpenCms package
      */
     public String getBundleName() {

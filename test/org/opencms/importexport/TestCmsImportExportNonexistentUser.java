@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -14,12 +14,12 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * Lesser General Public License for more details.
  *
- * For further information about Alkacon Software GmbH, please see the
- * company website: http://www.alkacon.com
+ * For further information about Alkacon Software GmbH & Co. KG, please see the
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -32,73 +32,43 @@ import org.opencms.file.CmsProject;
 import org.opencms.file.CmsResource;
 import org.opencms.file.types.CmsResourceTypePlain;
 import org.opencms.main.OpenCms;
+import org.opencms.module.CmsModule.ExportMode;
 import org.opencms.report.CmsShellReport;
-import org.opencms.test.OpenCmsTestCase;
-import org.opencms.test.OpenCmsTestProperties;
+import org.opencms.security.CmsRole;
+import org.opencms.test.OpenCmsTestRunner;
 
 import java.util.ArrayList;
 import java.util.List;
 
-import junit.extensions.TestSetup;
-import junit.framework.Test;
-import junit.framework.TestSuite;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInfo;
 
 /**
  * Tests exporting/import VFS data with nonexistent users.<p>
- * 
+ *
  */
-public class TestCmsImportExportNonexistentUser extends OpenCmsTestCase {
+public class TestCmsImportExportNonexistentUser extends OpenCmsTestRunner {
 
     /**
-     * Default JUnit constructor.<p>
-     * 
-     * @param arg0 JUnit parameters
+     * @see org.opencms.test.OpenCmsTestRunner#$openCmsSetUp(org.junit.jupiter.api.TestInfo)
      */
-    public TestCmsImportExportNonexistentUser(String arg0) {
+    @Override
+    @BeforeAll
+    public void $openCmsSetUp(TestInfo testInfo) {
 
-        super(arg0);
-    }
-
-    /**
-     * Test suite for this test class.<p>
-     * 
-     * @return the test suite
-     */
-    public static Test suite() {
-
-        OpenCmsTestProperties.initialize(org.opencms.test.AllTests.TEST_PROPERTIES_PATH);
-
-        TestSuite suite = new TestSuite();
-        suite.setName(TestCmsImportExport.class.getName());
-
-        suite.addTest(new TestCmsImportExportNonexistentUser("testImportExportNonexistentUser"));
-
-        TestSetup wrapper = new TestSetup(suite) {
-
-            @Override
-            protected void setUp() {
-
-                setupOpenCms("simpletest", "/");
-            }
-
-            @Override
-            protected void tearDown() {
-
-                removeOpenCms();
-            }
-        };
-
-        return wrapper;
+        setupOpenCms(testInfo, "simpletest", "/");
     }
 
     /**
      * Tests exporting and import of VFS data with a nonexistent/deleted user.<p>
-     * 
-     * The username of the deleted user should in the export manifest be replaced 
+     *
+     * The username of the deleted user should in the export manifest be replaced
      * by the name of the Admin user.<p>
-     * 
+     *
      * @throws Exception if something goes wrong
      */
+    @Test
     public void testImportExportNonexistentUser() throws Exception {
 
         String zipExportFilename = null;
@@ -117,8 +87,10 @@ public class TestCmsImportExportNonexistentUser extends OpenCmsTestCase {
 
             // create a temporary user for this test case
             cms.createUser(username, password, "Temporary user for import/export test case", null);
-            // add this user to the project managers user group
-            cms.addUserToGroup(username, OpenCms.getDefaultUsers().getGroupProjectmanagers());
+            // add this user to the user group
+            cms.addUserToGroup(username, OpenCms.getDefaultUsers().getGroupUsers());
+            // give this user the project manager role so that he can publish anything
+            OpenCms.getRoleManager().addUserToRole(cms, CmsRole.PROJECT_MANAGER, username);
 
             // switch to the temporary user, offline project and default site
             cms.loginUser(username, password);
@@ -156,7 +128,8 @@ public class TestCmsImportExportNonexistentUser extends OpenCmsTestCase {
                 true,
                 0,
                 true,
-                false);
+                false,
+                ExportMode.DEFAULT);
             vfsExportHandler.setExportParams(params);
 
             OpenCms.getImportExportManager().exportData(

@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -14,12 +14,12 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * Lesser General Public License for more details.
  *
- * For further information about Alkacon Software GmbH, please see the
- * company website: http://www.alkacon.com
+ * For further information about Alkacon Software GmbH & Co. KG, please see the
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -39,8 +39,8 @@ import org.dom4j.Element;
 
 /**
  * Base class for XML content value implementations that require only a simple XML cdata text node.<p>
- * 
- * @since 6.0.0 
+ *
+ * @since 6.0.0
  */
 public abstract class A_CmsXmlValueCdataBase extends A_CmsXmlContentValue {
 
@@ -48,8 +48,8 @@ public abstract class A_CmsXmlValueCdataBase extends A_CmsXmlContentValue {
     protected String m_stringValue;
 
     /**
-     * Default constructor for a xml content type 
-     * that initializes some internal values.<p> 
+     * Default constructor for a xml content type
+     * that initializes some internal values.<p>
      */
     protected A_CmsXmlValueCdataBase() {
 
@@ -58,13 +58,17 @@ public abstract class A_CmsXmlValueCdataBase extends A_CmsXmlContentValue {
 
     /**
      * Initializes the required members for this XML content value.<p>
-     * 
+     *
      * @param document the XML content instance this value belongs to
      * @param element the XML element that contains this value
      * @param locale the locale this value is created for
      * @param type the type instance to create the value for
      */
-    protected A_CmsXmlValueCdataBase(I_CmsXmlDocument document, Element element, Locale locale, I_CmsXmlSchemaType type) {
+    protected A_CmsXmlValueCdataBase(
+        I_CmsXmlDocument document,
+        Element element,
+        Locale locale,
+        I_CmsXmlSchemaType type) {
 
         super(document, element, locale, type);
         m_stringValue = element.getText();
@@ -72,7 +76,7 @@ public abstract class A_CmsXmlValueCdataBase extends A_CmsXmlContentValue {
 
     /**
      * Initializes the schema type descriptor values for this type descriptor.<p>
-     * 
+     *
      * @param name the name of the XML node containing the value according to the XML schema
      * @param minOccurs minimum number of occurrences of this type according to the XML schema
      * @param maxOccurs maximum number of occurrences of this type according to the XML schema

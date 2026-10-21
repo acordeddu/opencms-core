@@ -1,0 +1,63 @@
+@external oc-toolbar, oc-screensize-medium;
+
+body div.pageCenter {
+	padding: 10px;
+}
+
+.root {
+	background: value("constants.css.backgroundColorMenu");
+	font-family: value("constants.css.fontFamily");
+	margin: 0;
+	overflow: auto;
+	height: 100%;
+}
+
+.oc-toolbar + div {
+	margin-top: 72px;
+}
+
+
+.hiddenHeader.hiddenHeader { 
+	display: none; 
+}
+
+.hiddenHeader.hiddenHeader + .page { 
+	margin-top:  72px !important; 
+}
+
+
+/** joined vendor prefix style, for better fall back behavior */
+div.page{
+	background-color: value("constants.css.gradientFormDialogColor");
+	background-image: value("constants.css.gradientFormDialog");
+}
+
+.page {
+	background-color: value("constants.css.backgroundColorDialog");
+	border: 2px solid value("constants.css.borderColor");
+	padding: 10px;
+	width: value("constants.css.toolbarWidth");
+	margin: 0px auto;
+}
+
+body.oc-screensize-medium .page { 
+	width: eval("org.opencms.gwt.client.CmsWidthConstants.mediumLow()");
+}
+
+
+.headerContainer #locale-header-container { 
+	display: none; 
+}
+
+.headerContainer.headerContainerVaadinMode #locale-header-container { 
+	display: block; 
+}
+
+.headerContainer.headerContainerVaadinMode > *:first-child { 
+	display: none; 
+}
+
+.headerContainer > *:first-child, #locale-header-container > *:first-child {
+	padding: 10px; 
+}
+ 

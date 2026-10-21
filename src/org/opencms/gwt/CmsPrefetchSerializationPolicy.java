@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -15,11 +15,11 @@
  * Lesser General Public License for more details.
  *
  * For further information about Alkacon Software, please see the
- * company website: http://www.alkacon.com
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -34,7 +34,7 @@ import com.google.gwt.user.server.rpc.impl.LegacySerializationPolicy;
 
 /**
  * A GWT serialization policy for pre-fetching.<p>
- * 
+ *
  * @since 8.0.0
  */
 public final class CmsPrefetchSerializationPolicy extends SerializationPolicy {
@@ -55,8 +55,8 @@ public final class CmsPrefetchSerializationPolicy extends SerializationPolicy {
 
     /**
      * Returns the singleton instance of this class.<p>
-     * 
-     * @return the singleton instance of this class 
+     *
+     * @return the singleton instance of this class
      */
     public static CmsPrefetchSerializationPolicy instance() {
 

@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -14,12 +14,12 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * Lesser General Public License for more details.
  *
- * For further information about Alkacon Software GmbH, please see the
- * company website: http://www.alkacon.com
+ * For further information about Alkacon Software GmbH & Co. KG, please see the
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -27,7 +27,7 @@
 
 package org.opencms.flex;
 
-import org.opencms.jsp.util.CmsJspDeviceSelector;
+import org.opencms.jsp.util.CmsJspDeviceSelectorDesktopMobileTablet;
 import org.opencms.jsp.util.I_CmsJspDeviceSelector;
 import org.opencms.main.CmsLog;
 
@@ -35,14 +35,15 @@ import org.apache.commons.logging.Log;
 
 /**
  * Flex Cache configuration class.<p>
- * 
- * @since 6.0.0 
+ *
+ * @since 6.0.0
  */
 public class CmsFlexCacheConfiguration {
 
     /** The log object for this class. */
     private static final Log LOG = CmsLog.getLog(CmsFlexCacheConfiguration.class);
 
+    /** The average cache bytes. */
     private long m_avgCacheBytes;
 
     /** Indicates if the cache is enabled or not. */
@@ -57,18 +58,20 @@ public class CmsFlexCacheConfiguration {
     /** The device selector configuration. */
     private String m_deviceSelectorConfiguration;
 
-    /** 
+    /**
      * Sizing parameters for the cached "entries" (ie. pages) in the FlexCache.<p>
-     *  
+     *
      * The amount of server memory available obviously is the
      * critical factor here. The values below are set in byte size.
      * The default is 2mb memory for the cached pages _or_ a maximum of 4000
-     * cached page variations in total. 
+     * cached page variations in total.
      */
     private long m_maxCacheBytes;
 
+    /** The maximum entry bytes. */
     private int m_maxEntryBytes;
 
+    /** The maximum key. */
     private int m_maxKeys;
 
     /**
@@ -76,7 +79,7 @@ public class CmsFlexCacheConfiguration {
      */
     public CmsFlexCacheConfiguration() {
 
-        // empty public constructor for digester 
+        // empty public constructor for digester
     }
 
     /**
@@ -97,14 +100,14 @@ public class CmsFlexCacheConfiguration {
     public I_CmsJspDeviceSelector getDeviceSelector() {
 
         if (m_deviceSelector == null) {
-            m_deviceSelector = new CmsJspDeviceSelector();
+            m_deviceSelector = new CmsJspDeviceSelectorDesktopMobileTablet();
         }
         return m_deviceSelector;
     }
 
     /**
      * Returns the device selector configuration.<p>
-     * 
+     *
      * @return the device selector configuration
      */
     public String getDeviceSelectorConfiguration() {
@@ -144,7 +147,7 @@ public class CmsFlexCacheConfiguration {
 
     /**
      * Initializes the flex cache configuration with required parameters.<p>
-     * 
+     *
      * @param enabled enables or disable the flexcache
      * @param offline enable the flexcache for the offline project
      * @param maxCacheBytes the max bytes for cache
@@ -240,15 +243,17 @@ public class CmsFlexCacheConfiguration {
         if (objectInstance instanceof I_CmsJspDeviceSelector) {
             m_deviceSelector = (I_CmsJspDeviceSelector)objectInstance;
             if (CmsLog.INIT.isInfoEnabled()) {
-                CmsLog.INIT.info(Messages.get().getBundle().key(
-                    Messages.INIT_FLEXCACHE_DEVICE_SELECTOR_SUCCESS_1,
-                    m_deviceSelectorConfiguration));
+                CmsLog.INIT.info(
+                    Messages.get().getBundle().key(
+                        Messages.INIT_FLEXCACHE_DEVICE_SELECTOR_SUCCESS_1,
+                        m_deviceSelectorConfiguration));
             }
         } else {
             if (CmsLog.INIT.isFatalEnabled()) {
-                CmsLog.INIT.fatal(Messages.get().getBundle().key(
-                    Messages.INIT_FLEXCACHE_DEVICE_SELECTOR_FAILURE_1,
-                    m_deviceSelectorConfiguration));
+                CmsLog.INIT.fatal(
+                    Messages.get().getBundle().key(
+                        Messages.INIT_FLEXCACHE_DEVICE_SELECTOR_FAILURE_1,
+                        m_deviceSelectorConfiguration));
             }
         }
     }

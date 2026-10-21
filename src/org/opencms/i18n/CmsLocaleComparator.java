@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -14,12 +14,12 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * Lesser General Public License for more details.
  *
- * For further information about Alkacon Software GmbH, please see the
- * company website: http://www.alkacon.com
+ * For further information about Alkacon Software GmbH & Co. KG, please see the
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -33,8 +33,8 @@ import java.util.Locale;
 
 /**
  * Simple comparator implementation for locales, that compares the String value of the locales.<p>
- * 
- * @since 6.0.0 
+ *
+ * @since 6.0.0
  */
 public final class CmsLocaleComparator implements Serializable, Comparator<Locale> {
 
@@ -45,7 +45,7 @@ public final class CmsLocaleComparator implements Serializable, Comparator<Local
     private static final Comparator<Locale> LOCALE_COMPARATOR = new CmsLocaleComparator();
 
     /**
-     * Hides the public constructor.<p> 
+     * Hides the public constructor.<p>
      */
     private CmsLocaleComparator() {
 
@@ -54,7 +54,7 @@ public final class CmsLocaleComparator implements Serializable, Comparator<Local
 
     /**
      * Returns a static instance of the locale comparator.<p>
-     * 
+     *
      * @return a static instance of the locale comparator
      */
     public static Comparator<Locale> getComparator() {

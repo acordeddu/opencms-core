@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -15,11 +15,11 @@
  * Lesser General Public License for more details.
  *
  * For further information about Alkacon Software, please see the
- * company website: http://www.alkacon.com
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -33,17 +33,19 @@ import org.opencms.db.CmsUserSettings;
 import org.opencms.file.CmsObject;
 import org.opencms.file.CmsResource;
 import org.opencms.file.CmsResourceFilter;
+import org.opencms.flex.CmsFlexController;
+import org.opencms.gwt.shared.I_CmsContentLoadCollectorInfo;
 import org.opencms.i18n.CmsMessages;
 import org.opencms.lock.CmsLock;
 import org.opencms.main.CmsLog;
 import org.opencms.main.OpenCms;
 import org.opencms.security.CmsPermissionSet;
 import org.opencms.util.CmsStringUtil;
-import org.opencms.workplace.editors.Messages;
 
 import java.io.IOException;
 import java.util.Random;
 
+import javax.servlet.ServletRequest;
 import javax.servlet.jsp.JspException;
 import javax.servlet.jsp.PageContext;
 
@@ -51,8 +53,8 @@ import org.apache.commons.logging.Log;
 
 /**
  * Basic functions for direct edit providers.<p>
- * 
- * @since 6.2.3 
+ *
+ * @since 6.2.3
  */
 public abstract class A_CmsDirectEditProvider implements I_CmsDirectEditProvider {
 
@@ -99,22 +101,23 @@ public abstract class A_CmsDirectEditProvider implements I_CmsDirectEditProvider
      */
     public CmsParameterConfiguration getConfiguration() {
 
-        // this implementation ensures that this is an unmodifiable Map in #initConfiguration() 
+        // this implementation ensures that this is an unmodifiable Map in #initConfiguration()
         return m_configurationParameters;
     }
 
     /**
      * Calculates the direct edit resource information for the given VFS resource.<p>
-     * 
-     * This includes the direct edit permissions. 
+     *
+     * This includes the direct edit permissions.
      * If the permissions are not {@link CmsDirectEditPermissions#INACTIVE}, then the resource and lock
-     * information is also included in the result.<p> 
-     * 
+     * information is also included in the result.<p>
+     *
+     * @param params the direct edit parameters
      * @param resourceName the name of the VFS resource to get the direct edit info for
-     * 
+     *
      * @return the direct edit resource information for the given VFS resource
      */
-    public CmsDirectEditResourceInfo getResourceInfo(String resourceName) {
+    public CmsDirectEditResourceInfo getResourceInfo(CmsDirectEditParams params, String resourceName) {
 
         try {
             // first check some simple preconditions for direct edit
@@ -132,22 +135,24 @@ public abstract class A_CmsDirectEditProvider implements I_CmsDirectEditProvider
             }
             // read the target resource
             CmsResource resource = m_cms.readResource(resourceName, CmsResourceFilter.ALL);
-            if (!OpenCms.getResourceManager().getResourceType(resource.getTypeId()).isDirectEditable()) {
-                // don't show direct edit button for non-editable resources 
+            if (!OpenCms.getResourceManager().getResourceType(resource.getTypeId()).isDirectEditable()
+                && !resource.isFolder()) {
+                // don't show direct edit button for non-editable resources
                 return CmsDirectEditResourceInfo.INACTIVE;
             }
             // check the resource lock
             CmsLock lock = m_cms.getLock(resource);
-            boolean locked = !(lock.isUnlocked() || lock.isOwnedInProjectBy(
-                m_cms.getRequestContext().getCurrentUser(),
-                m_cms.getRequestContext().getCurrentProject()));
+            boolean locked = !(lock.isUnlocked()
+                || lock.isOwnedInProjectBy(
+                    m_cms.getRequestContext().getCurrentUser(),
+                    m_cms.getRequestContext().getCurrentProject()));
             // check the users permissions on the resource
             if (m_cms.hasPermissions(
                 resource,
                 CmsPermissionSet.ACCESS_WRITE,
                 false,
                 CmsResourceFilter.IGNORE_EXPIRATION)) {
-                // only if write permissions are granted the resource may be direct editable                
+                // only if write permissions are granted the resource may be direct editable
                 if (locked) {
                     // a locked resource must be shown as "disabled"
                     return new CmsDirectEditResourceInfo(CmsDirectEditPermissions.DISABLED, resource, lock);
@@ -156,9 +161,13 @@ public abstract class A_CmsDirectEditProvider implements I_CmsDirectEditProvider
                 return new CmsDirectEditResourceInfo(CmsDirectEditPermissions.ENABLED, resource, lock);
             }
         } catch (Exception e) {
-            // all exceptions: don't mix up the result HTML, always return INACTIVE mode 
+            // all exceptions: don't mix up the result HTML, always return INACTIVE mode
             if (LOG.isWarnEnabled()) {
-                LOG.warn(Messages.get().getBundle().key(Messages.LOG_CALC_EDIT_MODE_FAILED_1, resourceName), e);
+                LOG.warn(
+                    org.opencms.workplace.editors.Messages.get().getBundle().key(
+                        org.opencms.workplace.editors.Messages.LOG_CALC_EDIT_MODE_FAILED_1,
+                        resourceName),
+                    e);
             }
         }
         // otherwise the resource is not direct editable
@@ -179,7 +188,9 @@ public abstract class A_CmsDirectEditProvider implements I_CmsDirectEditProvider
 
         m_rnd = new Random();
         CmsUserSettings settings = new CmsUserSettings(cms);
-        m_messages = new CmsMessages(Messages.get().getBundleName(), settings.getLocale());
+        m_messages = new CmsMessages(
+            org.opencms.workplace.editors.Messages.get().getBundleName(),
+            settings.getLocale());
         m_editButtonStyle = settings.getEditorButtonStyle();
     }
 
@@ -200,6 +211,34 @@ public abstract class A_CmsDirectEditProvider implements I_CmsDirectEditProvider
     }
 
     /**
+     * @see org.opencms.workplace.editors.directedit.I_CmsDirectEditProvider#insertDirectEditEmptyList(javax.servlet.jsp.PageContext, org.opencms.workplace.editors.directedit.CmsDirectEditParams)
+     */
+    public void insertDirectEditEmptyList(PageContext context, CmsDirectEditParams params) throws JspException {
+
+        insertDirectEditStart(context, params);
+        ServletRequest req = context.getRequest();
+        CmsFlexController controller = CmsFlexController.getController(req);
+        CmsObject cms = controller.getCmsObject();
+        print(
+            context,
+            "<div style=\"minHeight:24px\">"
+                + Messages.get().getBundle(OpenCms.getWorkplaceManager().getWorkplaceLocale(cms)).key(
+                    Messages.GUI_CLICK_TO_ADD_ELEMENT_TO_EMPTY_LIST_0)
+                + "</div>");
+        insertDirectEditEnd(context);
+    }
+
+    /**
+     * @see org.opencms.workplace.editors.directedit.I_CmsDirectEditProvider#insertDirectEditListMetadata(javax.servlet.jsp.PageContext, org.opencms.gwt.shared.I_CmsContentLoadCollectorInfo)
+     */
+    @SuppressWarnings("unused")
+    public void insertDirectEditListMetadata(PageContext context, I_CmsContentLoadCollectorInfo info)
+    throws JspException {
+
+        // do nothing by default
+    }
+
+    /**
      * @see org.opencms.workplace.editors.directedit.I_CmsDirectEditProvider#isManual(org.opencms.workplace.editors.directedit.CmsDirectEditMode)
      */
     public boolean isManual(CmsDirectEditMode mode) {
@@ -210,9 +249,9 @@ public abstract class A_CmsDirectEditProvider implements I_CmsDirectEditProvider
 
     /**
      * Returns the given link resolved according to the OpenCms context and export rules.<p>
-     * 
+     *
      * @param target the link target to resolve
-     * 
+     *
      * @return the given link resolved according to the OpenCms context and export rules
      */
     protected String getLink(String target) {
@@ -222,9 +261,9 @@ public abstract class A_CmsDirectEditProvider implements I_CmsDirectEditProvider
 
     /**
      * Returns the next random edit id.<p>
-     * 
+     *
      * Random edit id's are used because to separate multiple direct edit buttons on one page.<p>
-     * 
+     *
      * @return the next random edit id
      */
     protected String getNextDirectEditId() {
@@ -234,12 +273,12 @@ public abstract class A_CmsDirectEditProvider implements I_CmsDirectEditProvider
 
     /**
      * Prints the given content string to the given page context.<p>
-     * 
+     *
      * Does not print anything if the content is <code>null</code>.<p>
-     * 
+     *
      * @param context the JSP page context to print the content to
      * @param content the content to print
-     * 
+     *
      * @throws JspException in case the content could not be written to the page conext
      */
     protected void print(PageContext context, String content) throws JspException {

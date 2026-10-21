@@ -1,0 +1,124 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<export>
+    <info>
+        <infoproject>Offline</infoproject>
+        <export_version>10</export_version>
+    </info>
+    <module>
+        <name>org.opencms.legacy.xmlpages</name>
+        <nicename><![CDATA[Legacy XML page support]]></nicename>
+        <group>OpenCms Editors</group>
+        <class />
+        <site>/sites/default</site>
+        <export-mode name="reduced" />
+        <description><![CDATA[<p>Legacy module for creating/editing XML pages ("page with free text").</p>]]></description>
+        <version>22.0.0</version>
+        <authorname><![CDATA[OpenCms community]]></authorname>
+        <authoremail><![CDATA[opencms-dev@opencms.org]]></authoremail>
+        <datecreated />
+        <userinstalled />
+        <dateinstalled />
+        <dependencies>
+        	<dependency name="org.opencms.legacy.tools" version="13.0.0" />
+        </dependencies>
+        <exportpoints />
+        <resources>
+            <resource uri="/system/workplace/editors/tinymce/editor_configuration.xml" />
+            <resource uri="/system/workplace/editors/tinymce/editor.jsp" />
+            <resource uri="/system/workplace/editors/tinymce/tinymce_xmlpage.css" />
+        </resources>
+        <excluderesources />
+        <parameters />
+        <resourcetypes>
+            <type class="org.opencms.file.types.CmsResourceTypeXmlPage" name="xmlpage" id="6">
+                <param name="gallery.type.names">downloadgallery</param>
+            </type>
+        </resourcetypes>
+        <explorertypes>
+            <explorertype name="xmlpage" key="fileicon.xmlpage">
+                <newresource order="81" autosetnavigation="false" autosettitle="false" info="desc.xmlpage" />
+                <editoptions>
+                    <defaultproperties enabled="true" shownavigation="true">
+                        <defaultproperty name="Title" />
+                        <defaultproperty name="Keywords" />
+                        <defaultproperty name="Description" />
+                    </defaultproperties>
+                </editoptions>
+            </explorertype>
+
+        </explorertypes>
+    </module>
+    <files>
+        <file>
+            <destination>system</destination>
+            <type>folder</type>
+            <properties />
+        </file>
+        <file>
+            <destination>system/workplace</destination>
+            <type>folder</type>
+            <properties />
+        </file>
+        <file>
+            <destination>system/workplace/editors</destination>
+            <type>folder</type>
+            <properties />
+        </file>
+        <file>
+            <destination>system/workplace/editors/tinymce</destination>
+            <type>folder</type>
+            <properties />
+        </file>
+        <file>
+            <source>system/workplace/editors/tinymce/editor.jsp</source>
+            <destination>system/workplace/editors/tinymce/editor.jsp</destination>
+            <type>jsp</type>
+            <uuidstructure>f09ff22e-3c5b-11e1-9604-974a2cad26ef</uuidstructure>
+            <uuidresource>f09ff22f-3c5b-11e1-9604-974a2cad26ef</uuidresource>
+            <datecreated>Wed, 11 Jan 2012 13:55:37 GMT</datecreated>
+            <flags>0</flags>
+            <properties>
+                <property>
+                    <name>Title</name>
+                    <value><![CDATA[TinyMCE WYSIWYG editor]]></value>
+                </property>
+                <property type="shared">
+                    <name>export</name>
+                    <value><![CDATA[false]]></value>
+                </property>
+            </properties>
+            <relations />
+            <accesscontrol />
+        </file>
+        <file>
+            <source>system/workplace/editors/tinymce/editor_configuration.xml</source>
+            <destination>system/workplace/editors/tinymce/editor_configuration.xml</destination>
+            <type>plain</type>
+            <uuidstructure>e1ab35eb-3c5b-11e1-9604-974a2cad26ef</uuidstructure>
+            <uuidresource>e1ab35ec-3c5b-11e1-9604-974a2cad26ef</uuidresource>
+            <datecreated>Wed, 11 Jan 2012 13:55:12 GMT</datecreated>
+            <flags>0</flags>
+            <properties>
+                <property>
+                    <name>Title</name>
+                    <value><![CDATA[Editor configuration file]]></value>
+                </property>
+            </properties>
+            <relations />
+            <accesscontrol />
+        </file>
+        <file>
+            <source>system/workplace/editors/tinymce/tinymce_xmlpage.css</source>
+            <destination>system/workplace/editors/tinymce/tinymce_xmlpage.css</destination>
+            <type>plain</type>
+            <uuidstructure>5de1afbd-57ee-11e1-a102-eb442326482c</uuidstructure>
+            <uuidresource>5de1afbe-57ee-11e1-a102-eb442326482c</uuidresource>
+            <datecreated>Wed, 15 Feb 2012 16:01:48 GMT</datecreated>
+            <flags>0</flags>
+            <properties />
+            <relations />
+            <accesscontrol />
+        </file>
+    </files>
+</export>

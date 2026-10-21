@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -14,12 +14,12 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * Lesser General Public License for more details.
  *
- * For further information about Alkacon Software GmbH, please see the
- * company website: http://www.alkacon.com
+ * For further information about Alkacon Software GmbH & Co. KG, please see the
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -30,28 +30,34 @@ package org.opencms.relations;
 import org.opencms.file.CmsDataAccessException;
 import org.opencms.file.CmsResource;
 import org.opencms.main.CmsException;
+import org.opencms.main.CmsLog;
 import org.opencms.util.CmsStringUtil;
 import org.opencms.util.CmsUUID;
 
 import java.io.Serializable;
 
+import org.apache.commons.logging.Log;
+
 /**
  * Represents a category, that is just a folder.<p>
- * 
- * The category can be centralized under <code>/system/categories/</code>, 
+ *
+ * The category can be centralized under <code>/system/categories/</code>,
  * or decentralized in every folder.<p>
- * 
- * For instance, you can have a category folder under <code>/sites/default/</code> 
- * so, any file under <code>/sites/default/</code> could be assigned to any 
- * category defined under <code>/system/categories/</code> or 
+ *
+ * For instance, you can have a category folder under <code>/sites/default/</code>
+ * so, any file under <code>/sites/default/</code> could be assigned to any
+ * category defined under <code>/system/categories/</code> or
  * <code>/sites/default/categories</code>.<p>
- * 
+ *
  * But a file under <code>/sites/othersite/</code> will only be assignable to
  * categories defined in <code>/system/categories/</code>.<p>
- * 
+ *
  * @since 6.9.2
  */
 public class CmsCategory implements Comparable<CmsCategory>, Serializable {
+
+    /** Logger instance for this class. */
+    private static final Log LOG = CmsLog.getLog(CmsCategory.class);
 
     /** The serialization id. */
     private static final long serialVersionUID = -6395887983124249138L;
@@ -61,6 +67,9 @@ public class CmsCategory implements Comparable<CmsCategory>, Serializable {
 
     /** The description of the category. */
     private String m_description;
+
+    /** Background color to use for the category in the explorer's 'Categories'  column. */
+    private String m_background;
 
     /** The path of the category. */
     private String m_path;
@@ -75,17 +84,43 @@ public class CmsCategory implements Comparable<CmsCategory>, Serializable {
     private String m_title;
 
     /**
+     * Creates a new category based on another one, keeping everything except title and description, which are passed in separately.<p>
+     *
+     * @param other the other category to copy fields from
+     * @param title the new title
+     * @param description the new description
+     */
+    public CmsCategory(CmsCategory other, String title, String description) {
+
+        m_basePath = other.m_basePath;
+
+        m_path = other.m_path;
+        m_rootPath = other.m_rootPath;
+        m_structureId = other.m_structureId;
+        m_description = description != null ? description : other.m_description;
+        m_title = title != null ? title : other.m_title;
+        m_background = other.m_background;
+    }
+
+    /**
      * Default constructor.<p>
-     * 
+     *
      * @param structureId the structure id of the resource that this category represents
      * @param rootPath the root path of the category folder
      * @param title the title of the category
      * @param description the description of the category
-     * @param baseFolder the base categories folder 
-     * 
+     * @param baseFolder the base categories folder
+     * @param background the background color for displaying the category in the explorer file table (in 6 digit hexadecimal form, e.g. #aabbcc), or null
+     *
      * @throws CmsException if the root path does not match the given base folder
      */
-    public CmsCategory(CmsUUID structureId, String rootPath, String title, String description, String baseFolder)
+    public CmsCategory(
+        CmsUUID structureId,
+        String rootPath,
+        String title,
+        String description,
+        String baseFolder,
+        String background)
     throws CmsException {
 
         m_structureId = structureId;
@@ -94,6 +129,7 @@ public class CmsCategory implements Comparable<CmsCategory>, Serializable {
         m_description = description;
         m_path = getCategoryPath(m_rootPath, baseFolder);
         m_basePath = m_rootPath.substring(0, m_rootPath.length() - m_path.length());
+        m_background = background;
     }
 
     /**
@@ -106,12 +142,12 @@ public class CmsCategory implements Comparable<CmsCategory>, Serializable {
 
     /**
      * Returns the category path for the given root path.<p>
-     * 
+     *
      * @param rootPath the root path
      * @param baseFolder the categories base folder name
-     * 
+     *
      * @return the category path
-     * 
+     *
      * @throws CmsException if the root path does not match the given base folder
      */
     public static String getCategoryPath(String rootPath, String baseFolder) throws CmsException {
@@ -129,9 +165,8 @@ public class CmsCategory implements Comparable<CmsCategory>, Serializable {
             }
             int pos = rootPath.indexOf(base);
             if (pos < 0) {
-                throw new CmsDataAccessException(Messages.get().container(
-                    Messages.ERR_CATEGORY_INVALID_LOCATION_1,
-                    rootPath));
+                throw new CmsDataAccessException(
+                    Messages.get().container(Messages.ERR_CATEGORY_INVALID_LOCATION_1, rootPath));
             }
             base = rootPath.substring(0, pos + base.length());
         }
@@ -143,10 +178,10 @@ public class CmsCategory implements Comparable<CmsCategory>, Serializable {
      */
     public int compareTo(CmsCategory cat) {
 
-        boolean thisGlobal = this.getBasePath().equals(CmsCategoryService.CENTRALIZED_REPOSITORY);
+        boolean thisGlobal = getBasePath().equals(CmsCategoryService.CENTRALIZED_REPOSITORY);
         boolean thatGlobal = cat.getBasePath().equals(CmsCategoryService.CENTRALIZED_REPOSITORY);
         if ((thisGlobal && thatGlobal) || (!thisGlobal && !thatGlobal)) {
-            return this.getPath().compareTo(cat.getPath());
+            return getPath().compareTo(cat.getPath());
         }
         return thisGlobal ? -1 : 1;
     }
@@ -165,6 +200,18 @@ public class CmsCategory implements Comparable<CmsCategory>, Serializable {
             return false;
         }
         return true;
+    }
+
+    /**
+     * Gets the configured background color for the category in the 'Categories' explorer column.
+     *
+     * <p>The color should consist of 6 hex digits preceded by a hash symbol (#aabbcc).
+     *
+     * @return the background color, or null if it's not set
+     */
+    public String getBackground() {
+
+        return m_background;
     }
 
     /**
@@ -189,7 +236,7 @@ public class CmsCategory implements Comparable<CmsCategory>, Serializable {
 
     /**
      * Returns the id.<p>
-     * 
+     *
      * @return the id
      */
     public CmsUUID getId() {
@@ -197,9 +244,9 @@ public class CmsCategory implements Comparable<CmsCategory>, Serializable {
         return m_structureId;
     }
 
-    /** 
+    /**
      * Returns the mere category name without it's complete path and without the trailing folder - slash.<p>
-     * 
+     *
      * @return the mere category name without it's complete path and without the trailing folder - slash
      */
     public String getName() {
@@ -217,7 +264,7 @@ public class CmsCategory implements Comparable<CmsCategory>, Serializable {
 
     /**
      * Returns the path.<p>
-     * 
+     *
      * @return the path
      */
     public String getPath() {
@@ -253,4 +300,14 @@ public class CmsCategory implements Comparable<CmsCategory>, Serializable {
 
         return getPath().hashCode();
     }
+
+    /**
+     * @see java.lang.Object#toString()
+     */
+    @Override
+    public String toString() {
+
+        return "[" + CmsCategory.class.getSimpleName() + "/" + System.identityHashCode(this) + ": " + m_rootPath + " ]";
+    }
+
 }

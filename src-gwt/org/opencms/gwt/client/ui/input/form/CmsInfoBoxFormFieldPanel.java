@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -15,11 +15,11 @@
  * Lesser General Public License for more details.
  *
  * For further information about Alkacon Software, please see the
- * company website: http://www.alkacon.com
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -37,44 +37,56 @@ import java.util.Collection;
 import java.util.List;
 
 import com.google.gwt.user.client.ui.FlowPanel;
+import com.google.gwt.user.client.ui.Widget;
 
 /**
  * Form field panel for the sitemap entry editor in the navigation mode.<p>
- * 
+ *
  * @since 8.0.0
  */
 public class CmsInfoBoxFormFieldPanel extends A_CmsFormFieldPanel {
 
+    /** Text metrics key for the info box. */
+    public static String TM_INFOBOX = "infobox_";
+
     /** The list of form fields. */
     protected List<I_CmsFormField> m_fields;
-
-    /** The main panel .*/
-    private FlowPanel m_panel;
 
     /** The inner panel containing the form fields. */
     private FlowPanel m_innerPanel;
 
-    /** Text metrics key for the info box. */
-    public static String TM_INFOBOX = "infobox_";
+    /** The main panel .*/
+    private FlowPanel m_panel;
 
     /**
      * Creates a new instance.<p>
-     * 
+     *
      * @param info the bean used to display the info item
      */
     public CmsInfoBoxFormFieldPanel(CmsListInfoBean info) {
 
         m_panel = new FlowPanel();
         m_innerPanel = new FlowPanel();
-        CmsListItemWidget liWidget = new CmsListItemWidget(info);
-        liWidget.truncate(TM_INFOBOX, CmsFormDialog.STANDARD_DIALOG_WIDTH - 50);
-        liWidget.setStateIcon(StateIcon.standard);
-        m_panel.add(liWidget);
+        m_infoWidget = new CmsListItemWidget(info);
+        m_infoWidget.truncate(TM_INFOBOX, CmsFormDialog.STANDARD_DIALOG_WIDTH - 50);
+        m_infoWidget.setStateIcon(StateIcon.standard);
+        m_panel.add(m_infoWidget);
         m_panel.add(m_innerPanel);
         m_innerPanel.addStyleName(I_CmsLayoutBundle.INSTANCE.generalCss().cornerAll());
         m_innerPanel.addStyleName(I_CmsLayoutBundle.INSTANCE.propertiesCss().navModePropertiesBox());
         //setBorder(m_panel);
         initWidget(m_panel);
+    }
+
+    /**
+     * Adds another widget after the list info widget.
+     *
+     * @param widget the widget to add
+     */
+    public void addWidgetAfterListInfo(Widget widget) {
+
+        int index = m_panel.getWidgetIndex(m_infoWidget);
+        m_panel.insert(widget, index + 1);
     }
 
     /**
@@ -97,6 +109,14 @@ public class CmsInfoBoxFormFieldPanel extends A_CmsFormFieldPanel {
             CmsFormRow row = createRow(field);
             m_innerPanel.add(row);
         }
+    }
+
+    /**
+     * @see org.opencms.gwt.client.ui.I_CmsTruncable#truncate(java.lang.String, int)
+     */
+    public void truncate(String textMetricsKey, int clientWidth) {
+
+        // do nothing
     }
 
 }

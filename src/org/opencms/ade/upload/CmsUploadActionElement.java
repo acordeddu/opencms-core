@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -15,11 +15,11 @@
  * Lesser General Public License for more details.
  *
  * For further information about Alkacon Software, please see the
- * company website: http://www.alkacon.com
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -27,10 +27,9 @@
 
 package org.opencms.ade.upload;
 
-import org.opencms.ade.upload.shared.CmsUploadData;
-import org.opencms.ade.upload.shared.I_CmsUploadConstants;
-import org.opencms.ade.upload.shared.rpc.I_CmsUploadService;
 import org.opencms.gwt.CmsGwtActionElement;
+import org.opencms.gwt.shared.CmsCoreData;
+import org.opencms.gwt.shared.I_CmsUploadConstants;
 import org.opencms.jsp.CmsJspActionElement;
 import org.opencms.util.CmsStringUtil;
 import org.opencms.workplace.CmsDialog;
@@ -42,7 +41,7 @@ import javax.servlet.jsp.PageContext;
 
 /**
  * Upload action element, used to generate the upload dialog.<p>
- * 
+ *
  * @since 8.0.0
  */
 public class CmsUploadActionElement extends CmsGwtActionElement {
@@ -54,7 +53,7 @@ public class CmsUploadActionElement extends CmsGwtActionElement {
 
         /**
          * Constructor.<p>
-         * 
+         *
          * @param jsp the JSP Action Element
          */
         public Dialog(CmsJspActionElement jsp) {
@@ -73,17 +72,18 @@ public class CmsUploadActionElement extends CmsGwtActionElement {
         }
     }
 
-    /** The module name. */
-    public static final String MODULE_NAME = "upload";
+    /** The OpenCms module name. */
+    public static final String CMS_MODULE_NAME = "org.opencms.ade.upload";
 
-    private CmsUploadData m_uploadData;
+    /** The GWT module name. */
+    public static final String GWT_MODULE_NAME = CmsCoreData.ModuleKey.upload.name();
 
     /**
      * Constructor.<p>
-     * 
+     *
      * @param context the JSP page context object
-     * @param req the JSP request 
-     * @param res the JSP response 
+     * @param req the JSP request
+     * @param res the JSP response
      */
     public CmsUploadActionElement(PageContext context, HttpServletRequest req, HttpServletResponse res) {
 
@@ -96,12 +96,7 @@ public class CmsUploadActionElement extends CmsGwtActionElement {
     @Override
     public String export() throws Exception {
 
-        StringBuffer sb = new StringBuffer();
-        String prefetchedData = serialize(I_CmsUploadService.class.getMethod("prefetch"), getUploadData());
-        sb.append(CmsUploadData.DICT_NAME).append("='").append(prefetchedData).append("';");
-        sb.append(ClientMessages.get().export(getRequest()));
-        wrapScript(sb);
-        return sb.toString();
+        return "";
     }
 
     /**
@@ -112,18 +107,17 @@ public class CmsUploadActionElement extends CmsGwtActionElement {
 
         StringBuffer sb = new StringBuffer();
         sb.append(super.export());
-        sb.append(export());
         sb.append(exportTargetFolder());
         sb.append(exportCloseLink());
-        sb.append(createNoCacheScript(MODULE_NAME));
+        sb.append(exportModuleScriptTag(GWT_MODULE_NAME));
         return sb.toString();
     }
 
     /**
      * Special export for the button mode.<p>
-     * 
+     *
      * @return the data
-     * 
+     *
      * @throws Exception if something goes wrong
      */
     public String exportButton() throws Exception {
@@ -136,7 +130,7 @@ public class CmsUploadActionElement extends CmsGwtActionElement {
 
     /**
      * Returns the upload dialog title.<p>
-     * 
+     *
      * @return the upload dialog title
      */
     public String getTitle() {
@@ -145,21 +139,8 @@ public class CmsUploadActionElement extends CmsGwtActionElement {
     }
 
     /**
-     * Returns the needed server data for client-side usage.<p> 
-     *
-     * @return the needed server data for client-side usage
-     */
-    public CmsUploadData getUploadData() {
-
-        if (m_uploadData == null) {
-            m_uploadData = CmsUploadService.newInstance(getRequest()).prefetch();
-        }
-        return m_uploadData;
-    }
-
-    /**
      * Returns a javascript tag that contains a variable deceleration that has the close link as value.<p>
-     * 
+     *
      * @return a javascript tag that contains a variable deceleration that has the close link as value
      */
     private String exportCloseLink() {
@@ -174,27 +155,24 @@ public class CmsUploadActionElement extends CmsGwtActionElement {
 
         StringBuffer sb = new StringBuffer();
         // var closeLink = '/system/workplace/views/explorer/explorer_files.jsp';
-        sb.append("var ").append(I_CmsUploadConstants.ATTR_CLOSE_LINK).append(" = \'").append(closeLink).append("\';");
-        wrapScript(sb);
+        sb.append(wrapScript("var ", I_CmsUploadConstants.ATTR_CLOSE_LINK, " = \'", closeLink, "\';"));
         return sb.toString();
     }
 
     /**
      * Returns a javascript tag that contains a variable deceleration that has the close link as value.<p>
-     * 
+     *
      * @return a javascript tag that contains a variable deceleration that has the close link as value
      */
     private String exportDialogMode() {
 
         // var dialogMode = 'button';
-        StringBuffer sb = new StringBuffer("var " + I_CmsUploadConstants.ATTR_DIALOG_MODE + " = 'button';");
-        wrapScript(sb);
-        return sb.toString();
+        return wrapScript("var ", I_CmsUploadConstants.ATTR_DIALOG_MODE, " = 'button';");
     }
 
     /**
      * Returns a javascript tag that contains a variable deceleration that has the target folder as value.<p>
-     * 
+     *
      * @return a javascript tag that contains a variable deceleration that has the target folder as value
      */
     private String exportTargetFolder() {
@@ -208,9 +186,7 @@ public class CmsUploadActionElement extends CmsGwtActionElement {
         }
         StringBuffer sb = new StringBuffer();
         // var targetFolder = '/demo_t3/';
-        sb.append("var ").append(I_CmsUploadConstants.VAR_TARGET_FOLDER).append(" = \'").append(targetFolder).append(
-            "\';");
-        wrapScript(sb);
+        sb.append(wrapScript("var ", I_CmsUploadConstants.VAR_TARGET_FOLDER, " = \'", targetFolder, "\';"));
         return sb.toString();
     }
 }

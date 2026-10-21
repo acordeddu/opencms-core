@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -14,23 +14,23 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * Lesser General Public License for more details.
  *
- * For further information about Alkacon Software GmbH, please see the
- * company website: http://www.alkacon.com
+ * For further information about Alkacon Software GmbH & Co. KG, please see the
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
- * 
+ *
  * This file is based on:
  * org.apache.taglibs.standard.tag.common.core.ParamSupport
  * from the Apache JSTL 1.0 implmentation.
- * 
+ *
  * The Apache Software License, Version 1.1
  *
- * Copyright (c) 1999 The Apache Software Foundation.  All rights 
+ * Copyright (c) 1999 The Apache Software Foundation.  All rights
  * reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -38,7 +38,7 @@
  * are met:
  *
  * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer. 
+ *    notice, this list of conditions and the following disclaimer.
  *
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in
@@ -46,15 +46,15 @@
  *    distribution.
  *
  * 3. The end-user documentation included with the redistribution, if
- *    any, must include the following acknowlegement:  
- *       "This product includes software developed by the 
+ *    any, must include the following acknowlegement:
+ *       "This product includes software developed by the
  *        Apache Software Foundation (http://www.apache.org/)."
  *    Alternately, this acknowlegement may appear in the software itself,
  *    if and wherever such third-party acknowlegements normally appear.
  *
  * 4. The names "The Jakarta Project", "Tomcat", and "Apache Software
  *    Foundation" must not be used to endorse or promote products derived
- *    from this software without prior written permission. For written 
+ *    from this software without prior written permission. For written
  *    permission, please contact apache@apache.org.
  *
  * 5. Products derived from this software may not be called "Apache"
@@ -96,8 +96,8 @@ import javax.servlet.jsp.tagext.Tag;
 /**
  * A handler for &lt;param&gt; that accepts attributes as Strings
  * and evaluates them as expressions at runtime.<p>
- * 
- * @since 6.0.0 
+ *
+ * @since 6.0.0
  */
 public class CmsJspTagParam extends BodyTagSupport {
 
@@ -128,7 +128,7 @@ public class CmsJspTagParam extends BodyTagSupport {
 
     /**
      * Simply send our name and value to our appropriate ancestor.<p>
-     * 
+     *
      * @throws JspException (never thrown, required by interface)
      * @return EVAL_PAGE
      */
@@ -137,9 +137,10 @@ public class CmsJspTagParam extends BodyTagSupport {
 
         Tag t = findAncestorWithClass(this, I_CmsJspTagParamParent.class);
         if (t == null) {
-            throw new JspTagException(Messages.get().getBundle(pageContext.getRequest().getLocale()).key(
-                Messages.ERR_PARENTLESS_TAG_1,
-                new Object[] {"param"}));
+            throw new JspTagException(
+                Messages.get().getBundle(pageContext.getRequest().getLocale()).key(
+                    Messages.ERR_PARENTLESS_TAG_1,
+                    new Object[] {"param"}));
         }
         // take no action for null or empty names
         if (CmsStringUtil.isEmpty(m_name)) {
@@ -178,8 +179,8 @@ public class CmsJspTagParam extends BodyTagSupport {
 
     /**
      * Sets the attribute name.<p>
-     * 
-     * @param name the name to set 
+     *
+     * @param name the name to set
      */
     public void setName(String name) {
 
@@ -188,8 +189,8 @@ public class CmsJspTagParam extends BodyTagSupport {
 
     /**
      * Sets the attribute value.<p>
-     * 
-     * @param value the name to set 
+     *
+     * @param value the name to set
      */
     public void setValue(String value) {
 
@@ -197,7 +198,7 @@ public class CmsJspTagParam extends BodyTagSupport {
     }
 
     /**
-     * Initializes the internal values.<p> 
+     * Initializes the internal values.<p>
      */
     private void init() {
 

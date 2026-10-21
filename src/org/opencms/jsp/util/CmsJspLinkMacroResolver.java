@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -14,12 +14,12 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * Lesser General Public License for more details.
  *
- * For further information about Alkacon Software GmbH, please see the
- * company website: http://www.alkacon.com
+ * For further information about Alkacon Software GmbH & Co. KG, please see the
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -46,10 +46,10 @@ import java.util.List;
 
 /**
  * Resolves link macros for jsp pages.<p>
- * 
+ *
  * The only supported macro is the 'link' macro.<p>
- * 
- * @since 6.5.4 
+ *
+ * @since 6.5.4
  */
 public class CmsJspLinkMacroResolver implements I_CmsMacroResolver {
 
@@ -74,9 +74,9 @@ public class CmsJspLinkMacroResolver implements I_CmsMacroResolver {
     /** The cms context. */
     private CmsObject m_cms;
 
-    /** 
-     * If <code>true</code> the macros get really resolved to valid vfs paths, 
-     * otherwise only the path/id in the macros are updated. 
+    /**
+     * If <code>true</code> the macros get really resolved to valid vfs paths,
+     * otherwise only the path/id in the macros are updated.
      */
     private boolean m_forRfs;
 
@@ -88,9 +88,9 @@ public class CmsJspLinkMacroResolver implements I_CmsMacroResolver {
 
     /**
      * Default constructor.<p>
-     * 
+     *
      * @param cms the cms context
-     * @param jspRootPath the (optional) jsp root path, needed for saving from the editor to resolve relative links 
+     * @param jspRootPath the (optional) jsp root path, needed for saving from the editor to resolve relative links
      * @param forRfs Only if <code>true</code> the macros get really resolved to valid vfs paths
      */
     public CmsJspLinkMacroResolver(CmsObject cms, String jspRootPath, boolean forRfs) {
@@ -136,7 +136,7 @@ public class CmsJspLinkMacroResolver implements I_CmsMacroResolver {
 
         // we do have a valid link macro now, parse path and id
         int pos = path.indexOf(KEY_SEPARATOR);
-        if ((pos > -1) && (path.length() > pos + 1)) {
+        if ((pos > -1) && (path.length() > (pos + 1))) {
             id = path.substring(pos + 1);
         }
         if (pos > -1) {
@@ -191,15 +191,15 @@ public class CmsJspLinkMacroResolver implements I_CmsMacroResolver {
         m_links.add(link);
 
         if (m_forRfs) {
-            // return the current correct link path 
+            // return the current correct link path
             return m_cms.getRequestContext().removeSiteRoot(link.getTarget());
         } else {
-            // rewrite the macro with the right absolute path and id 
+            // rewrite the macro with the right absolute path and id
             StringBuffer newMacro = new StringBuffer(128);
             newMacro.append(I_CmsMacroResolver.MACRO_DELIMITER);
             newMacro.append(I_CmsMacroResolver.MACRO_START);
             newMacro.append(macro);
-            newMacro.append(link.getSitePath());
+            newMacro.append(link.getSitePath(m_cms));
             if ((link.getStructureId() != null) && !link.getStructureId().isNullUUID()) {
                 newMacro.append(KEY_SEPARATOR).append(link.getStructureId());
             }
@@ -218,11 +218,11 @@ public class CmsJspLinkMacroResolver implements I_CmsMacroResolver {
 
     /**
      * Resolves the JSP link management macros in the given input.<p>
-     * 
+     *
      * Calls <code>{@link #resolveMacros(String)}</code> once for each macro in the input.
      * This means "nested" macros are not supported in this implementation, which is fine since
-     * it can't happen in JSP link management anyway.<p> 
-     * 
+     * it can't happen in JSP link management anyway.<p>
+     *
      * @see org.opencms.util.I_CmsMacroResolver#resolveMacros(java.lang.String)
      */
     public String resolveMacros(String input) {

@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -15,11 +15,11 @@
  * Lesser General Public License for more details.
  *
  * For further information about Alkacon Software, please see the
- * company website: http://www.alkacon.com
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -31,6 +31,7 @@ import org.opencms.ade.containerpage.client.Messages;
 import org.opencms.gwt.client.ui.CmsList;
 import org.opencms.gwt.client.ui.CmsListItem;
 import org.opencms.gwt.client.ui.CmsPushButton;
+import org.opencms.gwt.client.ui.CmsScrollPanel;
 
 import java.util.Iterator;
 
@@ -39,16 +40,15 @@ import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.uibinder.client.UiHandler;
-import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.Widget;
 
 /**
  * Content of the tool-bar menu favorite tab.<p>
- * 
+ *
  * @since 8.0.0
  */
-public class CmsFavoriteTab extends Composite {
+public class CmsFavoriteTab extends A_CmsClipboardTab {
 
     /** The ui-binder interface for this widget. */
     interface I_CmsFavoriteTabUiBinder extends UiBinder<Widget, CmsFavoriteTab> {
@@ -85,9 +85,13 @@ public class CmsFavoriteTab extends Composite {
     @UiField
     protected CmsPushButton m_saveButton;
 
+    /** The scroll panel. */
+    @UiField
+    protected CmsScrollPanel m_scrollPanel;
+
     /**
      * Constructor.<p>
-     * 
+     *
      * @param clipboard the clip-board menu
      */
     public CmsFavoriteTab(CmsToolbarClipboardMenu clipboard) {
@@ -106,40 +110,48 @@ public class CmsFavoriteTab extends Composite {
     }
 
     /**
-     * Adds an item to the favorite list.<p>
-     * 
-     * @param item the item to add
+     * @see org.opencms.ade.containerpage.client.ui.A_CmsClipboardTab#addListItem(org.opencms.gwt.client.ui.CmsListItem)
      */
+    @Override
     public void addListItem(CmsListItem item) {
 
-        m_listPanel.add(item);
+        super.addListItem(item);
         if (m_listPanel.getWidgetCount() > 0) {
             m_editButton.enable();
         }
     }
 
     /**
-     * Clears the favorite list.<p>
+     * @see org.opencms.ade.containerpage.client.ui.A_CmsClipboardTab#clearList()
      */
+    @Override
     public void clearList() {
 
-        m_listPanel.clear();
+        super.clearList();
         m_editButton.disable(Messages.get().key(Messages.GUI_TAB_FAVORITES_NO_ELEMENTS_0));
     }
 
     /**
-     * Returns the favorite list drag target.<p>
-     * 
-     * @return the favorite list drag target
+     * @see org.opencms.ade.containerpage.client.ui.A_CmsClipboardTab#getList()
      */
-    public CmsList<CmsListItem> getListTarget() {
+    @Override
+    public CmsList<CmsListItem> getList() {
 
         return m_listPanel;
     }
 
     /**
+     * @see org.opencms.ade.containerpage.client.ui.A_CmsClipboardTab#getScrollPanel()
+     */
+    @Override
+    public CmsScrollPanel getScrollPanel() {
+
+        return m_scrollPanel;
+    }
+
+    /**
      * Returns the favorite list item iterator.<p>
-     * 
+     *
      * @return the iterator
      */
     public Iterator<Widget> iterator() {
@@ -162,7 +174,7 @@ public class CmsFavoriteTab extends Composite {
 
     /**
      * Cancels the editing.<p>
-     * 
+     *
      * @param event the click event
      */
     @UiHandler("m_cancelButton")
@@ -175,7 +187,7 @@ public class CmsFavoriteTab extends Composite {
 
     /**
      * Starts the editing.<p>
-     * 
+     *
      * @param event the click event
      */
     @UiHandler("m_editButton")
@@ -188,7 +200,7 @@ public class CmsFavoriteTab extends Composite {
 
     /**
      * Saves the favorite list.<p>
-     * 
+     *
      * @param event the click event
      */
     @UiHandler("m_saveButton")

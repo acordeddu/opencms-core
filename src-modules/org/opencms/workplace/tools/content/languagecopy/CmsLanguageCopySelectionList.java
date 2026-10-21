@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -14,12 +14,12 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * Lesser General Public License for more details.
  *
- * For further information about Alkacon Software GmbH, please see the
- * company website: http://www.alkacon.com
+ * For further information about Alkacon Software GmbH & Co. KG, please see the
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -76,9 +76,9 @@ import org.apache.commons.logging.Log;
 /**
  * A list that displays resources and the existance of their language nodes.
  * <p>
- * 
+ *
  * @since 7.5.1
- * 
+ *
  */
 public class CmsLanguageCopySelectionList extends A_CmsListDialog {
 
@@ -118,8 +118,14 @@ public class CmsLanguageCopySelectionList extends A_CmsListDialog {
     /** The request parameter for the target language. */
     public static final String PARAM_TARGET_LANGUAGE = "targetlanguage";
 
+    /** The request parameter for the target language. */
+    public static final String PARAM_DELETE = "delete";
+
     /** The log object for this class. */
     private static final Log LOG = CmsLog.getLog(CmsLanguageCopySelectionList.class);
+
+    /** Signals whether to delete the original language node or not. */
+    private String m_paramDelete;
 
     /** The source language. */
     private String m_paramSourcelanguage;
@@ -133,11 +139,11 @@ public class CmsLanguageCopySelectionList extends A_CmsListDialog {
     /**
      * Public constructor.
      * <p>
-     * 
+     *
      * @param jsp an initialized JSP action element
-     * 
+     *
      * @throws CmsException if something goes wrong.
-     * 
+     *
      * @throws FileNotFoundException if something goes wrong.
      */
     public CmsLanguageCopySelectionList(final CmsJspActionElement jsp)
@@ -149,13 +155,13 @@ public class CmsLanguageCopySelectionList extends A_CmsListDialog {
     /**
      * Public constructor.
      * <p>
-     * 
+     *
      * @param jsp an initialized JSP action element
      * @param listId the id of the list
      * @param listName the list name
-     * 
+     *
      * @throws CmsException if something goes wrong.
-     * 
+     *
      * @throws FileNotFoundException if something goes wrong.
      */
     public CmsLanguageCopySelectionList(
@@ -170,14 +176,14 @@ public class CmsLanguageCopySelectionList extends A_CmsListDialog {
     /**
      * Public constructor.
      * <p>
-     * 
+     *
      * @param jsp an initialized JSP action element
      * @param listId the id of the displayed list
      * @param listName the name of the list
      * @param sortedColId the a priory sorted column
      * @param sortOrder the order of the sorted column
      * @param searchableColId the column to search into
-     * 
+     *
      * @throws CmsException if something goes wrong.
      * @throws FileNotFoundException if something goes wrong.
      */
@@ -197,11 +203,11 @@ public class CmsLanguageCopySelectionList extends A_CmsListDialog {
     /**
      * Public constructor with JSP variables.
      * <p>
-     * 
+     *
      * @param context the JSP page context
      * @param req the JSP request
      * @param res the JSP response
-     * 
+     *
      * @throws CmsException if something goes wrong.
      * @throws FileNotFoundException if something goes wrong.
      */
@@ -224,12 +230,15 @@ public class CmsLanguageCopySelectionList extends A_CmsListDialog {
 
             // create absolute RFS path and store it in dialog object
             Map<String, String[]> params = new HashMap<String, String[]>();
-            List<CmsListItem> items = this.getSelectedItems();
+            List<CmsListItem> items = getSelectedItems();
             List<String> paths = new LinkedList<String>();
             for (CmsListItem item : items) {
                 paths.add(String.valueOf(item.get(LIST_COLUMN_PATH)));
             }
-            params.put(CmsLanguageCopyFolderAndLanguageSelectDialog.PARAM_COPYRESOURCES, (String[])paths.toArray());
+            params.put(
+                CmsLanguageCopyFolderAndLanguageSelectDialog.PARAM_COPYRESOURCES,
+                new String[] {CmsStringUtil.listAsString(paths, ",")});
+            params.put(PARAM_DELETE, new String[] {getParamDelete()});
             // the source language
             params.put(PARAM_SOURCE_LANGUAGE, new String[] {getParamSourcelanguage()});
             // the target language
@@ -262,7 +271,7 @@ public class CmsLanguageCopySelectionList extends A_CmsListDialog {
      */
     public String[] getCopyResources() {
 
-        List<CmsListItem> items = this.getSelectedItems();
+        List<CmsListItem> items = getSelectedItems();
         String paths = "";
         boolean initial = true;
         for (CmsListItem item : items) {
@@ -273,6 +282,16 @@ public class CmsLanguageCopySelectionList extends A_CmsListDialog {
             initial = false;
         }
         return CmsStringUtil.splitAsArray(paths, ",");
+    }
+
+    /**
+     * Returns the paramDelete.<p>
+     *
+     * @return the paramDelete
+     */
+    public String getParamDelete() {
+
+        return m_paramDelete;
     }
 
     /**
@@ -300,12 +319,22 @@ public class CmsLanguageCopySelectionList extends A_CmsListDialog {
     }
 
     /**
+     * Sets the paramDelete.<p>
+     *
+     * @param paramDelete the paramDelete to set
+     */
+    public void setParamDelete(String paramDelete) {
+
+        m_paramDelete = paramDelete;
+    }
+
+    /**
      * @param paths
      *            the paths to set
      */
     public void setParamPaths(final String paths) {
 
-        this.m_paths = CmsStringUtil.splitAsArray(paths, ",");
+        m_paths = CmsStringUtil.splitAsArray(paths, ",");
     }
 
     /**
@@ -345,9 +374,9 @@ public class CmsLanguageCopySelectionList extends A_CmsListDialog {
         // get content
         CmsListItem item;
         int idCounter = 0;
-        for (CmsResource resource : this.getResources()) {
+        for (CmsResource resource : getResources()) {
             item = getList().newItem(resource.getRootPath());
-            this.fillItem(resource, item, idCounter);
+            fillItem(resource, item, idCounter);
             idCounter++;
             result.add(item);
         }
@@ -418,9 +447,10 @@ public class CmsLanguageCopySelectionList extends A_CmsListDialog {
         CmsListColumnDefinition langCol;
         for (Locale locale : sysLocales) {
             langCol = new CmsListColumnDefinition(locale.toString());
-            langCol.setName(Messages.get().container(
-                Messages.GUI_LIST_LANGUAGECOPY_COL_LANGUAGE_NAME_1,
-                new Object[] {locale.toString()}));
+            langCol.setName(
+                Messages.get().container(
+                    Messages.GUI_LIST_LANGUAGECOPY_COL_LANGUAGE_NAME_1,
+                    new Object[] {locale.toString()}));
             langCol.setHelpText(Messages.get().container(Messages.GUI_LIST_LANGUAGECOPY_COL_LANGUAGE_HELP_0));
             langCol.setAlign(CmsListColumnAlignEnum.ALIGN_LEFT);
             langCol.setSorteable(false);
@@ -446,24 +476,24 @@ public class CmsLanguageCopySelectionList extends A_CmsListDialog {
     protected void setMultiActions(final CmsListMetadata metadata) {
 
         // add copy multi action
-        CmsListMultiAction deleteMultiAction = new CmsListMultiAction(LIST_MACTION_COPY);
-        deleteMultiAction.setName(Messages.get().container(Messages.GUI_LIST_SEARCHINDEX_MACTION_COPY_NAME_0));
-        deleteMultiAction.setHelpText(Messages.get().container(Messages.GUI_LIST_SEARCHINDEX_MACTION_COPY_HELP_0));
-        deleteMultiAction.setIconPath(ICON_MULTI_ADD);
-        metadata.addMultiAction(deleteMultiAction);
+        CmsListMultiAction copyAction = new CmsListMultiAction(LIST_MACTION_COPY);
+        copyAction.setName(Messages.get().container(Messages.GUI_LIST_SEARCHINDEX_MACTION_COPY_NAME_0));
+        copyAction.setHelpText(Messages.get().container(Messages.GUI_LIST_SEARCHINDEX_MACTION_COPY_HELP_0));
+        copyAction.setIconPath(ICON_MULTI_ADD);
+        metadata.addMultiAction(copyAction);
     }
 
     /**
      * Fills a single item.
      * <p>
-     * 
+     *
      * @param resource the corresponding resource.
      * @param item the item to fill.
      * @param id used for the ID column.
      */
     private void fillItem(final CmsResource resource, final CmsListItem item, final int id) {
 
-        CmsObject cms = this.getCms();
+        CmsObject cms = getCms();
         CmsXmlContent xmlContent;
 
         I_CmsResourceType type;
@@ -522,16 +552,16 @@ public class CmsLanguageCopySelectionList extends A_CmsListDialog {
 
     /**
      * Reads the resources available for processing based on the path parameters.<p>
-     * 
+     *
      * @return the resources available for processing based on the path parameters.
      */
     private List<CmsResource> getResources() {
 
         List<CmsResource> result = new LinkedList<CmsResource>();
-        CmsObject cms = this.getCms();
+        CmsObject cms = getCms();
         CmsResourceFilter filter = CmsResourceFilter.ALL;
         try {
-            for (String path : this.m_paths) {
+            for (String path : m_paths) {
                 List<CmsResource> resources = cms.readResources(path, filter, true);
                 // filter out any resource that is no XML content:
                 for (CmsResource resource : resources) {

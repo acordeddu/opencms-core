@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -14,12 +14,12 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * Lesser General Public License for more details.
  *
- * For further information about Alkacon Software GmbH, please see the
- * company website: http://www.alkacon.com
+ * For further information about Alkacon Software GmbH & Co. KG, please see the
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -53,7 +53,7 @@ import com.google.common.collect.Lists;
 
 /**
  * Role users list view.<p>
- * 
+ *
  * @since 6.5.6
  */
 public class CmsShowRoleUsersList extends A_CmsRoleUsersList {
@@ -63,7 +63,7 @@ public class CmsShowRoleUsersList extends A_CmsRoleUsersList {
 
     /**
      * Public constructor.<p>
-     * 
+     *
      * @param jsp an initialized JSP action element
      */
     public CmsShowRoleUsersList(CmsJspActionElement jsp) {
@@ -72,8 +72,19 @@ public class CmsShowRoleUsersList extends A_CmsRoleUsersList {
     }
 
     /**
+     * Public constructor.<p>
+     *
+     * @param jsp an initialized JSP action element
+     * @param lazy the lazy flag
+     */
+    public CmsShowRoleUsersList(CmsJspActionElement jsp, boolean lazy) {
+
+        this(jsp, LIST_ID, lazy);
+    }
+
+    /**
      * Public constructor with JSP variables.<p>
-     * 
+     *
      * @param context the JSP page context
      * @param req the JSP request
      * @param res the JSP response
@@ -81,6 +92,19 @@ public class CmsShowRoleUsersList extends A_CmsRoleUsersList {
     public CmsShowRoleUsersList(PageContext context, HttpServletRequest req, HttpServletResponse res) {
 
         this(new CmsJspActionElement(context, req, res));
+    }
+
+    /**
+     * Public constructor with JSP variables.<p>
+     *
+     * @param context the JSP page context
+     * @param req the JSP request
+     * @param res the JSP response
+     * @param lazy the lazy flag
+     */
+    public CmsShowRoleUsersList(PageContext context, HttpServletRequest req, HttpServletResponse res, boolean lazy) {
+
+        this(new CmsJspActionElement(context, req, res), lazy);
     }
 
     /**
@@ -94,34 +118,10 @@ public class CmsShowRoleUsersList extends A_CmsRoleUsersList {
     }
 
     /**
-     * Public constructor.<p>
-     * 
-     * @param jsp an initialized JSP action element
-     * @param lazy the lazy flag 
-     */
-    public CmsShowRoleUsersList(CmsJspActionElement jsp, boolean lazy) {
-
-        this(jsp, LIST_ID, lazy);
-    }
-
-    /**
-     * Public constructor with JSP variables.<p>
-     * 
-     * @param context the JSP page context
-     * @param req the JSP request
-     * @param res the JSP response
-     * @param lazy the lazy flag 
-     */
-    public CmsShowRoleUsersList(PageContext context, HttpServletRequest req, HttpServletResponse res, boolean lazy) {
-
-        this(new CmsJspActionElement(context, req, res), lazy);
-    }
-
-    /**
      * Protected constructor.<p>
      * @param jsp an initialized JSP action element
      * @param listId the id of the specialized list
-     * @param lazy the lazy flag 
+     * @param lazy the lazy flag
      */
     protected CmsShowRoleUsersList(CmsJspActionElement jsp, String listId, boolean lazy) {
 
@@ -131,6 +131,7 @@ public class CmsShowRoleUsersList extends A_CmsRoleUsersList {
     /**
      * @see org.opencms.workplace.list.A_CmsListDialog#defaultActionHtmlStart()
      */
+    @Override
     public String defaultActionHtmlStart() {
 
         return getList().listJs() + dialogContentStart(getParamTitle());
@@ -139,6 +140,7 @@ public class CmsShowRoleUsersList extends A_CmsRoleUsersList {
     /**
      * @see org.opencms.workplace.list.A_CmsListDialog#executeListMultiActions()
      */
+    @Override
     public void executeListMultiActions() throws CmsRuntimeException {
 
         throwListUnsupportedActionException();
@@ -147,6 +149,7 @@ public class CmsShowRoleUsersList extends A_CmsRoleUsersList {
     /**
      * @see org.opencms.workplace.list.A_CmsListDialog#executeListSingleActions()
      */
+    @Override
     public void executeListSingleActions() {
 
         throwListUnsupportedActionException();
@@ -162,26 +165,6 @@ public class CmsShowRoleUsersList extends A_CmsRoleUsersList {
             meta.setSelfManaged(true);
         }
         super.setColumns(meta);
-    }
-
-    /**
-     * @see org.opencms.workplace.tools.accounts.A_CmsRoleUsersList#getUsers(boolean)
-     */
-    protected List getUsers(boolean withOtherOus) throws CmsException {
-
-        return OpenCms.getRoleManager().getUsersOfRole(
-            getCms(),
-            CmsRole.valueOf(getCms().readGroup(getParamRole())),
-            withOtherOus,
-            false);
-    }
-
-    /**
-     * @see org.opencms.workplace.list.A_CmsListDialog#setMultiActions(org.opencms.workplace.list.CmsListMetadata)
-     */
-    protected void setMultiActions(CmsListMetadata metadata) {
-
-        // noop
     }
 
     /**
@@ -208,10 +191,10 @@ public class CmsShowRoleUsersList extends A_CmsRoleUsersList {
 
     /**
      * Gets the search parameters.<p>
-     * 
-     * @return the search parameters 
-     * 
-     * @throws CmsException if something goes wrong 
+     *
+     * @return the search parameters
+     *
+     * @throws CmsException if something goes wrong
      */
     protected CmsUserSearchParameters getSearchParams() throws CmsException {
 
@@ -234,9 +217,9 @@ public class CmsShowRoleUsersList extends A_CmsRoleUsersList {
 
     /**
      * Gets the sort key for a column.<p>
-     * 
-     * @param column a column 
-     * @return the sort key 
+     *
+     * @param column a column
+     * @return the sort key
      */
     protected SortKey getSortKey(String column) {
 
@@ -251,6 +234,28 @@ public class CmsShowRoleUsersList extends A_CmsRoleUsersList {
             return SortKey.orgUnit;
         }
         return null;
+    }
+
+    /**
+     * @see org.opencms.workplace.tools.accounts.A_CmsRoleUsersList#getUsers(boolean)
+     */
+    @Override
+    protected List<CmsUser> getUsers(boolean withOtherOus) throws CmsException {
+
+        return OpenCms.getRoleManager().getUsersOfRole(
+            getCms(),
+            CmsRole.valueOf(getCms().readGroup(getParamRole())),
+            withOtherOus,
+            false);
+    }
+
+    /**
+     * @see org.opencms.workplace.list.A_CmsListDialog#setMultiActions(org.opencms.workplace.list.CmsListMetadata)
+     */
+    @Override
+    protected void setMultiActions(CmsListMetadata metadata) {
+
+        // noop
     }
 
 }

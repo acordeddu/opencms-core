@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -14,12 +14,12 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * Lesser General Public License for more details.
  *
- * For further information about Alkacon Software GmbH, please see the
- * company website: http://www.alkacon.com
+ * For further information about Alkacon Software GmbH & Co. KG, please see the
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -42,22 +42,33 @@ import java.util.List;
  * Logging Thread which collects the output from CmsSetupThread and
  * stores it in a Vector that the OpenCms setup wizard can read via
  * the getMessages() method.<p>
- * 
- * @since 6.0.0 
+ *
+ * @since 6.0.0
  */
 public class CmsSetupLoggingThread extends Thread {
 
+    /** The line number reader to print out the report. */
     private LineNumberReader m_lineReader;
+
+    /** The file writer for logging. */
     private FileWriter m_logWriter;
+
+    /** A list of messages. */
     private List<String> m_messages;
+
+    /** The piped input. */
     private PipedInputStream m_pipedIn;
+
+    /** The piped output. */
     private PipedOutputStream m_pipedOut;
+
+    /** Signals if the logging thread is finished. */
     private boolean m_stopThread;
 
-    /** 
+    /**
      * Constructor.<p>
-     * 
-     * @param pipedOut the output stream to write to 
+     *
+     * @param pipedOut the output stream to write to
      * @param log the file name to write the log to (if null, no log is written)
      */
     public CmsSetupLoggingThread(PipedOutputStream pipedOut, String log) {
@@ -91,9 +102,9 @@ public class CmsSetupLoggingThread extends Thread {
         }
     }
 
-    /** 
+    /**
      * Returns a Vector with the last collected log messages.<p>
-     * 
+     *
      * @return a Vector with the last collected log messages
      */
     public List<String> getMessages() {
@@ -103,7 +114,7 @@ public class CmsSetupLoggingThread extends Thread {
 
     /**
      * Returns <code>"true"</code> if the logging is finished.<p>
-     * 
+     *
      * @return <code>"true"</code> if the logging is finished
      */
     public boolean isFinished() {
@@ -125,11 +136,11 @@ public class CmsSetupLoggingThread extends Thread {
             try {
                 line = m_lineReader.readLine();
             } catch (IOException e) {
-                // "Write end dead" IO exceptions can be ignored                
+                // "Write end dead" IO exceptions can be ignored
             }
             if (line != null) {
                 if (lineNr > lastLineNr) {
-                    // supress multiple output of the same line after "Write end dead" IO exception 
+                    // supress multiple output of the same line after "Write end dead" IO exception
                     String content = (lineNr + 1) + ":\t" + line;
                     m_messages.add(content);
                     lastLineNr = lineNr;
@@ -157,8 +168,8 @@ public class CmsSetupLoggingThread extends Thread {
         }
     }
 
-    /** 
-     * Used to break the loop in the run() method.<p> 
+    /**
+     * Used to break the loop in the run() method.<p>
      */
     public void stopThread() {
 

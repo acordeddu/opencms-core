@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -15,11 +15,11 @@
  * Lesser General Public License for more details.
  *
  * For further information about Alkacon Software, please see the
- * company website: http://www.alkacon.com
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -27,42 +27,74 @@
 
 package org.opencms.ade.galleries.shared;
 
-import org.opencms.gwt.shared.sort.I_CmsHasTitle;
-import org.opencms.gwt.shared.sort.I_CmsHasType;
+import org.opencms.gwt.shared.CmsListInfoBean;
 
 import java.util.ArrayList;
 
-import com.google.gwt.user.client.rpc.IsSerializable;
-
 /**
  * Bean representing resource type information.<p>
- * 
+ *
  * @since 8.0.0
  */
-public class CmsResourceTypeBean implements I_CmsHasTitle, I_CmsHasType, IsSerializable {
+public class CmsResourceTypeBean extends CmsListInfoBean {
+
+    /** Enum for data source from which resource type bean was constructed. */
+    public enum Origin {
+        /** from sitemap config. */
+        config,
+
+        /** from other source. */
+        other,
+        /** unknown. */
+        unknown
+    }
+
+    /** Enum representing the visibility of a resource type in the bean. */
+    public enum TypeVisibility {
+        /** Never displayed. */
+        hidden,
+        /** Always show the type. */
+        showAlways,
+        /** The user may choose to display the type, but it's not shown by default. */
+        showOptional
+    }
 
     /** Flag to indicate if the current user may create a new resource of this type. */
     private boolean m_creatableType;
 
-    private String m_description;
+    /** The creation path. */
+    private String m_createPath;
+
+    /** The deactivated flag. */
+    private boolean m_deactivated;
 
     /** An array of gallery type names associated with this content type. */
     private ArrayList<String> m_galleryTypeNames;
 
-    /** The path to the resource type icon. */
-    private String m_iconResource;
+    /** The naming pattern for new resources. */
+    private String m_namePattern;
+
+    /** Origin. */
+    private Origin m_origin = Origin.unknown;
 
     /** The name of the preview provider. */
     private String m_previewProviderName;
 
-    /** The title. */
-    private String m_title;
-
-    /** The resource type name as a unique id. */
-    private String m_type;
-
     /** The resource type id. */
     private int m_typeId;
+
+    /** Visibility of this type. */
+    private TypeVisibility m_visibility = TypeVisibility.showAlways;
+
+    /**
+     * Gets the creation path.<p>
+     *
+     * @return the creation path
+     */
+    public String getCreatePath() {
+
+        return m_createPath;
+    }
 
     /**
      * Returns the description.<p>
@@ -71,7 +103,7 @@ public class CmsResourceTypeBean implements I_CmsHasTitle, I_CmsHasType, IsSeria
      */
     public String getDescription() {
 
-        return m_description;
+        return getSubTitle();
     }
 
     /**
@@ -85,13 +117,23 @@ public class CmsResourceTypeBean implements I_CmsHasTitle, I_CmsHasType, IsSeria
     }
 
     /**
-     * Returns the resource type icon.<p>
+     * Returns the naming pattern for new resources.<p>
      *
-     * @return the iconResource the icon for the resource type
+     * @return the naming pattern
      */
-    public String getIconResource() {
+    public String getNamePattern() {
 
-        return m_iconResource;
+        return m_namePattern;
+    }
+
+    /**
+     * Returns the origin.<p>
+     *
+     * @return the origin
+     */
+    public Origin getOrigin() {
+
+        return m_origin;
     }
 
     /**
@@ -105,26 +147,6 @@ public class CmsResourceTypeBean implements I_CmsHasTitle, I_CmsHasType, IsSeria
     }
 
     /**
-     * Returns the title.<p>
-     *
-     * @return the title
-     */
-    public String getTitle() {
-
-        return m_title;
-    }
-
-    /**
-     * Returns the resource type name.<p>
-     *
-     * @return the resource type name
-     */
-    public String getType() {
-
-        return m_type;
-    }
-
-    /**
      * Returns the resource type id.<p>
      *
      * @return the resource type id
@@ -132,6 +154,16 @@ public class CmsResourceTypeBean implements I_CmsHasTitle, I_CmsHasType, IsSeria
     public int getTypeId() {
 
         return m_typeId;
+    }
+
+    /**
+     * Gets the visibility.<p>
+     *
+     * @return the visibility
+     */
+    public TypeVisibility getVisibility() {
+
+        return m_visibility;
     }
 
     /**
@@ -145,6 +177,16 @@ public class CmsResourceTypeBean implements I_CmsHasTitle, I_CmsHasType, IsSeria
     }
 
     /**
+     * Returns if the type is deactivated.<p>
+     *
+     * @return if the type is deactivated
+     */
+    public boolean isDeactivated() {
+
+        return m_deactivated;
+    }
+
+    /**
      * Sets flag to indicate if the current user may create a new resource of this type.<p>
      *
      * @param creatableType <code>true</code> if the current user may create a new resource of this type
@@ -155,13 +197,23 @@ public class CmsResourceTypeBean implements I_CmsHasTitle, I_CmsHasType, IsSeria
     }
 
     /**
-     * Sets the description.<p>
+     * Sets the creation path.<p>
      *
-     * @param description the description to set
+     * @param createPath the creation path
      */
-    public void setDescription(String description) {
+    public void setCreatePath(String createPath) {
 
-        m_description = description;
+        m_createPath = createPath;
+    }
+
+    /**
+     * Sets the type deactivated.<p>
+     *
+     * @param deactivated if the type is deactivated
+     */
+    public void setDeactivated(boolean deactivated) {
+
+        m_deactivated = deactivated;
     }
 
     /**
@@ -175,6 +227,26 @@ public class CmsResourceTypeBean implements I_CmsHasTitle, I_CmsHasType, IsSeria
     }
 
     /**
+     * Sets the naming pattern for new resources.<p>
+     *
+     * @param pattern the naming pattern for new resources
+     */
+    public void setNamePattern(String pattern) {
+
+        m_namePattern = pattern;
+    }
+
+    /**
+     * Sets the origin.<p>
+     *
+     * @param origin the origin to set
+     */
+    public void setOrigin(Origin origin) {
+
+        m_origin = origin;
+    }
+
+    /**
      * Sets the preview provider name.<p>
      *
      * @param previewProviderName the preview provider name to set
@@ -182,26 +254,6 @@ public class CmsResourceTypeBean implements I_CmsHasTitle, I_CmsHasType, IsSeria
     public void setPreviewProviderName(String previewProviderName) {
 
         m_previewProviderName = previewProviderName;
-    }
-
-    /**
-     * Sets the title.<p>
-     *
-     * @param title the title to set
-     */
-    public void setTitle(String title) {
-
-        m_title = title;
-    }
-
-    /**
-     * Sets the resource type name.<p>
-     *
-     * @param type the resource type name to set
-     */
-    public void setType(String type) {
-
-        m_type = type;
     }
 
     /**
@@ -213,4 +265,16 @@ public class CmsResourceTypeBean implements I_CmsHasTitle, I_CmsHasType, IsSeria
 
         m_typeId = typeId;
     }
+
+    /**
+     * Sets the visibility.<p>
+     *
+     * @param visibility the new visibility
+     */
+    public void setVisibility(TypeVisibility visibility) {
+
+        m_visibility = visibility;
+
+    }
+
 }

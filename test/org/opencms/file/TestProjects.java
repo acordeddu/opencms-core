@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -14,12 +14,12 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * Lesser General Public License for more details.
  *
- * For further information about Alkacon Software GmbH, please see the
- * company website: http://www.alkacon.com
+ * For further information about Alkacon Software GmbH & Co. KG, please see the
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -27,82 +27,53 @@
 
 package org.opencms.file;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
+
 import org.opencms.file.CmsResource.CmsResourceDeleteMode;
 import org.opencms.file.types.CmsResourceTypeFolder;
 import org.opencms.file.types.CmsResourceTypePlain;
 import org.opencms.main.OpenCms;
 import org.opencms.security.CmsRole;
-import org.opencms.test.OpenCmsTestCase;
-import org.opencms.test.OpenCmsTestProperties;
 import org.opencms.test.OpenCmsTestResourceFilter;
+import org.opencms.test.OpenCmsTestRunner;
 
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 
-import junit.extensions.TestSetup;
-import junit.framework.Test;
-import junit.framework.TestSuite;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.MethodOrderer;
+import org.junit.jupiter.api.Order;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInfo;
+import org.junit.jupiter.api.TestMethodOrder;
 
 /**
  * Unit tests OpenCms projects.<p>
  */
-public class TestProjects extends OpenCmsTestCase {
+@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
+public class TestProjects extends OpenCmsTestRunner {
 
     /**
-     * Default JUnit constructor.<p>
-     * 
-     * @param arg0 JUnit parameters
+     * @see org.opencms.test.OpenCmsTestRunner#$openCmsSetUp(org.junit.jupiter.api.TestInfo)
      */
-    public TestProjects(String arg0) {
+    @Override
+    @BeforeAll
+    public void $openCmsSetUp(TestInfo testInfo) {
 
-        super(arg0);
-    }
-
-    /**
-     * Test suite for this test class.<p>
-     * 
-     * @return the test suite
-     */
-    public static Test suite() {
-
-        OpenCmsTestProperties.initialize(org.opencms.test.AllTests.TEST_PROPERTIES_PATH);
-
-        TestSuite suite = new TestSuite();
-        suite.setName(TestProjects.class.getName());
-
-        suite.addTest(new TestProjects("testCreateDeleteProject"));
-        suite.addTest(new TestProjects("testCopyResourceToProject"));
-        suite.addTest(new TestProjects("testDeleteProjectWithResources"));
-        suite.addTest(new TestProjects("testReadProjectResources"));
-        suite.addTest(new TestProjects("testAccessibleProjects"));
-        suite.addTest(new TestProjects("testDeleteNewFolderInProject"));
-        suite.addTest(new TestProjects("testDeleteFolderInProject"));
-        suite.addTest(new TestProjects("testMoveFolderInProject"));
-
-        TestSetup wrapper = new TestSetup(suite) {
-
-            @Override
-            protected void setUp() {
-
-                setupOpenCms("simpletest", "/");
-            }
-
-            @Override
-            protected void tearDown() {
-
-                removeOpenCms();
-            }
-        };
-
-        return wrapper;
+        setupOpenCms(testInfo, "simpletest", "/");
     }
 
     /**
      * Test the "getAllAccessibleProjects" method.<p>
-     * 
+     *
      * @throws Exception if the test fails
      */
+    @Test
+    @Order(5)
     public void testAccessibleProjects() throws Exception {
 
         CmsObject cms = getCmsObject();
@@ -145,9 +116,11 @@ public class TestProjects extends OpenCmsTestCase {
 
     /**
      * Test the "copy resource to project" function.<p>
-     * 
+     *
      * @throws Exception if the test fails
      */
+    @Test
+    @Order(2)
     public void testCopyResourceToProject() throws Exception {
 
         CmsObject cms = getCmsObject();
@@ -162,7 +135,7 @@ public class TestProjects extends OpenCmsTestCase {
                 projectName,
                 "Unit test project 1",
                 OpenCms.getDefaultUsers().getGroupUsers(),
-                OpenCms.getDefaultUsers().getGroupProjectmanagers(),
+                OpenCms.getDefaultUsers().getGroupAdministrators(),
                 CmsProject.PROJECT_TYPE_NORMAL);
             cms.getRequestContext().setCurrentProject(project);
             cms.copyResourceToProject("/sites/default/index.html");
@@ -190,9 +163,11 @@ public class TestProjects extends OpenCmsTestCase {
 
     /**
      * Test the "createProject" and "deleteProject" methods.<p>
-     * 
+     *
      * @throws Exception if the test fails
      */
+    @Test
+    @Order(1)
     public void testCreateDeleteProject() throws Exception {
 
         CmsObject cms = getCmsObject();
@@ -205,7 +180,7 @@ public class TestProjects extends OpenCmsTestCase {
             projectName,
             "Unit test project 2",
             OpenCms.getDefaultUsers().getGroupUsers(),
-            OpenCms.getDefaultUsers().getGroupProjectmanagers(),
+            OpenCms.getDefaultUsers().getGroupAdministrators(),
             CmsProject.PROJECT_TYPE_NORMAL);
 
         // some basic project tests
@@ -251,9 +226,11 @@ public class TestProjects extends OpenCmsTestCase {
 
     /**
      * Test the "delete folder in project" function.<p>
-     * 
+     *
      * @throws Exception if the test fails
      */
+    @Test
+    @Order(7)
     public void testDeleteFolderInProject() throws Exception {
 
         CmsObject cms = getCmsObject();
@@ -269,7 +246,7 @@ public class TestProjects extends OpenCmsTestCase {
             projectName,
             projectName,
             OpenCms.getDefaultUsers().getGroupUsers(),
-            OpenCms.getDefaultUsers().getGroupProjectmanagers(),
+            OpenCms.getDefaultUsers().getGroupAdministrators(),
             CmsProject.PROJECT_TYPE_NORMAL);
         cms.getRequestContext().setCurrentProject(project);
         // add folder to project
@@ -328,60 +305,12 @@ public class TestProjects extends OpenCmsTestCase {
     }
 
     /**
-     * Test the "move folder in project" function.<p>
-     * 
-     * @throws Exception if the test fails
-     */
-    public void testMoveFolderInProject() throws Exception {
-
-        CmsObject cms = getCmsObject();
-        echo("Testing moving folder in project");
-
-        String projectName = "testMoveFolderInProject";
-
-        cms.getRequestContext().setSiteRoot("/sites/default/");
-        String folderName = "/xmlcontent/";
-
-        // create new project
-        CmsProject project = cms.createProject(
-            projectName,
-            projectName,
-            OpenCms.getDefaultUsers().getGroupUsers(),
-            OpenCms.getDefaultUsers().getGroupProjectmanagers(),
-            CmsProject.PROJECT_TYPE_NORMAL);
-        cms.getRequestContext().setCurrentProject(project);
-        // add folder to project
-        cms.copyResourceToProject(folderName);
-
-        // check the project resources
-        List<String> resNames = cms.readProjectResources(project);
-        assertEquals(1, resNames.size());
-        assertEquals(cms.getRequestContext().addSiteRoot(folderName), resNames.get(0));
-
-        // move folder
-        String destFolder = "/testMoveFolderInProject/";
-        cms.lockResource(folderName);
-        cms.moveResource(folderName, destFolder);
-
-        // check the project resources
-        resNames = cms.readProjectResources(project);
-        assertEquals(1, resNames.size());
-        assertEquals(cms.getRequestContext().addSiteRoot(destFolder), resNames.get(0));
-
-        // undo changes
-        cms.undoChanges(destFolder, CmsResource.UNDO_MOVE_CONTENT);
-
-        // check the project resources
-        resNames = cms.readProjectResources(project);
-        assertEquals(1, resNames.size());
-        assertEquals(cms.getRequestContext().addSiteRoot(folderName), resNames.get(0));
-    }
-
-    /**
      * Test the "delete new folder in project" function.<p>
-     * 
+     *
      * @throws Exception if the test fails
      */
+    @Test
+    @Order(6)
     public void testDeleteNewFolderInProject() throws Exception {
 
         CmsObject cms = getCmsObject();
@@ -399,7 +328,7 @@ public class TestProjects extends OpenCmsTestCase {
             projectName,
             projectName,
             OpenCms.getDefaultUsers().getGroupUsers(),
-            OpenCms.getDefaultUsers().getGroupProjectmanagers(),
+            OpenCms.getDefaultUsers().getGroupAdministrators(),
             CmsProject.PROJECT_TYPE_NORMAL);
         cms.getRequestContext().setCurrentProject(project);
         // add new folder to project
@@ -441,9 +370,11 @@ public class TestProjects extends OpenCmsTestCase {
 
     /**
      * Test the "delete project with resources" function.<p>
-     * 
+     *
      * @throws Exception if the test fails
      */
+    @Test
+    @Order(3)
     public void testDeleteProjectWithResources() throws Exception {
 
         CmsObject cms = getCmsObject();
@@ -456,7 +387,7 @@ public class TestProjects extends OpenCmsTestCase {
             projectName,
             "Unit test project 3",
             OpenCms.getDefaultUsers().getGroupUsers(),
-            OpenCms.getDefaultUsers().getGroupProjectmanagers(),
+            OpenCms.getDefaultUsers().getGroupAdministrators(),
             CmsProject.PROJECT_TYPE_NORMAL);
 
         // use the main folder as start folder for the project
@@ -509,10 +440,64 @@ public class TestProjects extends OpenCmsTestCase {
     }
 
     /**
-     * Test the "readProjectResources" method.<p>
-     * 
+     * Test the "move folder in project" function.<p>
+     *
      * @throws Exception if the test fails
      */
+    @Test
+    @Order(8)
+    public void testMoveFolderInProject() throws Exception {
+
+        CmsObject cms = getCmsObject();
+        echo("Testing moving folder in project");
+
+        String projectName = "testMoveFolderInProject";
+
+        cms.getRequestContext().setSiteRoot("/sites/default/");
+        String folderName = "/xmlcontent/";
+
+        // create new project
+        CmsProject project = cms.createProject(
+            projectName,
+            projectName,
+            OpenCms.getDefaultUsers().getGroupUsers(),
+            OpenCms.getDefaultUsers().getGroupAdministrators(),
+            CmsProject.PROJECT_TYPE_NORMAL);
+        cms.getRequestContext().setCurrentProject(project);
+        // add folder to project
+        cms.copyResourceToProject(folderName);
+
+        // check the project resources
+        List<String> resNames = cms.readProjectResources(project);
+        assertEquals(1, resNames.size());
+        assertEquals(cms.getRequestContext().addSiteRoot(folderName), resNames.get(0));
+
+        // move folder
+        String destFolder = "/testMoveFolderInProject/";
+        cms.lockResource(folderName);
+        cms.moveResource(folderName, destFolder);
+
+        // check the project resources
+        resNames = cms.readProjectResources(project);
+        assertEquals(1, resNames.size());
+        assertEquals(cms.getRequestContext().addSiteRoot(destFolder), resNames.get(0));
+
+        // undo changes
+        cms.undoChanges(destFolder, CmsResource.UNDO_MOVE_CONTENT);
+
+        // check the project resources
+        resNames = cms.readProjectResources(project);
+        assertEquals(1, resNames.size());
+        assertEquals(cms.getRequestContext().addSiteRoot(folderName), resNames.get(0));
+    }
+
+    /**
+     * Test the "readProjectResources" method.<p>
+     *
+     * @throws Exception if the test fails
+     */
+    @Test
+    @Order(4)
     public void testReadProjectResources() throws Exception {
 
         CmsObject cms = getCmsObject();
@@ -528,7 +513,7 @@ public class TestProjects extends OpenCmsTestCase {
                 projectName,
                 "Unit test project 4",
                 OpenCms.getDefaultUsers().getGroupUsers(),
-                OpenCms.getDefaultUsers().getGroupProjectmanagers(),
+                OpenCms.getDefaultUsers().getGroupAdministrators(),
                 CmsProject.PROJECT_TYPE_NORMAL);
             cms.getRequestContext().setCurrentProject(project);
             cms.copyResourceToProject("/sites/default/index.html");

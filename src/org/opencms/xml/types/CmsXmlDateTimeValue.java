@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -14,12 +14,12 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * Lesser General Public License for more details.
  *
- * For further information about Alkacon Software GmbH, please see the
- * company website: http://www.alkacon.com
+ * For further information about Alkacon Software GmbH & Co. KG, please see the
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -27,9 +27,11 @@
 
 package org.opencms.xml.types;
 
+import org.opencms.file.CmsObject;
 import org.opencms.util.CmsMacroResolver;
 import org.opencms.util.CmsStringUtil;
 import org.opencms.xml.I_CmsXmlDocument;
+import org.opencms.xml.xml2json.I_CmsJsonFormattableValue;
 
 import java.util.Locale;
 import java.util.regex.Pattern;
@@ -38,10 +40,10 @@ import org.dom4j.Element;
 
 /**
  * Describes the XML content type "OpenCmsDateTime".<p>
- * 
- * @since 6.0.0 
+ *
+ * @since 6.0.0
  */
-public class CmsXmlDateTimeValue extends A_CmsXmlValueTextBase {
+public class CmsXmlDateTimeValue extends A_CmsXmlValueTextBase implements I_CmsJsonFormattableValue {
 
     /** The name of this type as used in the XML schema. */
     public static final String TYPE_NAME = "OpenCmsDateTime";
@@ -66,7 +68,7 @@ public class CmsXmlDateTimeValue extends A_CmsXmlValueTextBase {
 
     /**
      * Creates a new XML content value of type "OpenCmsDateTime".<p>
-     * 
+     *
      * @param document the XML content instance this value belongs to
      * @param element the XML element that contains this value
      * @param locale the locale this value is created for
@@ -84,7 +86,7 @@ public class CmsXmlDateTimeValue extends A_CmsXmlValueTextBase {
 
     /**
      * Creates a new schema type descriptor for the type "OpenCmsDateTime".<p>
-     * 
+     *
      * @param name the name of the XML node containing the value according to the XML schema
      * @param minOccurs minimum number of occurrences of this type according to the XML schema
      * @param maxOccurs maximum number of occurrences of this type according to the XML schema
@@ -92,17 +94,6 @@ public class CmsXmlDateTimeValue extends A_CmsXmlValueTextBase {
     public CmsXmlDateTimeValue(String name, String minOccurs, String maxOccurs) {
 
         super(name, minOccurs, maxOccurs);
-    }
-
-    /**
-     * @see org.opencms.xml.types.A_CmsXmlContentValue#isSearchable()
-     */
-    @Override
-    public boolean isSearchable() {
-
-        // there is no point in searching date/time values
-        // they are stored as long int anyway
-        return false;
     }
 
     /**
@@ -115,7 +106,7 @@ public class CmsXmlDateTimeValue extends A_CmsXmlValueTextBase {
 
     /**
      * Returns the date time value as a long.<p>
-     * 
+     *
      * @return the date time value as a long
      */
     public long getDateTimeValue() {
@@ -168,11 +159,30 @@ public class CmsXmlDateTimeValue extends A_CmsXmlValueTextBase {
     }
 
     /**
+     * @see org.opencms.xml.types.A_CmsXmlContentValue#isSearchable()
+     */
+    @Override
+    public boolean isSearchable() {
+
+        // there is no point in searching date/time values
+        // they are stored as long int anyway
+        return false;
+    }
+
+    /**
      * @see org.opencms.xml.types.A_CmsXmlContentValue#newInstance(java.lang.String, java.lang.String, java.lang.String)
      */
     public I_CmsXmlSchemaType newInstance(String name, String minOccurs, String maxOccurs) {
 
         return new CmsXmlDateTimeValue(name, minOccurs, maxOccurs);
+    }
+
+    /**
+     * @see org.opencms.xml.xml2json.I_CmsJsonFormattableValue#toJson(org.opencms.file.CmsObject)
+     */
+    public Object toJson(CmsObject cms) {
+
+        return Long.valueOf(getDateTimeValue());
     }
 
     /**

@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -14,12 +14,12 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * Lesser General Public License for more details.
  *
- * For further information about Alkacon Software GmbH, please see the
- * company website: http://www.alkacon.com
+ * For further information about Alkacon Software GmbH & Co. KG, please see the
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -43,15 +43,15 @@ import javax.servlet.jsp.JspException;
 import org.apache.commons.logging.Log;
 
 /**
- * Creates the output for editing a CmsDefaultPage with the simple textarea editor.<p> 
- * 
+ * Creates the output for editing a CmsDefaultPage with the simple textarea editor.<p>
+ *
  * The following editor uses this class:
  * <ul>
  * <li>/editors/simplehtml/editor.jsp
  * </ul>
  * <p>
- * 
- * @since 6.0.0 
+ *
+ * @since 6.0.0
  */
 public class CmsSimplePageEditor extends CmsDefaultPageEditor {
 
@@ -63,7 +63,7 @@ public class CmsSimplePageEditor extends CmsDefaultPageEditor {
 
     /**
      * Public constructor.<p>
-     * 
+     *
      * @param jsp an initialized JSP action element
      */
     public CmsSimplePageEditor(CmsJspActionElement jsp) {
@@ -74,6 +74,7 @@ public class CmsSimplePageEditor extends CmsDefaultPageEditor {
     /**
      * @see org.opencms.workplace.editors.CmsEditor#getEditorResourceUri()
      */
+    @Override
     public String getEditorResourceUri() {
 
         return getSkinUri() + "editors/" + EDITOR_TYPE + "/";
@@ -82,6 +83,7 @@ public class CmsSimplePageEditor extends CmsDefaultPageEditor {
     /**
      * @see org.opencms.workplace.CmsWorkplace#initWorkplaceRequestValues(org.opencms.workplace.CmsWorkplaceSettings, javax.servlet.http.HttpServletRequest)
      */
+    @Override
     protected void initWorkplaceRequestValues(CmsWorkplaceSettings settings, HttpServletRequest request) {
 
         // fill the parameter values in the get/set methods
@@ -93,7 +95,7 @@ public class CmsSimplePageEditor extends CmsDefaultPageEditor {
         // Initialize a page object from the temporary file
         if ((getParamTempfile() != null) && !"null".equals(getParamTempfile())) {
             try {
-                m_file = getCms().readFile(this.getParamTempfile(), CmsResourceFilter.ALL);
+                m_file = getCms().readFile(getParamTempfile(), CmsResourceFilter.ALL);
                 m_page = CmsXmlPageFactory.unmarshal(getCms(), m_file);
             } catch (CmsException e) {
                 if (e instanceof CmsVfsResourceNotFoundException) {
@@ -101,7 +103,7 @@ public class CmsSimplePageEditor extends CmsDefaultPageEditor {
                     // try to create a new one and redo the initialization
                     try {
                         setParamTempfile(createTempFile());
-                        m_file = getCms().readFile(this.getParamTempfile(), CmsResourceFilter.ALL);
+                        m_file = getCms().readFile(getParamTempfile(), CmsResourceFilter.ALL);
                         m_page = CmsXmlPageFactory.unmarshal(getCms(), m_file);
                     } catch (CmsException e1) {
                         // error during initialization
@@ -128,7 +130,7 @@ public class CmsSimplePageEditor extends CmsDefaultPageEditor {
             }
         }
 
-        // set the action for the JSP switch 
+        // set the action for the JSP switch
         if (EDITOR_SAVE.equals(getParamAction())) {
             setAction(ACTION_SAVE);
         } else if (EDITOR_SAVEEXIT.equals(getParamAction())) {
@@ -140,7 +142,7 @@ public class CmsSimplePageEditor extends CmsDefaultPageEditor {
             } catch (Exception e) {
                 // should usually never happen
                 if (LOG.isInfoEnabled()) {
-                    LOG.info(e);
+                    LOG.info(e.getLocalizedMessage(), e);
                 }
             }
             setAction(ACTION_EXIT);
@@ -183,7 +185,7 @@ public class CmsSimplePageEditor extends CmsDefaultPageEditor {
                 // create the temporary file
                 setParamTempfile(createTempFile());
                 // initialize a page object from the created temporary file
-                m_file = getCms().readFile(this.getParamTempfile(), CmsResourceFilter.ALL);
+                m_file = getCms().readFile(getParamTempfile(), CmsResourceFilter.ALL);
                 m_page = CmsXmlPageFactory.unmarshal(getCms(), m_file);
             } catch (CmsException e) {
                 // error during initialization
@@ -213,10 +215,11 @@ public class CmsSimplePageEditor extends CmsDefaultPageEditor {
 
     /**
      * Manipulates the content String and removes leading and trailing white spaces.<p>
-     * 
+     *
      * @param save if set to true, the content parameter is not updated
      * @return the prepared content String
      */
+    @Override
     protected String prepareContent(boolean save) {
 
         String content = getParamContent().trim();

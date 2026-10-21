@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -15,11 +15,11 @@
  * Lesser General Public License for more details.
  *
  * For further information about Alkacon Software, please see the
- * company website: http://www.alkacon.com
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -41,12 +41,16 @@ import org.opencms.gwt.client.util.CmsJSONMap;
 import org.opencms.gwt.shared.property.CmsClientProperty;
 import org.opencms.util.CmsStringUtil;
 
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.dom.client.Style.VerticalAlign;
 import com.google.gwt.event.dom.client.ClickEvent;
+import com.google.gwt.event.logical.shared.ValueChangeEvent;
+import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.uibinder.client.UiHandler;
@@ -56,7 +60,7 @@ import com.google.gwt.user.client.ui.Widget;
 
 /**
  * Simple image tag properties form, use in editor mode only.<p>
- * 
+ *
  * @since 8.0.
  */
 public class CmsImageEditorForm extends Composite {
@@ -173,11 +177,31 @@ public class CmsImageEditorForm extends Composite {
         m_buttonResetTitle.setText(Messages.get().key(Messages.GUI_IMAGE_RESET_TITLE_0));
         m_buttonResetCopyright.setSize(Size.small);
         m_buttonResetCopyright.setText(Messages.get().key(Messages.GUI_IMAGE_RESET_COPYRIGHT_0));
+        for (CmsCheckBox checkBox : Arrays.asList(
+            m_checkboxInsertCopyright,
+            m_checkboxInsertLinkOrig,
+            m_checkboxInsertSubtitle)) {
+            checkBox.getElement().getStyle().setVerticalAlign(VerticalAlign.MIDDLE);
+        }
 
         m_labelAlign.setText(Messages.get().key(Messages.GUI_IMAGE_ALIGN_0));
         m_selectAlign.addOption("", Messages.get().key(Messages.GUI_IMAGE_ALIGN_NOT_SET_0));
         m_selectAlign.addOption("left", Messages.get().key(Messages.GUI_IMAGE_ALIGN_LEFT_0));
         m_selectAlign.addOption("right", Messages.get().key(Messages.GUI_IMAGE_ALIGN_RIGHT_0));
+
+        m_checkboxSpacing.addValueChangeHandler(new ValueChangeHandler<Boolean>() {
+
+            public void onValueChange(ValueChangeEvent<Boolean> event) {
+
+                // if spacing is activated and no previous values present, set '5' as default
+                if (event.getValue().booleanValue()
+                    && CmsStringUtil.isEmptyOrWhitespaceOnly(m_inputHSpace.getFormValueAsString())
+                    && CmsStringUtil.isEmptyOrWhitespaceOnly(m_inputVSpace.getFormValueAsString())) {
+                    m_inputHSpace.setFormValueAsString("5");
+                    m_inputVSpace.setFormValueAsString("5");
+                }
+            }
+        });
 
         m_fields = new HashMap<Attribute, I_CmsFormWidget>();
         m_fields.put(Attribute.alt, m_inputAltTitle);
@@ -193,10 +217,10 @@ public class CmsImageEditorForm extends Composite {
 
     /**
      * Displays the provided image information.<p>
-     * 
+     *
      * @param imageInfo the image information
      * @param imageAttributes the image attributes
-     * @param initialFill flag to indicate that a new image has been selected 
+     * @param initialFill flag to indicate that a new image has been selected
      */
     public void fillContent(CmsImageInfoBean imageInfo, CmsJSONMap imageAttributes, boolean initialFill) {
 
@@ -222,7 +246,7 @@ public class CmsImageEditorForm extends Composite {
 
     /**
      * Adds necessary attributes to the map.<p>
-     * 
+     *
      * @param attributes the attribute map
      * @return the attribute map
      */
@@ -244,7 +268,7 @@ public class CmsImageEditorForm extends Composite {
 
     /**
      * Hides the enhanced image options in this form.<p>
-     * 
+     *
      * @param hide if <code>true</code> the enhanced options will get hidden
      */
     public void hideEnhancedOptions(boolean hide) {
@@ -258,7 +282,7 @@ public class CmsImageEditorForm extends Composite {
 
     /**
      * Handles the click on 'reset copyright' button.<p>
-     * 
+     *
      * @param event the click event
      */
     @UiHandler("m_buttonResetCopyright")
@@ -269,7 +293,7 @@ public class CmsImageEditorForm extends Composite {
 
     /**
      * Handles the click on 'reset title' button.<p>
-     * 
+     *
      * @param event the click event
      */
     @UiHandler("m_buttonResetTitle")
@@ -280,7 +304,7 @@ public class CmsImageEditorForm extends Composite {
 
     /**
      * Resets the value for the given attribute to it's initial value.<p>
-     * 
+     *
      * @param attribute the attribute to reset
      */
     protected void resetValue(Attribute attribute) {

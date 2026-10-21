@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -14,12 +14,12 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * Lesser General Public License for more details.
  *
- * For further information about Alkacon Software GmbH, please see the
- * company website: http://www.alkacon.com
+ * For further information about Alkacon Software GmbH & Co. KG, please see the
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -27,40 +27,66 @@
 
 package org.opencms.util;
 
+import org.opencms.file.CmsResource;
 import org.opencms.i18n.CmsEncoder;
 import org.opencms.i18n.I_CmsMessageBundle;
+import org.opencms.json.JSONException;
+import org.opencms.json.JSONObject;
 import org.opencms.main.CmsIllegalArgumentException;
 import org.opencms.main.CmsLog;
+import org.opencms.main.OpenCms;
 
 import java.awt.Color;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.net.InetAddress;
+import java.net.NetworkInterface;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.oro.text.perl.MalformedPerl5PatternException;
 import org.apache.oro.text.perl.Perl5Util;
 
+import org.antlr.stringtemplate.StringTemplateErrorListener;
+import org.antlr.stringtemplate.StringTemplateGroup;
+import org.antlr.stringtemplate.language.DefaultTemplateLexer;
+
+import com.cybozu.labs.langdetect.Detector;
+import com.cybozu.labs.langdetect.DetectorFactory;
+import com.cybozu.labs.langdetect.LangDetectException;
+import com.google.common.base.Optional;
+
 /**
  * Provides String utility functions.<p>
- * 
- * @since 6.0.0 
+ *
+ * @since 6.0.0
  */
 public final class CmsStringUtil {
 
     /**
      * Compares two Strings according to the count of containing slashes.<p>
-     * 
+     *
      * If both Strings contain the same count of slashes the Strings are compared.<p>
      */
     public static class CmsSlashComparator implements Comparator<String> {
@@ -98,6 +124,16 @@ public final class CmsStringUtil {
     /** Context macro. */
     public static final String MACRO_OPENCMS_CONTEXT = "${OpenCmsContext}";
 
+    /** Pattern to determine a locale for suffixes like '_de' or '_en_US'. */
+    public static final Pattern PATTERN_LOCALE_SUFFIX = Pattern.compile(
+        "(.*)_([a-z]{2}(?:_[A-Z]{2})?)(?:\\.[^\\.]*)?$");
+
+    /** Pattern to determine the document number for suffixes like '_0001'. */
+    public static final Pattern PATTERN_NUMBER_SUFFIX = Pattern.compile("(.*)_(\\d+)(\\.[^\\.^\\n]*)?$");
+
+    /** Pattern matching one or more slashes. */
+    public static final Pattern PATTERN_SLASHES = Pattern.compile("/+");
+
     /** The place holder end sign in the pattern. */
     public static final String PLACEHOLDER_END = "}";
 
@@ -122,6 +158,15 @@ public final class CmsStringUtil {
     /** Day constant. */
     private static final long DAYS = 1000 * 60 * 60 * 24;
 
+    /** Multipliers used for duration parsing. */
+    private static final long[] DURATION_MULTIPLIERS = {24L * 60 * 60 * 1000, 60L * 60 * 1000, 60L * 1000, 1000L, 1L};
+
+    /** Number and unit pattern for duration parsing. */
+    private static final Pattern DURATION_NUMBER_AND_UNIT_PATTERN = Pattern.compile("([0-9]+)([a-z]+)");
+
+    /** Units used for duration parsing. */
+    private static final String[] DURATION_UNTIS = {"d", "h", "m", "s", "ms"};
+
     /** Hour constant. */
     private static final long HOURS = 1000 * 60 * 60;
 
@@ -137,6 +182,12 @@ public final class CmsStringUtil {
     /** Minute constant. */
     private static final long MINUTES = 1000 * 60;
 
+    /** Pattern matching sequences of non-slash characters. */
+    private static final Pattern NOT_SLASHES = Pattern.compile("[^/]+");
+
+    /** Cache for compiled regular expressions. */
+    private static final ConcurrentHashMap<String, Pattern> patternCache = new ConcurrentHashMap<String, Pattern>();
+
     /** Second constant. */
     private static final long SECONDS = 1000;
 
@@ -148,8 +199,8 @@ public final class CmsStringUtil {
     /** Regex that matches an xml head. */
     private static final Pattern XML_HEAD_REGEX = Pattern.compile("<\\s*\\?.*\\?\\s*>", Pattern.CASE_INSENSITIVE);
 
-    /** 
-     * Default constructor (empty), private because this class has only 
+    /**
+     * Default constructor (empty), private because this class has only
      * static methods.<p>
      */
     private CmsStringUtil() {
@@ -158,11 +209,34 @@ public final class CmsStringUtil {
     }
 
     /**
+     * Adds leading and trailing slashes to a path,
+     * if the path does not already start or end with a slash.<p>
+     *
+     * <b>Directly exposed for JSP EL<b>, not through {@link org.opencms.jsp.util.CmsJspElFunctions}.<p>
+     *
+     * @param path the path to which add the slashes
+     *
+     * @return the path with added leading and trailing slashes
+     */
+    public static String addLeadingAndTrailingSlash(String path) {
+
+        StringBuffer buffer1 = new StringBuffer();
+        if (!path.startsWith("/")) {
+            buffer1.append("/");
+        }
+        buffer1.append(path);
+        if (!path.endsWith("/") && !path.isEmpty()) {
+            buffer1.append("/");
+        }
+        return buffer1.toString();
+    }
+
+    /**
      * Returns a string representation for the given array using the given separator.<p>
-     * 
+     *
      * @param arg the array to transform to a String
      * @param separator the item separator
-     * 
+     *
      * @return the String of the given array
      */
     public static String arrayAsString(final String[] arg, String separator) {
@@ -178,11 +252,24 @@ public final class CmsStringUtil {
     }
 
     /**
-     * Changes the filename suffix. 
-     * 
+     * Compiles a regular expression, but uses a cache to avoid compiling the same regex multiple times.
+     *
+     * @param regex the regex to compile
+     * @return the pattern corresponding to the regex
+     */
+    public static Pattern cachePattern(String regex) {
+
+        return patternCache.computeIfAbsent(regex, Pattern::compile);
+    }
+
+    /**
+     * Changes the given filenames suffix from the current suffix to the provided suffix.
+     *
+     * <b>Directly exposed for JSP EL</b>, not through {@link org.opencms.jsp.util.CmsJspElFunctions}.<p>
+     *
      * @param filename the filename to be changed
      * @param suffix the new suffix of the file
-     * 
+     *
      * @return the filename with the replaced suffix
      */
     public static String changeFileNameSuffixTo(String filename, String suffix) {
@@ -198,23 +285,23 @@ public final class CmsStringUtil {
 
     /**
      * Checks if a given name is composed only of the characters <code>a...z,A...Z,0...9</code>
-     * and the provided <code>constraints</code>.<p> 
-     * 
+     * and the provided <code>constraints</code>.<p>
+     *
      * If the check fails, an Exception is generated. The provided bundle and key is
      * used to generate the Exception. 4 parameters are passed to the Exception:<ol>
      * <li>The <code>name</code>
      * <li>The first illegal character found
      * <li>The position where the illegal character was found
      * <li>The <code>constraints</code></ol>
-     * 
+     *
      * @param name the name to check
-     * @param contraints the additional character constraints
+     * @param constraints the additional character constraints
      * @param key the key to use for generating the Exception (if required)
      * @param bundle the bundle to use for generating the Exception (if required)
-     * 
+     *
      * @throws CmsIllegalArgumentException if the check fails (generated from the given key and bundle)
      */
-    public static void checkName(String name, String contraints, String key, I_CmsMessageBundle bundle)
+    public static void checkName(String name, String constraints, String key, I_CmsMessageBundle bundle)
     throws CmsIllegalArgumentException {
 
         int l = name.length();
@@ -223,23 +310,20 @@ public final class CmsStringUtil {
             if (((c < 'a') || (c > 'z'))
                 && ((c < '0') || (c > '9'))
                 && ((c < 'A') || (c > 'Z'))
-                && (contraints.indexOf(c) < 0)) {
+                && (constraints.indexOf(c) < 0)) {
 
-                throw new CmsIllegalArgumentException(bundle.container(key, new Object[] {
-                    name,
-                    new Character(c),
-                    new Integer(i),
-                    contraints}));
+                throw new CmsIllegalArgumentException(
+                    bundle.container(key, new Object[] {name, Character.valueOf(c), Integer.valueOf(i), constraints}));
             }
         }
     }
 
     /**
      * Returns a string representation for the given collection using the given separator.<p>
-     * 
+     *
      * @param collection the collection to print
      * @param separator the item separator
-     * 
+     *
      * @return the string representation for the given collection
      */
     public static String collectionAsString(Collection<?> collection, String separator) {
@@ -256,11 +340,26 @@ public final class CmsStringUtil {
     }
 
     /**
+     * Compares two paths, ignoring leading and trailing slashes.<p>
+     *
+     * <b>Directly exposed for JSP EL</b>, not through {@link org.opencms.jsp.util.CmsJspElFunctions}.<p>
+     *
+     * @param path1 the first path
+     * @param path2 the second path
+     *
+     * @return true if the paths are equal (ignoring leading and trailing slashes)
+     */
+    public static boolean comparePaths(String path1, String path2) {
+
+        return addLeadingAndTrailingSlash(path1).equals(addLeadingAndTrailingSlash(path2));
+    }
+
+    /**
      * Counts the occurrence of a given char in a given String.<p>
-     * 
+     *
      * @param s the string
      * @param c the char to count
-     * 
+     *
      * @return returns the count of occurrences of a given char in a given String
      */
     public static int countChar(String s, char c) {
@@ -275,14 +374,31 @@ public final class CmsStringUtil {
     }
 
     /**
-     * Replaces occurrences of special control characters in the given input with 
-     * a HTML representation.<p>
-     * 
-     * This method currently replaces line breaks to <code>&lt;br/&gt;</code> and special HTML chars 
+     * Returns a String array representation for the given enum.<p>
+     *
+     * @param <T> the type of the enum
+     * @param values the enum values
+     *
+     * @return the representing String array
+     */
+    public static <T extends Enum<T>> String[] enumNameToStringArray(T[] values) {
+
+        int i = 0;
+        String[] result = new String[values.length];
+        for (T value : values) {
+            result[i++] = value.name();
+        }
+        return result;
+    }
+
+    /**
+     * Replaces line breaks to <code>&lt;br/&gt;</code> and HTML control characters
      * like <code>&lt; &gt; &amp; &quot;</code> with their HTML entity representation.<p>
-     * 
+     *
+     * <b>Directly exposed for JSP EL</b>, not through {@link org.opencms.jsp.util.CmsJspElFunctions}.<p>
+     *
      * @param source the String to escape
-     * 
+     *
      * @return the escaped String
      */
     public static String escapeHtml(String source) {
@@ -298,11 +414,15 @@ public final class CmsStringUtil {
 
     /**
      * Escapes a String so it may be used in JavaScript String definitions.<p>
-     * 
-     * This method replaces line breaks, quotation marks and \ characters.<p>
-     * 
+     *
+     * This method escapes
+     * line breaks (<code>\r\n,\n</code>) quotation marks (<code>".'</code>)
+     * and slash as well as backspace characters (<code>\,/</code>).<p>
+     *
+     * <b>Directly exposed for JSP EL</b>, not through {@link org.opencms.jsp.util.CmsJspElFunctions}.<p>
+     *
      * @param source the String to escape
-     * 
+     *
      * @return the escaped String
      */
     public static String escapeJavaScript(String source) {
@@ -312,17 +432,22 @@ public final class CmsStringUtil {
         source = CmsStringUtil.substitute(source, "\'", "\\\'");
         source = CmsStringUtil.substitute(source, "\r\n", "\\n");
         source = CmsStringUtil.substitute(source, "\n", "\\n");
+
+        // to avoid XSS (closing script tags) in embedded Javascript
+        source = CmsStringUtil.substitute(source, "/", "\\/");
         return source;
     }
 
     /**
      * Escapes a String so it may be used as a Perl5 regular expression.<p>
-     * 
+     *
      * This method replaces the following characters in a String:<br>
      * <code>{}[]()\$^.*+/</code><p>
-     * 
+     *
+     * <b>Directly exposed for JSP EL</b>, not through {@link org.opencms.jsp.util.CmsJspElFunctions}.<p>
+     *
      * @param source the string to escape
-     * 
+     *
      * @return the escaped string
      */
     public static String escapePattern(String source) {
@@ -391,14 +516,14 @@ public final class CmsStringUtil {
      * given text and a default value for this attribute; and returns a <code>{@link Map}</code>
      * with 2 values: a <code>{@link String}</code> with key <code>"text"</code> with the new text
      * without the given attribute, and another <code>{@link String}</code> with key <code>"value"</code>
-     * with the new extended value for the given attribute, this value is surrounded by the same type of 
-     * quotation marks as in the given text.<p> 
-     * 
+     * with the new extended value for the given attribute, this value is surrounded by the same type of
+     * quotation marks as in the given text.<p>
+     *
      * @param text the text to search in
      * @param attribute the attribute to remove and extend from the text
      * @param defValue a default value for the attribute, should not have any quotation mark
-     * 
-     * @return a map with the new text and the new value for the given attribute 
+     *
+     * @return a map with the new text and the new value for the given attribute
      */
     public static Map<String, String> extendAttribute(String text, String attribute, String defValue) {
 
@@ -433,12 +558,14 @@ public final class CmsStringUtil {
 
     /**
      * Extracts the content of a <code>&lt;body&gt;</code> tag in a HTML page.<p>
-     * 
+     *
      * This method should be pretty robust and work even if the input HTML does not contains
-     * a valid body tag.<p> 
-     * 
+     * a valid body tag.<p>
+     *
+     * <b>Directly exposed for JSP EL</b>, not through {@link org.opencms.jsp.util.CmsJspElFunctions}.<p>
+     *
      * @param content the content to extract the body from
-     * 
+     *
      * @return the extracted body tag content
      */
     public static String extractHtmlBody(String content) {
@@ -461,22 +588,22 @@ public final class CmsStringUtil {
     }
 
     /**
-     * Extracts the xml encoding setting from an xml file that is contained in a String by parsing 
+     * Extracts the xml encoding setting from an xml file that is contained in a String by parsing
      * the xml head.<p>
-     * 
-     * This is useful if you have a byte array that contains a xml String, 
-     * but you do not know the xml encoding setting. Since the encoding setting 
+     *
+     * This is useful if you have a byte array that contains a xml String,
+     * but you do not know the xml encoding setting. Since the encoding setting
      * in the xml head is usually encoded with standard US-ASCII, you usually
      * just create a String of the byte array without encoding setting,
      * and use this method to find the 'true' encoding. Then create a String
-     * of the byte array again, this time using the found encoding.<p>   
-     * 
-     * This method will return <code>null</code> in case no xml head 
+     * of the byte array again, this time using the found encoding.<p>
+     *
+     * This method will return <code>null</code> in case no xml head
      * or encoding information is contained in the input.<p>
-     * 
+     *
      * @param content the xml content to extract the encoding from
-     * 
-     * @return the extracted encoding, or null if no xml encoding setting was found in the input 
+     *
+     * @return the extracted encoding, or null if no xml encoding setting was found in the input
      */
     public static String extractXmlEncoding(String content) {
 
@@ -498,15 +625,22 @@ public final class CmsStringUtil {
     }
 
     /**
-     * Formats a resource name that it is displayed with the maximum length and path information is adjusted.<p>
-     * In order to reduce the length of the displayed names, single folder names are removed/replaced with ... successively, 
-     * starting with the second! folder. The first folder is removed as last.<p>
-     * 
-     * Example: formatResourceName("/myfolder/subfolder/index.html", 21) returns <code>/myfolder/.../index.html</code>.<p>
-     * 
+     * Shortens a resource name or path so that it is not longer than the provided maximum length.<p>
+     *
+     * In order to reduce the length of the resource name, only
+     * complete folder names are removed and replaced with ... successively,
+     * starting with the second folder.
+     * The first folder is removed only in case the result still does not fit
+     * if all subfolders have been removed.<p>
+     *
+     * Example: <code>formatResourceName("/myfolder/subfolder/index.html", 21)</code>
+     * returns <code>/myfolder/.../index.html</code>.<p>
+     *
+     * <b>Directly exposed for JSP EL</b>, not through {@link org.opencms.jsp.util.CmsJspElFunctions}.<p>
+     *
      * @param name the resource name to format
      * @param maxLength the maximum length of the resource name (without leading <code>/...</code>)
-     * 
+     *
      * @return the formatted resource name
      */
     public static String formatResourceName(String name, int maxLength) {
@@ -552,11 +686,11 @@ public final class CmsStringUtil {
 
     /**
      * Formats a runtime in the format hh:mm:ss, to be used e.g. in reports.<p>
-     * 
-     * If the runtime is greater then 24 hours, the format dd:hh:mm:ss is used.<p> 
-     * 
+     *
+     * If the runtime is greater then 24 hours, the format dd:hh:mm:ss is used.<p>
+     *
      * @param runtime the time to format
-     * 
+     *
      * @return the formatted runtime
      */
     public static String formatRuntime(long runtime) {
@@ -596,14 +730,14 @@ public final class CmsStringUtil {
     }
 
     /**
-     * Returns the color value (<code>{@link Color}</code>) for the given String value.<p> 
-     * 
+     * Returns the color value (<code>{@link Color}</code>) for the given String value.<p>
+     *
      * All parse errors are caught and the given default value is returned in this case.<p>
-     * 
+     *
      * @param value the value to parse as color
      * @param defaultValue the default value in case of parsing errors
      * @param key a key to be included in the debug output in case of parse errors
-     * 
+     *
      * @return the int value for the given parameter value String
      */
     public static Color getColorValue(String value, Color defaultValue, String key) {
@@ -625,12 +759,14 @@ public final class CmsStringUtil {
     }
 
     /**
-     * Gets the common prefix path of two paths.<p>
-     * 
-     * @param first the first path 
+     * Returns the common parent path of two paths.<p>
+     *
+     * <b>Directly exposed for JSP EL</b>, not through {@link org.opencms.jsp.util.CmsJspElFunctions}.<p>
+     *
+     * @param first the first path
      * @param second the second path
-     *  
-     * @return the common prefix path 
+     *
+     * @return the common prefix path
      */
     public static String getCommonPrefixPath(String first, String second) {
 
@@ -654,14 +790,42 @@ public final class CmsStringUtil {
     }
 
     /**
-     * Returns the Integer (int) value for the given String value.<p> 
-     * 
+     * Returns the Ethernet-Address of the locale host.<p>
+     *
+     * A dummy ethernet address is returned, if the ip is
+     * representing the loopback address or in case of exceptions.<p>
+     *
+     * @return the Ethernet-Address
+     */
+    public static String getEthernetAddress() {
+
+        try {
+            InetAddress ip = InetAddress.getLocalHost();
+            if (!ip.isLoopbackAddress()) {
+                NetworkInterface network = NetworkInterface.getByInetAddress(ip);
+                byte[] mac = network.getHardwareAddress();
+                StringBuilder sb = new StringBuilder();
+                for (int i = 0; i < mac.length; i++) {
+                    sb.append(String.format("%02X%s", Byte.valueOf(mac[i]), (i < (mac.length - 1)) ? ":" : ""));
+                }
+                return sb.toString();
+            }
+        } catch (Throwable t) {
+            // if an exception occurred return a dummy address
+        }
+        // return a dummy ethernet address, if the ip is representing the loopback address or in case of exceptions
+        return CmsUUID.getDummyEthernetAddress();
+    }
+
+    /**
+     * Returns the Integer (int) value for the given String value.<p>
+     *
      * All parse errors are caught and the given default value is returned in this case.<p>
-     * 
+     *
      * @param value the value to parse as int
      * @param defaultValue the default value in case of parsing errors
      * @param key a key to be included in the debug output in case of parse errors
-     * 
+     *
      * @return the int value for the given parameter value String
      */
     public static int getIntValue(String value, int defaultValue, String key) {
@@ -679,14 +843,14 @@ public final class CmsStringUtil {
     }
 
     /**
-     * Returns the closest Integer (int) value for the given String value.<p> 
-     * 
+     * Returns the closest Integer (int) value for the given String value.<p>
+     *
      * All parse errors are caught and the given default value is returned in this case.<p>
-     * 
+     *
      * @param value the value to parse as int, can also represent a float value
      * @param defaultValue the default value in case of parsing errors
      * @param key a key to be included in the debug output in case of parse errors
-     * 
+     *
      * @return the closest int value for the given parameter value String
      */
     public static int getIntValueRounded(String value, int defaultValue, String key) {
@@ -704,14 +868,101 @@ public final class CmsStringUtil {
     }
 
     /**
-     * Returns the Long (long) value for the given String value.<p> 
-     * 
+     * Returns a Locale calculated from the suffix of the given String, or <code>null</code> if no locale suffix is found.<p>
+     *
+     * The locale returned will include the optional country code if this was part of the suffix.<p>
+     *
+     * Calls {@link CmsResource#getName(String)} first, so the given name can also be a resource root path.<p>
+     *
+     * <b>Directly exposed for JSP EL</b>, not through {@link org.opencms.jsp.util.CmsJspElFunctions}.<p>
+     *
+     * @param name the name to get the locale for
+     *
+     * @return the locale, or <code>null</code>
+     *
+     * @see #getLocaleSuffixForName(String)
+     */
+    public static Locale getLocaleForName(String name) {
+
+        String suffix = getLocaleSuffixForName(CmsResource.getName(name));
+        if (suffix != null) {
+            String laguageString = suffix.substring(0, 2);
+            return suffix.length() == 5 ? new Locale(laguageString, suffix.substring(3, 5)) : new Locale(laguageString);
+        }
+        return null;
+    }
+
+    /**
+     * Returns the locale for the given text based on the language detection library.<p>
+     *
+     * The result will be <code>null</code> if the detection fails or the detected locale is not configured
+     * in the 'opencms-system.xml' as available locale.<p>
+     *
+     * @param text the text to retrieve the locale for
+     *
+     * @return the detected locale for the given text
+     */
+    public static Locale getLocaleForText(String text) {
+
+        // try to detect locale by language detector
+        if (isNotEmptyOrWhitespaceOnly(text)) {
+            try {
+                Detector detector = DetectorFactory.create();
+                detector.append(text);
+                String lang = detector.detect();
+                Locale loc = new Locale(lang);
+                if (OpenCms.getLocaleManager().getAvailableLocales().contains(loc)) {
+                    return loc;
+                }
+            } catch (LangDetectException e) {
+                LOG.debug(e.getLocalizedMessage(), e);
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Returns the locale suffix from the given String, or <code>null</code> if no locae suffix is found.<p>
+     *
+     * Uses the the {@link #PATTERN_LOCALE_SUFFIX} to find a language_country occurrence in the
+     * given name and returns the first group of the match.<p>
+     *
+     * <b>Examples:</b>
+     *
+     * <ul>
+     * <li><code>rabbit_en_EN.html -> Locale[en_EN]</code>
+     * <li><code>rabbit_en_EN&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;-> Locale[en_EN]</code>
+     * <li><code>rabbit_en.html&nbsp;&nbsp;&nbsp;&nbsp;-> Locale[en]</code>
+     * <li><code>rabbit_en&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;-> Locale[en]</code>
+     * <li><code>rabbit_en.&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;-> Locale[en]</code>
+     * <li><code>rabbit_enr&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;-> null</code>
+     * <li><code>rabbit_en.tar.gz&nbsp;&nbsp;-> null</code>
+     * </ul>
+     *
+     * <b>Directly exposed for JSP EL</b>, not through {@link org.opencms.jsp.util.CmsJspElFunctions}.<p>
+     *
+     * @param name the resource name to get the locale suffix for
+     *
+     * @return the locale suffix if found, <code>null</code> otherwise
+     */
+    public static String getLocaleSuffixForName(String name) {
+
+        Matcher matcher = PATTERN_LOCALE_SUFFIX.matcher(name);
+        if (matcher.find()) {
+            return matcher.group(2);
+        }
+        return null;
+    }
+
+    /**
+     * Returns the Long (long) value for the given String value.<p>
+     *
      * All parse errors are caught and the given default value is returned in this case.<p>
-     * 
+     *
      * @param value the value to parse as long
      * @param defaultValue the default value in case of parsing errors
      * @param key a key to be included in the debug output in case of parse errors
-     * 
+     *
      * @return the long value for the given parameter value String
      */
     public static long getLongValue(String value, long defaultValue, String key) {
@@ -730,12 +981,14 @@ public final class CmsStringUtil {
 
     /**
      * Splits a path into its non-empty path components.<p>
-     * 
+     *
      * If the path is the root path, an empty list will be returned.<p>
-     * 
+     *
+     * <b>Directly exposed for JSP EL</b>, not through {@link org.opencms.jsp.util.CmsJspElFunctions}.<p>
+     *
      * @param path the path to split
-     * 
-     * @return the list of non-empty path components 
+     *
+     * @return the list of non-empty path components
      */
     public static List<String> getPathComponents(String path) {
 
@@ -751,11 +1004,15 @@ public final class CmsStringUtil {
     }
 
     /**
-     * Converts a given path to a path relative to a base folder, but only if it actually is a sub-path of the latter, otherwise null is returned.<p>
-     * 
-     * @param base the base path 
-     * @param path the path which should be converted to a relative path 
-     * 
+     * Converts the given path to a path relative to a base folder,
+     * but only if it actually is a sub-path of the latter,
+     * otherwise <code>null</code> is returned.<p>
+     *
+     * <b>Directly exposed for JSP EL</b>, not through {@link org.opencms.jsp.util.CmsJspElFunctions}.<p>
+     *
+     * @param base the base path
+     * @param path the path which should be converted to a relative path
+     *
      * @return 'path' converted to a path relative to 'base', or null if 'path' is not a sub-folder of 'base'
      */
     public static String getRelativeSubPath(String base, String path) {
@@ -778,11 +1035,38 @@ public final class CmsStringUtil {
     }
 
     /**
+     * Checks if the given string contains a keyword that is not adjacent to non-space characters.
+     * @param text the text to find the keyword in
+     * @param keyword the keyword
+     *
+     * @return true if the text has the keyword
+     */
+    public static boolean hasKeyword(String text, String keyword) {
+
+        Pattern keywordPattern = cachePattern("(?<!\\S)" + Pattern.quote(keyword) + "(?!\\S)");
+        return keywordPattern.matcher(text).find();
+    }
+
+    /**
+     * Inserts the given number of spaces at the start of each line in the given text.
+     * <p>This is useful when writing toString() methods for complex nested objects.</p>
+     *
+     * @param text the text to indent
+     * @param numSpaces the number of spaces to insert before each line
+     *
+     * @return the indented text
+     */
+    public static String indentLines(String text, int numSpaces) {
+
+        return text.replaceAll("(?m)^", StringUtils.repeat(" ", numSpaces));
+    }
+
+    /**
      * Returns <code>true</code> if the provided String is either <code>null</code>
-     * or the empty String <code>""</code>.<p> 
-     * 
+     * or the empty String <code>""</code>.<p>
+     *
      * @param value the value to check
-     * 
+     *
      * @return true, if the provided value is null or the empty String, false otherwise
      */
     public static boolean isEmpty(String value) {
@@ -792,10 +1076,12 @@ public final class CmsStringUtil {
 
     /**
      * Returns <code>true</code> if the provided String is either <code>null</code>
-     * or contains only white spaces.<p> 
-     * 
+     * or contains only white spaces.<p>
+     *
+     * <b>Directly exposed for JSP EL</b>, not through {@link org.opencms.jsp.util.CmsJspElFunctions}.<p>
+     *
      * @param value the value to check
-     * 
+     *
      * @return true, if the provided value is null or contains only white spaces, false otherwise
      */
     public static boolean isEmptyOrWhitespaceOnly(String value) {
@@ -804,14 +1090,14 @@ public final class CmsStringUtil {
     }
 
     /**
-     * Returns <code>true</code> if the provided Objects are either both <code>null</code> 
+     * Returns <code>true</code> if the provided Objects are either both <code>null</code>
      * or equal according to {@link Object#equals(Object)}.<p>
-     * 
+     *
      * @param value1 the first object to compare
      * @param value2 the second object to compare
-     * 
-     * @return <code>true</code> if the provided Objects are either both <code>null</code> 
-     *              or equal according to {@link Object#equals(Object)} 
+     *
+     * @return <code>true</code> if the provided Objects are either both <code>null</code>
+     *              or equal according to {@link Object#equals(Object)}
      */
     public static boolean isEqual(Object value1, Object value2) {
 
@@ -823,10 +1109,10 @@ public final class CmsStringUtil {
 
     /**
      * Returns <code>true</code> if the provided String is neither <code>null</code>
-     * nor the empty String <code>""</code>.<p> 
-     * 
+     * nor the empty String <code>""</code>.<p>
+     *
      * @param value the value to check
-     * 
+     *
      * @return true, if the provided value is not null and not the empty String, false otherwise
      */
     public static boolean isNotEmpty(String value) {
@@ -836,11 +1122,11 @@ public final class CmsStringUtil {
 
     /**
      * Returns <code>true</code> if the provided String is neither <code>null</code>
-     * nor contains only white spaces.<p> 
-     * 
+     * nor contains only white spaces.<p>
+     *
      * @param value the value to check
-     * 
-     * @return <code>true</code>, if the provided value is <code>null</code> 
+     *
+     * @return <code>true</code>, if the provided value is <code>null</code>
      *          or contains only white spaces, <code>false</code> otherwise
      */
     public static boolean isNotEmptyOrWhitespaceOnly(String value) {
@@ -849,16 +1135,19 @@ public final class CmsStringUtil {
     }
 
     /**
-     * Checks whether one path is a prefix path of another, i.e. its path components are 
-     * the initial path components of the second path.<p>
-     * 
-     * It is not enough to just use {@link String#startsWith}, because we want /foo/bar to 
-     * be a prefix path of  /foo/bar/baz, but not of /foo/bar42.<p>
-     *  
-     * @param firstPath the first path 
-     * @param secondPath the second path 
-     * 
-     * @return true if the first path is a prefix path of the second path 
+     * Checks if the first path is a prefix of the second path.<p>
+     *
+     * This method is different compared to {@link String#startsWith},
+     * because it considers <code>/foo/bar</code> to
+     * be a prefix path of <code>/foo/bar/baz</code>,
+     * but not of <code>/foo/bar42</code>.
+     *
+     * <b>Directly exposed for JSP EL</b>, not through {@link org.opencms.jsp.util.CmsJspElFunctions}.<p>
+     *
+     * @param firstPath the first path
+     * @param secondPath the second path
+     *
+     * @return true if the first path is a prefix path of the second path
      */
     public static boolean isPrefixPath(String firstPath, String secondPath) {
 
@@ -868,10 +1157,28 @@ public final class CmsStringUtil {
     }
 
     /**
+     * Checks if the first path is a prefix of the second path, but not equivalent to it.<p>
+     *
+     * @param firstPath the first path
+     * @param secondPath the second path
+     *
+     * @return true if the first path is a prefix path of the second path, but not equivalent
+     */
+    public static boolean isProperPrefixPath(String firstPath, String secondPath) {
+
+        firstPath = CmsStringUtil.joinPaths(firstPath, "/");
+        secondPath = CmsStringUtil.joinPaths(secondPath, "/");
+        return secondPath.startsWith(firstPath) && !firstPath.equals(secondPath);
+
+    }
+
+    /**
      * Checks if the given class name is a valid Java class name.<p>
-     * 
+     *
+     * <b>Directly exposed for JSP EL</b>, not through {@link org.opencms.jsp.util.CmsJspElFunctions}.<p>
+     *
      * @param className the name to check
-     * 
+     *
      * @return true if the given class name is a valid Java class name
      */
     public static boolean isValidJavaClassName(String className) {
@@ -906,45 +1213,66 @@ public final class CmsStringUtil {
 
     /**
      * Concatenates multiple paths and separates them with '/'.<p>
-     * 
+     *
      * Consecutive slashes will be reduced to a single slash in the resulting string.
      * For example, joinPaths("/foo/", "/bar", "baz") will return "/foo/bar/baz".
-     * 
+     *
      * @param paths the list of paths
-     *  
-     * @return the joined path 
+     *
+     * @return the joined path
      */
     public static String joinPaths(List<String> paths) {
 
         String result = listAsString(paths, "/");
         // result may now contain multiple consecutive slashes, so reduce them to single slashes
-        result = result.replaceAll("/+", "/");
+        result = PATTERN_SLASHES.matcher(result).replaceAll("/");
         return result;
     }
 
     /**
      * Concatenates multiple paths and separates them with '/'.<p>
-     * 
+     *
      * Consecutive slashes will be reduced to a single slash in the resulting string.
-     * For example, joinPaths("/foo/", "/bar", "baz") will return "/foo/bar/baz".
-     * 
+     * For example joinPaths("/foo/", "/bar", "baz") will return "/foo/bar/baz".<p>
+     *
+     * If one of the argument paths already contains a double "//" this will also be reduced to '/'.
+     * For example joinPaths("/foo//bar/", "/baz") will return "/foo/bar/baz".
+     *
      * @param paths the array of paths
-     *  
-     * @return the joined path 
+     *
+     * @return the joined path
      */
     public static String joinPaths(String... paths) {
 
-        return joinPaths(Arrays.asList(paths));
+        StringBuffer result = new StringBuffer(paths.length * 32);
+        boolean noSlash = true;
+        for (int i = 0; i < paths.length; i++) {
+            for (int j = 0; j < paths[i].length(); j++) {
+                char c = paths[i].charAt(j);
+                if (c != '/') {
+                    result.append(c);
+                    noSlash = true;
+                } else if (noSlash) {
+                    result.append('/');
+                    noSlash = false;
+                }
+            }
+            if (noSlash && (i < (paths.length - 1))) {
+                result.append('/');
+                noSlash = false;
+            }
+        }
+        return result.toString();
     }
 
     /**
-     * Returns the last index of any of the given chars in the given source.<p> 
-     * 
+     * Returns the last index of any of the given chars in the given source.<p>
+     *
      * If no char is found, -1 is returned.<p>
-     * 
+     *
      * @param source the source to check
      * @param chars the chars to find
-     * 
+     *
      * @return the last index of any of the given chars in the given source, or -1
      */
     public static int lastIndexOf(String source, char[] chars) {
@@ -962,12 +1290,12 @@ public final class CmsStringUtil {
     }
 
     /**
-     * Returns the last index a whitespace char the given source.<p> 
-     * 
+     * Returns the last index a whitespace char the given source.<p>
+     *
      * If no whitespace char is found, -1 is returned.<p>
-     * 
+     *
      * @param source the source to check
-     * 
+     *
      * @return the last index a whitespace char the given source, or -1
      */
     public static int lastWhitespaceIn(String source) {
@@ -987,10 +1315,10 @@ public final class CmsStringUtil {
 
     /**
      * Returns a string representation for the given list using the given separator.<p>
-     * 
+     *
      * @param list the list to write
      * @param separator the item separator string
-     * 
+     *
      * @return the string representation for the given map
      */
     public static String listAsString(List<?> list, String separator) {
@@ -1007,14 +1335,33 @@ public final class CmsStringUtil {
     }
 
     /**
+     * Encodes a map with string keys and values as a JSON string with the same keys/values.<p>
+     *
+     * @param map the input map
+     * @return the JSON data containing the map entries
+     */
+    public static String mapAsJson(Map<String, String> map) {
+
+        JSONObject obj = new JSONObject();
+        for (Map.Entry<String, String> entry : map.entrySet()) {
+            try {
+                obj.put(entry.getKey(), entry.getValue());
+            } catch (JSONException e) {
+                LOG.error(e.getLocalizedMessage(), e);
+            }
+        }
+        return obj.toString();
+    }
+
+    /**
      * Returns a string representation for the given map using the given separators.<p>
-     * 
+     *
      * @param <K> type of map keys
      * @param <V> type of map values
      * @param map the map to write
      * @param sepItem the item separator string
      * @param sepKeyval the key-value pair separator string
-     * 
+     *
      * @return the string representation for the given map
      */
     public static <K, V> String mapAsString(Map<K, V> map, String sepItem, String sepKeyval) {
@@ -1035,10 +1382,10 @@ public final class CmsStringUtil {
 
     /**
      * Applies white space padding to the left of the given String.<p>
-     * 
+     *
      * @param input the input to pad left
      * @param size the size of the padding
-     * 
+     *
      * @return the input padded to the left
      */
     public static String padLeft(String input, int size) {
@@ -1048,15 +1395,128 @@ public final class CmsStringUtil {
 
     /**
      * Applies white space padding to the right of the given String.<p>
-     * 
+     *
      * @param input the input to pad right
      * @param size the size of the padding
-     * 
+     *
      * @return the input padded to the right
      */
     public static String padRight(String input, int size) {
 
         return (new PrintfFormat("%-" + size + "s")).sprintf(input);
+    }
+
+    /**
+     * Parses a duration and returns the corresponding number of milliseconds.
+     *
+     * Durations consist of a space-separated list of components of the form {number}{time unit},
+     * for example 1d 5m. The available units are d (days), h (hours), m (months), s (seconds), ms (milliseconds).<p>
+     *
+     * @param durationStr the duration string
+     * @param defaultValue the default value to return in case the pattern does not match
+     * @return the corresponding number of milliseconds
+     */
+    public static final long parseDuration(String durationStr, long defaultValue) {
+
+        durationStr = durationStr.toLowerCase().trim();
+        Matcher matcher = DURATION_NUMBER_AND_UNIT_PATTERN.matcher(durationStr);
+        long millis = 0;
+        boolean matched = false;
+        while (matcher.find()) {
+            long number = Long.valueOf(matcher.group(1)).longValue();
+            String unit = matcher.group(2);
+            long multiplier = 0;
+            for (int j = 0; j < DURATION_UNTIS.length; j++) {
+                if (unit.equals(DURATION_UNTIS[j])) {
+                    multiplier = DURATION_MULTIPLIERS[j];
+                    break;
+                }
+            }
+            if (multiplier == 0) {
+                LOG.warn("parseDuration: Unknown unit " + unit);
+            } else {
+                matched = true;
+            }
+            millis += number * multiplier;
+        }
+        if (!matched) {
+            millis = defaultValue;
+        }
+        return millis;
+    }
+
+    /**
+     * Reads a stringtemplate group from a stream.
+     *
+     * This will always return a group (empty if necessary), even if reading it from the stream fails.
+     *
+     * @param stream the stream to read from
+     * @return the string template group
+     */
+    public static StringTemplateGroup readStringTemplateGroup(InputStream stream) {
+
+        try {
+            return new StringTemplateGroup(
+                new InputStreamReader(stream, "UTF-8"),
+                DefaultTemplateLexer.class,
+                new StringTemplateErrorListener() {
+
+                    @SuppressWarnings("synthetic-access")
+                    public void error(String arg0, Throwable arg1) {
+
+                        LOG.error(arg0 + ": " + arg1.getMessage(), arg1);
+                    }
+
+                    @SuppressWarnings("synthetic-access")
+                    public void warning(String arg0) {
+
+                        LOG.warn(arg0);
+
+                    }
+                });
+        } catch (Exception e) {
+            LOG.error(e.getLocalizedMessage(), e);
+            return new StringTemplateGroup("dummy");
+        }
+    }
+
+    public static java.util.Optional<String> removePrefixPath(String prefix, String path) {
+
+        prefix = CmsFileUtil.addTrailingSeparator(prefix);
+        path = CmsFileUtil.addTrailingSeparator(path);
+        if (path.startsWith(prefix)) {
+            String result = path.substring(prefix.length() - 1);
+            if (result.length() > 1) {
+                result = CmsFileUtil.removeTrailingSeparator(result);
+            }
+            return java.util.Optional.of(result);
+        } else {
+            return java.util.Optional.empty();
+        }
+
+    }
+
+    /**
+     * Replaces a constant prefix with another string constant in a given text.<p>
+     *
+     * If the input string does not start with the given prefix, Optional.absent() is returned.<p>
+     *
+     * @param text the text for which to replace the prefix
+     * @param origPrefix the original prefix
+     * @param newPrefix the replacement prefix
+     * @param ignoreCase if true, upper-/lower case differences will be ignored
+     *
+     * @return an Optional containing either the string with the replaced prefix, or an absent value if the prefix could not be replaced
+     */
+    public static Optional<String> replacePrefix(String text, String origPrefix, String newPrefix, boolean ignoreCase) {
+
+        String prefixTestString = ignoreCase ? text.toLowerCase() : text;
+        origPrefix = ignoreCase ? origPrefix.toLowerCase() : origPrefix;
+        if (prefixTestString.startsWith(origPrefix)) {
+            return Optional.of(newPrefix + text.substring(origPrefix.length()));
+        } else {
+            return Optional.absent();
+        }
     }
 
     /**
@@ -1127,7 +1587,7 @@ public final class CmsStringUtil {
             i = n + 1;
             n = source.indexOf(delimiter, i);
         }
-        // is there a non - empty String to cut from the tail? 
+        // is there a non - empty String to cut from the tail?
         if (n < 0) {
             n = source.length();
         }
@@ -1154,11 +1614,11 @@ public final class CmsStringUtil {
     /**
      * Splits a String into substrings along the provided String delimiter and returns
      * the result as List of Substrings.<p>
-     * 
+     *
      * @param source the String to split
      * @param delimiter the delimiter to split at
      * @param trim flag to indicate if leading and trailing white spaces should be omitted
-     * 
+     *
      * @return the Array of splitted Substrings
      */
     public static List<String> splitAsList(String source, String delimiter, boolean trim) {
@@ -1181,7 +1641,7 @@ public final class CmsStringUtil {
             i = n + dl;
             n = source.indexOf(delimiter, i);
         }
-        // is there a non - empty String to cut from the tail? 
+        // is there a non - empty String to cut from the tail?
         if (n < 0) {
             n = source.length();
         }
@@ -1194,17 +1654,17 @@ public final class CmsStringUtil {
     /**
      * Splits a String into substrings along the provided <code>paramDelim</code> delimiter,
      * then each substring is treat as a key-value pair delimited by <code>keyValDelim</code>.<p>
-     * 
+     *
      * @param source the string to split
      * @param paramDelim the string to delimit each key-value pair
      * @param keyValDelim the string to delimit key and value
-     * 
+     *
      * @return a map of splitted key-value pairs
      */
     public static Map<String, String> splitAsMap(String source, String paramDelim, String keyValDelim) {
 
         int keyValLen = keyValDelim.length();
-        // use LinkedHashMap to preserve the order of items 
+        // use LinkedHashMap to preserve the order of items
         Map<String, String> params = new LinkedHashMap<String, String>();
         Iterator<String> itParams = CmsStringUtil.splitAsList(source, paramDelim, true).iterator();
         while (itParams.hasNext()) {
@@ -1224,16 +1684,146 @@ public final class CmsStringUtil {
     }
 
     /**
+     * Splits a String into substrings along the provided String delimiter and returns
+     * the result as List of Substrings. Empty values are skipped.<p>
+     *
+     * @param source the String to split
+     * @param delimiter the delimiter to split at
+     * @param trim flag to indicate if leading and trailing white spaces should be omitted
+     *
+     * @return the Set of splitted substrings
+     */
+    public static Set<String> splitAsSet(String source, String delimiter, boolean trim) {
+
+        if ((null == source) || source.isBlank()) {
+            return Collections.emptySet();
+        }
+        Stream<String> stream = Arrays.stream(
+            null == delimiter ? new String[] {source} : source.split(delimiter)).filter(s -> !s.isBlank());
+        if (trim) {
+            stream = stream.map(String::trim);
+        }
+        return stream.collect(Collectors.toCollection(HashSet::new));
+    }
+
+    /**
+     * Specialized version of splitAsMap used for splitting option lists for widgets.
+     *
+     * <p>This used the separator characters (':' for key/value, '|' for entries), but also allows escaping of
+     * these characters with backslashes ('\'), to enable use of colons/pipes in keys and values. Backslashes themselves
+     * can also be escaped.
+     *
+     * @param optionsStr the string representing the option list
+     * @return the options map
+     */
+    public static Map<String, String> splitOptions(String optionsStr) {
+
+        // state machine with 4 states - combination of whether we are currently either in the key or the value of an entry, and whether the last character was the escape character '\' or not
+        // (could be done more simply with java.util.regex.Pattern in the JVM, but we want to keep the implementation the same as in the GWT code, where we don't have it.)
+        final int S_KEY = 0;
+        final int S_VALUE = 1;
+        final int S_KEY_ESC = 2;
+        final int S_VALUE_ESC = 3;
+
+        boolean nextEntry = false;
+        StringBuilder keyBuffer = new StringBuilder();
+        StringBuilder valueBuffer = new StringBuilder();
+        Map<String, String> result = new LinkedHashMap<>();
+        int length = optionsStr.length();
+        int state = S_KEY;
+        // one more iteration than the number of characters, to flush the buffers
+        for (int i = 0; i < (length + 1); i++) {
+            nextEntry = false;
+            char ch = 0;
+            if (i < length) {
+                ch = optionsStr.charAt(i);
+            }
+            switch (state) {
+                case S_KEY:
+                    if ((ch == '|') || (ch == 0)) {
+                        nextEntry = true;
+                        valueBuffer = null; // we have to keep track of whether a value was found to trim the key correctly, and we set the value buffer to null to do this
+                        state = S_KEY;
+                    } else if (ch == '\\') {
+                        state = S_KEY_ESC;
+                    } else if (ch == ':') {
+                        state = S_VALUE;
+                    } else {
+                        keyBuffer.append(ch);
+                    }
+                    break;
+                case S_KEY_ESC:
+                    if (ch == 0) {
+                        nextEntry = true;
+                        valueBuffer = null;
+                    } else {
+                        keyBuffer.append(ch);
+                        state = S_KEY;
+                    }
+                    break;
+                case S_VALUE:
+                    if ((ch == '|') || (ch == 0)) {
+                        nextEntry = true;
+                        state = S_KEY;
+                    } else if (ch == '\\') {
+                        state = S_VALUE_ESC;
+                    } else {
+                        if (valueBuffer != null) {
+                            valueBuffer.append(ch);
+                        }
+                    }
+                    break;
+                case S_VALUE_ESC:
+                    if (ch == 0) {
+                        nextEntry = true;
+                        state = S_KEY;
+                    } else {
+                        if (valueBuffer != null) {
+                            valueBuffer.append(ch);
+                        }
+                        state = S_VALUE;
+                    }
+                    break;
+                default:
+            }
+            if (nextEntry) {
+                nextEntry = false;
+                String key = keyBuffer.toString();
+                // trim leading whitespace in key and trailing whitespace in value, for compatibility with splitAsMap
+                key = key.replaceFirst("^\\s+", "");
+                String value;
+                if (valueBuffer != null) {
+                    value = valueBuffer.toString();
+                    value = value.replaceFirst("\\s+$", "");
+                } else {
+                    // we just have a key, so we trim it on the right as well to get the same result as splitAsMap
+                    value = "";
+                    key = key.replaceFirst("\\s+$", "");
+                }
+                if (key.length() > 0) {
+                    result.put(key, value);
+                }
+                keyBuffer = new StringBuilder();
+                valueBuffer = new StringBuilder();
+            }
+        }
+        return result;
+    }
+
+    /**
      * Substitutes a pattern in a string using a {@link I_CmsRegexSubstitution}.<p>
-     * 
-     * @param pattern the pattern to substitute 
-     * @param text the text in which the pattern should be substituted 
-     * @param sub the substitution handler 
-     * 
-     * @return the transformed string 
+     *
+     * @param pattern the pattern to substitute
+     * @param text the text in which the pattern should be substituted
+     * @param sub the substitution handler
+     *
+     * @return the transformed string
      */
     public static String substitute(Pattern pattern, String text, I_CmsRegexSubstitution sub) {
 
+        if (text == null) {
+            return null;
+        }
         StringBuffer buffer = new StringBuffer();
         Matcher matcher = pattern.matcher(text);
         while (matcher.find()) {
@@ -1244,14 +1834,14 @@ public final class CmsStringUtil {
     }
 
     /**
-     * Replaces a set of <code>searchString</code> and <code>replaceString</code> pairs, 
+     * Replaces a set of <code>searchString</code> and <code>replaceString</code> pairs,
      * given by the <code>substitutions</code> Map parameter.<p>
-     * 
+     *
      * @param source the string to scan
      * @param substitions the map of substitutions
-     * 
+     *
      * @return the substituted String
-     * 
+     *
      * @see #substitute(String, String, String)
      */
     public static String substitute(String source, Map<String, String> substitions) {
@@ -1267,15 +1857,15 @@ public final class CmsStringUtil {
 
     /**
      * Substitutes <code>searchString</code> in the given source String with <code>replaceString</code>.<p>
-     * 
-     * This is a high-performance implementation which should be used as a replacement for 
+     *
+     * This is a high-performance implementation which should be used as a replacement for
      * <code>{@link String#replaceAll(java.lang.String, java.lang.String)}</code> in case no
      * regular expression evaluation is required.<p>
-     * 
+     *
      * @param source the content which is scanned
      * @param searchString the String which is searched in content
      * @param replaceString the String which replaces <code>searchString</code>
-     * 
+     *
      * @return the substituted String
      */
     public static String substitute(String source, String searchString, String replaceString) {
@@ -1329,12 +1919,12 @@ public final class CmsStringUtil {
     }
 
     /**
-     * Substitutes the OpenCms context path (e.g. /opencms/opencms/) in a HTML page with a 
+     * Substitutes the OpenCms context path (e.g. /opencms/opencms/) in a HTML page with a
      * special variable so that the content also runs if the context path of the server changes.<p>
-     * 
-     * @param htmlContent the HTML to replace the context path in 
+     *
+     * @param htmlContent the HTML to replace the context path in
      * @param context the context path of the server
-     * 
+     *
      * @return the HTML with the replaced context path
      */
     public static String substituteContextPath(String htmlContent, String context) {
@@ -1348,12 +1938,12 @@ public final class CmsStringUtil {
 
     /**
      * Substitutes searchString in content with replaceItem.<p>
-     * 
+     *
      * @param content the content which is scanned
      * @param searchString the String which is searched in content
      * @param replaceItem the new String which replaces searchString
      * @param occurences must be a "g" if all occurrences of searchString shall be replaced
-     * 
+     *
      * @return String the substituted String
      */
     public static String substitutePerl(String content, String searchString, String replaceItem, String occurences) {
@@ -1364,22 +1954,57 @@ public final class CmsStringUtil {
             return perlUtil.substitute(translationRule, content);
         } catch (MalformedPerl5PatternException e) {
             if (LOG.isDebugEnabled()) {
-                LOG.debug(Messages.get().getBundle().key(Messages.LOG_MALFORMED_TRANSLATION_RULE_1, translationRule), e);
+                LOG.debug(
+                    Messages.get().getBundle().key(Messages.LOG_MALFORMED_TRANSLATION_RULE_1, translationRule),
+                    e);
             }
         }
         return content;
     }
 
     /**
+     * Treats the given string as a whitespace-separated list of keywords and either adds a keyword to it or removes it.
+     *
+     * @param str the string to treat as a list of keyword
+     * @param keyword the keyword to add / remove
+     * @param enable true if the keyword should be added, false if it should be removed
+     *
+     * @return the modified string
+     */
+    public static String toggleKeyword(String str, String keyword, boolean enable) {
+
+        Pattern keywordPattern = cachePattern("(?<!\\S)" + Pattern.quote(keyword) + "(?!\\S)");
+        String textWithoutKeyword = keywordPattern.matcher(str).replaceAll("");
+        boolean alreadyHadKeyword = !textWithoutKeyword.equals(str);
+        if (alreadyHadKeyword) {
+            textWithoutKeyword = textWithoutKeyword.trim().replaceAll(" +", " ");
+        }
+        String result;
+        if (!alreadyHadKeyword && enable) {
+            result = str.stripTrailing();
+            if (result.length() > 0) {
+                result = result + " " + keyword;
+            } else {
+                result = keyword;
+            }
+        } else if (alreadyHadKeyword && !enable) {
+            result = textWithoutKeyword;
+        } else {
+            result = str;
+        }
+        return result;
+    }
+
+    /**
      * Returns the java String literal for the given String. <p>
-     *  
-     * This is the form of the String that had to be written into source code 
-     * using the unicode escape sequence for special characters. <p> 
-     * 
-     * Example: "&Auml" would be transformed to "\\u00C4".<p>
-     * 
-     * @param s a string that may contain non-ascii characters 
-     * 
+     *
+     * This is the form of the String that had to be written into source code
+     * using the unicode escape sequence for special characters. <p>
+     *
+     * Example: "&amp;Auml" would be transformed to "\\u00C4".<p>
+     *
+     * @param s a string that may contain non-ascii characters
+     *
      * @return the java unicode escaped string Literal of the given input string
      */
     public static String toUnicodeLiteral(String s) {
@@ -1401,14 +2026,62 @@ public final class CmsStringUtil {
     }
 
     /**
-     * This method transformes a string which matched a format with one or more place holders into another format. The 
-     * other format also includes the same number of place holders. Place holders start with 
+     * Transforms the values of a .properties formatted string while preserving
+     * comments, empty lines.
+     *
+     * <p>Does not support multi-line values or escape characters that would be valid in .properties files.
+     *
+     * @param properties the raw properties string.
+     * @param valueFunc  the function to apply to each property value.
+     * @return the transformed properties string.
+     */
+    public static String transformProperties(String properties, Function<String, String> valueFunc) {
+
+        if (properties == null) {
+            return null;
+        }
+
+        StringBuilder result = new StringBuilder();
+        String[] lines = properties.split("\n");
+        Pattern propPattern = Pattern.compile("^\\s*[^\\s=:]+?\\s*[=:]\\s*(.*)$");
+
+        for (String line : lines) {
+            if (line.endsWith("\\")) {
+                LOG.warn("multiline values not supported");
+                continue;
+            }
+            String trimmed = line.trim();
+            if (trimmed.isEmpty() || trimmed.startsWith("#") || trimmed.startsWith("!") || line.endsWith("\\")) {
+                result.append(line);
+                result.append("\n");
+                continue;
+            }
+
+            Matcher matcher = propPattern.matcher(line);
+            if (matcher.find()) {
+                String replaced = line.substring(0, matcher.start(1))
+                    + valueFunc.apply(matcher.group(1))
+                    + line.substring(matcher.end(1));
+                result.append(replaced);
+                result.append("\n");
+            } else {
+                result.append(line);
+                result.append("\n");
+            }
+        }
+
+        return result.toString();
+    }
+
+    /**
+     * This method transformes a string which matched a format with one or more place holders into another format. The
+     * other format also includes the same number of place holders. Place holders start with
      * {@link org.opencms.util.CmsStringUtil#PLACEHOLDER_START} and end with {@link org.opencms.util.CmsStringUtil#PLACEHOLDER_END}.<p>
      *
      * @param oldFormat the original format
      * @param newFormat the new format
      * @param value the value which matched the original format and which shall be transformed into the new format
-     * 
+     *
      * @return the new value with the filled place holder with the information in the parameter value
      */
     public static String transformValues(String oldFormat, String newFormat, String value) {
@@ -1443,7 +2116,7 @@ public final class CmsStringUtil {
             matcher = pattern.matcher(oldFormat);
             while (matcher.find()) {
                 int start = matcher.start() + 1;
-                oldValues.add(oldNumber, new Integer(start));
+                oldValues.add(oldNumber, Integer.valueOf(start));
                 oldNumber += 1;
             }
         } catch (PatternSyntaxException e) {
@@ -1463,7 +2136,7 @@ public final class CmsStringUtil {
             matcher = pattern.matcher(newFormat);
             while (matcher.find()) {
                 int start = matcher.start() + 1;
-                newValues.add(newNumber, new Integer(start));
+                newValues.add(newNumber, Integer.valueOf(start));
                 newNumber += 1;
             }
         } catch (PatternSyntaxException e) {
@@ -1483,13 +2156,13 @@ public final class CmsStringUtil {
         // for this example with oldFormat: {.*}<b>{.*}</b>{.*}
         // this array is that:
         // ---------
-        // | empty |        
+        // | empty |
         // ---------
         // | <b>   |
         // |--------
         // | </b>  |
         // |--------
-        // | empty |    
+        // | empty |
         // |--------
         int counter = 0;
         Iterator<Integer> iter = oldValues.iterator();
@@ -1532,13 +2205,13 @@ public final class CmsStringUtil {
         // for this example with newFormat: {}<strong>{}</strong>{}
         // this array is that:
         // ------------|
-        // | empty     |     
+        // | empty     |
         // ------------|
         // | <strong>  |
         // |-----------|
         // | </strong> |
         // |-----------|
-        // | empty     |    
+        // | empty     |
         // |-----------|
         counter = 0;
         iter = newValues.iterator();
@@ -1585,7 +2258,7 @@ public final class CmsStringUtil {
         // it is used the array with the old values between the place holders to get the content in the place holders
         // this result array is that:
         // ------|
-        // | abc |     
+        // | abc |
         // ------|
         // | def |
         // |-----|
@@ -1593,7 +2266,7 @@ public final class CmsStringUtil {
         // |-----|
         ArrayList<String> placeHolders = new ArrayList<String>(oldNumber);
         String tmpValue = value;
-        // loop over all rows with the old values between the place holders and take the values between them in the 
+        // loop over all rows with the old values between the place holders and take the values between them in the
         // current property value
         for (int placeCounter = 0; placeCounter < (oldBetween.size() - 1); placeCounter++) {
             // get the two next values with the old values between the place holders
@@ -1636,7 +2309,7 @@ public final class CmsStringUtil {
         // with following vectors from above:
         // old values between the place holders:
         // ---------
-        // | empty | (old.1)        
+        // | empty | (old.1)
         // ---------
         // | <b>   | (old.2)
         // |--------
@@ -1647,7 +2320,7 @@ public final class CmsStringUtil {
         //
         // new values between the place holders:
         // ------------|
-        // | empty     | (new.1)     
+        // | empty     | (new.1)
         // ------------|
         // | <strong>  | (new.2)
         // |-----------|
@@ -1659,16 +2332,16 @@ public final class CmsStringUtil {
         // content of the place holders:
         // ------|
         // | abc | (place.1)
-        // ------| 
+        // ------|
         // | def | (place.2)
         // |-----|
         // | ghi | (place.3)
         // |-----|
-        // 
+        //
         // the result is calculated in that way:
         // new.1 + place.1 + new.2 + place.2 + new.3 + place.3 + new.4
         String newValue = "";
-        // take the values between the place holders and add the content of the place holders 
+        // take the values between the place holders and add the content of the place holders
         for (int buildCounter = 0; buildCounter < newNumber; buildCounter++) {
             newValue = newValue + newBetween.get(buildCounter) + placeHolders.get(buildCounter);
         }
@@ -1678,14 +2351,29 @@ public final class CmsStringUtil {
     }
 
     /**
+     * Translates all consecutive sequences of non-slash characters in a path using the given resource translator.
+     *
+     * @param translator the resource translator
+     * @param path the path to translate
+     * @return the translated path
+     */
+    public static String translatePathComponents(CmsResourceTranslator translator, String path) {
+
+        String result = substitute(NOT_SLASHES, path, (text, matcher) -> {
+            return translator.translateResource(matcher.group());
+        });
+        return result;
+    }
+
+    /**
      * Returns a substring of the source, which is at most length characters long.<p>
-     * 
-     * This is the same as calling {@link #trimToSize(String, int, String)} with the 
+     *
+     * This is the same as calling {@link #trimToSize(String, int, String)} with the
      * parameters <code>(source, length, " ...")</code>.<p>
-     * 
+     *
      * @param source the string to trim
      * @param length the maximum length of the string to be returned
-     * 
+     *
      * @return a substring of the source, which is at most length characters long
      */
     public static String trimToSize(String source, int length) {
@@ -1694,16 +2382,16 @@ public final class CmsStringUtil {
     }
 
     /**
-     * Returns a substring of the source, which is at most length characters long, cut 
+     * Returns a substring of the source, which is at most length characters long, cut
      * in the last <code>area</code> chars in the source at a sentence ending char or whitespace.<p>
-     * 
+     *
      * If a char is cut, the given <code>suffix</code> is appended to the result.<p>
-     * 
+     *
      * @param source the string to trim
      * @param length the maximum length of the string to be returned
      * @param area the area at the end of the string in which to find a sentence ender or whitespace
      * @param suffix the suffix to append in case the String was trimmed
-     * 
+     *
      * @return a substring of the source, which is at most length characters long
      */
     public static String trimToSize(String source, int length, int area, String suffix) {
@@ -1754,18 +2442,18 @@ public final class CmsStringUtil {
 
     /**
      * Returns a substring of the source, which is at most length characters long.<p>
-     * 
+     *
      * If a char is cut, the given <code>suffix</code> is appended to the result.<p>
-     * 
-     * This is almost the same as calling {@link #trimToSize(String, int, int, String)} with the 
+     *
+     * This is almost the same as calling {@link #trimToSize(String, int, int, String)} with the
      * parameters <code>(source, length, length*, suffix)</code>. If <code>length</code>
      * if larger then 100, then <code>length* = length / 2</code>,
      * otherwise <code>length* = length</code>.<p>
-     * 
+     *
      * @param source the string to trim
      * @param length the maximum length of the string to be returned
      * @param suffix the suffix to append in case the String was trimmed
-     * 
+     *
      * @return a substring of the source, which is at most length characters long
      */
     public static String trimToSize(String source, int length, String suffix) {
@@ -1776,11 +2464,11 @@ public final class CmsStringUtil {
 
     /**
      * Validates a value against a regular expression.<p>
-     * 
+     *
      * @param value the value to test
      * @param regex the regular expression
      * @param allowEmpty if an empty value is allowed
-     * 
+     *
      * @return <code>true</code> if the value satisfies the validation
      */
     public static boolean validateRegex(String value, String regex, boolean allowEmpty) {
@@ -1792,5 +2480,4 @@ public final class CmsStringUtil {
         Matcher matcher = pattern.matcher(value);
         return matcher.matches();
     }
-
 }

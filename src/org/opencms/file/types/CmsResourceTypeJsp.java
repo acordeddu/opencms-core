@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -14,12 +14,12 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * Lesser General Public License for more details.
  *
- * For further information about Alkacon Software GmbH, please see the
- * company website: http://www.alkacon.com
+ * For further information about Alkacon Software GmbH & Co. KG, please see the
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -49,6 +49,7 @@ import org.opencms.relations.CmsLink;
 import org.opencms.util.CmsStringUtil;
 import org.opencms.xml.containerpage.CmsFormatterBean;
 import org.opencms.xml.containerpage.CmsFormatterConfiguration;
+import org.opencms.xml.containerpage.I_CmsFormatterBean;
 
 import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
@@ -61,16 +62,22 @@ import org.apache.commons.logging.Log;
 
 /**
  * Resource type descriptor for the type "jsp".<p>
- * 
+ *
  * Ensures that some required file properties are attached to new JSPs.<p>
- * 
+ *
  * The value for the encoding properties of a new JSP usually is the
- * system default encoding, but this can be overwritten by 
+ * system default encoding, but this can be overwritten by
  * a configuration parameters set in <code>opencms-vfs.xml</code>.<p>
- * 
- * @since 6.0.0 
+ *
+ * @since 6.0.0
  */
 public class CmsResourceTypeJsp extends A_CmsResourceTypeLinkParseable {
+
+    /** The type id of the JSP resource type. */
+    public static final int JSP_RESOURCE_TYPE_ID = 4;
+
+    /** The name of this resource type. */
+    public static final String RESOURCE_TYPE_NAME = "jsp";
 
     /** Key for formatter setting container maximum width. */
     public static final String FORMATTER_SETTING_MAX_WIDTH = "maxwidth";
@@ -87,24 +94,21 @@ public class CmsResourceTypeJsp extends A_CmsResourceTypeLinkParseable {
     /** The type name of the containerpage_template resource type. */
     private static final String CONTAINERPAGE_TEMPLATE_TYPE_NAME = "containerpage_template";
 
-    /** The type id of the JSP resource type. */
-    private static final int JSP_RESOURCE_TYPE_ID = 4;
-
     /** Static reference to the log. */
     private static final Log LOG = CmsLog.getLog(org.opencms.file.types.CmsResourceTypeJsp.class);
 
     /** The registered JSP resource type id's.    */
     private static List<Integer> m_jspResourceTypeIds = new ArrayList<Integer>();
 
-    /** The name of this resource type. */
-    private static final String RESOURCE_TYPE_NAME = "jsp";
+    /** The serial version id. */
+    private static final long serialVersionUID = 6852747481533451911L;
 
     /** JSP Loader instance. */
-    protected CmsJspLoader m_jspLoader;
+    protected transient CmsJspLoader m_jspLoader;
 
     /**
      * Returns the type id of the containerpage_template resource type.<p>
-     * 
+     *
      * @return the type id of the containerpage_template resource type
      */
     public static int getContainerPageTemplateTypeId() {
@@ -114,7 +118,7 @@ public class CmsResourceTypeJsp extends A_CmsResourceTypeLinkParseable {
 
     /**
      * Returns the type name of the containerpage_template resource type.<p>
-     * 
+     *
      * @return the type name of the containerpage_template resource type
      */
     public static String getContainerPageTemplateTypeName() {
@@ -124,7 +128,7 @@ public class CmsResourceTypeJsp extends A_CmsResourceTypeLinkParseable {
 
     /**
      * Returns the registered JSP resource type id's.<p>
-     * 
+     *
      * @return the resource type id's
      */
     public static List<Integer> getJspResourceTypeIds() {
@@ -134,7 +138,7 @@ public class CmsResourceTypeJsp extends A_CmsResourceTypeLinkParseable {
 
     /**
      * Returns the type id of the (default)JSP resource type.<p>
-     * 
+     *
      * @return the type id of this (default)JSP resource type
      */
     public static int getJSPTypeId() {
@@ -144,7 +148,7 @@ public class CmsResourceTypeJsp extends A_CmsResourceTypeLinkParseable {
 
     /**
      * Returns the static type name of this (default) resource type.<p>
-     * 
+     *
      * @return the static type name of this (default) resource type
      */
     public static String getStaticTypeName() {
@@ -154,13 +158,13 @@ public class CmsResourceTypeJsp extends A_CmsResourceTypeLinkParseable {
 
     /**
      * Returns <code>true</code> in case the given resource is a JSP.<p>
-     * 
+     *
      * Internally this checks if the given resource type has an id that is registered as a JSP resource type.<p>
-     * 
+     *
      * @param resource the resource to check
-     * 
+     *
      * @return <code>true</code> in case the given resource is a JSP
-     * 
+     *
      * @since 8.0.0
      */
     public static boolean isJsp(CmsResource resource) {
@@ -170,13 +174,13 @@ public class CmsResourceTypeJsp extends A_CmsResourceTypeLinkParseable {
 
     /**
      * Returns <code>true</code> in case the given resource type id is a JSP type.<p>
-     * 
+     *
      * Internally this checks if the given resource type id is registered as a JSP resource type.<p>
-     * 
+     *
      * @param typeId the resource type id to check
-     * 
+     *
      * @return <code>true</code> in case the given resource type id is a JSP type
-     * 
+     *
      * @since 8.0.0
      */
     public static boolean isJspTypeId(int typeId) {
@@ -204,7 +208,8 @@ public class CmsResourceTypeJsp extends A_CmsResourceTypeLinkParseable {
         CmsObject cms,
         CmsSecurityManager securityManager,
         CmsResource resource,
-        CmsResourceDeleteMode siblingMode) throws CmsException {
+        CmsResourceDeleteMode siblingMode)
+    throws CmsException {
 
         Set<String> references = getReferencingStrongLinks(cms, resource);
         super.deleteResource(cms, securityManager, resource, siblingMode);
@@ -223,7 +228,10 @@ public class CmsResourceTypeJsp extends A_CmsResourceTypeLinkParseable {
         int maxWidth = Integer.MAX_VALUE;
         try {
             // check template property to override default settings
-            String formatterSetting = cms.readPropertyObject(res, CmsPropertyDefinition.PROPERTY_TEMPLATE, false).getValue();
+            String formatterSetting = cms.readPropertyObject(
+                res,
+                CmsPropertyDefinition.PROPERTY_TEMPLATE,
+                false).getValue();
             if (CmsStringUtil.isNotEmptyOrWhitespaceOnly(formatterSetting)) {
                 JSONObject setting = new JSONObject(formatterSetting);
                 if (setting.has(FORMATTER_SETTING_TYPE)) {
@@ -254,7 +262,7 @@ public class CmsResourceTypeJsp extends A_CmsResourceTypeLinkParseable {
             false,
             res.getRootPath());
 
-        return CmsFormatterConfiguration.create(cms, Collections.singletonList(selfFormatter));
+        return CmsFormatterConfiguration.create(cms, Collections.<I_CmsFormatterBean> singletonList(selfFormatter));
     }
 
     /**
@@ -273,7 +281,7 @@ public class CmsResourceTypeJsp extends A_CmsResourceTypeLinkParseable {
     public void initConfiguration(String name, String id, String className) throws CmsConfigurationException {
 
         super.initConfiguration(name, id, className);
-        // set static members with values from the configuration      
+        // set static members with values from the configuration
         addTypeId(m_typeId);
     }
 
@@ -295,7 +303,11 @@ public class CmsResourceTypeJsp extends A_CmsResourceTypeLinkParseable {
      * @see org.opencms.file.types.A_CmsResourceType#moveResource(org.opencms.file.CmsObject, org.opencms.db.CmsSecurityManager, org.opencms.file.CmsResource, java.lang.String)
      */
     @Override
-    public void moveResource(CmsObject cms, CmsSecurityManager securityManager, CmsResource resource, String destination)
+    public void moveResource(
+        CmsObject cms,
+        CmsSecurityManager securityManager,
+        CmsResource resource,
+        String destination)
     throws CmsException, CmsIllegalArgumentException {
 
         Set<String> references = getReferencingStrongLinks(cms, resource);
@@ -325,7 +337,8 @@ public class CmsResourceTypeJsp extends A_CmsResourceTypeLinkParseable {
         CmsResource resource,
         int type,
         byte[] content,
-        List<CmsProperty> properties) throws CmsException {
+        List<CmsProperty> properties)
+    throws CmsException {
 
         Set<String> references = getReferencingStrongLinks(cms, resource);
         super.replaceResource(cms, securityManager, resource, type, content, properties);
@@ -353,7 +366,8 @@ public class CmsResourceTypeJsp extends A_CmsResourceTypeLinkParseable {
         CmsSecurityManager securityManager,
         CmsResource resource,
         long dateExpired,
-        boolean recursive) throws CmsException {
+        boolean recursive)
+    throws CmsException {
 
         Set<String> references = getReferencingStrongLinks(cms, resource);
         super.setDateExpired(cms, securityManager, resource, dateExpired, recursive);
@@ -369,7 +383,8 @@ public class CmsResourceTypeJsp extends A_CmsResourceTypeLinkParseable {
         CmsSecurityManager securityManager,
         CmsResource resource,
         long dateLastModified,
-        boolean recursive) throws CmsException {
+        boolean recursive)
+    throws CmsException {
 
         Set<String> references = getReferencingStrongLinks(cms, resource);
         super.setDateLastModified(cms, securityManager, resource, dateLastModified, recursive);
@@ -385,7 +400,8 @@ public class CmsResourceTypeJsp extends A_CmsResourceTypeLinkParseable {
         CmsSecurityManager securityManager,
         CmsResource resource,
         long dateReleased,
-        boolean recursive) throws CmsException {
+        boolean recursive)
+    throws CmsException {
 
         Set<String> references = getReferencingStrongLinks(cms, resource);
         super.setDateReleased(cms, securityManager, resource, dateReleased, recursive);
@@ -400,10 +416,17 @@ public class CmsResourceTypeJsp extends A_CmsResourceTypeLinkParseable {
         CmsObject cms,
         CmsSecurityManager securityManager,
         CmsResource resource,
-        CmsResourceUndoMode mode) throws CmsException {
+        CmsResourceUndoMode mode)
+    throws CmsException {
 
         Set<String> references = getReferencingStrongLinks(cms, resource);
         super.undoChanges(cms, securityManager, resource, mode);
+        if (m_jspLoader != null) {
+            // we need to remove the JSP explicitly because undoing the changes also
+            // resets the last modification date, so the automatic mechanism for updating
+            // JSPs based on modification dates doesn't work.
+            m_jspLoader.removeOfflineJspFromRepository(resource);
+        }
         removeReferencingFromCache(references);
     }
 
@@ -433,12 +456,12 @@ public class CmsResourceTypeJsp extends A_CmsResourceTypeLinkParseable {
 
     /**
      * Returns a set of root paths of files that are including the given resource using the 'link.strong' macro.<p>
-     * 
+     *
      * @param cms the current cms context
      * @param resource the resource to check
-     * 
+     *
      * @return the set of referencing paths
-     * 
+     *
      * @throws CmsException if something goes wrong
      */
     protected Set<String> getReferencingStrongLinks(CmsObject cms, CmsResource resource) throws CmsException {
@@ -453,7 +476,7 @@ public class CmsResourceTypeJsp extends A_CmsResourceTypeLinkParseable {
 
     /**
      * Removes the referencing resources from the cache.<p>
-     * 
+     *
      * @param references the references to remove
      */
     protected void removeReferencingFromCache(Set<String> references) {
@@ -465,7 +488,7 @@ public class CmsResourceTypeJsp extends A_CmsResourceTypeLinkParseable {
 
     /**
      * Adds another resource type id to the registered JSP resource type id's.<p>
-     * 
+     *
      * @param typeId the resource type id to add
      */
     private void addTypeId(int typeId) {

@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -14,12 +14,12 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * Lesser General Public License for more details.
  *
- * For further information about Alkacon Software GmbH, please see the
- * company website: http://www.alkacon.com
+ * For further information about Alkacon Software GmbH & Co. KG, please see the
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -35,10 +35,10 @@ import java.util.List;
 
 /**
  * Base filter class for OpenCms VFS access method tests.<p>
- * 
- * A filter defines the attributes of a CmsResource which 
+ *
+ * A filter defines the attributes of a CmsResource which
  * must not be changed after a method call in the CmsObject.<p>
- * 
+ *
  * To use a filter, either use the static filters provided by this class,
  * or create an instance of {@link org.opencms.test.OpenCmsTestResourceConfigurableFilter}.<p>
  */
@@ -152,6 +152,9 @@ public abstract class OpenCmsTestResourceFilter {
     /** Flag to enable/disable name tests. */
     protected boolean m_name;
 
+    /** Flag to enable/disable comparison of non-content relations. */
+    protected boolean m_nonContentRelations;
+
     /** Flag to enable/disable project last modified tests. */
     protected boolean m_projectLastModified;
 
@@ -180,10 +183,10 @@ public abstract class OpenCmsTestResourceFilter {
     protected boolean m_userLastModified;
 
     /**
-     * Compares two lists of properties and returns those 
+     * Compares two lists of properties and returns those
      * that are included only in the source but not in the targer list and not
      * part of a seperade exclude list.<p>
-     * 
+     *
      * @param source the source properties
      * @param target the target properties
      * @param exclude the exclude list
@@ -232,7 +235,7 @@ public abstract class OpenCmsTestResourceFilter {
 
     /**
      * Creates a new filter used for the "chacc" method.<p>
-     * 
+     *
      * @return the created filter
      */
     private static OpenCmsTestResourceConfigurableFilter getFilterChacc() {
@@ -249,7 +252,7 @@ public abstract class OpenCmsTestResourceFilter {
 
     /**
      * Creates a new filter used for the "chflags" method.<p>
-     * 
+     *
      * @return the created filter
      */
     private static OpenCmsTestResourceConfigurableFilter getFilterChflags() {
@@ -267,7 +270,7 @@ public abstract class OpenCmsTestResourceFilter {
 
     /**
      * Creates a new filter used for the "chtype" method.<p>
-     * 
+     *
      * @return the created filter
      */
     private static OpenCmsTestResourceConfigurableFilter getFilterChtype() {
@@ -282,7 +285,7 @@ public abstract class OpenCmsTestResourceFilter {
 
     /**
      * Creates a new filter used for the "copy a file as new" method.<p>
-     * 
+     *
      * @return the created filter
      */
     private static OpenCmsTestResourceConfigurableFilter getFilterCopyFileAsNew() {
@@ -304,7 +307,7 @@ public abstract class OpenCmsTestResourceFilter {
 
     /**
      * Creates a new filter used for the "copy a folder" method.<p>
-     * 
+     *
      * @return the created filter
      */
     private static OpenCmsTestResourceConfigurableFilter getFilterCopyFolder() {
@@ -319,7 +322,7 @@ public abstract class OpenCmsTestResourceFilter {
 
     /**
      * Creates a new filter used for the "copy as sibling" method.<p>
-     * 
+     *
      * @return the created filter
      */
     private static OpenCmsTestResourceConfigurableFilter getFilterCopySourceDestinationAsSibling() {
@@ -337,7 +340,7 @@ public abstract class OpenCmsTestResourceFilter {
 
     /**
      * Creates a new filter used for the "create resource" method.<p>
-     * 
+     *
      * @return the created filter
      */
     private static OpenCmsTestResourceConfigurableFilter getFilterCreateResource() {
@@ -358,7 +361,7 @@ public abstract class OpenCmsTestResourceFilter {
     /**
      * Creates a new filter used to validate the fields of a new sibling
      * different from the existing sibling(s) from which it was created.<p>
-     * 
+     *
      * @return the created filter
      */
     private static OpenCmsTestResourceConfigurableFilter getFilterExistingAndNewSibling() {
@@ -376,7 +379,7 @@ public abstract class OpenCmsTestResourceFilter {
     /**
      * Creates a new filter used to validate the modified fields of an
      * existing resource from which a new sibling was created.<p>
-     * 
+     *
      * @return the created filter
      */
     private static OpenCmsTestResourceConfigurableFilter getFilterExistingSibling() {
@@ -392,7 +395,7 @@ public abstract class OpenCmsTestResourceFilter {
 
     /**
      * Creates a new filter used for the "import/export" of a new file.<p>
-     * 
+     *
      * @return the created filter
      */
     private static OpenCmsTestResourceConfigurableFilter getFilterImportExport() {
@@ -409,7 +412,7 @@ public abstract class OpenCmsTestResourceFilter {
 
     /**
      * Creates a new filter used for the "import/export" when overwriting an existing file.<p>
-     * 
+     *
      * @return the created filter
      */
     private static OpenCmsTestResourceFilter getFilterImportExportOverwrite() {
@@ -426,7 +429,7 @@ public abstract class OpenCmsTestResourceFilter {
 
     /**
      * Creates a new filter used for the "import/export" of sibling of an existing file.<p>
-     * 
+     *
      * @return the created filter
      */
     private static OpenCmsTestResourceConfigurableFilter getFilterImportExportSibling() {
@@ -444,7 +447,7 @@ public abstract class OpenCmsTestResourceFilter {
 
     /**
      * Creates a new filter used for the "move/rename" method.<p>
-     * 
+     *
      * @return the created filter
      */
     private static OpenCmsTestResourceConfigurableFilter getFilterMoveDestination() {
@@ -461,7 +464,7 @@ public abstract class OpenCmsTestResourceFilter {
 
     /**
      * Creates a new filter used for the "publishResource" method.<p>
-     * 
+     *
      * @return the created filter
      */
     private static OpenCmsTestResourceFilter getFilterPublishResource() {
@@ -476,7 +479,7 @@ public abstract class OpenCmsTestResourceFilter {
 
     /**
      * Creates a new filter used for the "replaceResource" method.<p>
-     * 
+     *
      * @return the created filter
      */
     private static OpenCmsTestResourceFilter getFilterReplaceResource() {
@@ -496,7 +499,7 @@ public abstract class OpenCmsTestResourceFilter {
 
     /**
      * Creates a new filter used for the "write property" method, with individual property on the other sibling.<p>
-     * 
+     *
      * @return the created filter
      */
     private static OpenCmsTestResourceFilter getFilterSiblingProperty() {
@@ -511,7 +514,7 @@ public abstract class OpenCmsTestResourceFilter {
 
     /**
      * Creates a new filter used for the "touch" method.<p>
-     * 
+     *
      * @return the created filter
      */
     private static OpenCmsTestResourceConfigurableFilter getFilterTouch() {
@@ -527,7 +530,7 @@ public abstract class OpenCmsTestResourceFilter {
 
     /**
      * Creates a new filter used for the "undoChanges" method.<p>
-     * 
+     *
      * @return the created filter
      */
     private static OpenCmsTestResourceFilter getFilterUndoChangesAll() {
@@ -542,7 +545,7 @@ public abstract class OpenCmsTestResourceFilter {
 
     /**
      * Creates a new filter used for the "undoChanges" method without move operation.<p>
-     * 
+     *
      * @return the created filter
      */
     private static OpenCmsTestResourceFilter getFilterUndoChangesContent() {
@@ -559,7 +562,7 @@ public abstract class OpenCmsTestResourceFilter {
 
     /**
      * Creates a new filter used for the "write property" method.<p>
-     * 
+     *
      * @return the created filter
      */
     private static OpenCmsTestResourceFilter getFilterWriteProperty() {
@@ -712,6 +715,16 @@ public abstract class OpenCmsTestResourceFilter {
     public boolean testName() {
 
         return m_name;
+    }
+
+    /**
+     * Returns true if non-content relations should be compared.<p>
+     *
+     * @return true if non-content relations should be compared
+     */
+    public boolean testNonContentRelations() {
+
+        return m_nonContentRelations;
     }
 
     /**

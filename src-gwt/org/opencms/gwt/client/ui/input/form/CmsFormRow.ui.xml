@@ -6,14 +6,15 @@
 	<ui:with field="mainStyle" type="org.opencms.gwt.client.ui.css.I_CmsLayoutBundle" />
 	<ui:style>
 		.additionalIcon {
-    		position: absolute;
-    		left: 537px;
-    		margin-top: -2px;
+            margin-left: 5px;
 		}
 	</ui:style>
-	<g:FlowPanel styleName="{inputstyle.inputCss.formRow} {mainStyle.generalCss.clearFix}">
-		<g:Label styleName="{style.additionalIcon}" ui:field="m_icon" />
-		<g:Label ui:field="m_label"  styleName="{inputstyle.inputCss.formLabel}"/>
+	<g:FlowPanel styleName="{inputstyle.inputCss.formRow}">
+		<g:FlowPanel styleName="{inputstyle.inputCss.formLabelBox}">
+			<g:Label ui:field="m_label" styleName="{inputstyle.inputCss.formLabel} "/>
+			<g:Label ui:field="m_tag" styleName="{inputstyle.inputCss.formLabelTag}" visible="false"/>
+		</g:FlowPanel>
 		<g:SimplePanel ui:field="m_widgetContainer"  styleName="{inputstyle.inputCss.formWidgetContainer}" />
+        <g:FlowPanel styleName="{style.additionalIcon}" ui:field="m_icon" />
 	</g:FlowPanel>
 </ui:UiBinder> 

@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -15,11 +15,11 @@
  * Lesser General Public License for more details.
  *
  * For further information about Alkacon Software, please see the
- * company website: http://www.alkacon.com
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -33,6 +33,7 @@ import org.opencms.gwt.client.ui.css.I_CmsInputLayoutBundle;
 import org.opencms.gwt.client.ui.css.I_CmsLayoutBundle;
 import org.opencms.gwt.client.ui.input.form.CmsWidgetFactoryRegistry;
 import org.opencms.gwt.client.ui.input.form.I_CmsFormWidgetFactory;
+import org.opencms.gwt.client.util.CmsDomUtil;
 import org.opencms.util.CmsPair;
 import org.opencms.util.CmsStringUtil;
 
@@ -43,39 +44,48 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import com.google.common.base.Optional;
+import com.google.gwt.event.dom.client.FocusEvent;
+import com.google.gwt.event.dom.client.FocusHandler;
+import com.google.gwt.event.dom.client.HasFocusHandlers;
+import com.google.gwt.event.logical.shared.HasValueChangeHandlers;
+import com.google.gwt.event.logical.shared.ValueChangeEvent;
+import com.google.gwt.event.logical.shared.ValueChangeHandler;
+import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.Panel;
 
 /**
  * A form widget consisting of a group of checkboxes.<p>
- * 
+ *
  * @since 8.0.0
- *  
+ *
  */
-public class CmsMultiCheckBox extends Composite implements I_CmsFormWidget, I_CmsHasInit {
+public class CmsMultiCheckBox extends Composite
+implements I_CmsFormWidget, I_CmsHasInit, HasValueChangeHandlers<String>, HasFocusHandlers {
 
     /** The type string for this widget. */
-    public static final String WIDGET_TYPE = "multiselect";
+    public static final String WIDGET_TYPE = "multicheck";
 
     /** The list of checkboxes. */
-    private List<CmsCheckBox> m_checkboxes = new ArrayList<CmsCheckBox>();
+    protected List<CmsCheckBox> m_checkboxes = new ArrayList<CmsCheckBox>();
 
     /** Error display for this widget. */
-    private CmsErrorWidget m_error = new CmsErrorWidget();
+    protected CmsErrorWidget m_error = new CmsErrorWidget();
 
     /** The select options of the multi check box. */
-    private Map<String, String> m_items = new LinkedHashMap<String, String>();
+    protected Map<String, String> m_items = new LinkedHashMap<String, String>();
 
     /** Panel which contains all the components of the widget. */
-    private Panel m_panel = new FlowPanel();
+    protected Panel m_panel = new FlowPanel();
 
     /**
      * Constructs a new checkbox group from a list of string pairs.<p>
-     * 
+     *
      * The first string of every pair is the value of the checkbox, the second string is the label.
-     * 
-     * @param items a list of pairs of strings. 
+     *
+     * @param items a list of pairs of strings.
      */
     public CmsMultiCheckBox(List<CmsPair<String, String>> items) {
 
@@ -85,11 +95,11 @@ public class CmsMultiCheckBox extends Composite implements I_CmsFormWidget, I_Cm
 
     /**
      * Constructs a new checkbox group from a map from strings to strings.<p>
-     * 
+     *
      * The keys of the map are used as the selection values of the checkboxes, while the value
-     * for a given key in the map is used as the label for the checkbox which is displayed to the user. 
-     * 
-     * @param items the map of checkbox options 
+     * for a given key in the map is used as the label for the checkbox which is displayed to the user.
+     *
+     * @param items the map of checkbox options
      */
     public CmsMultiCheckBox(Map<String, String> items) {
 
@@ -106,13 +116,29 @@ public class CmsMultiCheckBox extends Composite implements I_CmsFormWidget, I_Cm
         CmsWidgetFactoryRegistry.instance().registerFactory(WIDGET_TYPE, new I_CmsFormWidgetFactory() {
 
             /**
-             * @see org.opencms.gwt.client.ui.input.form.I_CmsFormWidgetFactory#createWidget(java.util.Map)
+             * @see org.opencms.gwt.client.ui.input.form.I_CmsFormWidgetFactory#createWidget(java.util.Map, com.google.common.base.Optional)
              */
-            public I_CmsFormWidget createWidget(Map<String, String> widgetParams) {
+            public I_CmsFormWidget createWidget(Map<String, String> widgetParams, Optional<String> defaultValue) {
 
                 return new CmsMultiCheckBox(widgetParams);
             }
         });
+    }
+
+    /**
+     * @see com.google.gwt.event.dom.client.HasFocusHandlers#addFocusHandler(com.google.gwt.event.dom.client.FocusHandler)
+     */
+    public HandlerRegistration addFocusHandler(FocusHandler handler) {
+
+        return addDomHandler(handler, FocusEvent.getType());
+    }
+
+    /**
+     * @see com.google.gwt.event.logical.shared.HasValueChangeHandlers#addValueChangeHandler(com.google.gwt.event.logical.shared.ValueChangeHandler)
+     */
+    public HandlerRegistration addValueChangeHandler(ValueChangeHandler<String> handler) {
+
+        return addHandler(handler, ValueChangeEvent.getType());
     }
 
     /**
@@ -121,6 +147,16 @@ public class CmsMultiCheckBox extends Composite implements I_CmsFormWidget, I_Cm
     public String getApparentValue() {
 
         return getFormValueAsString();
+    }
+
+    /**
+     * Returns a list of all checkboxes.<p>
+     *
+     * @return a list of checkboxes
+     */
+    public List<CmsCheckBox> getCheckboxes() {
+
+        return m_checkboxes;
     }
 
     /**
@@ -151,7 +187,7 @@ public class CmsMultiCheckBox extends Composite implements I_CmsFormWidget, I_Cm
 
     /**
      * Returns the set of values of the selected checkboxes.<p>
-     * 
+     *
      * @return a set of strings
      */
     public Set<String> getSelected() {
@@ -221,8 +257,8 @@ public class CmsMultiCheckBox extends Composite implements I_CmsFormWidget, I_Cm
 
     /**
      * Sets the value of the widget.<p>
-     * 
-     * @param value the new value 
+     *
+     * @param value the new value
      */
     @SuppressWarnings("unchecked")
     public void setFormValue(Object value) {
@@ -245,17 +281,45 @@ public class CmsMultiCheckBox extends Composite implements I_CmsFormWidget, I_Cm
      */
     public void setFormValueAsString(String formValue) {
 
+        if (formValue == null) {
+            formValue = "";
+        }
         List<String> values = CmsStringUtil.splitAsList(formValue, "|");
         setFormValue(values);
+    }
+
+    /**
+     * Enables or disables italics display in the checkbox labels.<p>
+     *
+     * @param weak true if italics display should be enabled
+     */
+    public void setTextWeak(boolean weak) {
+
+        String style = I_CmsInputLayoutBundle.INSTANCE.inputCss().weakText();
+        if (weak) {
+            addStyleName(style);
+        } else {
+            removeStyleName(style);
+        }
 
     }
 
     /**
+     * Fires the value change event for the widget.<p>
+     *
+     * @param newValue the new value
+     */
+    protected void fireValueChanged(String newValue) {
+
+        ValueChangeEvent.fire(this, newValue);
+    }
+
+    /**
      * Initializes the widget given a map of select options.<p>
-     * 
-     * The keys of the map are the values of the select options, while the values of the map 
+     *
+     * The keys of the map are the values of the select options, while the values of the map
      * are the labels which should be used for the checkboxes.
-     * 
+     *
      * @param items the map of select options
      */
     protected void init(Map<String, String> items) {
@@ -264,13 +328,29 @@ public class CmsMultiCheckBox extends Composite implements I_CmsFormWidget, I_Cm
         m_items = new LinkedHashMap<String, String>(items);
         m_panel.setStyleName(I_CmsInputLayoutBundle.INSTANCE.inputCss().multiCheckBox());
         m_panel.addStyleName(I_CmsLayoutBundle.INSTANCE.generalCss().textMedium());
+        FocusHandler focusHandler = new FocusHandler() {
+
+            public void onFocus(FocusEvent event) {
+
+                CmsDomUtil.fireFocusEvent(CmsMultiCheckBox.this);
+            }
+        };
         for (Map.Entry<String, String> entry : items.entrySet()) {
             String value = entry.getValue();
             CmsCheckBox checkbox = new CmsCheckBox(value);
-            // wrap the check boxes in FlowPanels to arrange them vertically 
+            // wrap the check boxes in FlowPanels to arrange them vertically
             FlowPanel checkboxWrapper = new FlowPanel();
             checkboxWrapper.add(checkbox);
+            checkbox.addValueChangeHandler(new ValueChangeHandler<Boolean>() {
+
+                public void onValueChange(ValueChangeEvent<Boolean> valueChanged) {
+
+                    fireValueChanged(getFormValueAsString());
+                }
+            });
+            checkbox.getButton().addFocusHandler(focusHandler);
             m_panel.add(checkboxWrapper);
+            m_checkboxes.add(checkbox);
         }
         m_panel.add(m_error);
     }

@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -15,11 +15,11 @@
  * Lesser General Public License for more details.
  *
  * For further information about Alkacon Software, please see the
- * company website: http://www.alkacon.com
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -39,6 +39,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import com.google.common.base.Optional;
 import com.google.gwt.event.logical.shared.HasValueChangeHandlers;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
@@ -51,13 +52,13 @@ import com.google.gwt.user.client.ui.Panel;
 
 /**
  * Widget class consisting of a group of radio buttons, of which at most one may be active.<p>
- * 
+ *
  * This is mostly a 'convenience widget' for creating and handling multiple radio buttons as a single widget.
- * The radio buttons will be layed out vertically. If you need more control about the layout of the radio 
+ * The radio buttons will be layed out vertically. If you need more control about the layout of the radio
  * buttons, use multiple {@link CmsRadioButton} instances and link them with a {@link CmsRadioButtonGroup}.<p>
- * 
+ *
  * @since 8.0.0
- * 
+ *
  */
 public class CmsRadioButtonGroupWidget extends Composite
 implements I_CmsFormWidget, HasValueChangeHandlers<String>, I_CmsHasInit {
@@ -82,10 +83,10 @@ implements I_CmsFormWidget, HasValueChangeHandlers<String>, I_CmsHasInit {
 
     /**
      * Creates a new instance from a list of key/value pairs.<p>
-     * 
+     *
      * The first component of each pair is the value of the radio buttons, the second component is used as the label.
-     * 
-     * @param items a list of pairs of strings 
+     *
+     * @param items a list of pairs of strings
      */
     public CmsRadioButtonGroupWidget(List<CmsPair<String, String>> items) {
 
@@ -94,11 +95,11 @@ implements I_CmsFormWidget, HasValueChangeHandlers<String>, I_CmsHasInit {
 
     /**
      * Creates a new instance from a map of strings.<p>
-     * 
-     * The keys of the map are used as the values of the radio buttons, and the values of the map are used as labels 
+     *
+     * The keys of the map are used as the values of the radio buttons, and the values of the map are used as labels
      * for the radio buttons.
-     *  
-     * @param items the string map containing the select options 
+     *
+     * @param items the string map containing the select options
      */
     public CmsRadioButtonGroupWidget(Map<String, String> items) {
 
@@ -115,9 +116,9 @@ implements I_CmsFormWidget, HasValueChangeHandlers<String>, I_CmsHasInit {
         CmsWidgetFactoryRegistry.instance().registerFactory(WIDGET_TYPE, new I_CmsFormWidgetFactory() {
 
             /**
-             * @see org.opencms.gwt.client.ui.input.form.I_CmsFormWidgetFactory#createWidget(java.util.Map)
+             * @see org.opencms.gwt.client.ui.input.form.I_CmsFormWidgetFactory#createWidget(java.util.Map, com.google.common.base.Optional)
              */
-            public I_CmsFormWidget createWidget(Map<String, String> widgetParams) {
+            public I_CmsFormWidget createWidget(Map<String, String> widgetParams, Optional<String> defaultValue) {
 
                 return new CmsRadioButtonGroupWidget(widgetParams);
             }
@@ -205,7 +206,7 @@ implements I_CmsFormWidget, HasValueChangeHandlers<String>, I_CmsHasInit {
      */
     public void setAutoHideParent(I_CmsAutoHider autoHideParent) {
 
-        // nothing to do 
+        // nothing to do
 
     }
 
@@ -229,8 +230,8 @@ implements I_CmsFormWidget, HasValueChangeHandlers<String>, I_CmsHasInit {
 
     /**
      * Sets the value of the widget.<p>
-     * 
-     * @param value the new value 
+     *
+     * @param value the new value
      */
     public void setFormValue(Object value) {
 
@@ -260,8 +261,8 @@ implements I_CmsFormWidget, HasValueChangeHandlers<String>, I_CmsHasInit {
 
     /**
      * Internal method for initializing the widget with a list of select options.<p>
-     * 
-     * @param items the list of select options 
+     *
+     * @param items the list of select options
      */
     protected void init(Map<String, String> items) {
 
@@ -285,7 +286,7 @@ implements I_CmsFormWidget, HasValueChangeHandlers<String>, I_CmsHasInit {
 
     /**
      * Fires a ValueChangedEvent on this widget.<p>
-     *  
+     *
      * @param newValue the new value of this widget
      */
     void fireValueChangedEvent(String newValue) {

@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -15,11 +15,11 @@
  * Lesser General Public License for more details.
  *
  * For further information about Alkacon Software, please see the
- * company website: http://www.alkacon.com
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -46,10 +46,11 @@ import com.google.gwt.event.logical.shared.OpenEvent;
 import com.google.gwt.event.logical.shared.OpenHandler;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.ui.FlowPanel;
+import com.google.gwt.user.client.ui.PopupPanel;
 
 /**
  * The lock report dialog.<p>
- * 
+ *
  * @since 8.0.1
  */
 public final class CmsLockReportDialog extends CmsPopup {
@@ -84,9 +85,6 @@ public final class CmsLockReportDialog extends CmsPopup {
         }
     }
 
-    /** The dialog width. */
-    private static int DIALOG_WIDTH = 450;
-
     /** The text metrics key. */
     private static final String TEXT_METRICS_KEY = "CMS_LOCK_REPORT_DIALOG_METRICS";
 
@@ -110,13 +108,19 @@ public final class CmsLockReportDialog extends CmsPopup {
 
     /**
      * Constructor.<p>
-     * 
+     *
+     * @param title the title for the dialog (a default value will be used if this is null)
      * @param structureId the structure id of the resource to unlock
-     * @param the command to execute on unlock of the resource
+     * @param onUnlock command to execute after unlocking
+     * @param optionalOnCloseCommand optional action to execute when the dialog is closed
      */
-    private CmsLockReportDialog(CmsUUID structureId, Command onUnlock) {
+    private CmsLockReportDialog(
+        String title,
+        CmsUUID structureId,
+        Command onUnlock,
+        final Command optionalOnCloseCommand) {
 
-        super(Messages.get().key(Messages.GUI_LOCK_REPORT_TITLE_0), DIALOG_WIDTH);
+        super(title != null ? title : Messages.get().key(Messages.GUI_LOCK_REPORT_TITLE_0));
         m_structureId = structureId;
         m_onUnlock = onUnlock;
         m_closeButton = new CmsPushButton();
@@ -135,8 +139,18 @@ public final class CmsLockReportDialog extends CmsPopup {
         });
         addButton(m_closeButton);
         addDialogClose(null);
+        if (optionalOnCloseCommand != null) {
+            addCloseHandler(new CloseHandler<PopupPanel>() {
+
+                public void onClose(CloseEvent<PopupPanel> event) {
+
+                    optionalOnCloseCommand.execute();
+
+                }
+            });
+        }
         m_unlockButton = new CmsPushButton();
-        m_unlockButton.setText(Messages.get().key(Messages.GUI_UNLOCK_ALL_0));
+        m_unlockButton.setText(Messages.get().key(Messages.GUI_UNLOCK_0));
         m_unlockButton.setUseMinWidth(true);
         m_unlockButton.setButtonStyle(ButtonStyle.TEXT, ButtonColor.RED);
         m_unlockButton.addClickHandler(new ClickHandler() {
@@ -156,24 +170,36 @@ public final class CmsLockReportDialog extends CmsPopup {
 
     /**
      * Opens the lock report dialog for the given resource.<p>
-     * 
+     *
+     * @param title the dialog title (will use a default value if null)
      * @param structureId the structure id of the resource
      * @param onUnlock the command to execute after the has been unlocked
+     * @param optionalOnCloseCommand the optional command to execute when the lock report dialog is closed
      */
-    public static void openDialogForResource(final CmsUUID structureId, Command onUnlock) {
+    public static void openDialogForResource(
+        String title,
+        final CmsUUID structureId,
+        Command onUnlock,
+        Command optionalOnCloseCommand) {
 
-        final CmsLockReportDialog dialog = new CmsLockReportDialog(structureId, onUnlock);
+        final CmsLockReportDialog dialog = new CmsLockReportDialog(
+            title,
+            structureId,
+            onUnlock,
+            optionalOnCloseCommand);
         CmsRpcAction<CmsLockReportInfo> action = new CmsRpcAction<CmsLockReportInfo>() {
 
             @Override
             public void execute() {
 
+                start(0, true);
                 CmsCoreProvider.getVfsService().getLockReportInfo(structureId, this);
             }
 
             @Override
             public void onFailure(Throwable t) {
 
+                stop(false);
                 dialog.hide();
                 super.onFailure(t);
             }
@@ -181,6 +207,7 @@ public final class CmsLockReportDialog extends CmsPopup {
             @Override
             protected void onResponse(CmsLockReportInfo result) {
 
+                stop(false);
                 dialog.initContent(result);
             }
         };
@@ -204,7 +231,7 @@ public final class CmsLockReportDialog extends CmsPopup {
 
     /**
      * Returns the structure id of the resource to report on.<p>
-     * 
+     *
      * @return the structure id
      */
     protected CmsUUID getStructureId() {
@@ -214,7 +241,7 @@ public final class CmsLockReportDialog extends CmsPopup {
 
     /**
      * Initializes the dialog content with the give report info.<p>
-     * 
+     *
      * @param reportInfo the report info
      */
     protected void initContent(CmsLockReportInfo reportInfo) {
@@ -226,19 +253,25 @@ public final class CmsLockReportDialog extends CmsPopup {
         m_resourceItem.addOpenHandler(heightHandler);
         m_resourceItem.addCloseHandler(heightHandler);
         content.add(m_resourceItem);
-
         m_scrollPanel = new FlowPanel();
         m_scrollPanel.setStyleName(I_CmsLayoutBundle.INSTANCE.generalCss().border());
         m_scrollPanel.addStyleName(I_CmsLayoutBundle.INSTANCE.generalCss().cornerAll());
         m_scrollPanel.addStyleName(I_CmsLayoutBundle.INSTANCE.dialogCss().logReportScrollPanel());
+        CmsList<CmsListItem> list = null;
         CmsMessageWidget message = new CmsMessageWidget();
         m_scrollPanel.add(message);
-        CmsList<CmsListItem> list = null;
-        // only show the unlock button if the resource or a descending resource is locked
+        message.setMessageText(
+            getMessageForLock(
+                reportInfo.getResourceInfo().getLockIcon(),
+                !reportInfo.getLockedResourceInfos().isEmpty()));
         if (!reportInfo.getLockedResourceInfos().isEmpty()
-            || ((reportInfo.getResourceInfo().getLockIcon() != null) && (reportInfo.getResourceInfo().getLockIcon() != LockIcon.NONE))) {
+            || ((reportInfo.getResourceInfo().getLockIcon() != null)
+                && (reportInfo.getResourceInfo().getLockIcon() != LockIcon.NONE))) {
             m_unlockButton.setVisible(true);
-            message.setMessageText(Messages.get().key(Messages.GUI_LOCK_REPORT_UNLOCK_MESSAGE_0));
+        }
+        // only show the unlock button if the resource or a descending resource is locked
+        if (!reportInfo.getLockedResourceInfos().isEmpty()) {
+            m_unlockButton.setText(Messages.get().key(Messages.GUI_UNLOCK_ALL_0));
             list = new CmsList<CmsListItem>();
             for (CmsListInfoBean lockedInfo : reportInfo.getLockedResourceInfos()) {
                 CmsListItemWidget listItemWidget = new CmsListItemWidget(lockedInfo);
@@ -247,16 +280,14 @@ public final class CmsLockReportDialog extends CmsPopup {
                 list.addItem(new CmsListItem(listItemWidget));
             }
             m_scrollPanel.add(list);
-        } else {
-            message.setMessageText(Messages.get().key(Messages.GUI_LOCK_REPORT_NOTHING_LOCKED_0));
         }
 
         content.add(m_scrollPanel);
-        this.setMainContent(content);
+        setMainContent(content);
         if (isShowing()) {
-            m_resourceItem.truncate(TEXT_METRICS_KEY, DIALOG_WIDTH);
+            m_resourceItem.truncate(TEXT_METRICS_KEY, CmsPopup.DEFAULT_WIDTH - 10);
             if (list != null) {
-                list.truncate(TEXT_METRICS_KEY, DIALOG_WIDTH);
+                list.truncate(TEXT_METRICS_KEY, CmsPopup.DEFAULT_WIDTH - 10);
             }
             adjustHeight();
         }
@@ -302,6 +333,35 @@ public final class CmsLockReportDialog extends CmsPopup {
         m_closeButton.disable(Messages.get().key(Messages.GUI_LOADING_0));
         m_unlockButton.disable(Messages.get().key(Messages.GUI_LOADING_0));
         action.execute();
+    }
+
+    /**
+     * Returns the dialog message for the given lock.<p>
+     *
+     * @param lockIcon the lock icon
+     * @param hasLockedChildren <code>true</code> if the given resource has locked children
+     *
+     * @return the dialog message
+     */
+    private String getMessageForLock(LockIcon lockIcon, boolean hasLockedChildren) {
+
+        String result = "";
+        if (!hasLockedChildren && ((lockIcon == null) || (lockIcon == LockIcon.NONE))) {
+            result = Messages.get().key(Messages.GUI_LOCK_REPORT_NOTHING_LOCKED_0);
+        } else if ((lockIcon == LockIcon.OPEN) || (lockIcon == LockIcon.SHARED_OPEN)) {
+            if (hasLockedChildren) {
+                result = Messages.get().key(Messages.GUI_LOCK_REPORT_UNLOCK_ALL_MESSAGE_0);
+            } else {
+                result = Messages.get().key(Messages.GUI_LOCK_REPORT_UNLOCK_MESSAGE_0);
+            }
+        } else {
+            if (hasLockedChildren) {
+                result = Messages.get().key(Messages.GUI_LOCK_REPORT_STEAL_ALL_LOCKS_MESSAGE_0);
+            } else {
+                result = Messages.get().key(Messages.GUI_LOCK_REPORT_STEAL_LOCK_MESSAGE_0);
+            }
+        }
+        return result;
     }
 
 }

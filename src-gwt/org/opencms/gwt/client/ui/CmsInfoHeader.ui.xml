@@ -1,0 +1,22 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+	xmlns:g="urn:import:com.google.gwt.user.client.ui"
+	xmlns:cms="urn:import:org.opencms.gwt.client.ui">
+	<ui:with field="resources" type="org.opencms.gwt.client.ui.css.I_CmsLayoutBundle" />
+	<g:HTMLPanel ui:field="m_panel" styleName="{resources.generalCss.cornerAll} {resources.generalCss.header}">
+		<div class="{resources.generalCss.headerLeftBlock}">
+			<div ui:field="m_typeIcon"></div>
+			<div class="{resources.generalCss.headerTextSection}">
+				<h2 class="{resources.generalCss.inlineBlock}" ui:field="m_title"></h2>
+				<p ui:field="m_description"></p>
+				<div class="{resources.generalCss.headerPathSection}">
+					<div><b><span ui:field="m_siteHost"></span></b>&nbsp;<span ui:field="m_locale"></span></div>
+					<g:FlowPanel ui:field="m_pathButtons" styleName="{resources.generalCss.headerPathButtons}"/>
+				</div>
+			</div>
+		</div>
+		<div style="float:none; clear:left; height:0px;"></div>
+		<div ui:field="m_buttonBar" class="{resources.generalCss.headerButtons}"></div>
+		<div ui:field="m_additionalWidgets"></div>
+	</g:HTMLPanel>
+</ui:UiBinder> 

@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -14,12 +14,12 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * Lesser General Public License for more details.
  *
- * For further information about Alkacon Software GmbH, please see the
- * company website: http://www.alkacon.com
+ * For further information about Alkacon Software GmbH & Co. KG, please see the
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -33,7 +33,7 @@ import org.apache.commons.logging.Log;
 
 /**
  * Implements an LRU (last recently used) cache.<p>
- * 
+ *
  * The idea of this cache is to separate the caching policy from the data structure
  * where the cached objects are stored. The advantage of doing so is, that the CmsFlexLruCache
  * can identify the last-recently-used object in O(1), whereas you would need at least
@@ -49,7 +49,7 @@ import org.apache.commons.logging.Log;
  * are added/removed from the CmsFlexLruCache.<p>
  *
  * @see org.opencms.cache.I_CmsLruCacheObject
- * 
+ *
  * @since 6.0.0
  */
 public class CmsLruCache extends java.lang.Object {
@@ -94,7 +94,7 @@ public class CmsLruCache extends java.lang.Object {
 
     /**
      * Adds a new object to this cache.<p>
-     * 
+     *
      * If add the same object more than once,
      * the object is touched instead.<p>
      *
@@ -104,17 +104,18 @@ public class CmsLruCache extends java.lang.Object {
     public synchronized boolean add(I_CmsLruCacheObject theCacheObject) {
 
         if (theCacheObject == null) {
-            // null can't be added or touched in the cache 
+            // null can't be added or touched in the cache
             return false;
         }
 
         // only objects with cache costs < the max. allowed object cache costs can be cached!
         if ((m_maxObjectCosts != -1) && (theCacheObject.getLruCacheCosts() > m_maxObjectCosts)) {
             if (LOG.isInfoEnabled()) {
-                LOG.info(Messages.get().getBundle().key(
-                    Messages.LOG_CACHE_COSTS_TOO_HIGH_2,
-                    new Integer(theCacheObject.getLruCacheCosts()),
-                    new Integer(m_maxObjectCosts)));
+                LOG.info(
+                    Messages.get().getBundle().key(
+                        Messages.LOG_CACHE_COSTS_TOO_HIGH_2,
+                        Integer.valueOf(theCacheObject.getLruCacheCosts()),
+                        Integer.valueOf(m_maxObjectCosts)));
             }
             return false;
         }
@@ -155,7 +156,7 @@ public class CmsLruCache extends java.lang.Object {
 
     /**
      * Returns the average costs of all cached objects.<p>
-     * 
+     *
      * @return the average costs of all cached objects
      */
     public long getAvgCacheCosts() {
@@ -165,7 +166,7 @@ public class CmsLruCache extends java.lang.Object {
 
     /**
      * Returns the max costs of all cached objects.<p>
-     * 
+     *
      * @return the max costs of all cached objects
      */
     public long getMaxCacheCosts() {
@@ -175,7 +176,7 @@ public class CmsLruCache extends java.lang.Object {
 
     /**
      * Returns the max allowed costs per cached object.<p>
-     * 
+     *
      * @return the max allowed costs per cached object
      */
     public int getMaxObjectCosts() {
@@ -185,7 +186,7 @@ public class CmsLruCache extends java.lang.Object {
 
     /**
      * Returns the current costs of all cached objects.<p>
-     * 
+     *
      * @return the current costs of all cached objects
      */
     public int getObjectCosts() {
@@ -208,27 +209,20 @@ public class CmsLruCache extends java.lang.Object {
         }
 
         // set the list pointers correct
-        if (theCacheObject.getNextLruObject() == null) {
+        boolean nextNull = (theCacheObject.getNextLruObject() == null);
+        boolean prevNull = (theCacheObject.getPreviousLruObject() == null);
+        if (prevNull && nextNull) {
+            m_listHead = null;
+            m_listTail = null;
+        } else if (nextNull) {
             // remove the object from the head pos.
             I_CmsLruCacheObject newHead = theCacheObject.getPreviousLruObject();
-
-            if (newHead != null) {
-                // if newHead is null, theCacheObject 
-                // was the only object in the cache
-                newHead.setNextLruObject(null);
-            }
-
+            newHead.setNextLruObject(null);
             m_listHead = newHead;
-        } else if (theCacheObject.getPreviousLruObject() == null) {
+        } else if (prevNull) {
             // remove the object from the tail pos.
             I_CmsLruCacheObject newTail = theCacheObject.getNextLruObject();
-
-            if (newTail != null) {
-                // if newTail is null, theCacheObject 
-                // was the only object in the cache                
-                newTail.setPreviousLruObject(null);
-            }
-
+            newTail.setPreviousLruObject(null);
             m_listTail = newTail;
         } else {
             // remove the object from within the list
@@ -238,7 +232,6 @@ public class CmsLruCache extends java.lang.Object {
 
         // update cache stats. and notify the cached object
         decreaseCache(theCacheObject);
-
         return theCacheObject;
     }
 
@@ -254,7 +247,7 @@ public class CmsLruCache extends java.lang.Object {
 
     /**
      * Returns a string representing the current state of the cache.<p>
-     * 
+     *
      * @return a string representing the current state of the cache
      */
     @Override
@@ -285,10 +278,11 @@ public class CmsLruCache extends java.lang.Object {
         // only objects with cache costs < the max. allowed object cache costs can be cached!
         if ((m_maxObjectCosts != -1) && (theCacheObject.getLruCacheCosts() > m_maxObjectCosts)) {
             if (LOG.isInfoEnabled()) {
-                LOG.info(Messages.get().getBundle().key(
-                    Messages.LOG_CACHE_COSTS_TOO_HIGH_2,
-                    new Integer(theCacheObject.getLruCacheCosts()),
-                    new Integer(m_maxObjectCosts)));
+                LOG.info(
+                    Messages.get().getBundle().key(
+                        Messages.LOG_CACHE_COSTS_TOO_HIGH_2,
+                        Integer.valueOf(theCacheObject.getLruCacheCosts()),
+                        Integer.valueOf(m_maxObjectCosts)));
             }
             remove(theCacheObject);
             return false;
@@ -311,7 +305,6 @@ public class CmsLruCache extends java.lang.Object {
             prevObj.setNextLruObject(nextObj);
             nextObj.setPreviousLruObject(prevObj);
         }
-
         // set the touched object as the new head in the linked list:
         I_CmsLruCacheObject oldHead = m_listHead;
         if (oldHead != null) {
@@ -388,7 +381,7 @@ public class CmsLruCache extends java.lang.Object {
     }
 
     /**
-     * Increase this caches statistics 
+     * Increase this caches statistics
      * and notify the cached object that it was added to this cache.<p>
      *
      * @param theCacheObject the object being notified that it was added to the cache
@@ -407,7 +400,7 @@ public class CmsLruCache extends java.lang.Object {
     /**
      * Test if a given object resides inside the cache.<p>
      *
-     * @param theCacheObject the object to test 
+     * @param theCacheObject the object to test
      * @return true if the object is inside the cache, false otherwise
      */
     private boolean isCached(I_CmsLruCacheObject theCacheObject) {
@@ -421,7 +414,7 @@ public class CmsLruCache extends java.lang.Object {
         I_CmsLruCacheObject prevObj = theCacheObject.getPreviousLruObject();
 
         if ((nextObj != null) || (prevObj != null)) {
-            // the object has either a predecessor or successor in the linked 
+            // the object has either a predecessor or successor in the linked
             // list of all cached objects, so it is inside the cache
             return true;
         }

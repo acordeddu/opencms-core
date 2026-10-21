@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -14,12 +14,12 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * Lesser General Public License for more details.
  *
- * For further information about Alkacon Software GmbH, please see the
- * company website: http://www.alkacon.com
+ * For further information about Alkacon Software GmbH & Co. KG, please see the
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -50,8 +50,8 @@ import javax.servlet.jsp.PageContext;
 
 /**
  * Base class to edit an exiting module.<p>
- * 
- * @since 6.0.0 
+ *
+ * @since 6.0.0
  */
 public class CmsModulesEditBase extends CmsWidgetDialog {
 
@@ -82,6 +82,7 @@ public class CmsModulesEditBase extends CmsWidgetDialog {
     /** Template folder within the module. */
     public static final String PATH_TEMPLATES = "templates/";
 
+    /** The formatters folder within the module. */
     public static final String PATH_FORMATTERS = "formatters/";
 
     /** The module object that is edited on this dialog. */
@@ -92,7 +93,7 @@ public class CmsModulesEditBase extends CmsWidgetDialog {
 
     /**
      * Public constructor with JSP action element.<p>
-     * 
+     *
      * @param jsp an initialized JSP action element
      */
     public CmsModulesEditBase(CmsJspActionElement jsp) {
@@ -102,7 +103,7 @@ public class CmsModulesEditBase extends CmsWidgetDialog {
 
     /**
      * Public constructor with JSP variables.<p>
-     * 
+     *
      * @param context the JSP page context
      * @param req the JSP request
      * @param res the JSP response
@@ -112,14 +113,15 @@ public class CmsModulesEditBase extends CmsWidgetDialog {
         this(new CmsJspActionElement(context, req, res));
     }
 
-    /** 
+    /**
      * Commits the edited module.<p>
      */
+    @Override
     public void actionCommit() {
 
         if (!hasCommitErrors()) {
             //check if we have to update an existing module or to create a new one
-            Set moduleNames = OpenCms.getModuleManager().getModuleNames();
+            Set<String> moduleNames = OpenCms.getModuleManager().getModuleNames();
             if (moduleNames.contains(m_module.getName())) {
                 // update the module information
                 try {
@@ -139,7 +141,7 @@ public class CmsModulesEditBase extends CmsWidgetDialog {
 
         if (!hasCommitErrors()) {
             // refresh the list
-            Map objects = (Map)getSettings().getListObject();
+            Map<?, ?> objects = (Map<?, ?>)getSettings().getListObject();
             if (objects != null) {
                 objects.remove(CmsModulesList.class.getName());
             }
@@ -149,17 +151,18 @@ public class CmsModulesEditBase extends CmsWidgetDialog {
     /**
      * @see org.opencms.workplace.CmsDialog#getCancelAction()
      */
+    @Override
     public String getCancelAction() {
 
         // set the default action
-        setParamPage((String)getPages().get(0));
+        setParamPage(getPages().get(0));
 
         return DIALOG_SET;
     }
 
     /**
      * Gets the module parameter.<p>
-     * 
+     *
      * @return the module parameter
      */
     public String getParamModule() {
@@ -167,7 +170,7 @@ public class CmsModulesEditBase extends CmsWidgetDialog {
         return m_paramModule;
     }
 
-    /** 
+    /**
      * Sets the module parameter.<p>
      * @param paramModule the module parameter
      */
@@ -179,6 +182,7 @@ public class CmsModulesEditBase extends CmsWidgetDialog {
     /**
      * Creates the list of widgets for this dialog.<p>
      */
+    @Override
     protected void defineWidgets() {
 
         initModule();
@@ -188,6 +192,7 @@ public class CmsModulesEditBase extends CmsWidgetDialog {
     /**
      * @see org.opencms.workplace.CmsWidgetDialog#getPageArray()
      */
+    @Override
     protected String[] getPageArray() {
 
         return PAGES;
@@ -196,6 +201,7 @@ public class CmsModulesEditBase extends CmsWidgetDialog {
     /**
      * @see org.opencms.workplace.CmsWorkplace#initMessages()
      */
+    @Override
     protected void initMessages() {
 
         // add specific dialog resource bundle
@@ -238,6 +244,7 @@ public class CmsModulesEditBase extends CmsWidgetDialog {
     /**
      * @see org.opencms.workplace.CmsWorkplace#initWorkplaceRequestValues(org.opencms.workplace.CmsWorkplaceSettings, javax.servlet.http.HttpServletRequest)
      */
+    @Override
     protected void initWorkplaceRequestValues(CmsWorkplaceSettings settings, HttpServletRequest request) {
 
         // set the dialog type
@@ -252,6 +259,7 @@ public class CmsModulesEditBase extends CmsWidgetDialog {
     /**
      * @see org.opencms.workplace.CmsWidgetDialog#validateParamaters()
      */
+    @Override
     protected void validateParamaters() throws Exception {
 
         String moduleName = getParamModule();
@@ -266,18 +274,18 @@ public class CmsModulesEditBase extends CmsWidgetDialog {
 
     /**
      * Creates all module folders that are selected in the input form.<p>
-     * 
+     *
      * @param module the module
-     * 
+     *
      * @return the updated module
-     * 
+     *
      * @throws CmsException if somehting goes wrong
      */
     private CmsModule createModuleFolders(CmsModule module) throws CmsException {
 
         String modulePath = CmsWorkplace.VFS_PATH_MODULES + module.getName() + "/";
-        List exportPoints = module.getExportPoints();
-        List resources = module.getResources();
+        List<CmsExportPoint> exportPoints = module.getExportPoints();
+        List<String> resources = module.getResources();
 
         // set the createModuleFolder flag if any other flag is set
         if (module.isCreateClassesFolder()
@@ -294,7 +302,7 @@ public class CmsModulesEditBase extends CmsWidgetDialog {
         int folderId = CmsResourceTypeFolder.getStaticTypeId();
         if (module.isCreateModuleFolder()) {
             getCms().createResource(modulePath, folderId);
-            // add the module folder to the resource list        
+            // add the module folder to the resource list
             resources.add(modulePath);
             module.setResources(resources);
         }
@@ -323,7 +331,7 @@ public class CmsModulesEditBase extends CmsWidgetDialog {
         }
 
         // check if we have to create the resources folder
-        if (module.isCreateTemplateFolder()) {
+        if (module.isCreateResourcesFolder()) {
             String path = modulePath + PATH_RESOURCES;
             getCms().createResource(path, folderId);
         }
@@ -358,7 +366,7 @@ public class CmsModulesEditBase extends CmsWidgetDialog {
 
     /**
      * Checks if the new module dialog has to be displayed.<p>
-     * 
+     *
      * @return <code>true</code> if the new module dialog has to be displayed
      */
     private boolean isNewModule() {

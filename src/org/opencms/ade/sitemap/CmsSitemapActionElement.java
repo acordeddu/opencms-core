@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -14,12 +14,12 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * Lesser General Public License for more details.
  *
- * For further information about Alkacon Software GmbH, please see the
- * company website: http://www.alkacon.com
+ * For further information about Alkacon Software GmbH & Co. KG, please see the
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -27,37 +27,52 @@
 
 package org.opencms.ade.sitemap;
 
-import org.opencms.ade.publish.CmsPublishActionElement;
+import org.opencms.ade.sitemap.shared.CmsClientSitemapEntry;
 import org.opencms.ade.sitemap.shared.CmsSitemapData;
 import org.opencms.ade.sitemap.shared.rpc.I_CmsSitemapService;
+import org.opencms.file.CmsPropertyDefinition;
 import org.opencms.gwt.CmsGwtActionElement;
 import org.opencms.gwt.CmsRpcException;
+import org.opencms.gwt.shared.property.CmsClientProperty;
+import org.opencms.main.CmsLog;
+import org.opencms.main.OpenCms;
+import org.opencms.ui.CmsVaadinUtils;
+import org.opencms.util.CmsRequestUtil;
+import org.opencms.util.CmsStringUtil;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.jsp.PageContext;
 
+import org.apache.commons.logging.Log;
+
 /**
  * Sitemap action used to generate the sitemap editor.<p>
- * 
- * See jsp file <tt>/system/modules/org.opencms.ade.sitemap/sitemap.jsp</tt>.<p>
- * 
+ *
+ * See jsp file <tt>/system/workplace/commons/sitemap.jsp</tt>.<p>
+ *
  * @since 8.0.0
  */
 public class CmsSitemapActionElement extends CmsGwtActionElement {
 
-    /** The module name. */
-    public static final String MODULE_NAME = "sitemap";
+    /** The OpenCms module name. */
+    public static final String CMS_MODULE_NAME = "org.opencms.ade.sitemap";
+
+    /** The GWT module name. */
+    public static final String GWT_MODULE_NAME = "sitemap";
+
+    /** The static log object for this class. */
+    private static final Log LOG = CmsLog.getLog(CmsSitemapActionElement.class);
 
     /** The current sitemap data. */
     private CmsSitemapData m_sitemapData;
 
     /**
      * Constructor.<p>
-     * 
+     *
      * @param context the JSP page context object
-     * @param req the JSP request 
-     * @param res the JSP response 
+     * @param req the JSP request
+     * @param res the JSP response
      */
     public CmsSitemapActionElement(PageContext context, HttpServletRequest req, HttpServletResponse res) {
 
@@ -70,13 +85,7 @@ public class CmsSitemapActionElement extends CmsGwtActionElement {
     @Override
     public String export() throws Exception {
 
-        StringBuffer sb = new StringBuffer();
-        String prefetchedData = serialize(
-            I_CmsSitemapService.class.getMethod("prefetch", String.class),
-            getSitemapData());
-        sb.append(CmsSitemapData.DICT_NAME).append("='").append(prefetchedData).append("';");
-        sb.append(ClientMessages.get().export(getRequest()));
-        return wrapScript(sb).toString();
+        return "";
     }
 
     /**
@@ -85,16 +94,30 @@ public class CmsSitemapActionElement extends CmsGwtActionElement {
     @Override
     public String exportAll() throws Exception {
 
+        CmsRequestUtil.disableCrossSiteFrameEmbedding(getResponse());
         StringBuffer sb = new StringBuffer();
-        sb.append(super.export(".vfsMode"));
-        sb.append(export());
-        sb.append(new CmsPublishActionElement(getJspContext(), getRequest(), getResponse()).export());
-        sb.append(createNoCacheScript(MODULE_NAME));
+        sb.append(export(false));
+        sb.append(
+            exportDictionary(
+                CmsSitemapData.DICT_NAME,
+                I_CmsSitemapService.class.getMethod("prefetch", String.class),
+                getSitemapData()));
+        sb.append(exportModuleScriptTag(GWT_MODULE_NAME));
+        String vaadinBootstrap = CmsStringUtil.joinPaths(
+            OpenCms.getSystemInfo().getContextPath(),
+            "VAADIN/vaadinBootstrap.js");
+        sb.append("  <script \n" + "          src=\"" + vaadinBootstrap + "\"></script>");
+        sb.append(
+            "<script>    \n"
+                + "function initVaadin() { "
+                + CmsVaadinUtils.getBootstrapScript(getCmsObject(), "sitemap-ui", "workplace/sitemap/")
+                + " } "
+                + "</script>");
         return sb.toString();
     }
 
     /**
-     * Returns the needed server data for client-side usage.<p> 
+     * Returns the needed server data for client-side usage.<p>
      *
      * @return the needed server data for client-side usage
      */
@@ -102,9 +125,11 @@ public class CmsSitemapActionElement extends CmsGwtActionElement {
 
         if (m_sitemapData == null) {
             try {
-                m_sitemapData = CmsVfsSitemapService.newInstance(getRequest()).prefetch(getCoreData().getUri());
+                m_sitemapData = CmsVfsSitemapService.prefetch(
+                    getRequest(),
+                    getCmsObject().getRequestContext().getUri());
             } catch (CmsRpcException e) {
-                // ignore, should never happen, and it is already logged
+                LOG.error(e.getLocalizedMessage(), e);
             }
         }
         return m_sitemapData;
@@ -112,11 +137,25 @@ public class CmsSitemapActionElement extends CmsGwtActionElement {
 
     /**
      * Returns the editor title.<p>
-     * 
+     *
      * @return the editor title
      */
     public String getTitle() {
 
-        return Messages.get().getBundle(getWorkplaceLocale()).key(Messages.GUI_EDITOR_TITLE_1, getCoreData().getUri());
+        CmsSitemapData data = getSitemapData();
+        String folderTitle = "";
+        if (data != null) {
+            folderTitle = getSitemapData().getOpenPath();
+            CmsClientSitemapEntry root = getSitemapData().getRoot();
+            if (root != null) {
+                CmsClientProperty titleProp = root.getOwnProperties().get(CmsPropertyDefinition.PROPERTY_TITLE);
+                if ((titleProp != null) && !titleProp.isEmpty()) {
+                    folderTitle = root.getOwnProperties().get(CmsPropertyDefinition.PROPERTY_TITLE).getEffectiveValue();
+                } else {
+                    folderTitle = root.getName();
+                }
+            }
+        }
+        return Messages.get().getBundle(getWorkplaceLocale()).key(Messages.GUI_EDITOR_TITLE_1, folderTitle);
     }
 }

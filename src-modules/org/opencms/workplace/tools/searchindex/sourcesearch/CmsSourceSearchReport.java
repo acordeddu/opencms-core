@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -14,12 +14,12 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * Lesser General Public License for more details.
  *
- * For further information about Alkacon Software GmbH, please see the
- * company website: http://www.alkacon.com
+ * For further information about Alkacon Software GmbH & Co. KG, please see the
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -34,7 +34,7 @@ import org.opencms.workplace.list.A_CmsListExplorerDialog;
 import org.opencms.workplace.list.A_CmsListReport;
 import org.opencms.workplace.tools.CmsToolDialog;
 
-import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -47,7 +47,7 @@ import javax.servlet.jsp.PageContext;
 /**
  * Provides a report for searching in contents.
  * <p>
- * 
+ *
  * @since 7.5.3
  */
 public class CmsSourceSearchReport extends A_CmsListReport {
@@ -55,7 +55,7 @@ public class CmsSourceSearchReport extends A_CmsListReport {
     /**
      * Public constructor with JSP action element.
      * <p>
-     * 
+     *
      * @param jsp an initialized JSP action element
      */
     public CmsSourceSearchReport(CmsJspActionElement jsp) {
@@ -66,11 +66,11 @@ public class CmsSourceSearchReport extends A_CmsListReport {
     /**
      * Public constructor with JSP variables.
      * <p>
-     * 
+     *
      * @param context the JSP page context.
-     * 
+     *
      * @param req the JSP request.
-     * 
+     *
      * @param res the JSP response.
      */
     public CmsSourceSearchReport(PageContext context, HttpServletRequest req, HttpServletResponse res) {
@@ -80,11 +80,11 @@ public class CmsSourceSearchReport extends A_CmsListReport {
 
     /**
      * Used to close the current JSP dialog.<p>
-     * 
+     *
      * This method tries to include the URI stored in the workplace settings.
-     * This URI is determined by the frame name, which has to be set 
+     * This URI is determined by the frame name, which has to be set
      * in the frame name parameter.<p>
-     * 
+     *
      * @throws JspException if including an element fails
      */
     @SuppressWarnings("rawtypes")
@@ -102,7 +102,8 @@ public class CmsSourceSearchReport extends A_CmsListReport {
         // close link parameter present
         try {
             HttpSession session = getJsp().getJspContext().getSession();
-            ArrayList resultList = (ArrayList)session.getAttribute(CmsSourceSearchSettings.ATTRIBUTE_NAME_SOURCESEARCH_RESULT_LIST);
+            Collection resultList = (Collection)session.getAttribute(
+                CmsSearchReplaceSettings.ATTRIBUTE_NAME_SOURCESEARCH_RESULT_LIST);
             if ((resultList != null) && !resultList.isEmpty()) {
                 getToolManager().jspForwardTool(this, "/searchindex/sourcesearch/fileslist", params);
             } else {
@@ -115,24 +116,29 @@ public class CmsSourceSearchReport extends A_CmsListReport {
     }
 
     /**
-     * 
+     *
      * @see org.opencms.workplace.list.A_CmsListReport#initializeThread()
      */
     @SuppressWarnings("rawtypes")
     @Override
     public I_CmsReportThread initializeThread() {
 
-        CmsSourceSearchSettings settings = (CmsSourceSearchSettings)((Map)getSettings().getDialogObject()).get(CmsSourceSearchDialog.class.getName());
+        CmsSearchReplaceSettings settings = (CmsSearchReplaceSettings)((Map)getSettings().getDialogObject()).get(
+            CmsSourceSearchDialog.class.getName());
+        if (settings == null) {
+            settings = (CmsSearchReplaceSettings)((Map)getSettings().getDialogObject()).get(
+                CmsSourceSearchDialog.class.getName());
+        }
 
         // clear the matched file list in the session
         HttpSession session = getJsp().getJspContext().getSession();
-        session.removeAttribute(CmsSourceSearchSettings.ATTRIBUTE_NAME_SOURCESEARCH_RESULT_LIST);
+        session.removeAttribute(CmsSearchReplaceSettings.ATTRIBUTE_NAME_SOURCESEARCH_RESULT_LIST);
 
-        // no redirect to the matched file list is necessary here, because the 
+        // no redirect to the matched file list is necessary here, because the
         // org.opencms.workplace.list.A_CmsListReport.actionCloseDialog() method is overwritten here in this class
 
         // start the thread
-        I_CmsReportThread searchThread = new CmsSourceSearchThread(session, getCms(), settings);
+        I_CmsReportThread searchThread = new CmsSearchReplaceThread(session, getCms(), settings);
 
         return searchThread;
     }

@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -14,12 +14,12 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * Lesser General Public License for more details.
  *
- * For further information about Alkacon Software GmbH, please see the
- * company website: http://www.alkacon.com
+ * For further information about Alkacon Software GmbH & Co. KG, please see the
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -31,6 +31,7 @@ import org.opencms.configuration.CmsSystemConfiguration;
 import org.opencms.db.CmsCacheSettings;
 import org.opencms.db.CmsDbContext;
 import org.opencms.db.CmsDriverManager;
+import org.opencms.db.CmsModificationContext;
 import org.opencms.db.CmsSecurityManager;
 import org.opencms.db.I_CmsCacheKey;
 import org.opencms.file.CmsProject;
@@ -50,7 +51,7 @@ import org.apache.commons.logging.Log;
 
 /**
  * Generic base driver interface.<p>
- * 
+ *
  * @since 7.0.2
  */
 public class CmsDefaultPermissionHandler implements I_CmsPermissionHandler {
@@ -68,14 +69,15 @@ public class CmsDefaultPermissionHandler implements I_CmsPermissionHandler {
     private I_CmsCacheKey m_keyGenerator;
 
     /**
-     * @see org.opencms.security.I_CmsPermissionHandler#hasPermissions(org.opencms.db.CmsDbContext, org.opencms.file.CmsResource, org.opencms.security.CmsPermissionSet, boolean, org.opencms.file.CmsResourceFilter)
+     * @see org.opencms.security.I_CmsPermissionHandler#hasPermissions(org.opencms.db.CmsDbContext, org.opencms.file.CmsResource, org.opencms.security.CmsPermissionSet, org.opencms.security.I_CmsPermissionHandler.LockCheck, org.opencms.file.CmsResourceFilter)
      */
     public CmsPermissionCheckResult hasPermissions(
         CmsDbContext dbc,
         CmsResource resource,
         CmsPermissionSet requiredPermissions,
-        boolean checkLock,
-        CmsResourceFilter filter) throws CmsException {
+        LockCheck checkLock,
+        CmsResourceFilter filter)
+    throws CmsException {
 
         // check if the resource is valid according to the current filter
         // if not, throw a CmsResourceNotFoundException
@@ -85,13 +87,11 @@ public class CmsDefaultPermissionHandler implements I_CmsPermissionHandler {
 
         // checking the filter is less cost intensive then checking the cache,
         // this is why basic filter results are not cached
-        String cacheKey = m_keyGenerator.getCacheKeyForUserPermissions(
-            filter.requireVisible() && checkLock ? "11" : (!filter.requireVisible() && checkLock
-            ? "01"
-            : (filter.requireVisible() && !checkLock ? "10" : "00")),
-            dbc,
-            resource,
-            requiredPermissions);
+        String requireVisibleStr = filter.requireVisible() ? "1" : "0";
+        String lockCheckStr = checkLock.getCode();
+        String keyPrefix = requireVisibleStr + lockCheckStr;
+
+        String cacheKey = m_keyGenerator.getCacheKeyForUserPermissions(keyPrefix, dbc, resource, requiredPermissions);
         CmsPermissionCheckResult cacheResult = OpenCms.getMemoryMonitor().getCachedPermission(cacheKey);
         if (cacheResult != null) {
             return cacheResult;
@@ -99,7 +99,7 @@ public class CmsDefaultPermissionHandler implements I_CmsPermissionHandler {
 
         int denied = 0;
 
-        // if this is the online project, write is rejected 
+        // if this is the online project, write is rejected
         if (dbc.currentProject().isOnlineProject()) {
             denied |= CmsPermissionSet.PERMISSION_WRITE;
         }
@@ -111,25 +111,29 @@ public class CmsDefaultPermissionHandler implements I_CmsPermissionHandler {
             CmsRole.VFS_MANAGER,
             resource);
 
-        // check lock status 
+        // check lock status
         boolean writeRequired = requiredPermissions.requiresWritePermission()
             || requiredPermissions.requiresControlPermission();
 
         // if the resource type is jsp
         // write is only allowed for administrators
         if (writeRequired && !canIgnorePermissions && (CmsResourceTypeJsp.isJsp(resource))) {
-            if (!m_securityManager.hasRoleForResource(dbc, dbc.currentUser(), CmsRole.DEVELOPER, resource)) {
+            if (!m_securityManager.hasRoleForResource(dbc, dbc.currentUser(), CmsRole.VFS_MANAGER, resource)) {
                 denied |= CmsPermissionSet.PERMISSION_WRITE;
                 denied |= CmsPermissionSet.PERMISSION_CONTROL;
             }
         }
 
-        if (writeRequired && checkLock) {
+        if (writeRequired && (checkLock != LockCheck.no)) {
             // check lock state only if required
             CmsLock lock = m_driverManager.getLock(dbc, resource);
-            // if the resource is not locked by the current user, write and control 
+            // if the resource is not locked by the current user, write and control
             // access must cause a permission error that must not be cached
             if (lock.isUnlocked() || !lock.isLockableBy(dbc.currentUser())) {
+                return I_CmsPermissionHandler.PERM_NOTLOCKED;
+            }
+            // if we have a shallow lock, but need a non-shallow one, return NOTLOCKED
+            if (lock.getType().isShallow() && (checkLock != LockCheck.shallowOnly)) {
                 return I_CmsPermissionHandler.PERM_NOTLOCKED;
             }
         }
@@ -150,12 +154,13 @@ public class CmsDefaultPermissionHandler implements I_CmsPermissionHandler {
             // resource "invisible" flag is set for this user
             if (!canIgnorePermissions && filter.requireVisible()) {
                 // filter requires visible permission - extend required permission set
-                requiredPermissions = new CmsPermissionSet(requiredPermissions.getAllowedPermissions()
-                    | CmsPermissionSet.PERMISSION_VIEW, requiredPermissions.getDeniedPermissions());
+                requiredPermissions = new CmsPermissionSet(
+                    requiredPermissions.getAllowedPermissions() | CmsPermissionSet.PERMISSION_VIEW,
+                    requiredPermissions.getDeniedPermissions());
             } else {
                 // view permissions can be ignored by filter
                 permissions.setPermissions(
-                // modify permissions so that view is allowed
+                    // modify permissions so that view is allowed
                     permissions.getAllowedPermissions() | CmsPermissionSet.PERMISSION_VIEW,
                     permissions.getDeniedPermissions() & ~CmsPermissionSet.PERMISSION_VIEW);
             }
@@ -165,11 +170,8 @@ public class CmsDefaultPermissionHandler implements I_CmsPermissionHandler {
             // direct publish permission is required
             if ((permissions.getPermissions() & CmsPermissionSet.PERMISSION_DIRECT_PUBLISH) == 0) {
                 // but the user has no direct publish permission, so check if the user has the project manager role
-                boolean canIgnorePublishPermission = m_securityManager.hasRoleForResource(
-                    dbc,
-                    dbc.currentUser(),
-                    CmsRole.PROJECT_MANAGER,
-                    resource);
+                boolean canIgnorePublishPermission = CmsModificationContext.isInstantPublishing()
+                    || m_securityManager.hasRoleForResource(dbc, dbc.currentUser(), CmsRole.PROJECT_MANAGER, resource);
                 // if not, check the manageable projects
                 if (!canIgnorePublishPermission) {
                     CmsUser user = dbc.currentUser();
@@ -189,7 +191,7 @@ public class CmsDefaultPermissionHandler implements I_CmsPermissionHandler {
                 if (canIgnorePublishPermission) {
                     // direct publish permission can be ignored
                     permissions.setPermissions(
-                    // modify permissions so that direct publish is allowed
+                        // modify permissions so that direct publish is allowed
                         permissions.getAllowedPermissions() | CmsPermissionSet.PERMISSION_DIRECT_PUBLISH,
                         permissions.getDeniedPermissions() & ~CmsPermissionSet.PERMISSION_DIRECT_PUBLISH);
                 }
@@ -197,22 +199,32 @@ public class CmsDefaultPermissionHandler implements I_CmsPermissionHandler {
         }
 
         CmsPermissionCheckResult result;
-        if ((requiredPermissions.getPermissions() & (permissions.getPermissions())) == requiredPermissions.getPermissions()) {
+        if ((requiredPermissions.getPermissions()
+            & (permissions.getPermissions())) == requiredPermissions.getPermissions()) {
             result = I_CmsPermissionHandler.PERM_ALLOWED;
         } else {
             result = I_CmsPermissionHandler.PERM_DENIED;
             if (LOG.isDebugEnabled()) {
-                LOG.debug(Messages.get().getBundle().key(
-                    Messages.LOG_NO_PERMISSION_RESOURCE_USER_4,
-                    new Object[] {
-                        dbc.getRequestContext().removeSiteRoot(resource.getRootPath()),
-                        dbc.currentUser().getName(),
-                        requiredPermissions.getPermissionString(),
-                        permissions.getPermissionString()}));
+                LOG.debug(
+                    Messages.get().getBundle().key(
+                        Messages.LOG_NO_PERMISSION_RESOURCE_USER_4,
+                        new Object[] {
+                            dbc.getRequestContext().removeSiteRoot(resource.getRootPath()),
+                            dbc.currentUser().getName(),
+                            requiredPermissions.getPermissionString(),
+                            permissions.getPermissionString()}));
             }
         }
-        if (dbc.getProjectId().isNullUUID()) {
+        if (dbc.getProjectId().isNullUUID() && permissions.isCacheable()) {
             OpenCms.getMemoryMonitor().cachePermission(cacheKey, result);
+        }
+        if (!permissions.isCacheable()) {
+            // if this method is used for checking permissions in resource lists, the resulting resource lists
+            // are not cacheable either if the permission check for this resource isn't
+            boolean[] nocacheArray = (boolean[])dbc.getAttribute(CmsDriverManager.ATTR_PERMISSION_NOCACHE);
+            if (nocacheArray != null) {
+                nocacheArray[0] = true;
+            }
         }
 
         return result;
@@ -233,9 +245,11 @@ public class CmsDefaultPermissionHandler implements I_CmsPermissionHandler {
             // initialize the key generator
             m_keyGenerator = (I_CmsCacheKey)Class.forName(className).newInstance();
         } catch (Exception e) {
-            throw new CmsInitException(org.opencms.main.Messages.get().container(
-                org.opencms.main.Messages.ERR_CRITICAL_CLASS_CREATION_1,
-                className), e);
+            throw new CmsInitException(
+                org.opencms.main.Messages.get().container(
+                    org.opencms.main.Messages.ERR_CRITICAL_CLASS_CREATION_1,
+                    className),
+                e);
         }
     }
 }

@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -14,12 +14,12 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * Lesser General Public License for more details.
  *
- * For further information about Alkacon Software GmbH, please see the
- * company website: http://www.alkacon.com
+ * For further information about Alkacon Software GmbH & Co. KG, please see the
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -36,6 +36,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.LineNumberReader;
 import java.io.Reader;
+import java.io.Serializable;
 import java.io.UnsupportedEncodingException;
 import java.util.AbstractMap;
 import java.util.ArrayList;
@@ -43,6 +44,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 import java.util.Set;
 import java.util.StringTokenizer;
 import java.util.TreeMap;
@@ -51,13 +53,13 @@ import org.dom4j.Element;
 
 /**
  * Provides convenient access to configuration parameters.<p>
- * 
+ *
  * Usually the parameters are configured in some sort of String based file,
- * either in an XML configuration, or in a .property file. 
- * This wrapper allows accessing such String values directly 
- * as <code>int</code>, <code>boolean</code> or other data types, without 
+ * either in an XML configuration, or in a .property file.
+ * This wrapper allows accessing such String values directly
+ * as <code>int</code>, <code>boolean</code> or other data types, without
  * worrying about the type conversion.<p>
- * 
+ *
  * It can also read a configuration from a special property file format,
  * which is explained here:
  *
@@ -82,7 +84,7 @@ import org.dom4j.Element;
  *  </li>
  *  <li>
  *   Backslashes are escaped by using two consecutive backslashes i.e. \\.
- *   Note: Unlike in regular Java properties files, you don't need to escape Backslashes. 
+ *   Note: Unlike in regular Java properties files, you don't need to escape Backslashes.
  *  </li>
  *  <li>
  *   If a <i>key</i> is used more than once, the values are appended
@@ -116,11 +118,11 @@ import org.dom4j.Element;
  *      commas.escaped = Hi\, what'up?
  * </pre>
  */
-public class CmsParameterConfiguration extends AbstractMap<String, String> {
+public class CmsParameterConfiguration extends AbstractMap<String, String> implements Serializable {
 
     /**
-     * Used to read parameter lines from a property file.<p>  
-     * 
+     * Used to read parameter lines from a property file.<p>
+     *
      * The lines do not terminate with new-line chars but rather when there is no
      * backslash sign a the end of the line. This is used to
      * concatenate multiple lines for readability in the input file.<p>
@@ -141,7 +143,7 @@ public class CmsParameterConfiguration extends AbstractMap<String, String> {
          * Reads a parameter line.<p>
          *
          * @return the parameter line read
-         * 
+         *
          * @throws IOException in case of IO errors
          */
         public String readParameter() throws IOException {
@@ -167,7 +169,7 @@ public class CmsParameterConfiguration extends AbstractMap<String, String> {
 
     /**
      * This class divides property value into tokens separated by ",".<p>
-     * 
+     *
      * Commas in the property value that are wanted
      * can be escaped using the backslash in front like this "\,".
      */
@@ -216,10 +218,13 @@ public class CmsParameterConfiguration extends AbstractMap<String, String> {
      */
     public static final CmsParameterConfiguration EMPTY_PARAMETERS = new CmsParameterConfiguration(
         Collections.<String, String> emptyMap(),
-        Collections.<String, Object> emptyMap());
+        Collections.<String, Serializable> emptyMap());
+
+    /** The serial version id. */
+    private static final long serialVersionUID = 294679648036460877L;
 
     /** The parsed map of parameters where the Strings may have become Objects. */
-    private Map<String, Object> m_configurationObjects;
+    private transient Map<String, Serializable> m_configurationObjects;
 
     /** The original map of parameters that contains only String values. */
     private Map<String, String> m_configurationStrings;
@@ -229,14 +234,14 @@ public class CmsParameterConfiguration extends AbstractMap<String, String> {
      */
     public CmsParameterConfiguration() {
 
-        this(new TreeMap<String, String>(), new TreeMap<String, Object>());
+        this(new TreeMap<String, String>(), new TreeMap<String, Serializable>());
     }
 
     /**
      * Creates a parameter configuration from an input stream.<p>
-     * 
+     *
      * @param in the input stream to create the parameter configuration from
-     * 
+     *
      * @throws IOException in case of errors loading the parameters from the input stream
      */
     public CmsParameterConfiguration(InputStream in)
@@ -248,7 +253,7 @@ public class CmsParameterConfiguration extends AbstractMap<String, String> {
 
     /**
      * Creates a parameter configuration from a Map of Strings.<p>
-     * 
+     *
      * @param configuration the map of Strings to create the parameter configuration from
      */
     public CmsParameterConfiguration(Map<String, String> configuration) {
@@ -266,7 +271,7 @@ public class CmsParameterConfiguration extends AbstractMap<String, String> {
      * Creates a parameter wrapper by loading the parameters from the specified property file.<p>
      *
      * @param file the path of the file to load
-     * 
+     *
      * @throws IOException in case of errors loading the parameters from the specified property file
      */
     public CmsParameterConfiguration(String file)
@@ -291,11 +296,11 @@ public class CmsParameterConfiguration extends AbstractMap<String, String> {
 
     /**
      * Creates a parameter configuration from the given maps.<p>
-     * 
+     *
      * @param strings the String map
      * @param objects the object map
      */
-    private CmsParameterConfiguration(Map<String, String> strings, Map<String, Object> objects) {
+    private CmsParameterConfiguration(Map<String, String> strings, Map<String, Serializable> objects) {
 
         m_configurationStrings = strings;
         m_configurationObjects = objects;
@@ -303,9 +308,9 @@ public class CmsParameterConfiguration extends AbstractMap<String, String> {
 
     /**
      * Returns an unmodifiable version of this parameter configuration.<p>
-     * 
+     *
      * @param original the configuration to make unmodifiable
-     * 
+     *
      * @return an unmodifiable version of this parameter configuration
      */
     public static CmsParameterConfiguration unmodifiableVersion(CmsParameterConfiguration original) {
@@ -318,12 +323,12 @@ public class CmsParameterConfiguration extends AbstractMap<String, String> {
     /**
      * Counts the number of successive times 'ch' appears in the
      * 'line' before the position indicated by the 'index'.<p>
-     * 
+     *
      * @param line the line to count
      * @param index the index position to start
      * @param ch the character to count
-     * 
-     * @return the number of successive times 'ch' appears in the 'line' 
+     *
+     * @return the number of successive times 'ch' appears in the 'line'
      *      before the position indicated by the 'index'
      */
     protected static int countPreceding(String line, int index, char ch) {
@@ -339,9 +344,9 @@ public class CmsParameterConfiguration extends AbstractMap<String, String> {
 
     /**
      * Checks if the line ends with odd number of backslashes.<p>
-     * 
+     *
      * @param line the line to check
-     * 
+     *
      * @return <code>true</code> if the line ends with odd number of backslashes
      */
     protected static boolean endsWithSlash(String line) {
@@ -354,9 +359,9 @@ public class CmsParameterConfiguration extends AbstractMap<String, String> {
 
     /**
      * Replaces escaped char sequences in the input value.<p>
-     * 
+     *
      * @param value the value to unescape
-     * 
+     *
      * @return the unescaped String
      */
     protected static String unescape(String value) {
@@ -370,11 +375,11 @@ public class CmsParameterConfiguration extends AbstractMap<String, String> {
 
     /**
      * Add a parameter to this configuration.<p>
-     * 
+     *
      * If the parameter already exists then the value will be added
      * to the existing configuration entry and a List will be created for the values.<p>
      *
-     * String values separated by a comma "," will NOT be tokenized when this 
+     * String values separated by a comma "," will NOT be tokenized when this
      * method is used. To create a List of String values for a parameter, call this method
      * multiple times with the same parameter name.<p>
      *
@@ -388,15 +393,15 @@ public class CmsParameterConfiguration extends AbstractMap<String, String> {
 
     /**
      * Serializes this parameter configuration for the OpenCms XML configuration.<p>
-     * 
-     * For each parameter, a XML node like this<br> 
+     *
+     * For each parameter, a XML node like this<br>
      * <code>
      * &lt;param name="theName"&gt;theValue&lt;/param&gt;
      * </code><br>
-     * is generated and appended to the provided parent node.<p> 
-     * 
+     * is generated and appended to the provided parent node.<p>
+     *
      * @param parentNode the parent node where the parameter nodes are appended to
-     * 
+     *
      * @return the parent node
      */
     public Element appendToXml(Element parentNode) {
@@ -406,22 +411,22 @@ public class CmsParameterConfiguration extends AbstractMap<String, String> {
 
     /**
      * Serializes this parameter configuration for the OpenCms XML configuration.<p>
-     * 
-     * For each parameter, a XML node like this<br> 
+     *
+     * For each parameter, a XML node like this<br>
      * <code>
      * &lt;param name="theName"&gt;theValue&lt;/param&gt;
      * </code><br>
-     * is generated and appended to the provided parent node.<p> 
-     * 
+     * is generated and appended to the provided parent node.<p>
+     *
      * @param parentNode the parent node where the parameter nodes are appended to
-     * @param parametersToIgnore if not <code>null</code>, 
+     * @param parametersToIgnore if not <code>null</code>,
      *      all parameters in this list are not written to the XML
-     * 
+     *
      * @return the parent node
      */
     public Element appendToXml(Element parentNode, List<String> parametersToIgnore) {
 
-        for (Map.Entry<String, Object> entry : m_configurationObjects.entrySet()) {
+        for (Map.Entry<String, Serializable> entry : m_configurationObjects.entrySet()) {
             String name = entry.getKey();
             // check if the parameter should be ignored
             if ((parametersToIgnore == null) || !parametersToIgnore.contains(name)) {
@@ -491,10 +496,10 @@ public class CmsParameterConfiguration extends AbstractMap<String, String> {
     }
 
     /**
-     * Returns the String associated with the given parameter.<p> 
+     * Returns the String associated with the given parameter.<p>
      *
      * @param key the parameter to look up the value for
-     * 
+     *
      * @return the String associated with the given parameter
      */
     @Override
@@ -504,13 +509,13 @@ public class CmsParameterConfiguration extends AbstractMap<String, String> {
     }
 
     /**
-     * Returns the boolean associated with the given parameter, 
-     * or the default value in case there is no boolean value for this parameter.<p> 
+     * Returns the boolean associated with the given parameter,
+     * or the default value in case there is no boolean value for this parameter.<p>
      *
      * @param key the parameter to look up the value for
      * @param defaultValue the default value
-     * 
-     * @return the boolean associated with the given parameter, 
+     *
+     * @return the boolean associated with the given parameter,
      *      or the default value in case there is no boolean value for this parameter
      */
     public boolean getBoolean(String key, boolean defaultValue) {
@@ -531,13 +536,13 @@ public class CmsParameterConfiguration extends AbstractMap<String, String> {
     }
 
     /**
-     * Returns the integer associated with the given parameter, 
-     * or the default value in case there is no integer value for this parameter.<p> 
+     * Returns the integer associated with the given parameter,
+     * or the default value in case there is no integer value for this parameter.<p>
      *
      * @param key the parameter to look up the value for
      * @param defaultValue the default value
-     * 
-     * @return the integer associated with the given parameter, 
+     *
+     * @return the integer associated with the given parameter,
      *      or the default value in case there is no integer value for this parameter
      */
     public int getInteger(String key, int defaultValue) {
@@ -548,7 +553,7 @@ public class CmsParameterConfiguration extends AbstractMap<String, String> {
             return ((Integer)value).intValue();
 
         } else if (value instanceof String) {
-            Integer i = new Integer((String)value);
+            Integer i = Integer.valueOf((String)value);
             m_configurationObjects.put(key, i);
             return i.intValue();
 
@@ -558,15 +563,15 @@ public class CmsParameterConfiguration extends AbstractMap<String, String> {
     }
 
     /**
-     * Returns the List of Strings associated with the given parameter, 
-     * or an empty List in case there is no List of Strings for this parameter.<p> 
+     * Returns the List of Strings associated with the given parameter,
+     * or an empty List in case there is no List of Strings for this parameter.<p>
      *
      * The list returned is a copy of the internal data of this object, and as
      * such you may alter it freely.<p>
      *
      * @param key the parameter to look up the value for
-     * 
-     * @return the List of Strings associated with the given parameter, 
+     *
+     * @return the List of Strings associated with the given parameter,
      *      or an empty List in case there is no List of Strings for this parameter
      */
     public List<String> getList(String key) {
@@ -575,16 +580,16 @@ public class CmsParameterConfiguration extends AbstractMap<String, String> {
     }
 
     /**
-     * Returns the List of Strings associated with the given parameter, 
-     * or the default value in case there is no List of Strings for this parameter.<p> 
+     * Returns the List of Strings associated with the given parameter,
+     * or the default value in case there is no List of Strings for this parameter.<p>
      *
      * The list returned is a copy of the internal data of this object, and as
      * such you may alter it freely.<p>
      *
      * @param key the parameter to look up the value for
      * @param defaultValue the default value
-     * 
-     * @return the List of Strings associated with the given parameter, 
+     *
+     * @return the List of Strings associated with the given parameter,
      *      or the default value in case there is no List of Strings for this parameter
      */
     public List<String> getList(String key, List<String> defaultValue) {
@@ -597,7 +602,7 @@ public class CmsParameterConfiguration extends AbstractMap<String, String> {
             return new ArrayList<String>(result);
 
         } else if (value instanceof String) {
-            List<String> values = new ArrayList<String>(1);
+            ArrayList<String> values = new ArrayList<String>(1);
             values.add((String)value);
             m_configurationObjects.put(key, values);
             return values;
@@ -612,13 +617,13 @@ public class CmsParameterConfiguration extends AbstractMap<String, String> {
     }
 
     /**
-     * Returns the raw Object associated with the given parameter, 
-     * or <code>null</code> in case there is no Object for this parameter.<p> 
+     * Returns the raw Object associated with the given parameter,
+     * or <code>null</code> in case there is no Object for this parameter.<p>
      *
      * @param key the parameter to look up the value for
-     * 
-     * @return the raw Object associated with the given parameter, 
-     *      or <code>null</code> in case there is no Object for this parameter.<p> 
+     *
+     * @return the raw Object associated with the given parameter,
+     *      or <code>null</code> in case there is no Object for this parameter.<p>
      */
     public Object getObject(String key) {
 
@@ -626,14 +631,57 @@ public class CmsParameterConfiguration extends AbstractMap<String, String> {
     }
 
     /**
-     * Returns the String associated with the given parameter, 
-     * or the given default value in case there is no value for this parameter.<p> 
+     * Creates a new <tt>Properties</tt> object from the existing configuration
+     * extracting all key-value pars whose key are prefixed
+     * with <tt>keyPrefix</tt>. <p>
+     *
+     * For this example config:
+     *
+     * <pre>
+     *      # lines starting with # are comments
+     *      db.pool.default.jdbcDriver=net.bull.javamelody.JdbcDriver
+     *      db.pool.default.connectionProperties.driver=com.mysql.cj.jdbc.Driver
+     * </pre>
+     *
+     * <tt>getPrefixedProperties("db.pool.default.connectionProperties")</tt>
+     * will return a <tt>Properties</tt> object with one single entry:
+     * <pre>
+     *      key:"driver", value:"com.mysql.cj.jdbc.Driver"
+     * </pre>
+     *
+     * @param keyPrefix prefix to match. If it isn't already, it will be
+     *           terminated with a dot.  If <tt>null</tt>, it will return
+     *           an empty <tt>Properties</tt> instance
+     * @return a new <tt>Properties</tt> object with all the entries from this
+     *          configuration whose keys math the prefix
+     */
+    public Properties getPrefixedProperties(String keyPrefix) {
+
+        Properties props = new Properties();
+        if (null == keyPrefix) {
+            return props;
+        }
+
+        String dotTerminatedKeyPrefix = keyPrefix + (keyPrefix.endsWith(".") ? "" : ".");
+        for (Map.Entry<String, String> e : entrySet()) {
+            String key = e.getKey();
+            if ((null != key) && key.startsWith(dotTerminatedKeyPrefix)) {
+                String subKey = key.substring(dotTerminatedKeyPrefix.length());
+                props.put(subKey, e.getValue());
+            }
+        }
+        return props;
+    }
+
+    /**
+     * Returns the String associated with the given parameter,
+     * or the given default value in case there is no value for this parameter.<p>
      *
      * @param key the parameter to look up the value for
      * @param defaultValue the default value
-     * 
-     * @return the String associated with the given parameter, 
-     *      or the given default value in case there is no value for this parameter.<p> 
+     *
+     * @return the String associated with the given parameter,
+     *      or the given default value in case there is no value for this parameter.<p>
      */
     public String getString(String key, String defaultValue) {
 
@@ -663,7 +711,7 @@ public class CmsParameterConfiguration extends AbstractMap<String, String> {
      * Load the parameters from the given input stream, which must be in property file format.<p>
      *
      * @param input the stream to load the input from
-     * 
+     *
      * @throws IOException in case of IO errors reading from the stream
      */
     public void load(InputStream input) throws IOException {
@@ -700,13 +748,13 @@ public class CmsParameterConfiguration extends AbstractMap<String, String> {
 
     /**
      * Set a parameter for this configuration.<p>
-     * 
+     *
      * If the parameter already exists then the existing value will be replaced.<p>
      *
      * @param key the parameter to set
      * @param value the value to set
-     * 
-     * @return the previous String value from the parameter map  
+     *
+     * @return the previous String value from the parameter map
      */
     @Override
     public String put(String key, String value) {
@@ -718,14 +766,14 @@ public class CmsParameterConfiguration extends AbstractMap<String, String> {
 
     /**
      * Merges this parameter configuration with the provided other parameter configuration.<p>
-     * 
+     *
      * The difference form a simple <code>Map&lt;String, String&gt;</code> is that for the parameter
-     * configuration, the values of the keys in both maps are merged and kept in the Object store 
+     * configuration, the values of the keys in both maps are merged and kept in the Object store
      * as a List.<p>
-     * 
-     * As result, <code>this</code> configuration will be altered, the other configuration will 
+     *
+     * As result, <code>this</code> configuration will be altered, the other configuration will
      * stay unchanged.<p>
-     * 
+     *
      * @param other the other parameter configuration to merge this configuration with
      */
     @Override
@@ -757,7 +805,7 @@ public class CmsParameterConfiguration extends AbstractMap<String, String> {
     }
 
     /**
-     * @see java.util.Map#toString()
+     * @see java.lang.Object#toString()
      */
     @Override
     public String toString() {
@@ -776,7 +824,7 @@ public class CmsParameterConfiguration extends AbstractMap<String, String> {
 
     /**
      * Add a parameter to this configuration.<p>
-     * 
+     *
      * If the parameter already exists then the value will be added
      * to the existing configuration entry and a List will be created for the values.<p>
      *
@@ -793,6 +841,8 @@ public class CmsParameterConfiguration extends AbstractMap<String, String> {
                 String token = tokenizer.nextToken();
                 addInternal(key, unescape(token));
             }
+        } else if (tokenize) {
+            addInternal(key, unescape(value));
         } else {
             // token contains no commas, so can be simply added
             addInternal(key, value);
@@ -801,7 +851,7 @@ public class CmsParameterConfiguration extends AbstractMap<String, String> {
 
     /**
      * Adds a parameter, parsing the value if required.<p>
-     * 
+     *
      * @param key the parameter to add
      * @param value the value of the parameter
      */
@@ -812,7 +862,7 @@ public class CmsParameterConfiguration extends AbstractMap<String, String> {
 
         if (currentObj instanceof String) {
             // one object already in map - convert it to a list
-            List<String> values = new ArrayList<String>(2);
+            ArrayList<String> values = new ArrayList<String>(2);
             values.add(currentStr);
             values.add(value);
             m_configurationObjects.put(key, values);

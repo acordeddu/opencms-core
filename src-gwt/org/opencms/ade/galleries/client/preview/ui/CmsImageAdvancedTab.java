@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -15,11 +15,11 @@
  * Lesser General Public License for more details.
  *
  * For further information about Alkacon Software, please see the
- * company website: http://www.alkacon.com
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -33,12 +33,13 @@ import org.opencms.ade.galleries.client.preview.CmsPreviewUtil;
 import org.opencms.ade.galleries.shared.CmsImageInfoBean;
 import org.opencms.ade.galleries.shared.I_CmsGalleryProviderConstants.GalleryMode;
 import org.opencms.gwt.client.util.CmsJSONMap;
+import org.opencms.gwt.client.util.I_CmsSimpleCallback;
 
 import java.util.Map;
 
 /**
  * Advanced image tag properties tab, use in editor mode only.<p>
- * 
+ *
  * @since 8.0.
  */
 public class CmsImageAdvancedTab extends A_CmsPreviewDetailTab {
@@ -51,7 +52,7 @@ public class CmsImageAdvancedTab extends A_CmsPreviewDetailTab {
 
     /**
      * The constructor.<p>
-     * 
+     *
      * @param dialogMode the mode of the gallery
      * @param height the height of the tab
      * @param width the width of the height
@@ -67,7 +68,7 @@ public class CmsImageAdvancedTab extends A_CmsPreviewDetailTab {
 
     /**
      * Displays the provided image information.<p>
-     * 
+     *
      * @param imageInfo the image information
      */
     public void fillContent(CmsImageInfoBean imageInfo) {
@@ -76,8 +77,9 @@ public class CmsImageAdvancedTab extends A_CmsPreviewDetailTab {
         boolean inititalFill = false;
         // checking if selected image resource is the same as previewed resource
         if (imageAttributes.containsKey(Attribute.emptySelection.name())
-            || (imageAttributes.containsKey(Attribute.hash.name()) && !imageAttributes.getString(Attribute.hash.name()).equals(
-                String.valueOf(m_handler.getImageIdHash())))) {
+            || (imageAttributes.containsKey(Attribute.hash.name())
+                && !imageAttributes.getString(Attribute.hash.name()).equals(
+                    String.valueOf(m_handler.getImageIdHash())))) {
             imageAttributes = CmsJSONMap.createJSONMap();
             inititalFill = true;
         }
@@ -86,13 +88,15 @@ public class CmsImageAdvancedTab extends A_CmsPreviewDetailTab {
 
     /**
      * Adds necessary attributes to the map.<p>
-     * 
+     *
      * @param attributes the attribute map
-     * @return the attribute map
+     * @param callback the callback to execute
      */
-    public Map<String, String> getImageAttributes(Map<String, String> attributes) {
+    public void getImageAttributes(
+        Map<String, String> attributes,
+        final I_CmsSimpleCallback<Map<String, String>> callback) {
 
-        return m_form.getImageAttributes(attributes);
+        m_form.getImageAttributes(attributes, callback);
     }
 
     /**

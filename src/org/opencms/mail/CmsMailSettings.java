@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -14,12 +14,12 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * Lesser General Public License for more details.
  *
- * For further information about Alkacon Software GmbH, please see the
- * company website: http://www.alkacon.com
+ * For further information about Alkacon Software GmbH & Co. KG, please see the
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -37,8 +37,8 @@ import org.apache.commons.logging.Log;
 
 /**
  * Contains the settings for the OpenCms mail service.<p>
- * 
- * @since 6.0.0 
+ *
+ * @since 6.0.0
  */
 public class CmsMailSettings {
 
@@ -61,7 +61,7 @@ public class CmsMailSettings {
     private int m_orderDefault;
 
     /**
-     * Empty constructor, required for configuration.<p> 
+     * Empty constructor, required for configuration.<p>
      */
     public CmsMailSettings() {
 
@@ -74,26 +74,27 @@ public class CmsMailSettings {
 
     /**
      * Adds a new mail host to the internal list of mail hosts with default port 25.<p>
-     * 
+     *
      * @param hostname the name of the mail host
      * @param order the order in which the host is tried
      * @param protocol the protocol to use (default "smtp")
-     * @param username the user name to use for authentication 
+     * @param username the user name to use for authentication
      * @param password the password to use for authentication
      */
     public void addMailHost(String hostname, String order, String protocol, String username, String password) {
 
-        addMailHost(hostname, "25", order, protocol, username, password);
+        addMailHost(hostname, "25", order, protocol, null, username, password);
     }
 
     /**
        * Adds a new mail host to the internal list of mail hosts.<p>
-       * 
+       *
        * @param hostname the name of the mail host
        * @param port the port of the mail host
        * @param order the order in which the host is tried
        * @param protocol the protocol to use (default "smtp")
-       * @param username the user name to use for authentication 
+       * @param security the security mode
+       * @param username the user name to use for authentication
        * @param password the password to use for authentication
        */
     public void addMailHost(
@@ -101,8 +102,36 @@ public class CmsMailSettings {
         String port,
         String order,
         String protocol,
+        String security,
         String username,
         String password) {
+
+        addMailHost(hostname, "25", order, protocol, null, username, password, null, null);
+    }
+
+    /**
+       * Adds a new mail host to the internal list of mail hosts.<p>
+       *
+       * @param hostname the name of the mail host
+       * @param port the port of the mail host
+       * @param order the order in which the host is tried
+       * @param protocol the protocol to use (default "smtp")
+       * @param security the security mode
+       * @param username the user name to use for authentication
+       * @param password the password to use for authentication
+       * @param id the id of the mail host
+       * @param mailfrom the mail-from address of the mail host
+       */
+    public void addMailHost(
+        String hostname,
+        String port,
+        String order,
+        String protocol,
+        String security,
+        String username,
+        String password,
+        String id,
+        String mailfrom) {
 
         Integer thePort;
         try {
@@ -118,10 +147,19 @@ public class CmsMailSettings {
                 m_orderDefault = theOrder.intValue();
             }
         } catch (Throwable t) {
-            // valueOf: use jdk int cache if possible and not new operator: 
+            // valueOf: use jdk int cache if possible and not new operator:
             theOrder = Integer.valueOf(m_orderDefault);
         }
-        CmsMailHost host = new CmsMailHost(hostname, thePort, theOrder, protocol, username, password);
+        CmsMailHost host = new CmsMailHost(
+            hostname,
+            thePort,
+            theOrder,
+            protocol,
+            security,
+            username,
+            password,
+            id,
+            mailfrom);
         m_mailHosts.add(host);
         if (CmsLog.INIT.isInfoEnabled()) {
             CmsLog.INIT.info(Messages.get().getBundle().key(Messages.LOG_ADD_HOST_1, host));
@@ -131,7 +169,7 @@ public class CmsMailSettings {
 
     /**
      * Returns the default mail host.<p>
-     * 
+     *
      * @return the default mail host
      */
     public CmsMailHost getDefaultMailHost() {
@@ -141,7 +179,7 @@ public class CmsMailSettings {
 
     /**
      * Returns the mail from default sender.<p>
-     * 
+     *
      * @return the mail from default sender
      */
     public String getMailFromDefault() {
@@ -150,8 +188,33 @@ public class CmsMailSettings {
     }
 
     /**
+     * Returns a mail host for a given id.<p>
+     *
+     * @param id the id
+     * @return the mail host
+     */
+    public CmsMailHost getMailHost(String id) {
+
+        if (id == null) {
+            return null;
+        }
+        List<CmsMailHost> filtered = new ArrayList<CmsMailHost>();
+        for (CmsMailHost mailHost : m_mailHosts) {
+            if ((mailHost.getId() != null) && mailHost.getId().equals(id)) {
+                filtered.add(mailHost);
+            }
+        }
+        if (filtered.isEmpty()) {
+            return null;
+        } else {
+            Collections.sort(filtered);
+            return filtered.get(filtered.size() - 1);
+        }
+    }
+
+    /**
      * Returns an unmodifiable sorted list of all configured mail hosts.<p>
-     *  
+     *
      * @return an unmodifiable sorted list of all configured mail hosts
      */
     public List<CmsMailHost> getMailHosts() {
@@ -161,7 +224,7 @@ public class CmsMailSettings {
 
     /**
      * Sets the mail from default sender.<p>
-     * 
+     *
      * @param sender the mail from default sender to set
      */
     public void setMailFromDefault(String sender) {

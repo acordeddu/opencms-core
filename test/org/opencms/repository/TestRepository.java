@@ -1,0 +1,74 @@
+/*
+ * This library is part of OpenCms -
+ * the Open Source Content Management System
+ *
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Lesser General Public License for more details.
+ *
+ * For further information about Alkacon Software, please see the
+ * company website: https://www.alkacon.com
+ *
+ * For further information about OpenCms, please see the
+ * project website: https://www.opencms.org
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ */
+
+package org.opencms.repository;
+
+import org.opencms.file.CmsProperty;
+import org.opencms.file.CmsPropertyDefinition;
+import org.opencms.main.I_CmsEventListener;
+import org.opencms.main.OpenCms;
+import org.opencms.test.OpenCmsTestRunner;
+import org.opencms.util.CmsStringUtil;
+
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInfo;
+
+/**
+ * Test for WebDav repositories.<p>
+ */
+public class TestRepository extends OpenCmsTestRunner {
+
+    @Override
+    @BeforeAll
+    public void $openCmsSetUp(TestInfo testInfo) {
+
+        setupOpenCms(testInfo, "simpletest", "/");
+    }
+
+    /**
+     * Test for a bug with property caching caused by CmsResourceWrapperSystemFolder.<p>
+     *
+     * @throws Exception
+     */
+    @Test
+    public void testPropertyCachingBug() throws Exception {
+
+        OpenCms.getEventManager().fireEvent(I_CmsEventListener.EVENT_CLEAR_CACHES);
+        OpenCms.getMemoryMonitor().clearCache();
+        OpenCms.getRepositoryManager().getRepository("standard", CmsRepository.class).login("Admin", "admin").getItem(
+            "/");
+        CmsProperty templateElements = getCmsObject().readPropertyObject(
+            "/",
+            CmsPropertyDefinition.PROPERTY_TEMPLATE,
+            true);
+        System.out.println(templateElements);
+        assertTrue(
+            !CmsStringUtil.isEmptyOrWhitespaceOnly(templateElements.getValue()),
+            "template-elements property should not be empty");
+    }
+}

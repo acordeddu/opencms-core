@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -14,12 +14,12 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * Lesser General Public License for more details.
  *
- * For further information about Alkacon Software GmbH, please see the
- * company website: http://www.alkacon.com
+ * For further information about Alkacon Software GmbH & Co. KG, please see the
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -52,7 +52,7 @@ import javax.servlet.jsp.PageContext;
 /**
  * Widget dialog that sets the settings to replace HTML Tags in pages below a folder.
  * <p>
- * 
+ *
  * @since 6.1.7
  */
 public class CmsTagReplaceDialog extends CmsWidgetDialog {
@@ -73,7 +73,7 @@ public class CmsTagReplaceDialog extends CmsWidgetDialog {
     /**
      * Public constructor with JSP action element.
      * <p>
-     * 
+     *
      * @param jsp an initialized JSP action element
      */
     public CmsTagReplaceDialog(CmsJspActionElement jsp) {
@@ -84,7 +84,7 @@ public class CmsTagReplaceDialog extends CmsWidgetDialog {
     /**
      * Public constructor with JSP variables.
      * <p>
-     * 
+     *
      * @param context the JSP page context
      * @param req the JSP request
      * @param res the JSP response
@@ -97,6 +97,7 @@ public class CmsTagReplaceDialog extends CmsWidgetDialog {
     /**
      * @see org.opencms.workplace.CmsWidgetDialog#actionCommit()
      */
+    @Override
     public void actionCommit() throws IOException, ServletException {
 
         List errors = new ArrayList();
@@ -122,6 +123,7 @@ public class CmsTagReplaceDialog extends CmsWidgetDialog {
     /**
      * @see org.opencms.workplace.CmsWidgetDialog#createDialogHtml(java.lang.String)
      */
+    @Override
     protected String createDialogHtml(String dialog) {
 
         StringBuffer result = new StringBuffer(1024);
@@ -133,8 +135,9 @@ public class CmsTagReplaceDialog extends CmsWidgetDialog {
         result.append(createWidgetErrorHeader());
 
         // create export file name block
-        result.append(createWidgetBlockStart(Messages.get().getBundle(getLocale()).key(
-            Messages.GUI_TAGREPLACE_DIALOG_BLOCK_SETTINGS_0)));
+        result.append(
+            createWidgetBlockStart(
+                Messages.get().getBundle(getLocale()).key(Messages.GUI_TAGREPLACE_DIALOG_BLOCK_SETTINGS_0)));
         result.append(createDialogRowsHtml(0, 2));
         result.append(createWidgetBlockEnd());
 
@@ -147,6 +150,7 @@ public class CmsTagReplaceDialog extends CmsWidgetDialog {
     /**
      * @see org.opencms.workplace.CmsWidgetDialog#defineWidgets()
      */
+    @Override
     protected void defineWidgets() {
 
         // initialize the export object to use for the dialog
@@ -155,20 +159,24 @@ public class CmsTagReplaceDialog extends CmsWidgetDialog {
         // set localized key prefix
         setKeyPrefix(KEY_PREFIX);
         addWidget(new CmsWidgetDialogParameter(m_settings, "replacements", PAGES[0], new CmsInputWidget()));
-        addWidget(new CmsWidgetDialogParameter(m_settings, "workPath", "/", PAGES[0], new CmsVfsFileWidget(
-            false,
-            getCms().getRequestContext().getSiteRoot()), 1, 1));
+        addWidget(
+            new CmsWidgetDialogParameter(
+                m_settings,
+                "workPath",
+                "/",
+                PAGES[0],
+                new CmsVfsFileWidget(false, getCms().getRequestContext().getSiteRoot()),
+                1,
+                1));
 
-        addWidget(new CmsWidgetDialogParameter(
-            m_settings,
-            "propertyValueTagReplaceID",
-            PAGES[0],
-            new CmsInputWidget("")));
+        addWidget(
+            new CmsWidgetDialogParameter(m_settings, "propertyValueTagReplaceID", PAGES[0], new CmsInputWidget("")));
     }
 
     /**
      * @see org.opencms.workplace.CmsWidgetDialog#getPageArray()
      */
+    @Override
     protected String[] getPageArray() {
 
         return PAGES;
@@ -177,6 +185,7 @@ public class CmsTagReplaceDialog extends CmsWidgetDialog {
     /**
      * @see org.opencms.workplace.CmsWorkplace#initMessages()
      */
+    @Override
     protected void initMessages() {
 
         // add specific dialog resource bundle
@@ -216,6 +225,7 @@ public class CmsTagReplaceDialog extends CmsWidgetDialog {
      * @see org.opencms.workplace.CmsWorkplace#initWorkplaceRequestValues(org.opencms.workplace.CmsWorkplaceSettings,
      *      javax.servlet.http.HttpServletRequest)
      */
+    @Override
     protected void initWorkplaceRequestValues(CmsWorkplaceSettings settings, HttpServletRequest request) {
 
         // initialize parameters and dialog actions in super implementation

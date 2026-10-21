@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -14,12 +14,12 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * Lesser General Public License for more details.
  *
- * For further information about Alkacon Software GmbH, please see the
- * company website: http://www.alkacon.com
+ * For further information about Alkacon Software GmbH & Co. KG, please see the
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -34,7 +34,7 @@ import java.util.Locale;
 
 /**
  * Wrapper class for the different types of log entries.<p>
- * 
+ *
  * The IDs are organized as following:
  * <dl>
  *   <dt>1-3</dt>
@@ -54,7 +54,7 @@ import java.util.Locale;
  *   <dt>50-54</dt>
  *   <dd>resource recovery (history, restore, undelete, undo changes)</dd>
  * </dl>
- * 
+ *
  * @since 8.0.0
  */
 public enum CmsLogEntryType {
@@ -79,6 +79,8 @@ public enum CmsLogEntryType {
     RESOURCE_FLAGS(35, LogLevel.INFO, true, Messages.GUI_LOG_ENTRY_DETAIL_PATH_1),
     /** Resource hidden from publish list entry. */
     RESOURCE_HIDDEN(15, LogLevel.WARN, true, Messages.GUI_LOG_ENTRY_DETAIL_PATH_1),
+    /** New resource deleted. */
+    RESOURCE_NEW_DELETED(16, LogLevel.WARN, true, Messages.GUI_LOG_ENTRY_DETAIL_PATH_1),
     /** Resource restored from history entry. */
     RESOURCE_HISTORY(50, LogLevel.INFO, true, Messages.GUI_LOG_ENTRY_DETAIL_PATH_1),
     /** Resource imported entry. */
@@ -142,7 +144,7 @@ public enum CmsLogEntryType {
 
     /**
      * Public constructor.<p>
-     * 
+     *
      * @param id the id of the log entry type
      * @param logLevel the activation level
      * @param toPubList flag to indicate if this type generates an entry in the user's publish list
@@ -159,10 +161,10 @@ public enum CmsLogEntryType {
      * Parses an <code>int</code> into a log entry type.<p>
      *
      * @param id the internal representation number to parse
-     * 
+     *
      * @return the enumeration element
-     * 
-     * @throws CmsIllegalArgumentException if the given value could not be matched against a 
+     *
+     * @throws CmsIllegalArgumentException if the given value could not be matched against a
      *         <code>{@link CmsLogEntryType}</code> object.
      */
     public static CmsLogEntryType valueOf(int id) throws CmsIllegalArgumentException {
@@ -172,15 +174,16 @@ public enum CmsLogEntryType {
                 return type;
             }
         }
-        throw new CmsIllegalArgumentException(org.opencms.db.Messages.get().container(
-            org.opencms.db.Messages.ERR_MODE_ENUM_PARSE_2,
-            new Integer(id),
-            CmsLogEntryType.class.getName()));
+        throw new CmsIllegalArgumentException(
+            org.opencms.db.Messages.get().container(
+                org.opencms.db.Messages.ERR_MODE_ENUM_PARSE_2,
+                Integer.valueOf(id),
+                CmsLogEntryType.class.getName()));
     }
 
     /**
      * Localization key for detail formatting.<p>
-     * 
+     *
      * @return localization key for detail formatting
      */
     public String getDetailKey() {
@@ -200,9 +203,9 @@ public enum CmsLogEntryType {
 
     /**
      * Returns a localized name for the given log entry type.<p>
-     * 
+     *
      * @param messages the message bundle to use to resolve the name
-     * 
+     *
      * @return a localized name
      */
     public String getLocalizedName(CmsMessages messages) {
@@ -213,9 +216,9 @@ public enum CmsLogEntryType {
 
     /**
      * Returns a localized name for the given log entry type.<p>
-     * 
+     *
      * @param locale the locale
-     * 
+     *
      * @return a localized name
      */
     public String getLocalizedName(Locale locale) {
@@ -225,7 +228,7 @@ public enum CmsLogEntryType {
 
     /**
      * Checks if this log entry type is active or not.<p>
-     * 
+     *
      * @return <code>true</code> if this log entry type is active or not
      */
     public boolean isActive() {

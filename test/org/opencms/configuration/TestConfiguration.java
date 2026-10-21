@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -14,12 +14,12 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * Lesser General Public License for more details.
  *
- * For further information about Alkacon Software GmbH, please see the
- * company website: http://www.alkacon.com
+ * For further information about Alkacon Software GmbH & Co. KG, please see the
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -27,9 +27,10 @@
 
 package org.opencms.configuration;
 
+import org.opencms.file.CmsResource;
 import org.opencms.i18n.CmsEncoder;
-import org.opencms.test.OpenCmsTestCase;
 import org.opencms.test.OpenCmsTestProperties;
+import org.opencms.test.OpenCmsTestRunner;
 import org.opencms.xml.CmsXmlEntityResolver;
 import org.opencms.xml.CmsXmlUtils;
 
@@ -39,41 +40,38 @@ import java.util.Iterator;
 import java.util.List;
 
 import org.dom4j.Document;
+import org.junit.jupiter.api.Test;
 import org.xml.sax.InputSource;
 
 /**
  * Tests for the OpenCms configuration handling.<p>
- * 
+ *
  * @since 6.0.0
  */
-public class TestConfiguration extends OpenCmsTestCase {
-
-    /**
-     * Default JUnit constructor.<p>
-     * 
-     * @param arg0 JUnit parameters
-     */
-    public TestConfiguration(String arg0) {
-
-        super(arg0, false);
-    }
+public class TestConfiguration extends OpenCmsTestRunner {
 
     /**
      * Loads the configuration using the configuration manager,
      * if anyting goes wrong an exception is thrown and the test fails.<p>
-     * 
-     * 
+     *
      * @throws Exception if something goes wrong
      */
+    @Test
     public void testLoadXmlConfiguration() throws Exception {
 
         // get the file name of the input resource
-        String inputFile = OpenCmsTestProperties.getResourcePathFromClassloader("org/opencms/configuration/");
+        String configurationDirName = CmsResource.getParentFolder(
+            OpenCmsTestProperties.getResourcePathFromClassloader("org/opencms/configuration/opencms.xml"));
 
         // generate the configuration manager
-        CmsConfigurationManager manager = new CmsConfigurationManager(inputFile);
+        CmsConfigurationManager manager = new CmsConfigurationManager(configurationDirName);
+
         // now digest the XML
         manager.loadXmlConfiguration();
+        CmsWorkplaceConfiguration wpConfig = (CmsWorkplaceConfiguration)manager.getConfiguration(
+            CmsWorkplaceConfiguration.class);
+        wpConfig.getWorkplaceManager().getDefaultUserSettings().initPreferences(wpConfig.getWorkplaceManager());
+
         // generate an output XML format
         List<I_CmsXmlConfiguration> allConfigurations = new ArrayList<I_CmsXmlConfiguration>();
         allConfigurations.add(manager);
@@ -82,7 +80,7 @@ public class TestConfiguration extends OpenCmsTestCase {
         Iterator<I_CmsXmlConfiguration> i = allConfigurations.iterator();
         while (i.hasNext()) {
             I_CmsXmlConfiguration config = i.next();
-            String xmlOrigFile = inputFile + config.getXmlFileName();
+            String xmlOrigFile = configurationDirName + config.getXmlFileName();
             System.out.println("\n\nConfiguration instance: " + config + ":\n");
 
             // generate XML document for the configuration
@@ -92,6 +90,8 @@ public class TestConfiguration extends OpenCmsTestCase {
             // load XML from original file and compare to generated document
             InputSource source = new InputSource(new FileInputStream(xmlOrigFile));
             Document inputDoc = CmsXmlUtils.unmarshalHelper(source, new CmsXmlEntityResolver(null));
+            String outputDocStr = CmsXmlUtils.marshal(outputDoc, CmsEncoder.ENCODING_UTF_8);
+            String inputDocStr = CmsXmlUtils.marshal(inputDoc, CmsEncoder.ENCODING_UTF_8);
 
             // output the document
             System.out.println("---");
@@ -99,13 +99,13 @@ public class TestConfiguration extends OpenCmsTestCase {
             System.out.println("---");
 
             // it's better to not output the original doc, since spotting an error is easier
-            // if you compare console output to the original input file in your IDE 
+            // if you compare console output to the original input file in your IDE
 
             //            System.out.println("+++");
             //            System.out.println(CmsXmlUtils.marshal(inputDoc, CmsEncoder.ENCODING_UTF_8));
             //            System.out.println("+++");
 
-            assertEquals(outputDoc, inputDoc);
+            assertXmlEquals(inputDoc, outputDoc);
         }
     }
 }

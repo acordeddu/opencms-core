@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -14,12 +14,12 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * Lesser General Public License for more details.
  *
- * For further information about Alkacon Software GmbH, please see the
- * company website: http://www.alkacon.com
+ * For further information about Alkacon Software GmbH & Co. KG, please see the
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -57,7 +57,7 @@ import org.htmlparser.util.ParserException;
 /**
  * Replaces HTML tags of xmlpage resources using the corresponding settings object.
  * <p>
- * 
+ *
  * @since 6.1.8
  */
 public class CmsTagReplaceThread extends A_CmsReportThread {
@@ -71,9 +71,9 @@ public class CmsTagReplaceThread extends A_CmsReportThread {
 
     /**
      * Creates a replace html tag Thread.<p>
-     * 
+     *
      * @param cms the current cms context.
-     * 
+     *
      * @param settings the settings needed to perform the operation.
      */
     public CmsTagReplaceThread(CmsObject cms, CmsTagReplaceSettings settings) {
@@ -91,6 +91,7 @@ public class CmsTagReplaceThread extends A_CmsReportThread {
     /**
      * @see org.opencms.report.A_CmsReportThread#getReportUpdate()
      */
+    @Override
     public String getReportUpdate() {
 
         return getReport().getReportUpdate();
@@ -99,6 +100,7 @@ public class CmsTagReplaceThread extends A_CmsReportThread {
     /**
      * @see java.lang.Runnable#run()
      */
+    @Override
     public void run() {
 
         getReport().println(
@@ -137,11 +139,11 @@ public class CmsTagReplaceThread extends A_CmsReportThread {
     /**
      * Checks the shared property {@link CmsTagReplaceSettings#PROPERTY_CONTENTOOLS_TAGREPLACE} if
      * it has the value of this configuration ({@link CmsTagReplaceSettings#getPropertyValueTagReplaceID()}).<p>
-     * 
+     *
      * @param resource the resource to test.
-     * 
+     *
      * @return true if the property with the value was found.
-     * 
+     *
      * @throws CmsException if reading a property fails.
      */
     private boolean isProcessedBefore(CmsResource resource) throws CmsException {
@@ -168,26 +170,26 @@ public class CmsTagReplaceThread extends A_CmsReportThread {
         report.print(Messages.get().container(Messages.RPT_TAGREPLACE_READ_RESOURCES_1, m_settings.getWorkPath()));
         report.print(org.opencms.report.Messages.get().container(org.opencms.report.Messages.RPT_DOTS_0));
         if (LOG.isDebugEnabled()) {
-            LOG.debug(Messages.get().getBundle().key(Messages.RPT_TAGREPLACE_READ_RESOURCES_1, m_settings.getWorkPath()));
+            LOG.debug(
+                Messages.get().getBundle().key(Messages.RPT_TAGREPLACE_READ_RESOURCES_1, m_settings.getWorkPath()));
         }
-        CmsResourceFilter filter = CmsResourceFilter.ALL.addRequireType(OpenCms.getResourceManager().getResourceType(
-            "xmlpage").getTypeId());
+        CmsResourceFilter filter = CmsResourceFilter.ALL.addRequireType(
+            OpenCms.getResourceManager().getResourceType("xmlpage").getTypeId());
         List resources = getCms().readResources(m_settings.getWorkPath(), filter, true);
         if (LOG.isDebugEnabled()) {
-            LOG.debug(Messages.get().getBundle().key(
-                Messages.LOG_TAGREPLACE_READ_RESOURCES_OK_1,
-                m_settings.getWorkPath()));
+            LOG.debug(
+                Messages.get().getBundle().key(Messages.LOG_TAGREPLACE_READ_RESOURCES_OK_1, m_settings.getWorkPath()));
         }
         report.println(
             org.opencms.report.Messages.get().container(org.opencms.report.Messages.RPT_OK_0),
             I_CmsReport.FORMAT_OK);
-        Integer size = new Integer(resources.size());
+        Integer size = Integer.valueOf(resources.size());
         Iterator itResources = resources.iterator();
         CmsResource resource;
         int count = 1;
         while (itResources.hasNext()) {
             resource = (CmsResource)itResources.next();
-            replaceTags(resource, size, new Integer(count));
+            replaceTags(resource, size, Integer.valueOf(count));
             count++;
         }
     }
@@ -195,7 +197,7 @@ public class CmsTagReplaceThread extends A_CmsReportThread {
     /**
      * Replaces all replacement mappings configured in the internal {@link CmsTagReplaceSettings}
      * instance in the content of the given resource.<p>
-     * 
+     *
      * No modifications will be done:
      * <ol>
      * <li>the resource is locked by another user.</li>
@@ -210,25 +212,27 @@ public class CmsTagReplaceThread extends A_CmsReportThread {
      * <li>Writing of the file fails.</li>
      * </ol>
      * <p>
-     * 
+     *
      * @param resource denotes the content to process.
-     * 
+     *
      * @param totalJobCount for fancy report writing.
-     * 
+     *
      * @param actualJobCount for even fancier report writing.
-     * 
+     *
      * @throws CmsException if sth. goes wrong.
      */
     private void replaceTags(CmsResource resource, Integer totalJobCount, Integer actualJobCount) throws CmsException {
 
         I_CmsReport report = getReport();
-        report.print(org.opencms.report.Messages.get().container(
-            org.opencms.report.Messages.RPT_SUCCESSION_2,
-            actualJobCount,
-            totalJobCount));
-        report.print(Messages.get().container(
-            Messages.RPT_TAGREPLACE_PROCESS_FILE_1,
-            getCms().getRequestContext().removeSiteRoot(resource.getRootPath())));
+        report.print(
+            org.opencms.report.Messages.get().container(
+                org.opencms.report.Messages.RPT_SUCCESSION_2,
+                actualJobCount,
+                totalJobCount));
+        report.print(
+            Messages.get().container(
+                Messages.RPT_TAGREPLACE_PROCESS_FILE_1,
+                getCms().getRequestContext().removeSiteRoot(resource.getRootPath())));
         report.print(org.opencms.report.Messages.get().container(org.opencms.report.Messages.RPT_DOTS_0));
 
         if (isProcessedBefore(resource)) {
@@ -242,48 +246,48 @@ public class CmsTagReplaceThread extends A_CmsReportThread {
         }
 
         if (LOG.isDebugEnabled()) {
-            LOG.debug(Messages.get().getBundle().key(
-                Messages.LOG_DEBUG_TAGREPLACE_LOCK_RESOURCE_1,
-                resource.getRootPath()));
+            LOG.debug(
+                Messages.get().getBundle().key(Messages.LOG_DEBUG_TAGREPLACE_LOCK_RESOURCE_1, resource.getRootPath()));
         }
         try {
             // checking the lock:
             if (LOG.isDebugEnabled()) {
-                LOG.debug(Messages.get().getBundle().key(
-                    Messages.LOG_DEBUG_TAGREPLACE_LOCK_READ_1,
-                    resource.getRootPath()));
+                LOG.debug(
+                    Messages.get().getBundle().key(Messages.LOG_DEBUG_TAGREPLACE_LOCK_READ_1, resource.getRootPath()));
             }
 
             CmsLock lock = getCms().getLock(resource);
 
             if (LOG.isDebugEnabled()) {
-                LOG.debug(Messages.get().getBundle().key(
-                    Messages.LOG_DEBUG_TAGREPLACE_LOCK_READ_1,
-                    resource.getRootPath()));
+                LOG.debug(
+                    Messages.get().getBundle().key(Messages.LOG_DEBUG_TAGREPLACE_LOCK_READ_1, resource.getRootPath()));
             }
 
             boolean myLock = !lock.isNullLock() && lock.isOwnedBy(getCms().getRequestContext().getCurrentUser());
             if (lock.isNullLock() || myLock) {
                 if (!myLock) {
                     if (LOG.isDebugEnabled()) {
-                        LOG.debug(Messages.get().getBundle().key(
-                            Messages.LOG_DEBUG_TAGREPLACE_LOCK_RESOURCE_1,
-                            resource.getRootPath()));
+                        LOG.debug(
+                            Messages.get().getBundle().key(
+                                Messages.LOG_DEBUG_TAGREPLACE_LOCK_RESOURCE_1,
+                                resource.getRootPath()));
                     }
                     // obtaining the lock:
                     getCms().lockResource(getCms().getRequestContext().removeSiteRoot(resource.getRootPath()));
                     if (LOG.isDebugEnabled()) {
-                        LOG.debug(Messages.get().getBundle().key(
-                            Messages.LOG_DEBUG_TAGREPLACE_LOCK_RESOURCE_OK_1,
-                            resource.getRootPath()));
+                        LOG.debug(
+                            Messages.get().getBundle().key(
+                                Messages.LOG_DEBUG_TAGREPLACE_LOCK_RESOURCE_OK_1,
+                                resource.getRootPath()));
                     }
                 }
             } else {
                 // locked by another user:
                 if (LOG.isDebugEnabled()) {
-                    LOG.debug(Messages.get().getBundle().key(
-                        Messages.LOG_DEBUG_TAGREPLACE_RESOURCE_SKIPPED_1,
-                        resource.getRootPath()));
+                    LOG.debug(
+                        Messages.get().getBundle().key(
+                            Messages.LOG_DEBUG_TAGREPLACE_RESOURCE_SKIPPED_1,
+                            resource.getRootPath()));
                     LOG.debug(Messages.get().getBundle().key(Messages.RPT_TAGREPLACE_SKIP_REASON_LOCKED_0));
                 }
                 report.print(
@@ -291,17 +295,18 @@ public class CmsTagReplaceThread extends A_CmsReportThread {
                     I_CmsReport.FORMAT_WARNING);
                 try {
                     CmsUser locker = getCms().readUser(lock.getUserId());
-                    report.println(Messages.get().container(
-                        Messages.RPT_TAGREPLACE_SKIP_REASON_LOCKED_1,
-                        locker.getName()), I_CmsReport.FORMAT_WARNING);
+                    report.println(
+                        Messages.get().container(Messages.RPT_TAGREPLACE_SKIP_REASON_LOCKED_1, locker.getName()),
+                        I_CmsReport.FORMAT_WARNING);
                 } catch (Throwable f) {
                     report.println(
                         Messages.get().container(Messages.RPT_TAGREPLACE_SKIP_REASON_ERR_LOCK_0),
                         I_CmsReport.FORMAT_WARNING);
                     if (LOG.isDebugEnabled()) {
-                        LOG.debug(Messages.get().getBundle().key(
-                            Messages.LOG_DEBUG_TAGREPLACE_RESOURCE_SKIPPED_1,
-                            resource.getRootPath()));
+                        LOG.debug(
+                            Messages.get().getBundle().key(
+                                Messages.LOG_DEBUG_TAGREPLACE_RESOURCE_SKIPPED_1,
+                                resource.getRootPath()));
                         LOG.debug(Messages.get().getBundle().key(Messages.RPT_TAGREPLACE_SKIP_REASON_ERR_LOCK_0));
                     }
                 }
@@ -309,9 +314,11 @@ public class CmsTagReplaceThread extends A_CmsReportThread {
             }
         } catch (CmsException e) {
             if (LOG.isErrorEnabled()) {
-                LOG.error(Messages.get().getBundle().key(
-                    Messages.LOG_WARN_TAGREPLACE_LOCK_RESOURCE_FAILED_1,
-                    resource.getRootPath()), e);
+                LOG.error(
+                    Messages.get().getBundle().key(
+                        Messages.LOG_WARN_TAGREPLACE_LOCK_RESOURCE_FAILED_1,
+                        resource.getRootPath()),
+                    e);
             }
             report.print(
                 org.opencms.report.Messages.get().container(org.opencms.report.Messages.RPT_SKIPPED_0),
@@ -323,24 +330,24 @@ public class CmsTagReplaceThread extends A_CmsReportThread {
         }
 
         if (LOG.isDebugEnabled()) {
-            LOG.debug(Messages.get().getBundle().key(Messages.LOG_DEBUG_TAGREPLACE_LOAD_FILE_1, resource.getRootPath()));
+            LOG.debug(
+                Messages.get().getBundle().key(Messages.LOG_DEBUG_TAGREPLACE_LOAD_FILE_1, resource.getRootPath()));
         }
 
         CmsFile file = getCms().readFile(resource);
 
         if (LOG.isDebugEnabled()) {
-            LOG.debug(Messages.get().getBundle().key(
-                Messages.LOG_DEBUG_TAGREPLACE_LOAD_FILE_OK_1,
-                resource.getRootPath()));
-            LOG.debug(Messages.get().getBundle().key(Messages.LOG_DEBUG_TAGREPLACE_UNMARSHAL_1, resource.getRootPath()));
+            LOG.debug(
+                Messages.get().getBundle().key(Messages.LOG_DEBUG_TAGREPLACE_LOAD_FILE_OK_1, resource.getRootPath()));
+            LOG.debug(
+                Messages.get().getBundle().key(Messages.LOG_DEBUG_TAGREPLACE_UNMARSHAL_1, resource.getRootPath()));
         }
 
         CmsXmlContent xmlcontent = CmsXmlContentFactory.unmarshal(getCms(), file);
 
         if (LOG.isDebugEnabled()) {
-            LOG.debug(Messages.get().getBundle().key(
-                Messages.LOG_DEBUG_TAGREPLACE_UNMARSHAL_OK_1,
-                resource.getRootPath()));
+            LOG.debug(
+                Messages.get().getBundle().key(Messages.LOG_DEBUG_TAGREPLACE_UNMARSHAL_OK_1, resource.getRootPath()));
         }
 
         List locales = xmlcontent.getLocales();
@@ -363,10 +370,11 @@ public class CmsTagReplaceThread extends A_CmsReportThread {
                 value = (I_CmsXmlContentValue)itElements.next();
                 String content = value.getStringValue(getCms());
                 if (LOG.isDebugEnabled()) {
-                    LOG.debug(Messages.get().getBundle().key(
-                        Messages.LOG_DEBUG_TAGREPLACE_ELEMENT_2,
-                        value.getPath(),
-                        content));
+                    LOG.debug(
+                        Messages.get().getBundle().key(
+                            Messages.LOG_DEBUG_TAGREPLACE_ELEMENT_2,
+                            value.getPath(),
+                            content));
                 }
                 try {
 
@@ -389,42 +397,41 @@ public class CmsTagReplaceThread extends A_CmsReportThread {
         if (parser.isChangedContent()) {
 
             if (LOG.isDebugEnabled()) {
-                LOG.debug(Messages.get().getBundle().key(
-                    Messages.LOG_DEBUG_TAGREPLACE_MARSHAL_1,
-                    resource.getRootPath()));
+                LOG.debug(
+                    Messages.get().getBundle().key(Messages.LOG_DEBUG_TAGREPLACE_MARSHAL_1, resource.getRootPath()));
             }
             byte[] content = xmlcontent.marshal();
             if (LOG.isDebugEnabled()) {
-                LOG.debug(Messages.get().getBundle().key(
-                    Messages.LOG_DEBUG_TAGREPLACE_MARSHAL_OK_1,
-                    resource.getRootPath()));
+                LOG.debug(
+                    Messages.get().getBundle().key(Messages.LOG_DEBUG_TAGREPLACE_MARSHAL_OK_1, resource.getRootPath()));
             }
 
             // write back the modified xmlcontent:
             file.setContents(content);
 
             if (LOG.isDebugEnabled()) {
-                LOG.debug(Messages.get().getBundle().key(Messages.LOG_DEBUG_TAGREPLACE_WRITE_1, resource.getRootPath()));
+                LOG.debug(
+                    Messages.get().getBundle().key(Messages.LOG_DEBUG_TAGREPLACE_WRITE_1, resource.getRootPath()));
             }
 
             getCms().writeFile(file);
 
             if (LOG.isDebugEnabled()) {
-                LOG.debug(Messages.get().getBundle().key(
-                    Messages.LOG_DEBUG_TAGREPLACE_WRITE_OK_1,
-                    resource.getRootPath()));
+                LOG.debug(
+                    Messages.get().getBundle().key(Messages.LOG_DEBUG_TAGREPLACE_WRITE_OK_1, resource.getRootPath()));
             }
 
             try {
                 // set the marker property:
 
                 if (LOG.isDebugEnabled()) {
-                    LOG.debug(Messages.get().getBundle().key(
-                        Messages.LOG_DEBUG_TAGREPLACE_PROPERTY_WRITE_3,
-                        new Object[] {
-                            m_markerProperty.getName(),
-                            m_markerProperty.getResourceValue(),
-                            resource.getRootPath()}));
+                    LOG.debug(
+                        Messages.get().getBundle().key(
+                            Messages.LOG_DEBUG_TAGREPLACE_PROPERTY_WRITE_3,
+                            new Object[] {
+                                m_markerProperty.getName(),
+                                m_markerProperty.getResourceValue(),
+                                resource.getRootPath()}));
                 }
                 getCms().writePropertyObject(
                     getCms().getRequestContext().removeSiteRoot(resource.getRootPath()),
@@ -447,7 +454,8 @@ public class CmsTagReplaceThread extends A_CmsReportThread {
 
         } else {
             if (LOG.isDebugEnabled()) {
-                LOG.debug(Messages.get().container(Messages.LOG_DEBUG_TAGREPLACE_UNLOCK_FILE_1, resource.getRootPath()));
+                LOG.debug(
+                    Messages.get().container(Messages.LOG_DEBUG_TAGREPLACE_UNLOCK_FILE_1, resource.getRootPath()));
             }
             getCms().unlockResource(getCms().getRequestContext().removeSiteRoot(resource.getRootPath()));
             if (LOG.isDebugEnabled()) {

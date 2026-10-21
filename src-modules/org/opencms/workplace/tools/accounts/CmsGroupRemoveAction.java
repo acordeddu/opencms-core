@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -14,12 +14,12 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * Lesser General Public License for more details.
  *
- * For further information about Alkacon Software GmbH, please see the
- * company website: http://www.alkacon.com
+ * For further information about Alkacon Software GmbH & Co. KG, please see the
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -34,8 +34,8 @@ import java.util.List;
 
 /**
  * Shows direct/indirect assigned groups and enabled/disabled a remove action.<p>
- * 
- * @since 6.0.0 
+ *
+ * @since 6.0.0
  */
 public class CmsGroupRemoveAction extends CmsListDefaultAction {
 
@@ -44,7 +44,7 @@ public class CmsGroupRemoveAction extends CmsListDefaultAction {
 
     /**
      * Default Constructor.<p>
-     * 
+     *
      * @param id the unique id
      * @param direct the direct group flag
      */
@@ -67,12 +67,15 @@ public class CmsGroupRemoveAction extends CmsListDefaultAction {
     /**
      * @see org.opencms.workplace.tools.I_CmsHtmlIconButton#isVisible()
      */
+    @Override
     public boolean isVisible() {
 
         if (getItem() != null) {
             String groupName = (String)getItem().get(A_CmsUserGroupsList.LIST_COLUMN_NAME);
             try {
-                List dGroups = getWp().getCms().getGroupsOfUser(((A_CmsUserGroupsList)getWp()).getParamUsername(), true);
+                List<CmsGroup> dGroups = getWp().getCms().getGroupsOfUser(
+                    ((A_CmsUserGroupsList)getWp()).getParamUsername(),
+                    true);
                 CmsGroup group = getWp().getCms().readGroup(groupName);
                 if (isDirect()) {
                     return dGroups.contains(group);

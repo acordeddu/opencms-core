@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -14,12 +14,12 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * Lesser General Public License for more details.
  *
- * For further information about Alkacon Software GmbH, please see the
- * company website: http://www.alkacon.com
+ * For further information about Alkacon Software GmbH & Co. KG, please see the
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -43,33 +43,38 @@ public class CmsXmlContentTab {
     /** The XML element name where this tab starts. */
     private String m_startName;
 
+    /** Description of this tab. */
+    private String m_description;
+
     /** The name to display on the tab. */
     private String m_tabName;
 
     /**
      * Constructor with the start element name.<p>
-     * 
+     *
      * The tab name is equal to the element name and the first level should not be shown in the editor.<p>
-     * 
+     *
      * @param startName the XML element name where this tab starts
      */
     public CmsXmlContentTab(String startName) {
 
-        this(startName, true, startName);
+        this(startName, true, startName, null);
     }
 
     /**
      * Constructor with all possible tab parameter settings.<p>
-     * 
+     *
      * @param startName XML element name where this tab starts
      * @param collapsed indicates if the first level of left labels should be shown in the editor
      * @param tabName the name to display on the tab
+     * @param description the tab description HTML
      */
-    public CmsXmlContentTab(String startName, boolean collapsed, String tabName) {
+    public CmsXmlContentTab(String startName, boolean collapsed, String tabName, String description) {
 
         m_startName = startName;
         m_collapsed = collapsed;
         m_tabName = tabName;
+        m_description = description;
     }
 
     /**
@@ -88,8 +93,18 @@ public class CmsXmlContentTab {
     }
 
     /**
+     * Gets the tab description HTML.<p>
+     *
+     * @return the tab description HTML
+     */
+    public String getDescription() {
+
+        return m_description;
+    }
+
+    /**
      * Returns the name for the tab ID, generated from the start name.<p>
-     * 
+     *
      * @return the name for the tab ID, generated from the start name
      */
     public String getIdName() {
@@ -107,7 +122,7 @@ public class CmsXmlContentTab {
 
     /**
      * Returns the XML element name where this tab starts.<p>
-     * 
+     *
      * @return the XML element name where this tab starts
      */
     public String getStartName() {
@@ -117,7 +132,7 @@ public class CmsXmlContentTab {
 
     /**
      * Returns the name to display on the tab.<p>
-     * 
+     *
      * @return the name to display on the tab
      */
     public String getTabName() {
@@ -136,7 +151,7 @@ public class CmsXmlContentTab {
 
     /**
      * Indicates if the first level of left labels should be shown in the editor.<p>
-     * 
+     *
      * @return <code>true</code> if the first level of left labels should NOT be shown in the editor
      */
     public boolean isCollapsed() {

@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -14,12 +14,12 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * Lesser General Public License for more details.
  *
- * For further information about Alkacon Software GmbH, please see the
- * company website: http://www.alkacon.com
+ * For further information about Alkacon Software GmbH & Co. KG, please see the
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -27,26 +27,35 @@
 
 package org.opencms.search;
 
+import org.opencms.configuration.CmsConfigurationException;
+import org.opencms.configuration.CmsParameterConfiguration;
+import org.opencms.configuration.I_CmsConfigurationParameterHandler;
+
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
- * A document type specifies which document factory class is used to pull the 
- * content of an OpenCms document into a Lucene index document.<p> 
- * 
+ * A document type specifies which document factory class is used to pull the
+ * content of an OpenCms document into a Lucene index document.<p>
+ *
  * The appropriate document factory class gets triggerd while the search index is built
- * for OpenCms documents matching the specified resource type and/or mimetype combination 
+ * for OpenCms documents matching the specified resource type and/or mimetype combination
  * in a document factory class instance.<p>
- * 
- * @since 6.0.0 
+ *
+ * @since 6.0.0
  */
-public class CmsSearchDocumentType {
+public class CmsSearchDocumentType implements I_CmsConfigurationParameterHandler {
 
     /** The name of the document factory class. */
     private String m_className;
 
     /** The mimetype to trigger the document factory class. */
     private List<String> m_mimeTypes;
+
+    /** The parameters for the document factory class. */
+    private Map<String, String> m_params;
 
     /** The logical key/name of this document type. */
     private String m_name;
@@ -59,13 +68,24 @@ public class CmsSearchDocumentType {
      */
     public CmsSearchDocumentType() {
 
-        m_resourceTypes = new ArrayList<String>();
-        m_mimeTypes = new ArrayList<String>();
+        m_resourceTypes = new ArrayList<>();
+        m_mimeTypes = new ArrayList<>();
+        m_params = new HashMap<>();
+    }
+
+    /**
+     * @see org.opencms.configuration.I_CmsConfigurationParameterHandler#addConfigurationParameter(java.lang.String, java.lang.String)
+     */
+    @Override
+    public void addConfigurationParameter(String paramName, String paramValue) {
+
+        m_params.put(paramName, paramValue);
+
     }
 
     /**
      * Adds a mimetype.<p>
-     * 
+     *
      * @param mimeType a mimetype
      */
     public void addMimeType(String mimeType) {
@@ -75,7 +95,7 @@ public class CmsSearchDocumentType {
 
     /**
      * Adds the class name of a resource type.<p>
-     * 
+     *
      * @param resourceType the class name of a resource type
      */
     public void addResourceType(String resourceType) {
@@ -91,6 +111,15 @@ public class CmsSearchDocumentType {
     public String getClassName() {
 
         return m_className;
+    }
+
+    /**
+     * @see org.opencms.configuration.I_CmsConfigurationParameterHandler#getConfiguration()
+     */
+    @Override
+    public CmsParameterConfiguration getConfiguration() {
+
+        return new CmsParameterConfiguration(m_params);
     }
 
     /**
@@ -121,6 +150,16 @@ public class CmsSearchDocumentType {
     public List<String> getResourceTypes() {
 
         return m_resourceTypes;
+    }
+
+    /**
+     * @see org.opencms.configuration.I_CmsConfigurationParameterHandler#initConfiguration()
+     */
+    @Override
+    public void initConfiguration() throws CmsConfigurationException {
+
+        // Do nothing
+
     }
 
     /**

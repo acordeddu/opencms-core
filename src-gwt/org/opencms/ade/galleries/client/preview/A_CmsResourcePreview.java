@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -15,11 +15,11 @@
  * Lesser General Public License for more details.
  *
  * For further information about Alkacon Software, please see the
- * company website: http://www.alkacon.com
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -34,17 +34,18 @@ import org.opencms.ade.galleries.shared.rpc.I_CmsPreviewService;
 import org.opencms.ade.galleries.shared.rpc.I_CmsPreviewServiceAsync;
 import org.opencms.gwt.client.CmsCoreProvider;
 import org.opencms.gwt.shared.property.CmsClientProperty;
+import org.opencms.util.CmsUUID;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.rpc.ServiceDefTarget;
 
 /**
  * Preview dialog controller.<p>
- * 
- * This class handles the communication between preview dialog and the server.  
- * 
+ *
+ * This class handles the communication between preview dialog and the server.
+ *
  * @param <T> the resource info bean type
- * 
+ *
  * @since 8.0.0
  */
 public abstract class A_CmsResourcePreview<T extends CmsResourceInfoBean> implements I_CmsResourcePreview<T> {
@@ -60,7 +61,7 @@ public abstract class A_CmsResourcePreview<T extends CmsResourceInfoBean> implem
 
     /**
      * Constructor.<p>
-     * 
+     *
      * @param galleryDialog the gallery dialog instance
      */
     protected A_CmsResourcePreview(CmsGalleryDialog galleryDialog) {
@@ -70,7 +71,7 @@ public abstract class A_CmsResourcePreview<T extends CmsResourceInfoBean> implem
 
     /**
      * Returns the preview service.<p>
-     * 
+     *
      * @return the preview service
      */
     protected static I_CmsPreviewServiceAsync getService() {
@@ -81,6 +82,14 @@ public abstract class A_CmsResourcePreview<T extends CmsResourceInfoBean> implem
             ((ServiceDefTarget)m_previewService).setServiceEntryPoint(serviceUrl);
         }
         return m_previewService;
+    }
+
+    /**
+     * Removes the preview service reference.<p>
+     */
+    private static void clearService() {
+
+        m_previewService = null;
     }
 
     /**
@@ -118,6 +127,15 @@ public abstract class A_CmsResourcePreview<T extends CmsResourceInfoBean> implem
     public String getResourcePath() {
 
         return m_infoBean.getResourcePath();
+
+    }
+
+    /**
+     * @see org.opencms.ade.galleries.client.preview.I_CmsResourcePreview#getViewLink()
+     */
+    public String getViewLink() {
+
+        return getResourcePath();
     }
 
     /**
@@ -127,17 +145,21 @@ public abstract class A_CmsResourcePreview<T extends CmsResourceInfoBean> implem
 
         getPreviewDialog().removeFromParent();
         m_infoBean = null;
-        m_previewService = null;
+        clearService();
     }
 
     /**
-     * @see org.opencms.ade.galleries.client.preview.I_CmsResourcePreview#selectResource(java.lang.String, java.lang.String)
+     * @see org.opencms.ade.galleries.client.preview.I_CmsResourcePreview#selectResource(java.lang.String, org.opencms.util.CmsUUID, java.lang.String)
      */
-    public void selectResource(String resourcePath, String title) {
+    public void selectResource(String resourcePath, CmsUUID structureId, String title) {
 
         switch (getGalleryMode()) {
             case widget:
-                CmsPreviewUtil.setResourcePath(resourcePath);
+                if (getGalleryDialog().getWidgetHandler() != null) {
+                    getGalleryDialog().getWidgetHandler().setWidgetValue(resourcePath, structureId, null);
+                } else {
+                    CmsPreviewUtil.setResourcePath(resourcePath);
+                }
                 break;
             case editor:
                 CmsPreviewUtil.setLink(resourcePath, title, null);
@@ -145,6 +167,7 @@ public abstract class A_CmsResourcePreview<T extends CmsResourceInfoBean> implem
                 break;
             case ade:
             case view:
+            case adeView:
             default:
                 //nothing to do here, should not be called
                 break;
@@ -164,12 +187,15 @@ public abstract class A_CmsResourcePreview<T extends CmsResourceInfoBean> implem
      */
     public void setResource() {
 
-        selectResource(m_infoBean.getResourcePath(), m_infoBean.getProperties().get(CmsClientProperty.PROPERTY_TITLE));
+        selectResource(
+            m_infoBean.getResourcePath(),
+            m_infoBean.getStructureId(),
+            m_infoBean.getProperties().get(CmsClientProperty.PROPERTY_TITLE));
     }
 
     /**
      * Calls the preview handler to display the given data.<p>
-     * 
+     *
      * @param resourceInfo the resource info data
      */
     public void showData(T resourceInfo) {

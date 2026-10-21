@@ -1,0 +1,131 @@
+@mixin o-app-buttons {
+  .v-button.v-button-o-app-button{
+   	font-size: $v-font-size-small;
+   	
+   	.v-button-wrap {
+   	
+   		text-align: center;
+   		line-height: 48px;
+   		width: 140px;
+   		height: 70px;
+   		position: relative;
+   		
+   		&:before {
+	  		content: "";
+	  		display: block;
+	  		height: 48px;
+  			width: 48px;
+  			border-radius: $v-border-radius;
+	  		left: 46px;
+	  		top: 1px;
+	  		position: absolute;
+	  		z-index: 0;
+	  		background: $o-medium-background-color;
+  		}
+  	
+	  	span.v-button-caption{
+	  		text-overflow: ellipsis;
+	  		overflow: hidden;
+	  		display: block;
+	  		margin: 0;
+	  		line-height: 20px;
+	  		position:absolute;
+	  		left: 0;
+	  		right: 0;
+	  		height: 20px;
+	  		bottom: 0;
+	  	}
+	  	
+	  	.v-icon{
+	  		display: inline-block;
+	  		font-size: $app-icon-size;
+	  		line-height: 32px;
+	  		vertical-align: middle;
+	  		color: $blue-dark;
+	  		position: relative;
+	  		text-shadow: 1px -1px 2px #fff, -1px 1px 2px #fff, 1px 1px 2px #fff, -1px -1px 2px #fff;
+	  	}
+	}
+	  &.v-disabled  > span.v-button-wrap:before{
+	  	background: $o-medium-background-color !important;
+	  }
+	  &:hover:not(.v-disabled), &:focus:not(.v-disabled) {
+	  	&.o-image-transparent, &.o-image-gradient{
+		    > span.v-button-wrap:before {
+		    	box-shadow: 0 0 0 2px $o-button-blue inset;
+		    }
+		}
+	  }
+	  &:after{
+	    display: none;
+	  }
+	  
+	  &.o-color-cyan > span.v-button-wrap:before{
+	  	background: $cyan;
+	  }
+	  &.o-color-red > span.v-button-wrap:before{
+	  	background: $red;
+	  }
+	  &.o-color-blue  > span.v-button-wrap:before{
+	  	background: $blue;
+	  }
+	  &.o-color-orange  > span.v-button-wrap:before{
+	  	background: $orange-dark;
+	  }
+	  &.o-color-gray  > span.v-button-wrap:before{
+	  	background: $gray-dark;
+	  }
+	  &.o-color-cyan, &.o-color-red, &.o-color-blue, &.o-color-orange, &.o-color-gray{
+	  	.v-icon{
+	  		color: $white;
+	    }
+	  }
+	  
+	  
+	  &.o-image-gradient > span.v-button-wrap:before{
+	  	background-image: unquote("radial-gradient( #fff 30%, #bbb 100%)");
+	  }
+	  &.o-image-transparent > span.v-button-wrap:before{
+	  	background: transparent;
+	  }
+	  
+	  /* following style rules allow displaying a small overlay icon above the main icon. */
+	  
+	  &.o-button-overlay-blue span.v-button-wrap > .v-icon:after{
+	  	color: $blue-dark;
+	  }
+	  &.o-button-overlay-blue-inv span.v-button-wrap > .v-icon:after{
+	  	color: $white;
+	  	background: $blue-dark;
+	  	border-color: $blue-dark;
+	  	border-radius: $v-border-radius;
+	  	text-shadow: none;
+	  }
+	  &.o-button-overlay-blue-light span.v-button-wrap > .v-icon:after{
+	  	color: $o-button-blue;
+	  }
+	  &.o-button-overlay-cyan span.v-button-wrap > .v-icon:after{
+	  	color: $cyan;
+	  }
+	  &.o-button-overlay-cyan-inv span.v-button-wrap > .v-icon:after{
+	  	color: $white;
+	  	background: $cyan;
+	  	border-color: $cyan;
+	  	border-radius: $v-border-radius;
+	  	text-shadow: none;
+	  }
+	  &.o-button-overlay-red span.v-button-wrap > .v-icon:after{
+	  	color: $red;
+	  }
+	  &.o-button-overlay-orange span.v-button-wrap > .v-icon:after{
+	  	color: $orange;
+	  }
+
+	  &.o-button-overlay-gray-light span.v-button-wrap > .v-icon:after{
+	  	color: #7f8691;
+	  }
+	  &.o-button-overlay-green span.v-button-wrap > .v-icon:after{
+	  	color: $green;
+	  }
+  }
+}

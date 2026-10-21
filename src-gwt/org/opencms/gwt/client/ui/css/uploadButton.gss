@@ -1,0 +1,68 @@
+.popup {}
+
+div.uploadButton input.uploadFileInput {
+	position: absolute;
+	right: -1px;
+	top: -10px;
+	z-index: value("constants.css.zIndexInline");
+}
+
+.uploadButton {
+	overflow: hidden;
+	position: relative;
+}
+
+.uploadFileInput{
+    opacity: 0;
+ }
+ .uploadButton {
+  	display: inline-block;
+ } 
+
+.fileInfoTable {
+	width: 100%;
+}
+.progressInfo {
+	padding-top: 20px;
+	width: 100%;
+}
+
+.popupContent div.uploadDialogButton {
+	float: left;
+	margin: 0px;
+}
+
+.dialogMessage {
+	line-height: 16px;
+	margin: 0px;
+}
+
+.dialogMessageImportant {
+	line-height: 16px;
+	margin: 0px;
+	color: value("constants.css.textColorImportant");
+}
+
+.warningMessage{
+	line-height: 16px;
+	margin: 0px 0px 0px 45px;
+}
+
+.loadingPanel {
+    left: 0;
+    top: 0;
+	display: inline-block;
+    height: 100%;
+    position: absolute;
+    width: 100%;
+    z-index: value("constants.css.zIndexPopup");
+    background-color: value("constants.css.backgroundColorDialog");
+    text-align: center;
+}
+.loadingText {
+	text-align: center;
+}
+.loadingPanel .loadingAnimation {
+	margin-top: 20px;
+	position:absolute;
+}

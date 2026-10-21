@@ -1,0 +1,108 @@
+@external cms_type_icon;
+
+.contentHide * {
+	visibility: hidden;
+}
+
+.positionIndicator{
+	background-image: value("constants.css.gradientPlaceholder");
+	height: 4px;
+	right: 6px;
+	left: 6px;
+	position: absolute;
+	z-index: value("constants.css.zIndexInline");
+	border-left: solid 5px value("constants.css.borderColorHighlight");
+	border-right: solid 5px value("constants.css.borderColorHighlight");
+}
+
+li.positionIndicator {
+	margin-top: -3px;
+}
+
+.positionIndicator {
+    opacity: 0.5;
+}
+
+.positionIndicator *{
+	display: none;
+}
+
+.positionIndicator.markUnchanged {
+	display: none;
+}
+
+.sitemapEntryDecoration {
+
+}
+
+li.notInNavigationEntry{
+	display: none;
+}
+
+.notInNavigationEntry .itemTitle{
+	color: value("constants.css.textColorDisabled");
+	cursor: default;
+}
+
+.expiredOrNotReleased div.itemTitle{
+	font-style: italic;
+}
+div.expiredOrNotReleased{
+	background-color: value("constants.css.backgroundColorSitemapExpired");
+}
+
+div.liw-itemContent.hiddenNavEntry {
+	background-image: linear-gradient(to bottom, rgba(255, 255, 255, 0.4) 0%, rgba(255, 255, 255, 0.4) 48%, rgba(240, 240, 242, 0.4) 52%, rgba(240, 240, 242, 0.4) 100%);
+}
+
+div.hiddenNavEntry .liw-itemIcon {
+	opacity: 0.4;
+}
+
+div.hiddenNavEntry .liw-titleRow {
+	color: rgba(71,71,71,0.4);
+}
+
+div.hiddenNavEntry .liw-titleRow .buttons-cmsFontIconButton {
+	color: rgba(153,153,153,0.4) !important;
+}
+
+
+
+
+
+ 
+
+div.itemTitle{
+	cursor: text;
+}
+
+.navMode .cms_type_icon, .vfsMode .cms_type_icon, .galleriesMode .cms_type_icon, .modelPageMode .cms_type_icon {
+	cursor: pointer;
+}
+
+.vfsMode li.notInNavigationEntry{
+	display: block;
+}
+
+div.marker {
+	position: absolute; 
+	visibility: visible !important;
+	font-weight: bold;
+	right: 100px;
+	top: 0px;
+}
+
+.hasChildren {} 
+
+.hasNavChildren {}
+
+.navMode .hasNoNavChildren .treeItemOpener {
+	display: none; 
+}
+
+.vfsMode .hasNoChildren .treeItemOpener {
+	display: none; 
+}
+
+ 

@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -15,11 +15,11 @@
  * Lesser General Public License for more details.
  *
  * For further information about Alkacon Software, please see the
- * company website: http://www.alkacon.com
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -34,9 +34,6 @@ import org.opencms.file.CmsResource;
 import org.opencms.main.CmsException;
 import org.opencms.main.CmsLog;
 import org.opencms.main.OpenCms;
-import org.opencms.site.CmsSiteMatcher;
-import org.opencms.util.CmsStringUtil;
-import org.opencms.workplace.CmsWorkplace;
 import org.opencms.xml.content.CmsXmlContent;
 import org.opencms.xml.content.CmsXmlContentFactory;
 
@@ -51,22 +48,34 @@ import org.apache.commons.logging.Log;
  * Advanced link substitution behavior.<p>
  * You can define additional paths that are always used as external links, even if
  * they point to the same configured site than the OpenCms itself.
- * 
+ *
  * @since 7.5.0
- * 
- * @see CmsLinkManager#substituteLink(org.opencms.file.CmsObject, String, String, boolean) 
+ *
+ * @see CmsLinkManager#substituteLink(org.opencms.file.CmsObject, String, String, boolean)
  *      for the method where this handler is used.
  */
 public class CmsAdvancedLinkSubstitutionHandler extends CmsDefaultLinkSubstitutionHandler {
 
     /** Filename of the link exclude definition file. */
-    private static final String LINK_EXCLUDE_DEFINIFITON_FILE = "/system/shared/linkexcludes";
+    private static final String LINK_EXCLUDE_DEFINIFITON_FILE = "linkexcludes";
 
     /** The log object for this class. */
     private static final Log LOG = CmsLog.getLog(CmsAdvancedLinkSubstitutionHandler.class);
 
     /** XPath for link exclude in definition file. */
     private static final String XPATH_LINK = "link";
+
+    /**
+     * @see org.opencms.staticexport.CmsDefaultLinkSubstitutionHandler#getLink(org.opencms.file.CmsObject, java.lang.String, java.lang.String, boolean)
+     */
+    @Override
+    public String getLink(CmsObject cms, String link, String siteRoot, boolean forceSecure) {
+
+        if (isExcluded(cms, link)) {
+            return link;
+        }
+        return super.getLink(cms, link, siteRoot, forceSecure);
+    }
 
     /**
      * @see org.opencms.staticexport.I_CmsLinkSubstitutionHandler#getRootPath(org.opencms.file.CmsObject, java.lang.String, java.lang.String)
@@ -81,152 +90,78 @@ public class CmsAdvancedLinkSubstitutionHandler extends CmsDefaultLinkSubstituti
 
         URI uri;
         String path;
-        String fragment;
-        String query;
-        String suffix;
 
-        // malformed uri
+        // check for malformed URI
         try {
             uri = new URI(targetUri);
             path = uri.getPath();
-
-            fragment = uri.getFragment();
-            if (fragment != null) {
-                fragment = "#" + fragment;
-            } else {
-                fragment = "";
-            }
-
-            query = uri.getQuery();
-            if (query != null) {
-                query = "?" + query;
-            } else {
-                query = "";
-            }
         } catch (Exception e) {
             if (LOG.isWarnEnabled()) {
                 LOG.warn(Messages.get().getBundle().key(Messages.LOG_MALFORMED_URI_1, targetUri), e);
             }
             return null;
         }
-
-        // concatenate fragment and query 
-        suffix = fragment.concat(query);
-
         // opaque URI
         if (uri.isOpaque()) {
             return null;
         }
 
-        // get the list of link excludes form the cache if possible
-        CmsVfsMemoryObjectCache cache = CmsVfsMemoryObjectCache.getVfsMemoryObjectCache();
-        @SuppressWarnings("unchecked")
-        List<String> excludes = (List<String>)cache.getCachedObject(cms, LINK_EXCLUDE_DEFINIFITON_FILE);
-        if (excludes == null) {
-            // nothing found in cache, so read definition file and store the result in cache
-            excludes = readLinkExcludes(cms);
-            cache.putCachedObject(cms, LINK_EXCLUDE_DEFINIFITON_FILE, excludes);
+        // in case the target is the workplace UI
+        if (CmsLinkManager.isWorkplaceUri(uri)) {
+            return null;
         }
-        // now check if the current link start with one of the exclude links
-        for (int i = 0; i < excludes.size(); i++) {
-            if (path.startsWith(excludes.get(i))) {
-                return null;
-            }
-        }
-
-        // absolute URI (i.e. URI has a scheme component like http:// ...)
-        if (uri.isAbsolute()) {
-            CmsSiteMatcher matcher = new CmsSiteMatcher(targetUri);
-            if (OpenCms.getSiteManager().isMatching(matcher)) {
-                if (path.startsWith(OpenCms.getSystemInfo().getOpenCmsContext())) {
-                    path = path.substring(OpenCms.getSystemInfo().getOpenCmsContext().length());
-                }
-                if (OpenCms.getSiteManager().isWorkplaceRequest(matcher)) {
-                    // workplace URL, use current site root
-                    // this is required since the workplace site does not have a site root to set 
-                    return cms.getRequestContext().addSiteRoot(path + suffix);
-                } else {
-                    // add the site root of the matching site
-                    return cms.getRequestContext().addSiteRoot(
-                        OpenCms.getSiteManager().matchSite(matcher).getSiteRoot(),
-                        path + suffix);
-                }
-            } else {
-                return null;
-            }
-        }
-
-        // relative URI (i.e. no scheme component, but filename can still start with "/") 
-        String context = OpenCms.getSystemInfo().getOpenCmsContext();
-        if ((context != null) && path.startsWith(context)) {
-            // URI is starting with opencms context
-            String siteRoot = null;
-            if (basePath != null) {
-                siteRoot = OpenCms.getSiteManager().getSiteRoot(basePath);
-            }
-
-            // cut context from path
-            path = path.substring(context.length());
-
-            if (siteRoot != null) {
-                // special case: relative path contains a site root, i.e. we are in the root site                
-                if (!path.startsWith(siteRoot)) {
-                    // path does not already start with the site root, we have to add this path as site prefix
-                    return cms.getRequestContext().addSiteRoot(siteRoot, path + suffix);
-                } else {
-                    // since path already contains the site root, we just leave it unchanged
-                    return path + suffix;
-                }
-            } else {
-                // site root is added with standard mechanism
-                return cms.getRequestContext().addSiteRoot(path + suffix);
-            }
-        }
-
-        // URI with relative path is relative to the given relativePath if available and in a site, 
-        // otherwise invalid
-        if (CmsStringUtil.isNotEmpty(path) && (path.charAt(0) != '/')) {
-            if (basePath != null) {
-                String absolutePath;
-                int pos = path.indexOf("../../galleries/pics/");
-                if (pos >= 0) {
-                    // HACK: mixed up editor path to system gallery image folder
-                    return CmsWorkplace.VFS_PATH_SYSTEM + path.substring(pos + 6) + suffix;
-                }
-                absolutePath = CmsLinkManager.getAbsoluteUri(path, cms.getRequestContext().addSiteRoot(basePath));
-                if (OpenCms.getSiteManager().getSiteRoot(absolutePath) != null) {
-                    return absolutePath + suffix;
-                }
-                // HACK: some editor components (e.g. HtmlArea) mix up the editor URL with the current request URL 
-                absolutePath = CmsLinkManager.getAbsoluteUri(path, cms.getRequestContext().getSiteRoot()
-                    + CmsWorkplace.VFS_PATH_EDITORS);
-                if (OpenCms.getSiteManager().getSiteRoot(absolutePath) != null) {
-                    return absolutePath + suffix;
-                }
-                // HACK: same as above, but XmlContent editor has one path element more
-                absolutePath = CmsLinkManager.getAbsoluteUri(path, cms.getRequestContext().getSiteRoot()
-                    + CmsWorkplace.VFS_PATH_EDITORS
-                    + "xmlcontent/");
-                if (OpenCms.getSiteManager().getSiteRoot(absolutePath) != null) {
-                    return absolutePath + suffix;
-                }
-            }
-
+        if (isExcluded(cms, path)) {
             return null;
         }
 
-        // relative URI (= VFS path relative to currently selected site root)
-        if (CmsStringUtil.isNotEmpty(path)) {
-            return cms.getRequestContext().addSiteRoot(path) + suffix;
-        }
+        return super.getRootPath(cms, targetUri, basePath);
+    }
 
-        // URI without path (typically local link)
-        return suffix;
+    /**
+     * Returns if the given path starts with an exclude prefix.<p>
+     *
+     * @param cms the cms context
+     * @param path the path to check
+     *
+     * @return <code>true</code> if the given path starts with an exclude prefix
+     */
+    protected boolean isExcluded(CmsObject cms, String path) {
+
+        List<String> excludes = getExcludes(cms);
+        // now check if the current link start with one of the exclude links
+        for (int i = 0; i < excludes.size(); i++) {
+            if (path.startsWith(excludes.get(i))) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Returns the exclude prefix list.<p>
+     *
+     * @param cms the cms context
+     *
+     * @return the exclude prefix list
+     */
+    private List<String> getExcludes(CmsObject cms) {
+
+        // get the list of link excludes form the cache if possible
+        CmsVfsMemoryObjectCache cache = CmsVfsMemoryObjectCache.getVfsMemoryObjectCache();
+        String filePath = OpenCms.getSystemInfo().getConfigFilePath(cms, LINK_EXCLUDE_DEFINIFITON_FILE);
+        @SuppressWarnings("unchecked")
+        List<String> excludes = (List<String>)cache.getCachedObject(cms, filePath);
+        if (excludes == null) {
+            // nothing found in cache, so read definition file and store the result in cache
+            excludes = readLinkExcludes(cms);
+            cache.putCachedObject(cms, filePath, excludes);
+        }
+        return excludes;
     }
 
     /**
      * Reads the link exclude definition file and extracts all excluded links stored in it.<p>
-     * 
+     *
      * @param cms the current CmsObject
      * @return list of Strings, containing link exclude paths
      */
@@ -236,7 +171,8 @@ public class CmsAdvancedLinkSubstitutionHandler extends CmsDefaultLinkSubstituti
 
         try {
             // get the link exclude file
-            CmsResource res = cms.readResource(LINK_EXCLUDE_DEFINIFITON_FILE);
+            String filePath = OpenCms.getSystemInfo().getConfigFilePath(cms, LINK_EXCLUDE_DEFINIFITON_FILE);
+            CmsResource res = cms.readResource(filePath);
             CmsFile file = cms.readFile(res);
             CmsXmlContent linkExcludeDefinitions = CmsXmlContentFactory.unmarshal(cms, file);
 
@@ -251,7 +187,7 @@ public class CmsAdvancedLinkSubstitutionHandler extends CmsDefaultLinkSubstituti
             }
 
         } catch (CmsException e) {
-            LOG.error(e);
+            LOG.error(e.getLocalizedMessage(), e);
         }
 
         return linkExcludes;

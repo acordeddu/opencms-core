@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -14,12 +14,12 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * Lesser General Public License for more details.
  *
- * For further information about Alkacon Software GmbH, please see the
- * company website: http://www.alkacon.com
+ * For further information about Alkacon Software GmbH & Co. KG, please see the
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -39,8 +39,7 @@ import org.opencms.relations.CmsRelation;
 import org.opencms.relations.CmsRelationFilter;
 import org.opencms.relations.CmsRelationType;
 import org.opencms.report.CmsShellReport;
-import org.opencms.test.OpenCmsTestCase;
-import org.opencms.test.OpenCmsTestProperties;
+import org.opencms.test.OpenCmsTestRunner;
 import org.opencms.util.CmsUUID;
 import org.opencms.xml.content.CmsXmlContent;
 import org.opencms.xml.content.CmsXmlContentFactory;
@@ -54,14 +53,18 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
-import junit.extensions.TestSetup;
-import junit.framework.Test;
-import junit.framework.TestSuite;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.MethodOrderer;
+import org.junit.jupiter.api.Order;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInfo;
+import org.junit.jupiter.api.TestMethodOrder;
 
 /**
  * Unit tests for OpenCms link validation.<p>
  */
-public class TestLinkValidation extends OpenCmsTestCase {
+@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
+public class TestLinkValidation extends OpenCmsTestRunner {
 
     private static final int MODE_XMLCONTENT_BOTH = 1;
     private static final int MODE_XMLCONTENT_FILEREF_ONLY = 3;
@@ -69,23 +72,13 @@ public class TestLinkValidation extends OpenCmsTestCase {
     private static final int MODE_XMLPAGE = 0;
 
     /**
-     * Default JUnit constructor.<p>
-     * 
-     * @param arg0 JUnit parameters
-     */
-    public TestLinkValidation(String arg0) {
-
-        super(arg0);
-    }
-
-    /**
      * Sets the content of a resource.<p>
-     * 
+     *
      * @param cms the cms context
      * @param filename the resource name
      * @param content the content to set
-     * 
-     * @throws CmsException if something goes wrong 
+     *
+     * @throws CmsException if something goes wrong
      */
     public static void setContent(CmsObject cms, String filename, String content) throws CmsException {
 
@@ -103,13 +96,13 @@ public class TestLinkValidation extends OpenCmsTestCase {
 
     /**
      * Sets the content of a xmlcontent resource.<p>
-     * 
+     *
      * @param cms the cms context
      * @param filename the resource name
      * @param html the content to set in the text field
      * @param link the vfs file reference to set
-     * 
-     * @throws CmsException if something goes wrong 
+     *
+     * @throws CmsException if something goes wrong
      */
     public static void setXmlContent(CmsObject cms, String filename, String html, String link) throws CmsException {
 
@@ -130,89 +123,22 @@ public class TestLinkValidation extends OpenCmsTestCase {
     }
 
     /**
-     * Test suite for this test class.<p>
-     * 
-     * @return the test suite
+     * @see org.opencms.test.OpenCmsTestRunner#$openCmsSetUp(org.junit.jupiter.api.TestInfo)
      */
-    public static Test suite() {
+    @Override
+    @BeforeAll
+    public void $openCmsSetUp(TestInfo testInfo) {
 
-        OpenCmsTestProperties.initialize(org.opencms.test.AllTests.TEST_PROPERTIES_PATH);
-
-        TestSuite suite = new TestSuite();
-        suite.setName(TestLinkValidation.class.getName());
-
-        suite.addTest(new TestLinkValidation("testInternalLinkValidation"));
-        suite.addTest(new TestLinkValidation("testLinkValidationXmlPages"));
-        suite.addTest(new TestLinkValidation("testLinkValidationXmlContents"));
-        suite.addTest(new TestLinkValidation("testLinkValidationXmlContentsHtml"));
-        suite.addTest(new TestLinkValidation("testLinkValidationXmlContentsFileRef"));
-        suite.addTest(new TestLinkValidation("testBrokenLinkFile"));
-        suite.addTest(new TestLinkValidation("testBrokenLinkFolder"));
-
-        TestSetup wrapper = new TestSetup(suite) {
-
-            @Override
-            protected void setUp() {
-
-                setupOpenCms("simpletest", "/");
-            }
-
-            @Override
-            protected void tearDown() {
-
-                removeOpenCms();
-            }
-        };
-
-        return wrapper;
-    }
-
-    /**
-     * Test internal link validation.<p>
-     * 
-     * @throws Throwable if something goes wrong
-     */
-    public void testInternalLinkValidation() throws Throwable {
-
-        echo("Testing internal link validation");
-        CmsObject cms = getCmsObject();
-
-        CmsInternalLinksValidator validator = new CmsInternalLinksValidator(cms, Collections.singletonList("/"));
-        assertTrue(validator.getResourcesWithBrokenLinks().isEmpty());
-
-        String resName = "testInternalLinkValidation.html";
-        String linkName = "brokenlink.gif";
-
-        CmsResource res = cms.createResource(resName, CmsResourceTypeXmlPage.getStaticTypeId());
-        setContent(cms, resName, "<img src='" + linkName + "' >");
-
-        validator = new CmsInternalLinksValidator(cms, Collections.singletonList("/"));
-        assertEquals(1, validator.getResourcesWithBrokenLinks().size());
-        assertEquals(res, validator.getResourcesWithBrokenLinks().get(0));
-
-        cms.createResource(linkName, CmsResourceTypeBinary.getStaticTypeId());
-
-        validator = new CmsInternalLinksValidator(cms, Collections.singletonList("/"));
-        assertTrue(validator.getResourcesWithBrokenLinks().isEmpty());
-
-        String linkMoved = "brokenlink2.gif";
-        cms.moveResource(linkName, linkMoved);
-
-        validator = new CmsInternalLinksValidator(cms, Collections.singletonList("/"));
-        assertTrue(validator.getResourcesWithBrokenLinks().isEmpty());
-
-        cms.deleteResource(linkMoved, CmsResource.DELETE_REMOVE_SIBLINGS);
-
-        validator = new CmsInternalLinksValidator(cms, Collections.singletonList("/"));
-        assertEquals(1, validator.getResourcesWithBrokenLinks().size());
-        assertEquals(res, validator.getResourcesWithBrokenLinks().get(0));
+        setupOpenCms(testInfo, "simpletest", "/");
     }
 
     /**
      * Test broken link issue with files.<p>
-     * 
+     *
      * @throws Throwable if something goes wrong
      */
+    @Test
+    @Order(6)
     public void testBrokenLinkFile() throws Throwable {
 
         echo("Testing broken link issue with files");
@@ -265,9 +191,11 @@ public class TestLinkValidation extends OpenCmsTestCase {
 
     /**
      * Test broken link issue with folder.<p>
-     * 
+     *
      * @throws Throwable if something goes wrong
      */
+    @Test
+    @Order(7)
     public void testBrokenLinkFolder() throws Throwable {
 
         echo("Testing broken link issue with folder");
@@ -293,7 +221,7 @@ public class TestLinkValidation extends OpenCmsTestCase {
         // set the content to create a relation to an image in a folder
         setContent(cms, resName, "<img src='" + folderName + imgName + "' >");
 
-        // check the new created relation, first as a broken link 
+        // check the new created relation, first as a broken link
         relations = cms.getRelationsForResource(resName, CmsRelationFilter.ALL);
         assertEquals(1, relations.size());
         CmsRelation expected = new CmsRelation(
@@ -309,7 +237,7 @@ public class TestLinkValidation extends OpenCmsTestCase {
         assertEquals(1, relations.size());
         assertRelation(expected, (CmsRelation)relations.get(0));
 
-        // create an image in a different folder 
+        // create an image in a different folder
         cms.createResource(folderName2, CmsResourceTypeFolder.RESOURCE_TYPE_ID);
         cms.createResource(folderName2 + imgName, CmsResourceTypeImage.getStaticTypeId());
 
@@ -346,169 +274,116 @@ public class TestLinkValidation extends OpenCmsTestCase {
     }
 
     /**
-     * Test link validation for xml contents with html and file references.<p>
-     * 
+     * Test internal link validation.<p>
+     *
      * @throws Throwable if something goes wrong
      */
+    @Test
+    @Order(1)
+    public void testInternalLinkValidation() throws Throwable {
+
+        echo("Testing internal link validation");
+        CmsObject cms = getCmsObject();
+
+        CmsInternalLinksValidator validator = new CmsInternalLinksValidator(cms, Collections.singletonList("/"));
+        assertTrue(validator.getResourcesWithBrokenLinks().isEmpty());
+
+        String resName = "testInternalLinkValidation.html";
+        String linkName = "brokenlink.gif";
+
+        CmsResource res = cms.createResource(resName, CmsResourceTypeXmlPage.getStaticTypeId());
+        setContent(cms, resName, "<img src='" + linkName + "' >");
+
+        validator = new CmsInternalLinksValidator(cms, Collections.singletonList("/"));
+        assertEquals(1, validator.getResourcesWithBrokenLinks().size());
+        assertEquals(res, validator.getResourcesWithBrokenLinks().get(0));
+
+        cms.createResource(linkName, CmsResourceTypeBinary.getStaticTypeId());
+
+        validator = new CmsInternalLinksValidator(cms, Collections.singletonList("/"));
+        assertTrue(validator.getResourcesWithBrokenLinks().isEmpty());
+
+        String linkMoved = "brokenlink2.gif";
+        cms.moveResource(linkName, linkMoved);
+
+        validator = new CmsInternalLinksValidator(cms, Collections.singletonList("/"));
+        assertTrue(validator.getResourcesWithBrokenLinks().isEmpty());
+
+        cms.deleteResource(linkMoved, CmsResource.DELETE_REMOVE_SIBLINGS);
+
+        validator = new CmsInternalLinksValidator(cms, Collections.singletonList("/"));
+        assertEquals(1, validator.getResourcesWithBrokenLinks().size());
+        assertEquals(res, validator.getResourcesWithBrokenLinks().get(0));
+    }
+
+    /**
+     * Test link validation for xml contents with html and file references.<p>
+     *
+     * @throws Throwable if something goes wrong
+     */
+    @Test
+    @Order(3)
     public void testLinkValidationXmlContents() throws Throwable {
 
         echo("Testing link validation for xml contents with html and file references");
 
-        testLinkValidation(MODE_XMLCONTENT_BOTH);
+        checkLinkValidation(MODE_XMLCONTENT_BOTH);
     }
 
     /**
      * Test link validation for xml contents with only file references.<p>
-     * 
+     *
      * @throws Throwable if something goes wrong
      */
+    @Test
+    @Order(5)
     public void testLinkValidationXmlContentsFileRef() throws Throwable {
 
         echo("Testing link validation for xml contents with only file references");
 
-        testLinkValidation(MODE_XMLCONTENT_FILEREF_ONLY);
+        checkLinkValidation(MODE_XMLCONTENT_FILEREF_ONLY);
     }
 
     /**
      * Test link validation for xml contents with only html.<p>
-     * 
+     *
      * @throws Throwable if something goes wrong
      */
+    @Test
+    @Order(4)
     public void testLinkValidationXmlContentsHtml() throws Throwable {
 
         echo("Testing link validation for xml contents with only html");
 
-        testLinkValidation(MODE_XMLCONTENT_HTML_ONLY);
+        checkLinkValidation(MODE_XMLCONTENT_HTML_ONLY);
     }
 
     /**
      * Test link validation for xml pages.<p>
-     * 
+     *
      * @throws Throwable if something goes wrong
      */
+    @Test
+    @Order(2)
     public void testLinkValidationXmlPages() throws Throwable {
 
         echo("Testing link validation for xml pages");
 
-        testLinkValidation(MODE_XMLPAGE);
-    }
-
-    /**
-     * Deletes a resource and publish it.<p>
-     * 
-     * @param cms the cms context
-     * @param resName the resource name
-     * @param report the report
-     * 
-     * @throws Exception if something goes wrong
-     */
-    private void delete(CmsObject cms, String resName, CmsShellReport report) throws Exception {
-
-        cms.lockResource(resName);
-        cms.deleteResource(resName, CmsResource.DELETE_REMOVE_SIBLINGS);
-        cms.unlockResource(resName);
-        OpenCms.getPublishManager().publishResource(cms, resName, true, report);
-        OpenCms.getPublishManager().waitWhileRunning();
-    }
-
-    /**
-     * Restores the first version of a resource.<p>
-     * 
-     * @param cms the cms context
-     * @param resource the resource 
-     * @param report the report
-     * 
-     * @throws Exception if something goes wrong
-     */
-    private void restore(CmsObject cms, CmsResource resource, CmsShellReport report) throws Exception {
-
-        String resName = cms.getRequestContext().getSitePath(resource);
-        // restore the first historical resource
-        cms.importResource(resName, resource, "import".getBytes(), null);
-        List historicalVersions = cms.readAllAvailableVersions(resName);
-        I_CmsHistoryResource history = (I_CmsHistoryResource)historicalVersions.get(historicalVersions.size() - 1);
-        cms.restoreResourceVersion(history.getStructureId(), history.getVersion());
-        cms.unlockResource(resName);
-        OpenCms.getPublishManager().publishResource(cms, resName, true, report);
-        OpenCms.getPublishManager().waitWhileRunning();
-        cms.lockResource(resName);
-    }
-
-    /**
-     * Sets the content of a xmlcontent resource.<p>
-     * 
-     * @param cms the cms context
-     * @param filename the resource name
-     * @param link1 the 1st vfs file reference to set
-     * @param link2 the 2nd vfs file reference to set
-     * 
-     * @throws CmsException if something goes wrong 
-     */
-    private void setXmlContentFileRef(CmsObject cms, String filename, String link1, String link2) throws CmsException {
-
-        CmsResource res = cms.readResource(filename);
-        CmsFile file = cms.readFile(res);
-        CmsXmlContent content = CmsXmlContentFactory.unmarshal(cms, file);
-        if (!content.hasValue("Homepage", Locale.ENGLISH, 0) && (link1 != null)) {
-            content.addValue(cms, "Homepage", Locale.ENGLISH, 0);
-        }
-        if (link1 != null) {
-            content.getValue("Homepage", Locale.ENGLISH, 0).setStringValue(cms, link1);
-        } else {
-            if (content.hasValue("Homepage", Locale.ENGLISH, 0)) {
-                content.removeValue("Homepage", Locale.ENGLISH, 0);
-            }
-        }
-        if (!content.hasValue("Homepage", Locale.ENGLISH, 1) && (link2 != null)) {
-            content.addValue(cms, "Homepage", Locale.ENGLISH, 1);
-        }
-        if (link2 != null) {
-            content.getValue("Homepage", Locale.ENGLISH, 1).setStringValue(cms, link2);
-        } else {
-            if (content.hasValue("Homepage", Locale.ENGLISH, 1)) {
-                content.removeValue("Homepage", Locale.ENGLISH, 1);
-            }
-        }
-        file.setContents(content.marshal());
-        cms.lockResource(filename);
-        cms.writeFile(file);
-    }
-
-    /**
-     * Sets the content of a xmlcontent resource.<p>
-     * 
-     * @param cms the cms context
-     * @param filename the resource name
-     * @param html the content to set in the text field
-     * 
-     * @throws CmsException if something goes wrong 
-     */
-    private void setXmlContentHtml(CmsObject cms, String filename, String html) throws CmsException {
-
-        CmsResource res = cms.readResource(filename);
-        CmsFile file = cms.readFile(res);
-        CmsXmlContent content = CmsXmlContentFactory.unmarshal(cms, file);
-        if (!content.hasValue("Text", Locale.ENGLISH, 0)) {
-            content.addValue(cms, "Text", Locale.ENGLISH, 0);
-        }
-        content.getValue("Text", Locale.ENGLISH, 0).setStringValue(cms, html);
-        file.setContents(content.marshal());
-        cms.lockResource(filename);
-        cms.writeFile(file);
+        checkLinkValidation(MODE_XMLPAGE);
     }
 
     /**
      * Test the link validation for different resource types.<p>
-     * 
-     * @param mode the mode: 
-     *      <code>0</code> for hmlpage, 
-     *      <code>1</code> for xmlcontent with html and file ref, 
-     *      <code>2</code> for xmlcontent with html only, 
+     *
+     * @param mode the mode:
+     *      <code>0</code> for hmlpage,
+     *      <code>1</code> for xmlcontent with html and file ref,
+     *      <code>2</code> for xmlcontent with html only,
      *      <code>3</code> for xmlcontent with file ref only
-     *       
-     * @throws Exception if something goes wrong 
+     *
+     * @throws Exception if something goes wrong
      */
-    private void testLinkValidation(int mode) throws Exception {
+    private void checkLinkValidation(int mode) throws Exception {
 
         CmsObject cms = getCmsObject();
         String filename1, filename2, filename3, filename4, filename5, filename6, filename7, filename8;
@@ -558,7 +433,7 @@ public class TestLinkValidation extends OpenCmsTestCase {
         // create files
         int type;
         if (mode > MODE_XMLPAGE) {
-            type = OpenCmsTestCase.ARTICLE_TYPEID; // article
+            type = ARTICLE_TYPEID; // article
         } else {
             type = CmsResourceTypeXmlPage.getStaticTypeId();
         }
@@ -779,7 +654,7 @@ public class TestLinkValidation extends OpenCmsTestCase {
 
         // check links after modification
 
-        // Publishing after deleting file5 and changing the link 
+        // Publishing after deleting file5 and changing the link
         // from file6 on file5 to file7 must generate no errors
         CmsResource file5 = cms.readResource(filename5); // keeping the id for restoration
         delete(cms, filename5, report);
@@ -823,8 +698,8 @@ public class TestLinkValidation extends OpenCmsTestCase {
         }
         restore(cms, file5, report);
 
-        // Publishing after deleting file2 and changing the link from file4 on file2 to file7 
-        // and removing the link from file1 on file2 must generate no errors 
+        // Publishing after deleting file2 and changing the link from file4 on file2 to file7
+        // and removing the link from file1 on file2 must generate no errors
         CmsResource file2 = cms.readResource(filename2); // keeping id for restoration
         delete(cms, filename2, report);
         switch (mode) {
@@ -875,7 +750,7 @@ public class TestLinkValidation extends OpenCmsTestCase {
         }
         restore(cms, file2, report);
 
-        // Publishing just file7 after creating a new file8 and creating a link 
+        // Publishing just file7 after creating a new file8 and creating a link
         // from file7 to file8 must generate one error
         CmsResource res8 = cms.createResource(filename8, type);
         switch (mode) {
@@ -907,7 +782,7 @@ public class TestLinkValidation extends OpenCmsTestCase {
             assertTrue(brokenLinks.contains(new CmsRelation(res7, res8, CmsRelationType.XML_WEAK)));
         }
 
-        // Publishing after creating a new file8 and creating a link 
+        // Publishing after creating a new file8 and creating a link
         // from file7 to file8 must generate no errors
         List res78 = new ArrayList();
         res78.add(res7);
@@ -978,8 +853,112 @@ public class TestLinkValidation extends OpenCmsTestCase {
     }
 
     /**
+     * Deletes a resource and publish it.<p>
+     *
+     * @param cms the cms context
+     * @param resName the resource name
+     * @param report the report
+     *
+     * @throws Exception if something goes wrong
+     */
+    private void delete(CmsObject cms, String resName, CmsShellReport report) throws Exception {
+
+        cms.lockResource(resName);
+        cms.deleteResource(resName, CmsResource.DELETE_REMOVE_SIBLINGS);
+        cms.unlockResource(resName);
+        OpenCms.getPublishManager().publishResource(cms, resName, true, report);
+        OpenCms.getPublishManager().waitWhileRunning();
+    }
+
+    /**
+     * Restores the first version of a resource.<p>
+     *
+     * @param cms the cms context
+     * @param resource the resource
+     * @param report the report
+     *
+     * @throws Exception if something goes wrong
+     */
+    private void restore(CmsObject cms, CmsResource resource, CmsShellReport report) throws Exception {
+
+        String resName = cms.getRequestContext().getSitePath(resource);
+        // restore the first historical resource
+        cms.importResource(resName, resource, "import".getBytes(), null);
+        List historicalVersions = cms.readAllAvailableVersions(resName);
+        I_CmsHistoryResource history = (I_CmsHistoryResource)historicalVersions.get(historicalVersions.size() - 1);
+        cms.restoreResourceVersion(history.getStructureId(), history.getVersion());
+        cms.unlockResource(resName);
+        OpenCms.getPublishManager().publishResource(cms, resName, true, report);
+        OpenCms.getPublishManager().waitWhileRunning();
+        cms.lockResource(resName);
+    }
+
+    /**
+     * Sets the content of a xmlcontent resource.<p>
+     *
+     * @param cms the cms context
+     * @param filename the resource name
+     * @param link1 the 1st vfs file reference to set
+     * @param link2 the 2nd vfs file reference to set
+     *
+     * @throws CmsException if something goes wrong
+     */
+    private void setXmlContentFileRef(CmsObject cms, String filename, String link1, String link2) throws CmsException {
+
+        CmsResource res = cms.readResource(filename);
+        CmsFile file = cms.readFile(res);
+        CmsXmlContent content = CmsXmlContentFactory.unmarshal(cms, file);
+        if (!content.hasValue("Homepage", Locale.ENGLISH, 0) && (link1 != null)) {
+            content.addValue(cms, "Homepage", Locale.ENGLISH, 0);
+        }
+        if (link1 != null) {
+            content.getValue("Homepage", Locale.ENGLISH, 0).setStringValue(cms, link1);
+        } else {
+            if (content.hasValue("Homepage", Locale.ENGLISH, 0)) {
+                content.removeValue("Homepage", Locale.ENGLISH, 0);
+            }
+        }
+        if (!content.hasValue("Homepage", Locale.ENGLISH, 1) && (link2 != null)) {
+            content.addValue(cms, "Homepage", Locale.ENGLISH, 1);
+        }
+        if (link2 != null) {
+            content.getValue("Homepage", Locale.ENGLISH, 1).setStringValue(cms, link2);
+        } else {
+            if (content.hasValue("Homepage", Locale.ENGLISH, 1)) {
+                content.removeValue("Homepage", Locale.ENGLISH, 1);
+            }
+        }
+        file.setContents(content.marshal());
+        cms.lockResource(filename);
+        cms.writeFile(file);
+    }
+
+    /**
+     * Sets the content of a xmlcontent resource.<p>
+     *
+     * @param cms the cms context
+     * @param filename the resource name
+     * @param html the content to set in the text field
+     *
+     * @throws CmsException if something goes wrong
+     */
+    private void setXmlContentHtml(CmsObject cms, String filename, String html) throws CmsException {
+
+        CmsResource res = cms.readResource(filename);
+        CmsFile file = cms.readFile(res);
+        CmsXmlContent content = CmsXmlContentFactory.unmarshal(cms, file);
+        if (!content.hasValue("Text", Locale.ENGLISH, 0)) {
+            content.addValue(cms, "Text", Locale.ENGLISH, 0);
+        }
+        content.getValue("Text", Locale.ENGLISH, 0).setStringValue(cms, html);
+        file.setContents(content.marshal());
+        cms.lockResource(filename);
+        cms.writeFile(file);
+    }
+
+    /**
      * Touch all resources in the given list.<p>
-     * 
+     *
      * @param cms the cms context
      * @param resources the resources to touch
      * @throws CmsException if something goes wrong
@@ -997,14 +976,14 @@ public class TestLinkValidation extends OpenCmsTestCase {
 
     /**
      * Validates the links after the deletion of all the given resources.<p>
-     * 
+     *
      * @param cms the cms context
      * @param resources the resources to delete
      * @param allResources the resource context
      * @param report the report
-     * 
+     *
      * @return the validation map
-     * 
+     *
      * @throws Exception if something goes wrong
      */
     private Map validateAfterDelete(CmsObject cms, List resources, List allResources, CmsShellReport report)

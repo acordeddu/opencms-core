@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -14,12 +14,12 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * Lesser General Public License for more details.
  *
- * For further information about Alkacon Software GmbH, please see the
- * company website: http://www.alkacon.com
+ * For further information about Alkacon Software GmbH & Co. KG, please see the
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -33,7 +33,7 @@ import org.opencms.main.CmsException;
 
 import javax.mail.MessagingException;
 
-import org.apache.commons.mail.Email;
+import org.apache.commons.mail2.javax.Email;
 
 /**
  * Interface for the newsletter.<p>
@@ -55,26 +55,26 @@ public interface I_CmsNewsletter {
     /** Macro for the lastname. */
     String MACRO_USER_LASTNAME = "lastname";
 
-    /** 
+    /**
      * Adds a OpenCms resource as an attachment to the newsletter.<p>
-     * 
+     *
      * @param cms the CmsObject
      * @param resource the resource to attach
-     * 
+     *
      * @throws CmsException if something goes wrong
      */
     void addAttachment(CmsObject cms, CmsResource resource) throws CmsException;
 
     /**
      * Adds content to the newsletter.<p>
-     * 
+     *
      * @param content the content to add
      */
     void addContent(I_CmsNewsletterContent content);
 
     /**
      * Returns the newsletter as an e-mail to be sent.<p>
-     * 
+     *
      * @param cms the CmsObject
      * @param recipient the recipient to which the newsletter will be sent
      * @return the newsletter as an e-mail
@@ -85,7 +85,7 @@ public interface I_CmsNewsletter {
 
     /**
      * Sets the subject.<p>
-     * 
+     *
      * @param subject the subject to set
      */
     void setSubject(String subject);

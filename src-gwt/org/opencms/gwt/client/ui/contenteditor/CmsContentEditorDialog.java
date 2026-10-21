@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -15,11 +15,11 @@
  * Lesser General Public License for more details.
  *
  * For further information about Alkacon Software, please see the
- * company website: http://www.alkacon.com
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -46,6 +46,8 @@ import org.opencms.util.CmsStringUtil;
 import java.util.HashMap;
 import java.util.Map;
 
+import com.google.gwt.core.client.Scheduler;
+import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.dom.client.FormElement;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.Command;
@@ -56,10 +58,63 @@ import com.google.gwt.user.client.ui.RootPanel;
 
 /**
  * XML content editor dialog.<p>
- * 
+ *
  * @since 8.0.0
  */
 public final class CmsContentEditorDialog {
+
+    /**
+     * Additional options for the editor dialog.<p>
+     */
+    public static class DialogOptions {
+
+        /** Suggested editor width. */
+        private Integer m_suggestedWidth;
+
+        /** Suggested editor height. */
+        private Integer m_suggestedHeight;
+
+        /**
+         * Returns the suggestedHeight.<p>
+         *
+         * @return the suggestedHeight
+         */
+        public Integer getSuggestedHeight() {
+
+            return m_suggestedHeight;
+        }
+
+        /**
+         * Returns the suggestedWidth.<p>
+         *
+         * @return the suggestedWidth
+         */
+        public Integer getSuggestedWidth() {
+
+            return m_suggestedWidth;
+        }
+
+        /**
+         * Sets the suggestedHeight.<p>
+         *
+         * @param suggestedHeight the suggestedHeight to set
+         */
+        public void setSuggestedHeight(Integer suggestedHeight) {
+
+            m_suggestedHeight = suggestedHeight;
+        }
+
+        /**
+         * Sets the suggestedWidth.<p>
+         *
+         * @param suggestedWidth the suggestedWidth to set
+         */
+        public void setSuggestedWidth(Integer suggestedWidth) {
+
+            m_suggestedWidth = suggestedWidth;
+        }
+
+    }
 
     /** Name of exported dialog close function. */
     private static final String CLOSING_METHOD_NAME = "cms_ade_closeEditorDialog";
@@ -88,6 +143,9 @@ public final class CmsContentEditorDialog {
     /** Flag indicating if a new resource needs to created. */
     private boolean m_isNew;
 
+    /** The content creation mode. */
+    private String m_mode;
+
     /**
      * Hiding constructor.<p>
      */
@@ -97,8 +155,62 @@ public final class CmsContentEditorDialog {
     }
 
     /**
+     * Generates the form to post to the editor frame.<p>
+     *
+     * @param editableData the data about the resource which should be edited
+     * @param isNew true if the resource to be edited doesn'T already exist
+     * @param target the target of the form to be created
+     * @param mode the mode for creating new elements
+     *
+     * @return the form element which, when submitted, opens the editor
+     */
+    public static FormElement generateForm(I_CmsEditableData editableData, boolean isNew, String target, String mode) {
+
+        // create a form to submit a post request to the editor JSP
+        Map<String, String> formValues = new HashMap<String, String>();
+        if (editableData.getSitePath() != null) {
+            formValues.put("resource", editableData.getSitePath());
+        }
+        if (editableData.getElementLanguage() != null) {
+            formValues.put("elementlanguage", editableData.getElementLanguage());
+        }
+        if (editableData.getElementName() != null) {
+            formValues.put("elementname", editableData.getElementName());
+        }
+
+        // in case the editor is opened within this window, use the current URI as back link
+        String backlink = "_self".equals(target)
+        ? CmsCoreProvider.get().getUri()
+        : CmsCoreProvider.get().getContentEditorBacklinkUrl();
+
+        formValues.put("backlink", backlink);
+        formValues.put("redirect", "true");
+        formValues.put("directedit", "true");
+        formValues.put("editcontext", CmsCoreProvider.get().getUri());
+        formValues.put("nofoot", "1");
+        if (isNew) {
+            formValues.put("newlink", editableData.getNewLink());
+            formValues.put("editortitle", editableData.getNewTitle());
+        }
+
+        String postCreateHandler = editableData.getPostCreateHandler();
+        if (postCreateHandler != null) {
+            formValues.put("postCreateHandler", postCreateHandler);
+        }
+        if (mode != null) {
+            formValues.put("mode", mode);
+        }
+        FormElement formElement = CmsDomUtil.generateHiddenForm(
+            CmsCoreProvider.get().link(CmsCoreProvider.get().getContentEditorUrl()),
+            Method.post,
+            target,
+            formValues);
+        return formElement;
+    }
+
+    /**
      * Returns the dialogs instance.<p>
-     * 
+     *
      * @return the dialog instance
      */
     public static CmsContentEditorDialog get() {
@@ -120,15 +232,21 @@ public final class CmsContentEditorDialog {
 
     /**
      * Opens the content editor dialog for the given element.<p>
-     * 
+     *
      * @param editableData the editable data
      * @param isNew <code>true</code> when creating a new resource
+     * @param mode the content creation mode
+     * @param dlgOptions the additional dialog options
      * @param editorHandler the editor handler
      */
     public void openEditDialog(
         final I_CmsEditableData editableData,
         boolean isNew,
+        String mode,
+        final DialogOptions dlgOptions,
         I_CmsContentEditorHandler editorHandler) {
+
+        m_mode = mode;
 
         if ((m_dialog != null) && m_dialog.isShowing()) {
             CmsDebugLog.getInstance().printLine("Dialog is already open, cannot open another one.");
@@ -138,7 +256,7 @@ public final class CmsContentEditorDialog {
         m_editableData = editableData;
         m_editorHandler = editorHandler;
         if (m_isNew || (editableData.getStructureId() == null)) {
-            openDialog();
+            openDialog(dlgOptions);
         } else {
             CmsRpcAction<String> action = new CmsRpcAction<String>() {
 
@@ -154,7 +272,7 @@ public final class CmsContentEditorDialog {
 
                     if (CmsStringUtil.isNotEmptyOrWhitespaceOnly(result)) {
                         getEditableData().setSitePath(result);
-                        openDialog();
+                        openDialog(dlgOptions);
                     } else {
                         CmsAlertDialog alert = new CmsAlertDialog(
                             Messages.get().key(Messages.ERR_TITLE_ERROR_0),
@@ -166,7 +284,6 @@ public final class CmsContentEditorDialog {
             };
             action.execute();
         }
-
     }
 
     /**
@@ -177,7 +294,12 @@ public final class CmsContentEditorDialog {
         if (m_dialog != null) {
             m_dialog.hide();
             m_dialog = null;
-            m_editorHandler.onClose(m_editableData.getSitePath(), m_isNew);
+            m_editorHandler.onClose(
+                m_editableData.getSitePath(),
+                m_editableData.getStructureId(),
+                m_isNew,
+                false,
+                false);
             m_editorHandler = null;
         }
         if (m_form != null) {
@@ -192,7 +314,7 @@ public final class CmsContentEditorDialog {
 
     /**
      * Returns the editable data.<p>
-     * 
+     *
      * @return the editable data
      */
     protected I_CmsEditableData getEditableData() {
@@ -206,9 +328,8 @@ public final class CmsContentEditorDialog {
      */
     protected void onWindowClose() {
 
-        boolean savePage = Window.confirm(Messages.get().key(
-            Messages.GUI_EDITOR_SAVE_BEFORE_LEAVING_1,
-            m_editableData.getSitePath()));
+        boolean savePage = Window.confirm(
+            Messages.get().key(Messages.GUI_EDITOR_SAVE_BEFORE_LEAVING_1, m_editableData.getSitePath()));
         if (savePage) {
             saveEditorContent();
         }
@@ -216,27 +337,37 @@ public final class CmsContentEditorDialog {
 
     /**
      * Opens the dialog for the given sitepath.<p>
+     *
+     * @param dlgOptions the additional dialog options
      */
-    protected void openDialog() {
+    protected void openDialog(DialogOptions dlgOptions) {
 
-        m_dialog = new CmsPopup(Messages.get().key(Messages.GUI_DIALOG_CONTENTEDITOR_TITLE_0)
-            + " - "
-            + (m_isNew ? m_editableData.getNewTitle() : m_editableData.getSitePath()));
+        m_dialog = new CmsPopup(
+            Messages.get().key(Messages.GUI_DIALOG_CONTENTEDITOR_TITLE_0)
+                + " - "
+                + (m_isNew ? m_editableData.getNewTitle() : m_editableData.getSitePath()));
         m_dialog.addStyleName(I_CmsLayoutBundle.INSTANCE.contentEditorCss().contentEditor());
 
         // calculate width
         int width = Window.getClientWidth();
         width = (width < 1350) ? width - 50 : 1300;
+        if (dlgOptions.getSuggestedWidth() != null) {
+            width = dlgOptions.getSuggestedWidth().intValue();
+        }
+
         m_dialog.setWidth(width);
 
         // calculate height
         int height = Window.getClientHeight() - 50;
         height = (height < 645) ? 645 : height;
+        if (dlgOptions.getSuggestedHeight() != null) {
+            height = dlgOptions.getSuggestedHeight().intValue();
+        }
         m_dialog.setHeight(height);
 
         m_dialog.setGlassEnabled(true);
         m_dialog.setUseAnimation(false);
-        CmsIFrame editorFrame = new CmsIFrame(EDITOR_IFRAME_NAME, "");
+        final CmsIFrame editorFrame = new CmsIFrame(EDITOR_IFRAME_NAME, "");
         m_dialog.addDialogClose(new Command() {
 
             /**
@@ -244,8 +375,9 @@ public final class CmsContentEditorDialog {
              */
             public void execute() {
 
-                CmsConfirmDialog confirmDlg = new CmsConfirmDialog(Messages.get().key(
-                    Messages.GUI_EDITOR_CLOSE_CAPTION_0), Messages.get().key(Messages.GUI_EDITOR_CLOSE_TEXT_0));
+                CmsConfirmDialog confirmDlg = new CmsConfirmDialog(
+                    Messages.get().key(Messages.GUI_EDITOR_CLOSE_CAPTION_0),
+                    Messages.get().key(Messages.GUI_EDITOR_CLOSE_TEXT_0));
                 confirmDlg.setHandler(new I_CmsConfirmDialogHandler() {
 
                     public void onClose() {
@@ -255,7 +387,15 @@ public final class CmsContentEditorDialog {
 
                     public void onOk() {
 
-                        CmsContentEditorDialog.this.close();
+                        // make sure the onunload event is triggered within the editor frames for ALL browsers
+                        editorFrame.setUrl("about:blank");
+                        Scheduler.get().scheduleDeferred(new ScheduledCommand() {
+
+                            public void execute() {
+
+                                CmsContentEditorDialog.this.close();
+                            }
+                        });
                     }
                 });
                 confirmDlg.center();
@@ -265,8 +405,9 @@ public final class CmsContentEditorDialog {
         });
 
         m_dialog.add(editorFrame);
+        m_dialog.setPositionFixed();
         m_dialog.center();
-        m_form = generateForm();
+        m_form = generateForm(m_editableData, m_isNew, EDITOR_IFRAME_NAME, m_mode);
         RootPanel.getBodyElement().appendChild(m_form);
         m_form.submit();
 
@@ -290,37 +431,7 @@ public final class CmsContentEditorDialog {
     }-*/;
 
     /**
-     * Generates the form to post to the editor frame.<p>
-     * 
-     * @return the form element
-     */
-    private FormElement generateForm() {
-
-        // create a form to submit a post request to the editor JSP
-        Map<String, String> formValues = new HashMap<String, String>();
-        if (m_editableData.getSitePath() != null) {
-            formValues.put("resource", m_editableData.getSitePath());
-        }
-        if (m_editableData.getElementLanguage() != null) {
-            formValues.put("elementlanguage", m_editableData.getElementLanguage());
-        }
-        if (m_editableData.getElementName() != null) {
-            formValues.put("elementname", m_editableData.getElementName());
-        }
-        formValues.put("backlink", CmsCoreProvider.get().getContentEditorBacklinkUrl());
-        formValues.put("redirect", "true");
-        formValues.put("directedit", "true");
-        if (m_isNew) {
-            formValues.put("newlink", m_editableData.getNewLink());
-            formValues.put("editortitle", m_editableData.getNewTitle());
-        }
-        FormElement formElement = CmsDomUtil.generateHiddenForm(CmsCoreProvider.get().link(
-            CmsCoreProvider.get().getContentEditorUrl()), Method.post, EDITOR_IFRAME_NAME, formValues);
-        return formElement;
-    }
-
-    /**
-     * Saves the current editor content synchronously.<p>
+      * Saves the current editor content synchronously.<p>
      */
     private native void saveEditorContent() /*-{
         var iFrame = $wnd.frames[@org.opencms.gwt.client.ui.contenteditor.CmsContentEditorDialog::EDITOR_IFRAME_NAME];

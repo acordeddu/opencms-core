@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -14,12 +14,12 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * Lesser General Public License for more details.
  *
- * For further information about Alkacon Software GmbH, please see the
- * company website: http://www.alkacon.com
+ * For further information about Alkacon Software GmbH & Co. KG, please see the
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -31,8 +31,8 @@ import org.opencms.setup.CmsSetupBean;
 
 /**
  * Tests the servlet container.<p>
- * 
- * @since 6.1.8 
+ *
+ * @since 6.1.8
  */
 public class CmsSetupTestServletContainer implements I_CmsSetupTest {
 
@@ -51,7 +51,12 @@ public class CmsSetupTestServletContainer implements I_CmsSetupTest {
             {"Apache Tomcat/5", null},
             {"Apache Tomcat/6", null},
             {"Apache Tomcat/7", null},
+            {"Apache Tomcat/8", null},
+            {"Apache Tomcat/9", null},
+            {"Apache Tomcat/10", null},
+            {"Apache Tomcat/11", null},
             {"WebLogic Server 9", null},
+            {"jetty/12", null},
             {
                 "Resin/3",
                 "Please be sure that during the Setup Wizard, the web application auto-redeployment feature is deactivated. One way to achieve this, is to set the '<code>dependency-check-interval</code>' option in your <code>resin.conf</code> configuration file to <code>-1</code> or something big like <code>2000s</code>."},
@@ -81,12 +86,14 @@ public class CmsSetupTestServletContainer implements I_CmsSetupTest {
         if (unsupportedServletContainer > -1) {
             testResult.setRed();
             testResult.setInfo(unsupportedContainers[unsupportedServletContainer][1]);
-            testResult.setHelp("This servlet container does not work with OpenCms. Even though OpenCms is fully standards compliant, "
-                + "the standard leaves some 'grey' (i.e. undefined) areas. "
-                + "Please consider using another, supported servlet container.");
+            testResult.setHelp(
+                "This servlet container does not work with OpenCms. Even though OpenCms is fully standards compliant, "
+                    + "the standard leaves some 'grey' (i.e. undefined) areas. "
+                    + "Please consider using another, supported servlet container.");
         } else if (supportedServletContainer < 0) {
             testResult.setYellow();
-            testResult.setHelp("This servlet container has not been tested with OpenCms. Please consider using another, supported servlet container.");
+            testResult.setHelp(
+                "This servlet container has not been tested with OpenCms. Please consider using another, supported servlet container.");
         } else if (supportedContainers[supportedServletContainer][1] != null) {
             // set additional info for supported servlet containers
             testResult.setInfo(supportedContainers[supportedServletContainer][1]);
@@ -104,12 +111,12 @@ public class CmsSetupTestServletContainer implements I_CmsSetupTest {
         return TEST_NAME;
     }
 
-    /** 
+    /**
      * Checks if the used servlet container is part of the servlet containers OpenCms supports.<p>
-     * 
+     *
      * @param thisContainer The servlet container in use
      * @param supportedContainers All known servlet containers OpenCms supports
-     * 
+     *
      * @return true if this container is supported, false if it was not found in the list
      */
     private int hasSupportedServletContainer(String thisContainer, String[][] supportedContainers) {
@@ -122,13 +129,13 @@ public class CmsSetupTestServletContainer implements I_CmsSetupTest {
         return -1;
     }
 
-    /** 
+    /**
      * Checks if the used servlet container is part of the servlet containers OpenCms
      * does NOT support.<p>
-     * 
+     *
      * @param thisContainer the servlet container in use
      * @param unsupportedContainers all known servlet containers OpenCms does NOT support
-     * 
+     *
      * @return the container id or -1 if the container is not supported
      */
     private int unsupportedServletContainer(String thisContainer, String[][] unsupportedContainers) {

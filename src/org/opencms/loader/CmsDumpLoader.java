@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -14,12 +14,12 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * Lesser General Public License for more details.
  *
- * For further information about Alkacon Software GmbH, please see the
- * company website: http://www.alkacon.com
+ * For further information about Alkacon Software GmbH & Co. KG, please see the
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -27,19 +27,24 @@
 
 package org.opencms.loader;
 
+import org.opencms.configuration.CmsConfigurationException;
 import org.opencms.configuration.CmsParameterConfiguration;
+import org.opencms.db.storage.I_CmsStorageDelivery;
 import org.opencms.file.CmsFile;
 import org.opencms.file.CmsObject;
 import org.opencms.file.CmsResource;
+import org.opencms.file.CmsStoredContentInfo;
 import org.opencms.flex.CmsFlexController;
 import org.opencms.main.CmsException;
 import org.opencms.main.CmsLog;
 import org.opencms.main.OpenCms;
+import org.opencms.security.CmsPermissionSet;
 import org.opencms.util.CmsRequestUtil;
 import org.opencms.util.CmsStringUtil;
 import org.opencms.workplace.CmsWorkplaceManager;
 
 import java.io.IOException;
+import java.io.OutputStream;
 import java.util.Iterator;
 import java.util.Locale;
 
@@ -50,13 +55,68 @@ import javax.servlet.http.HttpServletResponse;
 
 /**
  * Dump loader for binary or other unprocessed resource types.<p>
- * 
- * This loader is also used to deliver static sub-elements of pages processed 
+ *
+ * This loader is also used to deliver static sub-elements of pages processed
  * by other loaders.<p>
- * 
- * @since 6.0.0 
+ *
+ * @since 6.0.0
  */
-public class CmsDumpLoader implements I_CmsResourceLoader {
+public class CmsDumpLoader
+implements I_CmsResourceLoader, I_CmsStaticExportStreamLoader, I_CmsStoredContentDirectDeliveryLoader {
+
+    /**
+     * Output stream which writes all bytes to two target streams.<p>
+     */
+    private static class CmsTeeOutputStream extends OutputStream {
+
+        /** The first output stream. */
+        private final OutputStream m_first;
+
+        /** The second output stream. */
+        private final OutputStream m_second;
+
+        /**
+         * Creates a new tee output stream.<p>
+         *
+         * @param first the first output stream
+         * @param second the second output stream
+         */
+        CmsTeeOutputStream(OutputStream first, OutputStream second) {
+
+            m_first = first;
+            m_second = second;
+        }
+
+        /**
+         * @see java.io.OutputStream#flush()
+         */
+        @Override
+        public void flush() throws IOException {
+
+            m_first.flush();
+            m_second.flush();
+        }
+
+        /**
+         * @see java.io.OutputStream#write(byte[], int, int)
+         */
+        @Override
+        public void write(byte[] buffer, int offset, int length) throws IOException {
+
+            m_first.write(buffer, offset, length);
+            m_second.write(buffer, offset, length);
+        }
+
+        /**
+         * @see java.io.OutputStream#write(int)
+         */
+        @Override
+        public void write(int value) throws IOException {
+
+            m_first.write(value);
+            m_second.write(value);
+        }
+    }
 
     /** The id of this loader. */
     public static final int RESOURCE_LOADER_ID = 1;
@@ -83,7 +143,52 @@ public class CmsDumpLoader implements I_CmsResourceLoader {
         m_configuration.put(paramName, paramValue);
     }
 
-    /** 
+    /**
+     * Tries to deliver externally stored content directly to the servlet response.<p>
+     *
+     * @param cms the CMS context
+     * @param resource the resource
+     * @param req the request
+     * @param res the response
+     *
+     * @return <code>true</code> if the response was handled
+     *
+     * @throws IOException in case writing to the response fails
+     * @throws CmsException in case storage delivery fails
+     */
+    public boolean deliverStoredContent(
+        CmsObject cms,
+        CmsResource resource,
+        HttpServletRequest req,
+        HttpServletResponse res)
+    throws IOException, CmsException {
+
+        if ((req == null) || (res == null)) {
+            return false;
+        }
+        if (!cms.hasPermissions(resource, CmsPermissionSet.ACCESS_READ)) {
+            return false;
+        }
+        CmsStoredContentInfo info = cms.readStoredContentInfo(resource);
+        if ((info == null) || !info.isExternallyStored()) {
+            return false;
+        }
+        I_CmsStorageDelivery storage = cms.getStoredContentDelivery(info.getStorage());
+        if (storage == null) {
+            return false;
+        }
+        String mimetype = OpenCms.getResourceManager().getMimeType(
+            resource.getName(),
+            cms.getRequestContext().getEncoding());
+        if (mimetype != null) {
+            res.setContentType(mimetype);
+        }
+        CmsStoredContentDeliveryHelper.DeliveryResult result = new CmsStoredContentDeliveryHelper(
+            getClientCacheMaxAge()).deliver(info, storage, req, res);
+        return result != CmsStoredContentDeliveryHelper.DeliveryResult.NOT_DELIVERABLE;
+    }
+
+    /**
      * Destroy this ResourceLoder, this is a NOOP so far.<p>
      */
     public void destroy() {
@@ -100,7 +205,8 @@ public class CmsDumpLoader implements I_CmsResourceLoader {
         String element,
         Locale locale,
         HttpServletRequest req,
-        HttpServletResponse res) throws CmsException {
+        HttpServletResponse res)
+    throws CmsException {
 
         return cms.readFile(resource).getContents();
     }
@@ -117,15 +223,7 @@ public class CmsDumpLoader implements I_CmsResourceLoader {
         // output must be generated
         if ((req != null) && (res != null)) {
             // overwrite headers if set as default
-            for (Iterator<String> i = OpenCms.getStaticExportManager().getExportHeaders().listIterator(); i.hasNext();) {
-                String header = i.next();
-
-                // set header only if format is "key: value"
-                String[] parts = CmsStringUtil.splitAsArray(header, ':');
-                if (parts.length == 2) {
-                    res.setHeader(parts[0], parts[1]);
-                }
-            }
+            setStaticExportHeaders(res);
             load(cms, file, req, res);
         }
 
@@ -133,9 +231,60 @@ public class CmsDumpLoader implements I_CmsResourceLoader {
     }
 
     /**
-     * Will always return <code>null</code> since this loader does not 
+     * Tries to deliver externally stored content directly during static export.<p>
+     *
+     * @param cms the CMS context
+     * @param resource the resource
+     * @param req the request
+     * @param res the response
+     *
+     * @return <code>true</code> if the response was handled
+     *
+     * @throws IOException in case writing to the response fails
+     * @throws CmsException in case storage delivery fails
+     */
+    @Override
+    public boolean exportStoredContentTo(
+        CmsObject cms,
+        CmsResource resource,
+        HttpServletRequest req,
+        HttpServletResponse res)
+    throws IOException, CmsException {
+
+        if ((req == null) || (res == null)) {
+            return false;
+        }
+        setStaticExportHeaders(res);
+        return deliverStoredContent(cms, resource, req, res);
+    }
+
+    /**
+     * @see org.opencms.loader.I_CmsStaticExportStreamLoader#exportTo(org.opencms.file.CmsObject, org.opencms.file.CmsResource, javax.servlet.http.HttpServletRequest, javax.servlet.http.HttpServletResponse, java.io.OutputStream)
+     */
+    @Override
+    public void exportTo(
+        CmsObject cms,
+        CmsResource resource,
+        HttpServletRequest req,
+        HttpServletResponse res,
+        OutputStream exportOut)
+    throws IOException, CmsException {
+
+        OutputStream out = exportOut;
+        if ((req != null) && (res != null)) {
+            setStaticExportHeaders(res);
+            if (!canSendLastModifiedHeader(resource, req, res)) {
+                prepareResponse(resource, resource.getLength(), req, res);
+                out = new CmsTeeOutputStream(exportOut, res.getOutputStream());
+            }
+        }
+        cms.readFileContentTo(resource, out);
+    }
+
+    /**
+     * Will always return <code>null</code> since this loader does not
      * need to be configured.<p>
-     * 
+     *
      * @see org.opencms.configuration.I_CmsConfigurationParameterHandler#getConfiguration()
      */
     public CmsParameterConfiguration getConfiguration() {
@@ -154,10 +303,10 @@ public class CmsDumpLoader implements I_CmsResourceLoader {
 
     /**
      * Return a String describing the ResourceLoader,
-     * which is (localized to the system default locale) 
+     * which is (localized to the system default locale)
      * <code>"The OpenCms default resource loader for unprocessed files"</code>.<p>
-     * 
-     * @return a describing String for the ResourceLoader 
+     *
+     * @return a describing String for the ResourceLoader
      */
     public String getResourceLoaderInfo() {
 
@@ -167,7 +316,7 @@ public class CmsDumpLoader implements I_CmsResourceLoader {
     /**
      * @see org.opencms.configuration.I_CmsConfigurationParameterHandler#initConfiguration()
      */
-    public void initConfiguration() {
+    public void initConfiguration() throws CmsConfigurationException {
 
         Object maxAge = m_configuration.get("client.cache.maxage");
         if (maxAge == null) {
@@ -180,9 +329,8 @@ public class CmsDumpLoader implements I_CmsResourceLoader {
             if (maxAge != null) {
                 CmsLog.INIT.info(Messages.get().getBundle().key(Messages.INIT_CLIENT_CACHE_MAX_AGE_1, maxAge));
             }
-            CmsLog.INIT.info(Messages.get().getBundle().key(
-                Messages.INIT_LOADER_INITIALIZED_1,
-                this.getClass().getName()));
+            CmsLog.INIT.info(
+                Messages.get().getBundle().key(Messages.INIT_LOADER_INITIALIZED_1, this.getClass().getName()));
         }
     }
 
@@ -200,6 +348,20 @@ public class CmsDumpLoader implements I_CmsResourceLoader {
     public boolean isStaticExportProcessable() {
 
         return false;
+    }
+
+    /**
+     * @see org.opencms.loader.I_CmsStoredContentDirectDeliveryLoader#isStoredContentDirectDeliveryEnabled(org.opencms.file.CmsObject, org.opencms.file.CmsResource, javax.servlet.http.HttpServletRequest, javax.servlet.http.HttpServletResponse)
+     */
+    @Override
+    public boolean isStoredContentDirectDeliveryEnabled(
+        CmsObject cms,
+        CmsResource resource,
+        HttpServletRequest req,
+        HttpServletResponse res)
+    throws CmsException {
+
+        return true;
     }
 
     /**
@@ -224,40 +386,18 @@ public class CmsDumpLoader implements I_CmsResourceLoader {
     public void load(CmsObject cms, CmsResource resource, HttpServletRequest req, HttpServletResponse res)
     throws IOException, CmsException {
 
+        if (tryDeliverStoredContent(cms, resource, req, res)) {
+            return;
+        }
+
         if (canSendLastModifiedHeader(resource, req, res)) {
             // no further processing required
             return;
         }
 
-        // make sure we have the file contents available
-        CmsFile file = cms.readFile(resource);
+        prepareResponse(resource, resource.getLength(), req, res);
 
-        // set response status to "200 - OK" (required for static export "on-demand")
-        res.setStatus(HttpServletResponse.SC_OK);
-        // set content length header
-        res.setContentLength(file.getContents().length);
-
-        if (CmsWorkplaceManager.isWorkplaceUser(req)) {
-            // prevent caching for Workplace users
-            res.setDateHeader(CmsRequestUtil.HEADER_LAST_MODIFIED, System.currentTimeMillis());
-            CmsRequestUtil.setNoCacheHeaders(res);
-        } else {
-            // set date last modified header
-            res.setDateHeader(CmsRequestUtil.HEADER_LAST_MODIFIED, file.getDateLastModified());
-
-            // set "Expires" only if cache control is not already set
-            if (!res.containsHeader(CmsRequestUtil.HEADER_CACHE_CONTROL)) {
-                long expireTime = resource.getDateExpired();
-                if (expireTime == CmsResource.DATE_EXPIRED_DEFAULT) {
-                    expireTime--;
-                    // flex controller will automatically reduce this to a reasonable value
-                }
-                // now set "Expires" header        
-                CmsFlexController.setDateExpiresHeader(res, expireTime, m_clientCacheMaxAge);
-            }
-        }
-
-        service(cms, file, req, res);
+        service(cms, resource, req, res);
     }
 
     /**
@@ -266,33 +406,33 @@ public class CmsDumpLoader implements I_CmsResourceLoader {
     public void service(CmsObject cms, CmsResource resource, ServletRequest req, ServletResponse res)
     throws CmsException, IOException {
 
-        res.getOutputStream().write(cms.readFile(resource).getContents());
+        cms.readFileContentTo(resource, res.getOutputStream());
     }
 
     /**
      * Checks if the requested resource must be send to the client by checking the "If-Modified-Since" http header.<p>
-     * 
-     * If the resource has not been modified, the "304 - not modified" 
+     *
+     * If the resource has not been modified, the "304 - not modified"
      * header is send to the client and <code>true</code>
      * is returned, otherwise nothing is send and <code>false</code> is returned.<p>
-     * 
+     *
      * @param resource the resource to check
      * @param req the current request
      * @param res the current response
-     * 
+     *
      * @return <code>true</code> if the "304 - not modified" header has been send to the client
      */
     protected boolean canSendLastModifiedHeader(CmsResource resource, HttpServletRequest req, HttpServletResponse res) {
 
         // resource state must be unchanged
         if (resource.getState().isUnchanged()
-        // the request must not have been send by a workplace user (we can't use "304 - not modified" in workplace
+            // the request must not have been send by a workplace user (we can't use "304 - not modified" in workplace
             && !CmsWorkplaceManager.isWorkplaceUser(req)
             // last modified header must match the time form the resource
             && CmsFlexController.isNotModifiedSince(req, resource.getDateLastModified())) {
             long now = System.currentTimeMillis();
             if ((resource.getDateReleased() < now) && (resource.getDateExpired() > now)) {
-                // resource is available and not expired 
+                // resource is available and not expired
                 CmsFlexController.setDateExpiresHeader(res, resource.getDateExpired(), m_clientCacheMaxAge);
                 // set status 304 - not modified
                 res.setStatus(HttpServletResponse.SC_NOT_MODIFIED);
@@ -300,5 +440,96 @@ public class CmsDumpLoader implements I_CmsResourceLoader {
             }
         }
         return false;
+    }
+
+    /**
+     * Returns the maximum age for dumped contents in the clients cache.<p>
+     *
+     * @return the maximum age for dumped contents in the clients cache
+     */
+    protected long getClientCacheMaxAge() {
+
+        return m_clientCacheMaxAge;
+    }
+
+    /**
+     * Prepares the servlet response headers for sending the given resource.<p>
+     *
+     * @param resource the resource to send
+     * @param contentLength the content length to set
+     * @param req the current request
+     * @param res the current response
+     *
+     */
+    protected void prepareResponse(
+        CmsResource resource,
+        int contentLength,
+        HttpServletRequest req,
+        HttpServletResponse res) {
+
+        // set response status to "200 - OK" (required for static export "on-demand")
+        res.setStatus(HttpServletResponse.SC_OK);
+        // set content length header
+        res.setContentLength(contentLength);
+
+        if (CmsWorkplaceManager.isWorkplaceUser(req)) {
+            // prevent caching for Workplace users
+            res.setDateHeader(CmsRequestUtil.HEADER_LAST_MODIFIED, System.currentTimeMillis());
+            CmsRequestUtil.setNoCacheHeaders(res);
+        } else {
+            // set date last modified header
+            res.setDateHeader(CmsRequestUtil.HEADER_LAST_MODIFIED, resource.getDateLastModified());
+
+            // set "Expires" only if cache control is not already set
+            if (!res.containsHeader(CmsRequestUtil.HEADER_CACHE_CONTROL)) {
+                long expireTime = resource.getDateExpired();
+                if (expireTime == CmsResource.DATE_EXPIRED_DEFAULT) {
+                    expireTime--;
+                    // flex controller will automatically reduce this to a reasonable value
+                }
+                // now set "Expires" header
+                CmsFlexController.setDateExpiresHeader(res, expireTime, m_clientCacheMaxAge);
+            }
+        }
+    }
+
+    /**
+     * Sets the configured static export headers on the response.<p>
+     *
+     * @param res the response
+     */
+    private void setStaticExportHeaders(HttpServletResponse res) {
+
+        Iterator<String> headers = OpenCms.getStaticExportManager().getExportHeaders().listIterator();
+        while (headers.hasNext()) {
+            String header = headers.next();
+            String[] parts = CmsStringUtil.splitAsArray(header, ':');
+            if (parts.length == 2) {
+                res.setHeader(parts[0], parts[1]);
+            }
+        }
+    }
+
+    /**
+     * Tries to deliver externally stored content directly from the storage backend.<p>
+     *
+     * @param cms the CMS context
+     * @param resource the resource
+     * @param req the request
+     * @param res the response
+     *
+     * @return <code>true</code> if the response was handled
+     *
+     * @throws IOException in case writing to the response fails
+     * @throws CmsException in case storage delivery fails
+     */
+    private boolean tryDeliverStoredContent(
+        CmsObject cms,
+        CmsResource resource,
+        HttpServletRequest req,
+        HttpServletResponse res)
+    throws IOException, CmsException {
+
+        return deliverStoredContent(cms, resource, req, res);
     }
 }

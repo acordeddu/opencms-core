@@ -1,0 +1,220 @@
+.popup, .popupContent{}
+
+div.blocking{
+	position: fixed;
+	height: 100%;
+	width: 100%;
+	top: 0px;
+	left: 0px;
+	z-index: value("constants.css.zIndexPopup");
+}
+
+.popup div.blocking{
+	position: absolute;
+}
+
+.blocking div.notificationContainer{
+	top: 40%;
+}
+
+.blocking .notificationContainer br, .blocking .notificationOverlay{
+	display: block;	
+}
+
+.notificationContainer br, .notificationOverlay {
+	display: none;
+}
+
+div.notificationOverlay { 
+	position:absolute; 
+	height: 100%; 
+	width:100%; 
+	top: 0; 
+	left: 0; 
+	background-color: value("constants.css.backgroundColorOverlay"); 
+}
+
+.notificationOverlay { 
+	opacity: value("constants.css.overlayOpacity");
+}
+.popup div.notificationContainer{
+	top: 0px;
+	height: 100%;
+	padding-top: 50px;
+	z-index: value("constants.css.zIndexPopup");
+}
+div.notificationContainer {
+	text-align: center;
+	position:absolute;
+	width:100%;
+	top: 50%;
+	left: 0;
+	height: 16px;
+}
+.popup .notificationContainer .loadingAnimation{
+	position: absolute;
+	margin-left: -32px;
+    margin-top: -32px;
+}
+
+.notificationContainer .loadingAnimation{
+	display: none;
+}
+
+/** Broadcast messages */
+p.messageTime{
+	font-size: 10px;
+	line-height: 10px;
+	color: value("constants.css.textColorDisabled");
+}
+
+p.messageHead{
+	border-top:0px solid #c9c9c9;
+	position:relative;
+	background:inherit !important;
+	padding: 10px !important;
+}
+
+div.messageWrap{
+	background-color: value("constants.css.backgroundColorDialog");
+	border-top: 1px solid value("constants.css.borderColor");
+	margin: 0 -15px -5px;
+	padding: 0 15px 5px;
+}
+/** Broadcast messages */
+
+.notificationContainer div.closeButton{
+	position: absolute;
+	top:10px;
+	right:10px;
+	z-index:100;
+	font-size:30px !important;
+	pointer-events: auto;
+}
+
+div.notificationContainer, .notificationContainer div.messagesPanel > div{
+	text-align: center;
+}
+
+.messagesPanel {
+	margin-top: 55px;
+	pointer-events: none;    	
+} 
+
+.notificationMessage {
+	pointer-events: auto;
+}
+
+.notificationMessage div.messageContent{
+	dislay: inline-block;
+}
+
+.notificationMessage div.messageContent p{
+	line-height: 21.7px !important;
+	padding:5px;
+	background: white;
+	border-top: 1px solid #c9c9c9;
+	text-align: left;
+}
+
+.notificationMessage div.messageContent br{
+	display: block;
+}
+
+.notificationMessage div.messageContent ul {
+	display: block;
+	list-style-type: disc;
+	margin-block-start: 1em;
+	margin-block-end: 1em;
+	padding-inline-start: 40px;
+}
+
+.notificationMessage div.messageContent .messageText {
+	background-color: white; 
+	padding: 10px;
+	line-height: 1.55; 
+}
+
+.notificationMessage div.messageContent .messageText * {
+	line-height: 1.55;
+}
+
+.notificationMessage div.messageContent .messageText div {
+	min-height: 20px; 
+}
+
+div.notificationMessage, span.notificationMessage {
+	font-weight: normal; 
+	font-size: value("constants.css.fontSizeBig");
+	padding: 5px 15px; 
+	line-height: value("constants.css.lineHeightBig");
+	display: inline-block; 
+	margin-top: 8px;
+	max-height: 300px;
+    max-width: 830px;
+    min-width: 415px;
+    overflow: auto;
+    border-width: 2px;
+    border-style: solid;
+    position: relative;
+    text-align: left;
+}
+
+
+div.notificationMessage b, span.notificationMessage b{
+	font-weight: bold;
+}
+
+.popup div.notificationMessage, .popup span.notificationMessage {
+	max-width: 80%;
+	min-width: 40%;
+}
+.busy .loadingAnimation{
+	display: inline-block;
+}
+
+.notificationError .notificationMessage { 
+	background-color: value("constants.css.notificationErrorBg"); 
+	color: value("constants.css.notificationErrorColor"); 
+	border-color: value("constants.css.notificationErrorBorder"); 
+}
+
+.notificationNormal .notificationMessage { 
+	background-color: value("constants.css.notificationNormalBg"); 
+	color: value("constants.css.notificationNormalColor"); 
+	border-color: value("constants.css.notificationNormalBorder");
+}
+.notificationWarning .notificationMessage { 
+			max-width: 600px;
+		width:600px;
+		text-align:left;
+		padding: 0px 0px;
+		border-color: #ac7c00;
+		border-width: 2px;
+		border-style: solid;
+		background-color: value("constants.css.notificationWarningBg");
+}
+
+.notificationWarning .notificationMessage img{
+    float: left;
+    margin-top: 3px;
+    margin-right: 10px;
+    background-color: white;
+    border: 2px solid;
+    border-radius: 3px;
+    padding: 1px;
+}
+
+.notificationWarning .notificationMessage span{
+    line-height: inherit !important;
+}
+
+.notificationWarning .messageTime{
+	
+	padding:10px;
+}
+
+.notificationWarning .messageWrap{
+	padding:5px;
+	margin:0px;
+}

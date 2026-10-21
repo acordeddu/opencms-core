@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta http-equiv="X-UA-Compatible"
+        content="IE=edge">
+  <meta http-equiv="Content-Type"
+        content="text/html; charset=UTF-8">
+  <style type="text/css">html, body {height:100%;margin:0;}</style>
+  %(workplaceCss)
+  <title>%(title)</title>
+</head>
+
+<body class="v-generated-body opencms">
+  <!-- Loads the Vaadin widget set, etc. -->
+  <script src="%(vaadinBootstrap)"></script>
+          
+  <form class="cmslogin-form" id="opencms-login-form" method="post" action="">
+  <div style="position: relative; left: -2000px; top: -2000px;">
+  	<input type="text" id="hidden-username" name="ocUname" %(predefUser) >
+  	%(hiddenPasswordField)
+  </div>    	  
+  <div id="login-app" class="v-app vaadinBox">
+	    <!-- Optional placeholder for the loading indicator -->
+	    <div class=" v-app-loading">%(loadingHtml)</div>
+	    <!-- Alternative fallback text -->
+	    <noscript>You have to enable javascript in your browser to
+	              use an application built with Vaadin.</noscript>
+	  </div>
+         </form> 
+  <script>//<![CDATA[
+    if (!window.vaadin)
+        alert("Failed to load the bootstrap JavaScript: "+
+              "VAADIN/vaadinBootstrap.js");
+
+    /* The UI Configuration */
+	vaadin.initApplication("login-app", {
+	    "browserDetailsUrl": "%(vaadinServlet)",
+	    "serviceUrl": "%(vaadinServlet)",
+	    "widgetset": "org.opencms.ui.WidgetSet",
+	    "theme": "opencms",
+	    "versionInfo": {"vaadinVersion": "%(vaadinVersion)"},
+	    "vaadinDir": "%(vaadinDir)",
+	    "heartbeatInterval": 30,
+	    "debug": false,
+	    "standalone": false,
+	    /* In case of any issues ask to reload. No need to be any more specific. */
+	    "authErrMsg": {
+	        "message": "Please <u>click here<\/u> to reload.",
+	        "caption": "Communication problem"
+	    },
+	    "comErrMsg": {
+	        "message": "Please <u>click here<\/u> to reload.",
+	        "caption": "Communication problem"
+	    },
+	    "sessExpMsg": {
+	        "message": "Please <u>click here<\/u> to reload.",
+	        "caption": "Communication problem"
+	    }
+	});//]] >
+  </script>
+</body>
+</html>

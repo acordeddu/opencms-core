@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -14,12 +14,12 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * Lesser General Public License for more details.
  *
- * For further information about Alkacon Software GmbH, please see the
- * company website: http://www.alkacon.com
+ * For further information about Alkacon Software GmbH & Co. KG, please see the
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -28,23 +28,24 @@
 package org.opencms.file;
 
 import org.opencms.db.CmsResourceState;
+import org.opencms.file.types.I_CmsResourceType;
 
 /**
  * Provides filters for resource result sets obtained from requests to the OpenCms VFS.<p>
- * 
+ *
  * Using the constant filters provided by this class
- * you can control "special" behaviour 
- * of access to the VFS. For example, in the "Offline" project 
+ * you can control "special" behaviour
+ * of access to the VFS. For example, in the "Offline" project
  * there can be deleted files, by using this filter you can control
- * if deleted files should be included in a result set or not.<p> 
- * 
- * @since 6.0.0 
+ * if deleted files should be included in a result set or not.<p>
+ *
+ * @since 6.0.0
  */
 public final class CmsResourceFilter {
 
-    /** 
+    /**
      * Filter to display all resources.<p>
-     * 
+     *
      * This filter uses the following rules:
      * <ul>
      * <li>Includes: Resources marked as deleted.</li>
@@ -59,17 +60,18 @@ public final class CmsResourceFilter {
      */
     public static final CmsResourceFilter ALL_MODIFIED = ALL.addExcludeState(CmsResource.STATE_UNCHANGED);
 
-    /** 
+    /**
      * Default filter to display resources for the online project.<p>
-     * 
+     *
      * This filter uses the following rules:
      * <ul>
      * <li>Excludes: Resources marked as deleted.</li>
      * <li>Excludes: Resources outside the 'time window' set with release and expiration date.</li>
      * <li>Includes: Resources marked as 'invisible' using permissions.</li>
-     * </ul> 
+     * </ul>
      */
-    public static final CmsResourceFilter DEFAULT = ALL.addExcludeState(CmsResource.STATE_DELETED).addRequireTimerange();
+    public static final CmsResourceFilter DEFAULT = ALL.addExcludeState(
+        CmsResource.STATE_DELETED).addRequireTimerange();
 
     /**
      * Default filter to display files for the online project.<p>
@@ -81,58 +83,62 @@ public final class CmsResourceFilter {
      */
     public static final CmsResourceFilter DEFAULT_FOLDERS = DEFAULT.addRequireFolder();
 
-    /** 
+    /**
      * Default filter to display resources for the online project.<p>
-     * 
+     *
      * This filter uses the following rules:
      * <ul>
      * <li>Excludes: Resources marked as deleted.</li>
      * <li>Excludes: Resources outside the 'time window' set with release and expiration date.</li>
      * <li>Excludes: Resources marked as 'invisible' using permissions.</li>
-     * </ul> 
+     * </ul>
      */
     public static final CmsResourceFilter DEFAULT_ONLY_VISIBLE = DEFAULT.addRequireVisible();
 
-    /** 
+    /**
      * Filter to display resources ignoring the release and expiration dates.<p>
-     * 
+     *
      * This filter uses the following rules:
      * <ul>
      * <li>Excludes: Resources marked as deleted.</li>
      * <li>Includes: Resources outside the 'time window' set with release and expiration date.</li>
      * <li>Includes: Resources marked as 'invisible' using permissions.</li>
-     * </ul> 
+     * </ul>
      */
     public static final CmsResourceFilter IGNORE_EXPIRATION = ALL.addExcludeState(CmsResource.STATE_DELETED);
 
-    /** 
+    /**
      * Filter to display only visible resources.<p>
-     * 
+     *
      * This filter used the following rules:
      * <ul>
      * <li>Includes: Resources marked as deleted.</li>
      * <li>Includes: Resources outside the 'time window' set with release and expiration date.</li>
      * <li>Excludes: Resources marked as 'invisible' using permissions.</li>
-     * </ul> 
+     * </ul>
      */
     public static final CmsResourceFilter ONLY_VISIBLE = ALL.addRequireVisible();
 
-    /** 
+    /**
      * Filter to display only visible and not deleted resources.<p>
-     * 
+     *
      * This filter used the following rules:
      * <ul>
      * <li>Excludes: Resources marked as deleted.</li>
      * <li>Includes: Resources outside the 'time window' set with release and expiration date.</li>
      * <li>Excludes: Resources marked as 'invisible' using permissions.</li>
-     * </ul> 
+     * </ul>
      */
-    public static final CmsResourceFilter ONLY_VISIBLE_NO_DELETED = ONLY_VISIBLE.addExcludeState(CmsResource.STATE_DELETED);
+    public static final CmsResourceFilter ONLY_VISIBLE_NO_DELETED = ONLY_VISIBLE.addExcludeState(
+        CmsResource.STATE_DELETED);
 
+    /** The excluded flag value. */
     private static final int EXCLUDED = 2;
 
+    /** The ignored flag value. */
     private static final int IGNORED = 0;
 
+    /** The required flag value. */
     private static final int REQUIRED = 1;
 
     /** The cache id for this filter. */
@@ -223,19 +229,47 @@ public final class CmsResourceFilter {
     }
 
     /**
+     * Returns the DEFAULT filter in the Online project, and IGNORE_EXPIRATION otherwise.<p>
+     *
+     * @param cms the CMS context whose project to check
+     * @return the resource filter based on the given CmsObject
+     */
+    public static CmsResourceFilter ignoreExpirationOffline(CmsObject cms) {
+
+        return cms.getRequestContext().getCurrentProject().isOnlineProject() ? DEFAULT : IGNORE_EXPIRATION;
+    }
+
+    /**
      * Returns a new CmsResourceFilter requiring the given type.<p>
-     * 
+     *
      * @param type the required resource type
      * @return a filter requiring the given type
      */
+    public static CmsResourceFilter requireType(I_CmsResourceType type) {
+
+        return new CmsResourceFilter().addRequireType(type);
+    }
+
+    /**
+     * Returns a new CmsResourceFilter requiring the given type.<p>
+     *
+     * @param type the required resource type
+     * @return a filter requiring the given type
+     *
+     * @deprecated
+     * Use {@link #requireType(I_CmsResourceType)} instead.
+     * Resource types should always be referenced either by its type class (preferred) or by type name.
+     * Use of int based resource type references will be discontinued in a future OpenCms release.
+     */
+    @Deprecated
     public static CmsResourceFilter requireType(int type) {
 
         return new CmsResourceFilter().addRequireType(type);
     }
 
     /**
-     * Returns an extended filter in order to avoid the given flags in the filtered resources.<p> 
-     *  
+     * Returns an extended filter in order to avoid the given flags in the filtered resources.<p>
+     *
      * @param flags the resource flags to exclude
      * @return a filter excluding the given resource flags
      */
@@ -251,8 +285,8 @@ public final class CmsResourceFilter {
     }
 
     /**
-     * Returns an extended filter in order to avoid the given type in the filtered resources.<p> 
-     *  
+     * Returns an extended filter in order to avoid the given type in the filtered resources.<p>
+     *
      * @param state the resource state to exclude
      * @return a filter excluding the given resource state
      */
@@ -269,9 +303,9 @@ public final class CmsResourceFilter {
 
     /**
      * Returns an extended filter to guarantee all filtered resources ignoring the time range (released and not expired) window.<p>
-     * 
+     *
      * This is the reverse of {@link #addRequireTimerange()}.<p>
-     * 
+     *
      * @return a filter excluding invalid resources
      */
     public CmsResourceFilter addExcludeTimerange() {
@@ -285,11 +319,28 @@ public final class CmsResourceFilter {
     }
 
     /**
-     * Returns an extended filter in order to avoid the given type in the filtered resources.<p> 
-     *  
+     * Returns an extended filter in order to avoid the given type in the filtered resources.<p>
+     *
      * @param type the resource type to exclude
      * @return a filter excluding the given resource type
      */
+    public CmsResourceFilter addExcludeType(I_CmsResourceType type) {
+
+        return addExcludeType(type.getTypeId());
+    }
+
+    /**
+     * Returns an extended filter in order to avoid the given type in the filtered resources.<p>
+     *
+     * @param type the resource type to exclude
+     * @return a filter excluding the given resource type
+     *
+     * @deprecated
+     * Use {@link #addExcludeType(I_CmsResourceType)} instead.
+     * Resource types should always be referenced either by its type class (preferred) or by type name.
+     * Use of int based resource type references will be discontinued in a future OpenCms release.
+     */
+    @Deprecated
     public CmsResourceFilter addExcludeType(int type) {
 
         CmsResourceFilter extendedFilter = (CmsResourceFilter)clone();
@@ -303,8 +354,8 @@ public final class CmsResourceFilter {
 
     /**
      * Returns an extended filter to restrict the results to resources that expire in the given timerange.<p>
-     * 
-     * @param time the required time 
+     *
+     * @param time the required time
      * @return a filter to restrict the results to resources that expire in the given timerange
      */
     public CmsResourceFilter addRequireExpireAfter(long time) {
@@ -320,8 +371,8 @@ public final class CmsResourceFilter {
 
     /**
      * Returns an extended filter to restrict the results to resources that expire in the given timerange.<p>
-     * 
-     * @param time the required time 
+     *
+     * @param time the required time
      * @return a filter to restrict the results to resources that expire in the given timerange
      */
     public CmsResourceFilter addRequireExpireBefore(long time) {
@@ -336,8 +387,8 @@ public final class CmsResourceFilter {
     }
 
     /**
-     * Returns an extended filter that requires all returned resources to be files.<p> 
-     *  
+     * Returns an extended filter that requires all returned resources to be files.<p>
+     *
      * @return an extended filter that requires all returned resources to be files
      */
     public CmsResourceFilter addRequireFile() {
@@ -352,7 +403,7 @@ public final class CmsResourceFilter {
 
     /**
      * Returns an extended filter to guarantee a distinct resource flags of the filtered resources.<p>
-     * 
+     *
      * @param flags the required resource flags
      * @return a filter requiring the given resource flags
      */
@@ -368,8 +419,8 @@ public final class CmsResourceFilter {
     }
 
     /**
-     * Returns an extended filter that requires all returned resources to be folders.<p> 
-     *  
+     * Returns an extended filter that requires all returned resources to be folders.<p>
+     *
      * @return an extended filter that requires all returned resources to be folders
      */
     public CmsResourceFilter addRequireFolder() {
@@ -384,7 +435,7 @@ public final class CmsResourceFilter {
 
     /**
      * Returns an extended filter to restrict the results to resources modified in the given timerange.<p>
-     * 
+     *
      * @param time the required time
      * @return a filter to restrict the results to resources modified in the given timerange
      */
@@ -401,8 +452,8 @@ public final class CmsResourceFilter {
 
     /**
      * Returns an extended filter to restrict the results to resources modified in the given timerange.<p>
-     * 
-     * @param time the required time 
+     *
+     * @param time the required time
      * @return a filter to restrict the results to resources modified in the given timerange
      */
     public CmsResourceFilter addRequireLastModifiedBefore(long time) {
@@ -418,8 +469,8 @@ public final class CmsResourceFilter {
 
     /**
      * Returns an extended filter to restrict the results to resources that are released in the given timerange.<p>
-     * 
-     * @param time the required time 
+     *
+     * @param time the required time
      * @return a filter to restrict the results to resources that are released in the given timerange
      */
     public CmsResourceFilter addRequireReleaseAfter(long time) {
@@ -435,8 +486,8 @@ public final class CmsResourceFilter {
 
     /**
      * Returns an extended filter to restrict the results to resources that are released in the given timerange.<p>
-     * 
-     * @param time the required time 
+     *
+     * @param time the required time
      * @return a filter to restrict the results to resources that are released in the given timerange
      */
     public CmsResourceFilter addRequireReleaseBefore(long time) {
@@ -452,7 +503,7 @@ public final class CmsResourceFilter {
 
     /**
      * Returns an extended filter to guarantee a distinct resource state of the filtered resources.<p>
-     * 
+     *
      * @param state the required resource state
      * @return a filter requiring the given resource state
      */
@@ -469,7 +520,7 @@ public final class CmsResourceFilter {
 
     /**
      * Returns an extended filter to guarantee all filtered resources are valid (released and not expired).<p>
-     * 
+     *
      * @return a filter excluding invalid resources
      */
     public CmsResourceFilter addRequireTimerange() {
@@ -484,12 +535,32 @@ public final class CmsResourceFilter {
 
     /**
      * Returns an extended filter to guarantee a distinct resource type of the filtered resources.<p>
-     * 
+     *
      * If <code>-1</code> is given as type, the filter will not be extended to require a resource type
-     * 
+     *
      * @param type the required resource type
      * @return a filter requiring the given resource type
      */
+    public CmsResourceFilter addRequireType(I_CmsResourceType type) {
+
+        // TODO: Refactor driver layer to use resource type id classes (or names) instead of int
+        return addRequireType(type.getTypeId());
+    }
+
+    /**
+     * Returns an extended filter to guarantee a distinct resource type of the filtered resources.<p>
+     *
+     * If <code>-1</code> is given as type, the filter will not be extended to require a resource type
+     *
+     * @param type the required resource type
+     * @return a filter requiring the given resource type
+     *
+     * @deprecated
+     * Use {@link #addRequireType(I_CmsResourceType)} instead.
+     * Resource types should always be referenced either by its type class (preferred) or by type name.
+     * Use of int based resource type references will be discontinued in a future OpenCms release.
+     */
+    @Deprecated
     public CmsResourceFilter addRequireType(int type) {
 
         if (type != -1) {
@@ -506,7 +577,7 @@ public final class CmsResourceFilter {
 
     /**
      * Returns an extended filter to guarantee all filtered resources are visible.<p>
-     * 
+     *
      * @return a filter excluding invisible resources
      */
     public CmsResourceFilter addRequireVisible() {
@@ -552,7 +623,7 @@ public final class CmsResourceFilter {
 
     /**
      * return if the stored flags should be excluded while filtering resources.<p>
-     * 
+     *
      * @return if the flags should be excluded
      */
     public boolean excludeFlags() {
@@ -562,7 +633,7 @@ public final class CmsResourceFilter {
 
     /**
      * return if the stored state should be excluded while filtering resources.<p>
-     * 
+     *
      * @return if the state should be excluded
      */
     public boolean excludeState() {
@@ -572,7 +643,7 @@ public final class CmsResourceFilter {
 
     /**
      * Returns if the stored type should be excluded while filtering resources.<p>
-     * 
+     *
      * @return if the type should be excluded
      */
     public boolean excludeType() {
@@ -582,7 +653,7 @@ public final class CmsResourceFilter {
 
     /**
      * Returns the unique cache id for this filter.<p>
-     * 
+     *
      * @return the unique cache id for this filter
      */
     public String getCacheId() {
@@ -592,7 +663,7 @@ public final class CmsResourceFilter {
 
     /**
      * Returns the start of the expire time range for this filter.<p>
-     * 
+     *
      * @return start of the expire time range for this filter
      */
     public long getExpireAfter() {
@@ -602,7 +673,7 @@ public final class CmsResourceFilter {
 
     /**
      * Returns the end of the expire time range for this filter.<p>
-     * 
+     *
      * @return the end of the expire time range for this filter
      */
     public long getExpireBefore() {
@@ -612,7 +683,7 @@ public final class CmsResourceFilter {
 
     /**
      * Returns the flags for this filter.<p>
-     * 
+     *
      * @return the flags for this filter
      */
     public int getFlags() {
@@ -622,7 +693,7 @@ public final class CmsResourceFilter {
 
     /**
      * Returns the start of the modification time range for this filter.<p>
-     * 
+     *
      * @return start of the modification time range for this filter
      */
     public long getModifiedAfter() {
@@ -632,7 +703,7 @@ public final class CmsResourceFilter {
 
     /**
      * Returns the end of the modification time range for this filter.<p>
-     * 
+     *
      * @return the end of the modification time range for this filter
      */
     public long getModifiedBefore() {
@@ -642,9 +713,9 @@ public final class CmsResourceFilter {
 
     /**
      * Returns the state of the "only folders" flag.<p>
-     * 
+     *
      * If the result is <code>null</code>, then this flag is not set.<p>
-     * 
+     *
      * @return the state of the "only folders" flag
      */
     public Boolean getOnlyFolders() {
@@ -654,7 +725,7 @@ public final class CmsResourceFilter {
 
     /**
      * Returns the start of the release time range for this filter.<p>
-     * 
+     *
      * @return start of the release time range for this filter
      */
     public long getReleaseAfter() {
@@ -664,7 +735,7 @@ public final class CmsResourceFilter {
 
     /**
      * Returns the end of the release time range for this filter.<p>
-     * 
+     *
      * @return the end of the release time range for this filter
      */
     public long getReleaseBefore() {
@@ -674,7 +745,7 @@ public final class CmsResourceFilter {
 
     /**
      * Returns the state for this filter.<p>
-     * 
+     *
      * @return the state for this filter
      */
     public CmsResourceState getState() {
@@ -684,7 +755,7 @@ public final class CmsResourceFilter {
 
     /**
      * Returns the type for this filter.<p>
-     * 
+     *
      * @return the type for this filter
      */
     public int getType() {
@@ -694,7 +765,7 @@ public final class CmsResourceFilter {
 
     /**
      * Check if deleted resources should be filtered.<p>
-     * 
+     *
      * @return true if deleted resources should be included, false otherwise
      */
     public boolean includeDeleted() {
@@ -706,11 +777,11 @@ public final class CmsResourceFilter {
 
     /**
      * Validates if a CmsResource fits to all filer settings.<p>
-     * 
+     *
      * Please note that the "visible permission" setting of the filter is NOT checked
      * in this method since the permission information is not part of the resource.
      * The visible permission information in the filter will be used in the permission
-     * checks 
+     * checks
      *
      * @param context the current request context
      * @param resource the resource to be validated
@@ -826,7 +897,7 @@ public final class CmsResourceFilter {
 
     /**
      * Returns if the stored flags is required while filtering resources.<p>
-     * 
+     *
      * @return if the flags is required
      */
     public boolean requireFlags() {
@@ -836,7 +907,7 @@ public final class CmsResourceFilter {
 
     /**
      * Returns if the stored state is required while filtering resources.<p>
-     * 
+     *
      * @return if the state is required
      */
     public boolean requireState() {
@@ -846,7 +917,7 @@ public final class CmsResourceFilter {
 
     /**
      * Returns if the release timerange of the resource should be required.<p>
-     * 
+     *
      * @return true if the release timerange of the resource should be required
      */
     public boolean requireTimerange() {
@@ -856,7 +927,7 @@ public final class CmsResourceFilter {
 
     /**
      * Returns if the stored type is required while filtering resources.<p>
-     * 
+     *
      * @return true if the type is required
      */
     public boolean requireType() {
@@ -866,7 +937,7 @@ public final class CmsResourceFilter {
 
     /**
      * Returns if the visible permission should be required for resources.<p>
-     * 
+     *
      * @return true if the visible permission is required, false if the visible permission is ignored
      */
     public boolean requireVisible() {
@@ -877,27 +948,27 @@ public final class CmsResourceFilter {
     /**
      * Returns the name of the filter, if it is one of the filters used as a constant of this class and
      * a default message otherwise.<p>
-     * 
+     *
      * @return the name of the filter
      */
     @Override
     public String toString() {
 
-        if (this.equals(CmsResourceFilter.ALL)) {
+        if (equals(CmsResourceFilter.ALL)) {
             return "ALL";
-        } else if (this.equals(CmsResourceFilter.ALL_MODIFIED)) {
+        } else if (equals(CmsResourceFilter.ALL_MODIFIED)) {
             return "ALL_MODIFIED";
-        } else if (this.equals(CmsResourceFilter.DEFAULT)) {
+        } else if (equals(CmsResourceFilter.DEFAULT)) {
             return "DEFAULT";
-        } else if (this.equals(CmsResourceFilter.DEFAULT_FILES)) {
+        } else if (equals(CmsResourceFilter.DEFAULT_FILES)) {
             return "DEFAULT_FILES";
-        } else if (this.equals(CmsResourceFilter.DEFAULT_FOLDERS)) {
+        } else if (equals(CmsResourceFilter.DEFAULT_FOLDERS)) {
             return "DEFAULT_FOLDERS";
-        } else if (this.equals(CmsResourceFilter.IGNORE_EXPIRATION)) {
+        } else if (equals(CmsResourceFilter.IGNORE_EXPIRATION)) {
             return "IGNORE_EXPIRATION";
-        } else if (this.equals(CmsResourceFilter.ONLY_VISIBLE)) {
+        } else if (equals(CmsResourceFilter.ONLY_VISIBLE)) {
             return "ONLY_VISIBLE";
-        } else if (this.equals(CmsResourceFilter.ONLY_VISIBLE_NO_DELETED)) {
+        } else if (equals(CmsResourceFilter.ONLY_VISIBLE_NO_DELETED)) {
             return "ONLY_VISIBLE_NO_DELETED";
         } else {
             return "Nonstandard Resource Filter";

@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -14,12 +14,12 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * Lesser General Public License for more details.
  *
- * For further information about Alkacon Software GmbH, please see the
- * company website: http://www.alkacon.com
+ * For further information about Alkacon Software GmbH & Co. KG, please see the
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -33,8 +33,8 @@ import java.util.Map;
 /**
  * A search result object returned as result of a search in
  * <code>{@link org.opencms.search.CmsSearchIndex}</code>.<p>
- * 
- * @since 6.0.0 
+ *
+ * @since 6.0.0
  */
 public class CmsSearchResultList extends ArrayList<CmsSearchResult> {
 
@@ -57,7 +57,7 @@ public class CmsSearchResultList extends ArrayList<CmsSearchResult> {
 
     /**
      * Creates a new result list with the specified initial capacity.<p>
-     * 
+     *
      * @param initialCapacity the initial capacity
      */
     public CmsSearchResultList(int initialCapacity) {
@@ -66,11 +66,11 @@ public class CmsSearchResultList extends ArrayList<CmsSearchResult> {
     }
 
     /**
-     * Returns the (otional) categories found in the last the search, or <code>null</code> 
+     * Returns the (otional) categories found in the last the search, or <code>null</code>
      * if the category list was not requested in the search.<p>
      *
      * @return the (otional) categories found in the last the search
-     * 
+     *
      * @see CmsSearch#getCalculateCategories()
      */
     public Map<String, Integer> getCategories() {
@@ -80,10 +80,10 @@ public class CmsSearchResultList extends ArrayList<CmsSearchResult> {
 
     /**
      * Returns the hit count of all results found in the last search.<p>
-     * 
+     *
      * Since this list will only contain the result objects for the current display page,
      * the size of the list is usually much less then the hit count of all results found.<p>
-     * 
+     *
      * @return the hit count of all results found in the last search
      */
     public int getHitCount() {
@@ -95,7 +95,7 @@ public class CmsSearchResultList extends ArrayList<CmsSearchResult> {
      * Sets the categories found in the last the search.<p>
      *
      * @param categories the categories to set
-     * 
+     *
      * @see CmsSearch#setCalculateCategories(boolean)
      */
     public void setCategories(Map<String, Integer> categories) {

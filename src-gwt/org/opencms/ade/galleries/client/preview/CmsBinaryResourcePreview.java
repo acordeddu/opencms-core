@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -15,11 +15,11 @@
  * Lesser General Public License for more details.
  *
  * For further information about Alkacon Software, please see the
- * company website: http://www.alkacon.com
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -29,7 +29,6 @@ package org.opencms.ade.galleries.client.preview;
 
 import org.opencms.ade.galleries.client.preview.ui.CmsBinaryPreviewDialog;
 import org.opencms.ade.galleries.client.ui.CmsGalleryDialog;
-import org.opencms.ade.galleries.client.ui.css.I_CmsLayoutBundle;
 import org.opencms.ade.galleries.shared.CmsResourceInfoBean;
 import org.opencms.ade.galleries.shared.I_CmsBinaryPreviewProvider;
 import org.opencms.gwt.client.rpc.CmsRpcAction;
@@ -41,7 +40,7 @@ import com.google.gwt.user.client.ui.FlowPanel;
 
 /**
  * The binary resource preview.<p>
- * 
+ *
  * @since 8.0.0
  */
 public final class CmsBinaryResourcePreview extends A_CmsResourcePreview<CmsResourceInfoBean> {
@@ -54,7 +53,7 @@ public final class CmsBinaryResourcePreview extends A_CmsResourcePreview<CmsReso
 
     /**
      * Constructor.<p>
-     * 
+     *
      * @param galleryDialog the gallery dialog instance
      */
     public CmsBinaryResourcePreview(CmsGalleryDialog galleryDialog) {
@@ -89,7 +88,7 @@ public final class CmsBinaryResourcePreview extends A_CmsResourcePreview<CmsReso
 
     /**
      * Loads the resource info and displays the retrieved data.<p>
-     * 
+     *
      * @param resourcePath the resource path
      */
     public void loadResourceInfo(final String resourcePath) {
@@ -118,9 +117,9 @@ public final class CmsBinaryResourcePreview extends A_CmsResourcePreview<CmsReso
     }
 
     /**
-     * @see org.opencms.ade.galleries.client.preview.I_CmsResourcePreview#openPreview(java.lang.String)
+     * @see org.opencms.ade.galleries.client.preview.I_CmsResourcePreview#openPreview(java.lang.String, boolean)
      */
-    public void openPreview(String resourcePath) {
+    public void openPreview(String resourcePath, boolean disableSelection) {
 
         if (m_previewDialog != null) {
             m_previewDialog.removeFromParent();
@@ -129,13 +128,14 @@ public final class CmsBinaryResourcePreview extends A_CmsResourcePreview<CmsReso
         m_previewDialog = new CmsBinaryPreviewDialog(
             getGalleryDialog().getController().getDialogMode(),
             parentPanel.getOffsetHeight(),
-            parentPanel.getOffsetWidth());
+            parentPanel.getOffsetWidth(),
+            disableSelection);
 
         m_handler = new CmsBinaryPreviewHandler(this);
         m_previewDialog.init(m_handler);
         CmsPreviewUtil.exportFunctions(getPreviewName(), this);
         parentPanel.add(m_previewDialog);
-        parentPanel.removeStyleName(I_CmsLayoutBundle.INSTANCE.previewDialogCss().hidePreview());
+        m_handler.getGalleryDialog().setPreviewVisible(true);
         //load preview data
         loadResourceInfo(resourcePath);
     }

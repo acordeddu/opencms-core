@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -14,12 +14,12 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * Lesser General Public License for more details.
  *
- * For further information about Alkacon Software GmbH, please see the
- * company website: http://www.alkacon.com
+ * For further information about Alkacon Software GmbH & Co. KG, please see the
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -40,12 +40,12 @@ import java.util.Map;
 
 import org.apache.lucene.document.DateTools;
 import org.apache.lucene.document.Document;
-import org.apache.lucene.document.Fieldable;
+import org.apache.lucene.index.IndexableField;
 
 /**
  * Contains the data of a single item in a search result.<p>
- * 
- * @since 6.0.0 
+ *
+ * @since 6.0.0
  */
 public class CmsSearchResult implements I_CmsMemoryMonitorable, Comparable<CmsSearchResult> {
 
@@ -75,7 +75,7 @@ public class CmsSearchResult implements I_CmsMemoryMonitorable, Comparable<CmsSe
 
     /**
      * Creates a new search result.<p>
-     * 
+     *
      * @param score the score of this search result
      * @param doc the Lucene document to extract fields from such as description, title, key words etc. pp.
      * @param excerpt the excerpt of the search result's content
@@ -86,31 +86,29 @@ public class CmsSearchResult implements I_CmsMemoryMonitorable, Comparable<CmsSe
         m_excerpt = excerpt;
         m_fields = new HashMap<String, String>();
 
-        Iterator<Fieldable> i = doc.getFields().iterator();
+        Iterator<IndexableField> i = doc.getFields().iterator();
         while (i.hasNext()) {
-            Fieldable field = i.next();
-            if ((field != null) && field.isStored()) {
-                // content can be displayed only if it has been stored in the field
-                String name = field.name();
-                String value = field.stringValue();
-                if (CmsStringUtil.isNotEmpty(value)
-                    && !CmsSearchField.FIELD_PATH.equals(name)
-                    && !CmsSearchField.FIELD_DATE_CREATED.equals(name)
-                    && !CmsSearchField.FIELD_DATE_LASTMODIFIED.equals(name)) {
-                    // these "hard coded" fields are treated differently
-                    m_fields.put(name, value);
-                }
+            IndexableField field = i.next();
+            // content can be displayed only if it has been stored in the field
+            String name = field.name();
+            String value = field.stringValue();
+            if (CmsStringUtil.isNotEmpty(value)
+                && !CmsSearchField.FIELD_PATH.equals(name)
+                && !CmsSearchField.FIELD_DATE_CREATED.equals(name)
+                && !CmsSearchField.FIELD_DATE_LASTMODIFIED.equals(name)) {
+                // these "hard coded" fields are treated differently
+                m_fields.put(name, value);
             }
         }
 
-        Fieldable f = doc.getFieldable(CmsSearchField.FIELD_PATH);
+        IndexableField f = doc.getField(CmsSearchField.FIELD_PATH);
         if (f != null) {
             m_path = f.stringValue();
         } else {
             m_path = null;
         }
 
-        f = doc.getFieldable(CmsSearchField.FIELD_DATE_CREATED);
+        f = doc.getField(CmsSearchField.FIELD_DATE_CREATED);
         if (f != null) {
             try {
                 m_dateCreated = DateTools.stringToDate(f.stringValue());
@@ -121,7 +119,7 @@ public class CmsSearchResult implements I_CmsMemoryMonitorable, Comparable<CmsSe
             m_dateCreated = null;
         }
 
-        f = doc.getFieldable(CmsSearchField.FIELD_DATE_LASTMODIFIED);
+        f = doc.getField(CmsSearchField.FIELD_DATE_LASTMODIFIED);
         if (f != null) {
             try {
                 m_dateLastModified = DateTools.stringToDate(f.stringValue());
@@ -132,7 +130,7 @@ public class CmsSearchResult implements I_CmsMemoryMonitorable, Comparable<CmsSe
             m_dateLastModified = null;
         }
 
-        f = doc.getFieldable(CmsSearchField.FIELD_TYPE);
+        f = doc.getField(CmsSearchField.FIELD_TYPE);
         if (f != null) {
             m_documentType = f.stringValue();
         } else {
@@ -205,10 +203,11 @@ public class CmsSearchResult implements I_CmsMemoryMonitorable, Comparable<CmsSe
      * Returns the description.<p>
      *
      * @return the description
-     * 
-     * @Deprecated use {@link #getField(String)} instead with the name of the field, 
-     *      for example use {@link CmsSearchField#FIELD_DESCRIPTION} to get the description (if available)
+     *
+     * @deprecated use {@link #getField(String)} instead with the name of the field,
+     *      for example use {@link org.opencms.search.fields.CmsLuceneField#FIELD_DESCRIPTION} to get the description (if available)
      */
+    @Deprecated
     public String getDescription() {
 
         return getField(CmsSearchField.FIELD_DESCRIPTION);
@@ -216,15 +215,15 @@ public class CmsSearchResult implements I_CmsMemoryMonitorable, Comparable<CmsSe
 
     /**
      * Returns the document type of the search result document.<p>
-     * 
-     * Usually this will be a VFS resource type String that can be used in the 
+     *
+     * Usually this will be a VFS resource type String that can be used in the
      * resource type manager with {@link org.opencms.loader.CmsResourceManager#getResourceType(String)}.
      * However, what is stored in the document type field depends only on the indexer used, and therefore it
      * may also be some String not referring  a VFS resource type but some external type or application.
-     * It may also be <code>null</code> in case it has not been set by a non-standard indexer.<p>  
-     * 
+     * It may also be <code>null</code> in case it has not been set by a non-standard indexer.<p>
+     *
      * @return the document type of the search result document
-     * 
+     *
      * @see org.opencms.loader.CmsResourceManager#getResourceType(String)
      */
     public String getDocumentType() {
@@ -244,9 +243,9 @@ public class CmsSearchResult implements I_CmsMemoryMonitorable, Comparable<CmsSe
 
     /**
      * Returns the text stored in the search index field with the given name.<p>
-     * 
+     *
      * @param fieldName the name of the field to get the stored text for
-     * 
+     *
      * @return the text stored in the search index field with the given name
      */
     public String getField(String fieldName) {
@@ -258,10 +257,11 @@ public class CmsSearchResult implements I_CmsMemoryMonitorable, Comparable<CmsSe
      * Returns the key words.<p>
      *
      * @return the key words
-     * 
-     * @Deprecated use {@link #getField(String)} instead with the name of the field, 
-     *      for example use {@link CmsSearchField#FIELD_KEYWORDS} to get the keywords (if available)
+     *
+     * @deprecated use {@link #getField(String)} instead with the name of the field,
+     *      for example use {@link org.opencms.search.fields.CmsLuceneField#FIELD_KEYWORDS} to get the keywords (if available)
      */
+    @Deprecated
     public String getKeywords() {
 
         return getField(CmsSearchField.FIELD_KEYWORDS);
@@ -323,10 +323,11 @@ public class CmsSearchResult implements I_CmsMemoryMonitorable, Comparable<CmsSe
      * Returns the title.<p>
      *
      * @return the title
-     * 
-     * @Deprecated use {@link #getField(String)} instead with the name of the field, 
-     *      for example use {@link CmsSearchField#FIELD_TITLE} to get the title (if available)
+     *
+     * @deprecated use {@link #getField(String)} instead with the name of the field,
+     *      for example use {@link org.opencms.search.fields.CmsLuceneField#FIELD_TITLE} to get the title (if available)
      */
+    @Deprecated
     public String getTitle() {
 
         return getField(CmsSearchField.FIELD_TITLE);

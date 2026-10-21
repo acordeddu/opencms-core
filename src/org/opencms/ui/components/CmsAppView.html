@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta name="package-mapping" content="o:org.opencms.ui.components" />
+	</head>
+	<body>
+  		<v-css-layout style-name="o-responsive" size-full>
+  			<o-cms-tool-bar _id="m_toolbar"></o-cms-tool-bar>
+  			<vaadin7-vertical-layout size-full style-name="o-main">
+  				<v-css-layout _id="m_infoArea" style-name="o-app-info" width="100%" ></v-css-layout>
+	    		<v-css-layout _id="m_appArea" primary-style-name="o-app-content" style-name="v-scrollable" size-full :expand ></v-css-layout>
+	    	</vaadin7-vertical-layout>
+	    	<v-css-layout style-name="o-font-load-panel">
+	    		<v-css-layout></v-css-layout>
+	    	</v-css-layout>
+		</v-css-layout>
+	</body>
+</html>

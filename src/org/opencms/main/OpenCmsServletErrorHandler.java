@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -14,12 +14,12 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * Lesser General Public License for more details.
  *
- * For further information about Alkacon Software GmbH, please see the
- * company website: http://www.alkacon.com
+ * For further information about Alkacon Software GmbH & Co. KG, please see the
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -31,6 +31,9 @@ import org.opencms.jsp.util.CmsJspStatusBean;
 import org.opencms.util.CmsStringUtil;
 
 import java.io.IOException;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Set;
 
 import javax.servlet.ServletConfig;
 import javax.servlet.ServletException;
@@ -39,16 +42,16 @@ import javax.servlet.http.HttpServletResponse;
 
 /**
  * This the error handler servlet of the OpenCms system.<p>
- * 
+ *
  * This almost 1:1 extends the "standard" {@link org.opencms.main.OpenCmsServlet}.
- * By default, all errors are handled by this servlet, which is controlled by the 
- * setting in the shipped <code>web.xml</code>.<p> 
- * 
- * This servlet is required because certain servlet containers (eg. BEA Weblogic) 
+ * By default, all errors are handled by this servlet, which is controlled by the
+ * setting in the shipped <code>web.xml</code>.<p>
+ *
+ * This servlet is required because certain servlet containers (eg. BEA Weblogic)
  * can not handler the error with the same servlet that produced the error.<p>
- * 
- * @since 6.2.0 
- * 
+ *
+ * @since 6.2.0
+ *
  * @see org.opencms.main.OpenCmsServlet
  * @see org.opencms.staticexport.CmsStaticExportManager
  */
@@ -57,9 +60,12 @@ public class OpenCmsServletErrorHandler extends OpenCmsServlet {
     /** Serial version UID required for safe serialization. */
     private static final long serialVersionUID = 5316004893684482816L;
 
+    /** HTTP methods for which we want normal handling (rather than just setting the error code) .*/
+    private static Set<String> defaultMethods = new HashSet<>(Arrays.asList("GET", "HEAD", "POST"));
+
     /**
      * OpenCms servlet main request handling method.<p>
-     * 
+     *
      * @see javax.servlet.http.HttpServlet#doGet(javax.servlet.http.HttpServletRequest, javax.servlet.http.HttpServletResponse)
      */
     @Override
@@ -79,10 +85,11 @@ public class OpenCmsServletErrorHandler extends OpenCmsServlet {
                     errorMessage = "";
                 }
                 String output = "<html><body>"
-                    + CmsStringUtil.escapeHtml(Messages.get().getBundle().key(
-                        Messages.ERR_OPENCMS_NOT_INITIALIZED_2,
-                        errorStatus,
-                        errorMessage))
+                    + CmsStringUtil.escapeHtml(
+                        Messages.get().getBundle().key(
+                            Messages.ERR_OPENCMS_NOT_INITIALIZED_2,
+                            errorStatus,
+                            errorMessage))
                     + "</body></html>";
                 res.setStatus(errorStatus.intValue());
                 res.getWriter().println(output);
@@ -97,8 +104,31 @@ public class OpenCmsServletErrorHandler extends OpenCmsServlet {
      * @see javax.servlet.Servlet#init(javax.servlet.ServletConfig)
      */
     @Override
-    public void init(ServletConfig config) {
+    public synchronized void init(ServletConfig config) {
 
         // override super class to avoid default initialization
     }
+
+    /**
+     * @see javax.servlet.http.HttpServlet#service(javax.servlet.http.HttpServletRequest, javax.servlet.http.HttpServletResponse)
+     */
+    @Override
+    protected void service(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+
+        // the service() method of HttpServlet sets a status code of 405 for unimplemented / unsupported methods,
+        // which is a problem for servlets using non-standard methods like the WebDAV servlet (in the case of WebDAV,
+        // it might break clients which rely on status 404 to be returned for PROPFIND requests to nonexistent resources).
+        // So we just set the HTTP response status to the original status for all methods except GET/POST.
+
+        if (defaultMethods.contains(req.getMethod())) {
+            super.service(req, resp);
+        } else {
+            Integer errorStatus = (Integer)req.getAttribute(CmsJspStatusBean.ERROR_STATUS_CODE);
+            if (errorStatus != null) {
+                resp.setStatus(errorStatus.intValue());
+            }
+        }
+
+    }
+
 }

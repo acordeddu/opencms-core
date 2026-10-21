@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -15,11 +15,11 @@
  * Lesser General Public License for more details.
  *
  * For further information about Alkacon Software, please see the
- * company website: http://www.alkacon.com
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -27,8 +27,10 @@
 
 package org.opencms.gwt.client.ui;
 
-import org.opencms.gwt.client.util.CmsFadeAnimation;
+import org.opencms.gwt.client.ui.CmsQuickLauncher.I_QuickLaunchHandler;
+import org.opencms.gwt.client.ui.css.I_CmsLayoutBundle;
 import org.opencms.gwt.client.util.CmsStyleVariable;
+import org.opencms.util.CmsStringUtil;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -37,14 +39,14 @@ import java.util.List;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
-import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.FlowPanel;
+import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.Widget;
 
 /**
  * Provides a tool-bar to be shown at the top of a page.<p>
- * 
+ *
  * @since 8.0.0
  */
 public class CmsToolbar extends Composite {
@@ -67,20 +69,51 @@ public class CmsToolbar extends Composite {
     @UiField
     protected FlowPanel m_buttonPanelRight;
 
+    /** The quick launcher (initially invisible). */
+    @UiField
+    protected CmsQuickLauncher m_quickLauncher;
+
+    /**
+     * Center of the toolbar, normally for displaying the logo, but the content can be changed.
+     */
+    @UiField
+    protected FlowPanel m_toolbarCenter;
+
+    /** The user info button HTML. */
+    @UiField
+    protected CmsUserInfo m_userInfo;
+
+    /** The two-line title widget. */
+    private FlowPanel m_complexTitle = new FlowPanel();
+
+    /** Bottom row of the two-line title. */
+    private Label m_complexTitleBottom = new Label();
+
+    /** Top row of the two-line title. */
+    private Label m_complexTitleTop = new Label();
+
+    /** The title label. */
+    private Label m_titleLabel;
+
     /**
      * Constructor.<p>
      */
     public CmsToolbar() {
 
         initWidget(uiBinder.createAndBindUi(this));
+        m_complexTitle.add(m_complexTitleTop);
+        m_complexTitle.add(m_complexTitleBottom);
+        m_complexTitle.addStyleName(I_CmsLayoutBundle.INSTANCE.toolbarCss().title());
+        m_complexTitle.addStyleName(I_CmsLayoutBundle.INSTANCE.toolbarCss().complexTitle());
+
     }
 
     /**
      * Helper method for setting toolbar visibility.<p>
-     * 
-     * @param toolbar the toolbar 
-     * @param show true if the toolbar should be shown 
-     * @param toolbarVisibility the style variable controlling the toolbar visibility 
+     *
+     * @param toolbar the toolbar
+     * @param show true if the toolbar should be shown
+     * @param toolbarVisibility the style variable controlling the toolbar visibility
      */
     public static void showToolbar(
         final CmsToolbar toolbar,
@@ -88,29 +121,19 @@ public class CmsToolbar extends Composite {
         final CmsStyleVariable toolbarVisibility) {
 
         if (show) {
-            toolbarVisibility.setValue(org.opencms.gwt.client.ui.css.I_CmsLayoutBundle.INSTANCE.toolbarCss().toolbarShow());
-            CmsFadeAnimation.fadeIn(toolbar.getElement(), null, 300);
-            // body.getStyle().setMarginTop(m_bodyMarginTop + 36, Unit.PX);
+            toolbarVisibility.setValue(null);
         } else {
-            CmsFadeAnimation.fadeOut(toolbar.getElement(), new Command() {
-
-                public void execute() {
-
-                    toolbarVisibility.setValue(org.opencms.gwt.client.ui.css.I_CmsLayoutBundle.INSTANCE.toolbarCss().toolbarHide());
-                }
-            },
-                300);
-            // body.getStyle().setMarginTop(m_bodyMarginTop, Unit.PX);
+            toolbarVisibility.setValue(I_CmsLayoutBundle.INSTANCE.toolbarCss().toolbarHide());
         }
     }
 
     /**
      * Helper method for setting toolbar visibility.<p>
-     * 
-     * @param toolbar the toolbar 
-     * @param show true if the toolbar should be shown 
+     *
+     * @param toolbar the toolbar
+     * @param show true if the toolbar should be shown
      * @param toolbarVisibility the style variable controlling the toolbar visibility
-     * @param showClass the class which should be used for showing the toolbar  
+     * @param showClass the class which should be used for showing the toolbar
      */
     public static void showToolbar(
         final CmsToolbar toolbar,
@@ -120,24 +143,14 @@ public class CmsToolbar extends Composite {
 
         if (show) {
             toolbarVisibility.setValue(showClass);
-            CmsFadeAnimation.fadeIn(toolbar.getElement(), null, 300);
-            // body.getStyle().setMarginTop(m_bodyMarginTop + 36, Unit.PX);
         } else {
-            CmsFadeAnimation.fadeOut(toolbar.getElement(), new Command() {
-
-                public void execute() {
-
-                    toolbarVisibility.setValue(org.opencms.gwt.client.ui.css.I_CmsLayoutBundle.INSTANCE.toolbarCss().toolbarHide());
-                }
-            },
-                300);
-            // body.getStyle().setMarginTop(m_bodyMarginTop, Unit.PX);
+            toolbarVisibility.setValue(I_CmsLayoutBundle.INSTANCE.toolbarCss().toolbarHide());
         }
     }
 
     /**
      * Adds a widget to the left button panel.<p>
-     * 
+     *
      * @param widget the widget to add
      */
     public void addLeft(Widget widget) {
@@ -147,7 +160,7 @@ public class CmsToolbar extends Composite {
 
     /**
      * Adds a widget to the left button panel.<p>
-     * 
+     *
      * @param widget the widget to add
      */
     public void addRight(Widget widget) {
@@ -158,7 +171,7 @@ public class CmsToolbar extends Composite {
 
     /**
      * Returns all {@link com.google.gwt.user.client.ui.Widget} added to the tool-bar in order of addition first left than right.<p>
-     * 
+     *
      * @return all added Widgets
      */
     public List<Widget> getAll() {
@@ -173,5 +186,116 @@ public class CmsToolbar extends Composite {
             all.add(it.next());
         }
         return all;
+    }
+
+    /**
+     * Returns the quick launcher.<p>
+     *
+     * @return the quick launch menu button
+     */
+    public CmsQuickLauncher getQuickLauncher() {
+
+        return m_quickLauncher;
+    }
+
+    /**
+     * Gets the center area of the toolbar, which normally contains the logo.
+     *
+     * @return the center toolbar area
+     */
+    public FlowPanel getToolbarCenter() {
+
+        return m_toolbarCenter;
+    }
+
+    /**
+     * Returns the user info button.<p>
+     *
+     * @return the user info button
+     */
+    public CmsUserInfo getUserInfo() {
+
+        return m_userInfo;
+    }
+
+    /**
+     * Inserts a widget into the left button panel.<p>
+     *
+     * @param widget the widget to add
+     * @param index the before index
+     */
+    public void insertLeft(Widget widget, int index) {
+
+        m_buttonPanelLeft.insert(widget, index);
+    }
+
+    /**
+     * Inserts a widget into the left button panel.<p>
+     *
+     * @param widget the widget to add
+     * @param index the before index
+     */
+    public void insertRight(Widget widget, int index) {
+
+        m_buttonPanelRight.insert(widget, index);
+    }
+
+    /**
+     * Sets the toolbar title label.<p>
+     *
+     * @param title the title
+     */
+    public void setAppTitle(String title) {
+
+        if (CmsStringUtil.isEmptyOrWhitespaceOnly(title)) {
+            if (m_titleLabel != null) {
+                m_titleLabel.removeFromParent();
+                m_titleLabel = null;
+            }
+            m_complexTitle.removeFromParent();
+        } else {
+
+            if (m_titleLabel == null) {
+                m_titleLabel = new Label();
+                m_titleLabel.setStyleName(I_CmsLayoutBundle.INSTANCE.toolbarCss().title());
+                m_buttonPanelLeft.insert(m_titleLabel, 0);
+            }
+            m_titleLabel.setText(title);
+        }
+    }
+
+    /**
+     * Sets a two-line title.
+     *
+     * @param top the top line text
+     * @param bottom the bottom line text
+     */
+    public void setComplexTitle(String top, String bottom) {
+
+        setAppTitle(null);
+        if ((top == null) && (bottom == null)) {
+            return;
+        }
+
+        if (top == null) {
+            top = "";
+        }
+        if (bottom == null) {
+            bottom = "";
+        }
+        m_complexTitleTop.setText(top);
+        m_complexTitleBottom.setText(bottom);
+        m_buttonPanelLeft.insert(m_complexTitle, 0);
+
+    }
+
+    /**
+     * Sets the handler for the quick launch menu and turns that menu visible.<p>
+     *
+     * @param quicklaunchHandler the quick launch handler
+     */
+    public void setQuickLaunchHandler(I_QuickLaunchHandler quicklaunchHandler) {
+
+        m_quickLauncher.setQuicklaunchHandler(quicklaunchHandler);
     }
 }

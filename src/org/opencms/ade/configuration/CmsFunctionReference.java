@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (C) Alkacon Software (http://www.alkacon.com)
+ * Copyright (C) Alkacon Software (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -15,11 +15,11 @@
  * Lesser General Public License for more details.
  *
  * For further information about Alkacon Software, please see the
- * company website: http://www.alkacon.com
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -34,6 +34,9 @@ import org.opencms.util.CmsUUID;
  */
 public class CmsFunctionReference implements I_CmsConfigurationObject<CmsFunctionReference> {
 
+    /** The function default page id. */
+    private CmsUUID m_functionDefaultPageId;
+
     /** The function reference name. */
     private String m_name;
 
@@ -45,16 +48,28 @@ public class CmsFunctionReference implements I_CmsConfigurationObject<CmsFunctio
 
     /**
      * Creates a new function reference.<p>
-     * 
-     * @param name the name of the function reference 
-     * @param structureId the structure id of the function 
-     * @param order the number used for sorting the function references 
+     *
+     * @param name the name of the function reference
+     * @param structureId the structure id of the function
+     * @param functionDefaultPageId the function default page id
+     * @param order the number used for sorting the function references
      */
-    public CmsFunctionReference(String name, CmsUUID structureId, int order) {
+    public CmsFunctionReference(String name, CmsUUID structureId, CmsUUID functionDefaultPageId, int order) {
 
         m_name = name;
         m_structureId = structureId;
+        m_functionDefaultPageId = functionDefaultPageId;
         m_order = order;
+    }
+
+    /**
+     * Returns the function default page id.<p>
+     *
+     * @return the function default page id
+     */
+    public CmsUUID getFunctionDefaultPageId() {
+
+        return m_functionDefaultPageId;
     }
 
     /**
@@ -67,7 +82,7 @@ public class CmsFunctionReference implements I_CmsConfigurationObject<CmsFunctio
 
     /**
      * Returns the name of the function reference.<p>
-     * 
+     *
      * @return the name of the function reference
      */
     public String getName() {
@@ -77,8 +92,8 @@ public class CmsFunctionReference implements I_CmsConfigurationObject<CmsFunctio
 
     /**
      * The order information for sorting the function references.<p>
-     * 
-     * @return the order information 
+     *
+     * @return the order information
      */
     public int getOrder() {
 
@@ -86,9 +101,9 @@ public class CmsFunctionReference implements I_CmsConfigurationObject<CmsFunctio
     }
 
     /**
-     * Returns the structure id of the dynamic function resource.<p> 
-     * 
-     * @return the structure id of the function 
+     * Returns the structure id of the dynamic function resource.<p>
+     *
+     * @return the structure id of the function
      */
     public CmsUUID getStructureId() {
 

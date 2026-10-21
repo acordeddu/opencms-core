@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -15,11 +15,11 @@
  * Lesser General Public License for more details.
  *
  * For further information about Alkacon Software, please see the
- * company website: http://www.alkacon.com
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -31,21 +31,24 @@ import org.opencms.gwt.client.ui.input.I_CmsFormWidget;
 
 import java.util.Map;
 
-/** 
+import com.google.common.base.Optional;
+
+/**
  * Interface for creating different types of widgets depending on a key.<p>
- * 
+ *
  * @since 8.0.0
  */
 public interface I_CmsFormWidgetMultiFactory {
 
     /**
      * Creates a new form widget.<p>
-     * 
-     * @param key the key identifying the widget type 
-     * 
-     * @param widgetParams the widget initialization parameters 
-     * @return the created form widget 
+     *
+     * @param key the key identifying the widget type
+     *
+     * @param widgetParams the widget initialization parameters
+     * @param defaultValue an optional default value
+     * @return the created form widget
      */
-    I_CmsFormWidget createFormWidget(String key, Map<String, String> widgetParams);
+    I_CmsFormWidget createFormWidget(String key, Map<String, String> widgetParams, Optional<String> defaultValue);
 
 }

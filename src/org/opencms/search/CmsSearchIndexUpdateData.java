@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -15,11 +15,11 @@
  * Lesser General Public License for more details.
  *
  * For further information about Alkacon Software, please see the
- * company website: http://www.alkacon.com
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -34,7 +34,7 @@ import java.util.List;
 
 /**
  * A collection of resources for the incremental update of a search index.<p>
- * 
+ *
  * @since 6.0.1
  */
 public class CmsSearchIndexUpdateData {
@@ -53,7 +53,7 @@ public class CmsSearchIndexUpdateData {
 
     /**
      * Creates a new instance of an update collection.<p>
-     * 
+     *
      * @param source the search index source of this update collection
      * @param indexer the indexer of this update collection
      */
@@ -67,7 +67,7 @@ public class CmsSearchIndexUpdateData {
 
     /**
      * Adds the given resource to the resources that must be deleted from the search index.<p>
-     * 
+     *
      * @param resource the resource to add
      */
     public void addResourceToDelete(CmsPublishedResource resource) {
@@ -77,7 +77,7 @@ public class CmsSearchIndexUpdateData {
 
     /**
      * Adds the given resource to the resources that must be updated in the search index.<p>
-     * 
+     *
      * @param resource the resource to add
      */
     public void addResourceToUpdate(CmsPublishedResource resource) {
@@ -87,7 +87,7 @@ public class CmsSearchIndexUpdateData {
 
     /**
      * Returns the indexer of this update collection.<p>
-     * 
+     *
      * @return the indexer of this update collection
      */
     public I_CmsIndexer getIndexer() {
@@ -97,7 +97,7 @@ public class CmsSearchIndexUpdateData {
 
     /**
      * Returns the list of <code>{@link org.opencms.db.CmsPublishedResource}</code> instances that must be deleted.<p>
-     * 
+     *
      * @return the list of <code>{@link org.opencms.db.CmsPublishedResource}</code> instances that must be deleted
      */
     public List<CmsPublishedResource> getResourcesToDelete() {
@@ -107,7 +107,7 @@ public class CmsSearchIndexUpdateData {
 
     /**
      * Returns the list of <code>{@link org.opencms.db.CmsPublishedResource}</code> instances that must be updated.<p>
-     * 
+     *
      * @return the list of <code>{@link org.opencms.db.CmsPublishedResource}</code> instances that must be updated
      */
     public List<CmsPublishedResource> getResourcesToUpdate() {
@@ -117,7 +117,7 @@ public class CmsSearchIndexUpdateData {
 
     /**
      * Returns the search index source of this update collection.<p>
-     * 
+     *
      * @return the search index source of this update collection
      */
     public CmsSearchIndexSource getSource() {
@@ -127,7 +127,7 @@ public class CmsSearchIndexUpdateData {
 
     /**
      * Returns <code>true</code> if this collections contains resources to delete.<p>
-     * 
+     *
      * @return <code>true</code> if this collections contains resources to delete
      */
     public boolean hasResourcesToDelete() {
@@ -137,7 +137,7 @@ public class CmsSearchIndexUpdateData {
 
     /**
      * Returns <code>true</code> if this collections contains resources to update.<p>
-     * 
+     *
      * @return <code>true</code> if this collections contains resources to update
      */
     public boolean hasResourceToUpdate() {
@@ -147,7 +147,7 @@ public class CmsSearchIndexUpdateData {
 
     /**
      * Returns <code>true</code> if this collections contains no resources to update or delete.<p>
-     * 
+     *
      * @return <code>true</code> if this collections contains no resources to update or delete
      */
     public boolean isEmpty() {

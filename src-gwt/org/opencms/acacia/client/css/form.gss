@@ -1,0 +1,806 @@
+@external tox, tox-tinymce, tox-toolbar, tox-editor-container, tox-statusbar__branding, tox-edit-area, tox-statusbar, tox-fullscreen, tox-tinymce-inline,
+	gwt-TabLayoutPanelTabBar, gwt-TabLayoutPanel, gwt-TabLayoutPanelTab, html-face, cmsState, cmsState-down, cmsState-up, cmsState-up-hovering, cmsState-down-hovering, tabDescriptionPanel, oc-screensize-medium, oc-touch-only, gwt-TabLayoutPanelContentContainer;
+
+@def SECOND_COLUMN_WIDTH 448;
+ 
+.attribute, .defaultView{}
+
+div.formParent{
+	padding: 2px 2px 0px;
+	position: relative;
+	width: value("constants.css.toolbarWidth");
+	margin: 10px auto;
+	border: 2px solid value("constants.css.borderColor");
+	border-radius: value("constants.css.borderRadius");
+}
+
+body.oc-screensize-medium div.formParent { 
+	width: eval("org.opencms.gwt.client.CmsWidthConstants.mediumLow()");
+}
+
+div.gwt-TabLayoutPanel div.formParent{
+	padding: 0px;
+	width: auto;
+	margin: 0;
+	background-color: transparent;
+	border: none;
+	border-radius: 0;
+}
+
+div.formParent .gwt-TabLayoutPanelContentContainer > div {
+    overflow: visible !important;
+    /* This is to ensure the help bubbles for fields remain visible, even if they clip out of the tab content. */ 
+}
+
+div.formParent div.gwt-TabLayoutPanel, div.formParent div.gwt-TabLayoutPanel div.gwt-TabLayoutPanelTabBar{
+	background: transparent;
+}
+
+.formParent, .inlineEditOverlay{
+	color: value("constants.css.textColor");
+	font-family: value("constants.css.fontFamily");
+	font-size: value("constants.css.fontSize");
+	font-weight: normal;
+	line-height: value("constants.css.lineHeight");
+}
+
+.formParent *, .formParent table tr td, .formParent input[type="text"], .inlineEditOverlay, .inlineEditOverlay *{
+	margin: 0;
+	padding: 0;
+	border: none;
+	color: inherit;
+	font-family: inherit;
+	font-size: inherit;
+	font-weight: inherit;
+	line-height: inherit;
+	background: transparent;
+	text-align: left;
+	height: auto;
+	width: auto;
+	min-height: 0;
+	max-height: none;
+	min-width: 0;
+	max-width: none;
+	box-sizing: border-box;
+	-moz-box-sizing: border-box;
+}
+.formParent input[type="text"]:focus, .formParent input[type="text"]:hover, .formParent input[type="text"]{
+	outline: none;
+}
+
+.entity{
+	margin: 5px;
+}
+
+.entity .entity{
+	margin: 0px 0px 0px 20px;
+}
+
+.formTabTerminator {
+	display: block;
+	clear: both; 
+}
+
+/** Attribute value view styles. */
+.attributeValue .label{
+	margin:0px 25px 0px 3px;
+	padding: 4px 0px;
+	color: value("constants.css.textColorEditorLabel");
+	cursor: default;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.attributeValue.compactView .label{
+	padding-bottom: 2px;
+	padding-top: 2px;
+}
+
+.entity .attributeValue{
+	padding-bottom:2px;
+	position: relative;
+	clear: both;
+}
+
+div.attributeValue.firstColumn{
+	float: left;
+}
+div.attributeValue.secondColumn{
+	width: value('form.SECOND_COLUMN_WIDTH','px');
+	float: right;
+	clear: none;
+}
+
+.entity .attributeValue .label, .dragHelper.attributeValue .label{
+	font-size: value("constants.css.fontSizeBig");
+	line-height: value("constants.css.lineHeightBig");
+	font-weight: bold;
+}
+
+.attributeValue.singleLine > .widgetHolder > div > .label{
+	position:absolute;
+	text-align: left;
+	right: 665px;
+	margin:0px;
+	left: 7px;
+	top: 6px;
+	line-height: value("constants.css.inputHeight");
+	padding: 0;
+}
+
+.attributeValue.singleLine > .widgetHolder > div > .widget {
+	float: right;
+	margin: 4px 25px 4px 0px;
+	width: 630px;
+}
+
+body.oc-touch-only .attributeValue.singleLine > .widgetHolder > div > .widget {
+	margin-right: 30px;
+}
+
+/* clear both after the widget holder */
+.attributeValue > div.widgetHolder:after{
+	content: ".";
+    display: block;
+    height: 0;
+    clear: both;
+    visibility: hidden;
+}
+
+.attributeValue.simpleValue.singleLine .buttonBar{
+	top:8px;
+}
+.attributeValue.simpleValue.shallowWidget div.buttonBar{
+	top:5px;
+}
+
+.attributeValue.emptyValue .label{
+	color: #B1B4B8;
+	font-style: italic;
+}
+
+.entity .attributeValue.uncollapsed .entity .attributeValue.uncollapsed .label{
+	font-weight: normal;
+}
+
+.entity .attributeValue.uncollapsed .entity .attributeValue.uncollapsed .entity .attributeValue.uncollapsed .label{
+	font-size: value("constants.css.fontSize");
+}
+.entity .attributeValue.uncollapsed > div.widgetHolder{
+	position: relative;
+	padding: 2px 0px 2px 4px;
+	border-radius: value("constants.css.borderRadius");
+}
+
+.attributeValue .label{
+	font-weight:bold;
+}
+
+.attributeValue .buttonBar{
+	top: 5px;
+	right: 0px;
+	transform-origin: center right;
+}
+
+body.oc-touch-only .attributeValue .buttonBar { 
+	transform: scale(1.5) translateX(2px);
+	/* Need to set the Z index because otherwise the button bar's menu might show up *under* the form widgets that follow. */
+	z-index: 1;
+}
+
+
+.attributeValue div.buttonBar, div.buttonBar{
+	position: absolute;
+	border-radius: value("constants.css.borderRadius");
+	white-space: nowrap;
+	border: 1px solid transparent;
+	width: auto;
+}
+
+.attributeValue.compactView .buttonBar{
+	top: 0px;
+}
+
+.multiButtonBar.buttonBar.hoverButton{
+	display: block;
+	box-shadow: 2px 2px 2px #666666;
+	background: value("constants.css.backgroundColorDialog");
+	border: 1px solid value("constants.css.borderColor");
+	z-index: 1000000500;
+}
+
+.buttonBar .button{
+	cursor: pointer;
+	float: right;
+}
+
+.buttonBar.multiButtonBar > .button:first-child{
+	display: block;
+}
+
+.buttonBar.multiButtonBar > .button{
+	border: 1px solid transparent;
+	border-radius: value("constants.css.borderRadius");
+	padding: 1px;
+	margin-bottom: -1px;
+	display: none;
+	position: relative;
+}
+
+.buttonBar.multiButtonBar.hoverButton > .button{
+	border-bottom-right-radius: 0px;
+	border-bottom-left-radius: 0px;
+	display: block;
+}
+
+
+/** Editing widget styles. */
+.widgetHolder .widget{
+	margin: 0 25px 4px 2px;
+}
+
+body.oc-touch-only .widgetHolder .widget { 
+	margin-right: 30px;
+}
+
+
+
+.collapsed  > .widgetHolder > * > .label { 
+	display: none; 
+}
+
+.collapsed  > .widgetHolder > .entity {
+	margin-left: 0px !important; 
+}
+
+.collapsed > .buttonBar { 
+	display: none;
+}
+ 
+
+.compactView .widgetHolder .widget{
+	margin-bottom: 0px;
+}
+
+.widgetHolder .widget.input{
+	margin: 0px 2px;
+	padding: 2px 5px;
+	min-height: 14px;
+}
+
+.input:focus{
+	outline:none;
+}
+
+.widgetHolder > div > .widget.input{
+	border: 1px solid value("constants.css.borderColorEditor");
+	background: value("constants.css.backgroundColorDialog");
+}
+
+.attributeValue.hasError .label{
+	color: value("constants.css.borderColorHighlight") !important;
+}
+
+.attributeValue.hasWarning .label{
+	color: #FFAA00 !important; 
+}
+
+.hasError .widgetHolder > div > .widget.input, .attributeValue.hasError .widgetHolder  .tox-tinymce, .gwt-TabLayoutPanel .gwt-TabLayoutPanelTabBar .gwt-TabLayoutPanelTab.hasError{
+	border-color: value("constants.css.borderColorHighlight");
+}
+
+.hasWarning .widgetHolder > div > .widget.input, .attributeValue.hasWarning .widgetHolder  .tox-tinymce, .gwt-TabLayoutPanel .gwt-TabLayoutPanelTabBar .gwt-TabLayoutPanelTab.hasWarning{
+	border-color: #FFAA00;
+}
+.widgetHolder > div > .widget.input{
+	cursor: text;
+}
+
+.attributeValue .widgetHolder  .tox-tinymce{
+	border: 1px solid value("constants.css.borderColorEditor");
+	background: value("constants.css.backgroundColorDialog");
+	border-radius: value("constants.css.borderRadius");
+	width: auto !important;
+}
+
+.attributeValue .widgetHolder .widget.inActive .tox-tinymce{
+	overflow: hidden;
+}
+
+.attributeValue.focused > .widgetHolder > div > .widget .tox-tinymce {
+	border-radius: value("constants.css.borderRadius") 0 0 0;
+}
+
+.widgetHolder > div > .widget.input.inActive, .attributeValue .widgetHolder .widget.inActive  .tox-tinymce{
+	color: transparent;
+	border-color: value("constants.css.borderColor");
+}
+.attributeValue > .widgetHolder > .widget .tox-tinymce.inActive{
+	height: 18px;	
+	border-radius: value("constants.css.borderRadius");
+}
+
+/* tinymce in line edit toolbar styles */
+.tox.tox-tinymce.tox-tinymce-inline{
+	z-index: value("constants.css.zIndexPopup");
+}
+
+.tox-statusbar__branding{
+	display: none !important;
+}
+
+/* this styles the tinymce toolbar */
+.attributeValue .tox-tinymce .tox-toolbar{
+	position: absolute;
+	display: none;
+	z-index: 1000000000;
+	bottom: 100%;
+	width: 90%;
+	right: 0;
+	margin-bottom: 0px;
+	margin-right: -1px;
+	border-top: 1px solid value("constants.css.borderColorEditor") !important;
+    border-right: 1px solid value("constants.css.borderColorEditor");
+    border-left: 1px solid value("constants.css.borderColorEditor");
+    border-radius: value("constants.css.borderRadius") value("constants.css.borderRadius") 0px 0px;
+}
+
+.attributeValue .tox-tinymce .tox-editor-container{
+	
+	overflow: visible;
+}
+
+.attributeValue .tox-tinymce .tox-edit-area{
+	border: none;
+}
+
+.attributeValue .tox.tox-tinymce{
+	overflow: visible;
+	position: relative;
+}
+
+div.attributeValue div.tox-tinymce.tox-fullscreen {
+	width: 100%;
+	top: 0px;
+	right: 0px;
+	left: 0px;
+	bottom: 0px;
+	position: fixed;
+}
+div.attributeValue div.tox-tinymce.tox-fullscreen .tox-toolbar, div.attributeValue div.tox-tinymce.tox-fullscreen .tox-statusbar{
+	width: 100%;
+	border: none !important;
+	margin: 0px;
+	border-radius: 0px;
+}
+
+.attributeValue .tox-tinymce.tox-fullscreen .tox-toolbar,
+.attributeValue .tox-tinymce.tox-fullscreen .tox-statusbar  {
+	position: static;
+}
+
+.attributeValue .tox-tinymce.tox-fullscreen .tox-statusbar {
+	position: static !important;
+}
+
+.attributeValue.focused > .widgetHolder > div > div.widget .tox-tinymce .tox-toolbar, 
+.attributeValue.focused > .widgetHolder > div > div.widget .tox-tinymce .tox-statusbar{
+	display: flex;	
+}
+
+.attributeValue > .widgetHolder > div > div.widget .tox-tinymce .tox-statusbar{
+	background: none repeat scroll 0 0 value("constants.css.backgroundColorDialog");
+    border-bottom: 1px solid value("constants.css.borderColorEditor");
+    border-right: 1px solid value("constants.css.borderColorEditor");
+    border-left: 1px solid value("constants.css.borderColorEditor");
+    box-shadow: 2px 2px 2px #666666;
+    border-radius: 0 0 value("constants.css.borderRadius") value("constants.css.borderRadius");
+    display: none;
+    left: -1px;
+    position: absolute;
+    right: -1px;
+    top:100%;
+    z-index: 2;
+}
+
+.attributeValue > .widgetHolder > div > div.widget .tox-tinymce iframe{
+	border-radius: value("constants.css.borderRadius");
+	width: 100% !important;
+}
+
+/** Help bubble styles. */
+div.helpBubble{
+	position: absolute;
+	background: #FFFFCC;
+	color: value("constants.css.textColor");
+	top: 100%;
+	left: 150px;
+	max-width: 600px;
+	display: none;
+	padding: 7px 19px 5px 5px;
+	border-radius:value("constants.css.borderRadius");
+	z-index: 10;
+	box-shadow: 2px 2px 2px #666666;
+}
+
+div.helpBubble a, div.helpBubble a:hover, div.helpBubble a:focus{
+	color: value("constants.css.textColorImportant");
+}
+
+div.helpBubble * {
+    margin: 0;
+    font-weight: 400;
+    font-family: "Open Sans",sans-serif;
+    font-style: normal;
+    font-size: 14px;
+    line-height: 1.25;
+    color: #474747;
+    text-align: left;
+}
+
+div.helpBubble h1, 
+div.helpBubble h2, 
+div.helpBubble h3 {
+    font-weight: 700;
+    margin-bottom: 3px;
+    color: #222;
+}
+
+div.helpBubble h1 {
+    font-size: 20px;
+}
+
+div.helpBubble h2 {
+    font-size: 18px;
+}
+
+div.helpBubble strong {
+    font-weight: 700;
+}
+
+div.helpBubble em {
+    font-style: italic;
+}
+
+div.helpBubble a {
+    font-size: inherit;
+    line-height: inherit;
+    color: #b31b34;
+    text-decoration: underline;
+}
+
+div.helpBubble small {
+    font-size: 11px;
+    display: block;
+    line-height: 1.125;
+    margin-bottom: 5px;
+}
+
+div.helpBubble ul,
+div.helpBubble ol {
+    padding-left: 14px;
+    margin-bottom: 5px;
+}
+
+.hasError .helpMessage, .hasWarning .helpMessage{
+	display: block;
+	margin-top: 3px;
+}
+.hasError div.helpBubble, .gwt-TabLayoutPanel .gwt-TabLayoutPanelTabBar .gwt-TabLayoutPanelTab.hasError{
+	background-color: #ffcccc;
+	background-image: unset;
+}
+
+.gwt-TabLayoutPanel .gwt-TabLayoutPanelTabBar .gwt-TabLayoutPanelTab.hasWarning{
+	background: #FFFFCC;
+}
+
+.hasError .helpMessage .helpMessageIcon{
+    font-family: opencms-font;
+    margin-right: 10px;
+    display: inline-block;
+    vertical-align: inherit;
+    font-style: normal;
+    font-weight: normal;
+    font-variant: normal;
+    text-transform: none;
+    line-height: inherit;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+.hasError .helpMessage .helpMessageIcon:before{
+	content: "\e63f";
+}
+.helpMessage{
+	display:none;
+}
+
+.displayAbove > .helpBubble{
+	top: auto;
+	bottom: 100%;
+}
+
+
+.helpBubble div{
+	color: value("constants.css.textColor");
+}
+
+.attributeValue.focused > .helpBubble, div.attributeValue.focused.hasError > .helpBubble, div.attributeValue.focused.hasWarning > .helpBubble, div.attributeValue.labelHover > div.helpBubble,.hideHelpBubbles div.attributeValue.labelHover > div.helpBubble{
+	display: block;
+}
+
+.attributeValue.focused.closedBubble > .helpBubble, .hideHelpBubbles .attributeValue.focused > .helpBubble{
+	display: none;
+}
+
+.helpBubble .helpBubbleClose{
+	position: absolute;
+	top: 2px;
+	right: 2px;
+}
+
+.helpBubble .helpBubbleClose span:before{
+	font-size: 10px;
+	vertical-align: middle;
+	padding: 0 2px 2px;
+}
+
+.hasError .helpBubble .helpBubbleClose{
+	display: none;
+}
+.helpBubble > .helpBubbleArrow {
+	height: 10px;
+	width: 10px;
+	position: absolute;
+	left: 10px;
+	top: -5px;
+	transform: rotate(45deg);
+	background: #FFFFCC;
+}
+.displayAbove > .helpBubble > .helpBubbleArrow{
+	top: auto;
+	bottom: -5px;
+	left: 10px;
+}
+
+.hasError > .helpBubble > .helpBubbleArrow{
+	background-color: #ffcccc;
+}
+
+.helpBubble p {
+	margin-left: 0px;
+	margin-right: 0px;
+	margin-top: 0px;
+	margin-bottom: 5px; 
+}
+		
+.helpBubble p:last-child {
+	margin-bottom: 0px;
+}
+
+.helpBubble * {
+    margin: 0;
+    font-weight: 400;
+    font-family: "Open Sans",sans-serif;
+    font-style: normal;
+    font-size: 14px;
+    line-height: 1.25;
+    color: #474747;
+    text-align: left;
+}
+
+.helpBubble h1, 
+.helpBubble h2, 
+.helpBubble h3 {
+    font-weight: 700;
+    margin-bottom: 3px;
+    color: #222;
+}
+
+.helpBubble h1 {
+    font-size: 20px;
+}
+
+.helpBubble h2 {
+    font-size: 18px;
+}
+
+.helpBubble strong {
+    font-weight: 700;
+}
+
+.helpBubble em {
+    font-style: italic;
+}
+
+.helpBubble a {
+    font-size: inherit;
+    line-height: inherit;
+    color: #b31b34;
+    text-decoration: underline;
+}
+
+.helpBubble small {
+    font-size: 11px;
+    display: block;
+    line-height: 1.125;
+    margin-bottom: 5px;
+}
+
+.helpBubble ul,
+.helpBubble ol {
+    padding-left: 14px;
+    margin-bottom: 5px;
+}
+
+
+.entity .attributeValue > div, .dragHelper.attributeValue > div{
+	border-radius: value("constants.css.borderRadius");
+}
+.widgetHolder .widget.input{
+	border-radius: value("constants.css.borderRadius");
+}
+
+/** joined vendor prefix style, for better fall back behavior */
+.formParent{
+	background: value("constants.css.gradientFormDialogColor") !important;
+	background-image: value("constants.css.gradientFormDialog") !important;
+}
+.entity .attributeValue.focused > .widgetHolder, .dragHelper.attributeValue > .widgetHolder{
+	background: value("constants.css.gradientFormDialogFocusColor");
+	background-image: value("constants.css.gradientFormDialogFocus");
+}
+
+/** Drag and drop styles. */
+.dragPlaceholder > div *{
+	visibility:hidden !important;
+}
+
+.dragElement {
+	display: none;
+}
+
+.dragPlaceholder {
+    opacity: 0.5;
+}
+
+.dragStarted .entity .attributeValue .buttonBar > div{
+	display: none;
+}
+
+.dragStarted .entity .dragHelper.attributeValue > .buttonBar > div.moveHandle{
+	display: inline-block;
+	border-color: transparent;
+	background: transparent;
+}
+
+/* Spreading the button bar to cover the hole attribute view element to avoid any iframe issues. */
+.dragStarted .entity .dragHelper.attributeValue > .buttonBar{
+	left: 0px;
+	bottom: 0px;
+	text-align: right;
+	background: transparent;
+	border-color: transparent;
+	box-shadow: none;
+}
+
+.dragHelper.attributeValue{
+	position: absolute;
+	z-index: value("constants.css.zIndexDND");
+	opacity: 0.8;
+	box-shadow: 2px 2px 2px #666666;
+	border-radius: value("constants.css.borderRadius");
+}
+
+.dragHelper.attributeValue > .widgetHolder{
+	padding: 2px 0px 2px 4px;
+}
+
+.dragOverlay{
+	position: fixed;
+	z-index: value("constants.css.zIndexPopup");
+	top: 0px;
+	left: 0px;
+	height: 100%;
+	width: 100%;
+	background: transparent;
+}
+
+html.fullWindowDrag {}
+
+div.inlineEditOverlay {
+	position:absolute;
+	top:0px;
+	left:0px;
+	z-index: 160000;
+}
+
+div.overlayButtonBar{
+	position: absolute;
+	background: #E1E4E8;
+	width: 27px;
+	top: 0px;
+	left: 0px;
+	bottom:0px;
+}
+
+div.overlayButtonPanel{
+	position:absolute;
+	top:0px;
+	right: -25px;
+	width: 110px;
+}
+div.overlayButtonPanel, div.overlayButtonPanel * {
+	box-sizing: border-box;
+	-moz-box-sizing: border-box;
+}
+
+div.overlayButtonPanel > div{
+	position: absolute;
+	right: 0px;
+}
+
+.multiButtonBar .cmsState:first-child span:before{
+    background-image: url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxNjAiIGhlaWdodD0iMTYwIiB2aWV3Qm94PSIwIDAgMTYwIDE2MCI+DQogIDxwYXRoIGQ9Ik0xMTYgMTcuN2E3MiA3MiAwIDAgMSAyNi4zIDk4LjRBNzIgNzIgMCAwIDEgNDQgMTQyLjUgNzIgNzIgMCAwIDEgMTcuNiA0NCA3MiA3MiAwIDAgMSAxMTYgMTcuNyIvPg0KICA8cGF0aCBmaWxsPSIjZmZmIiBkPSJNMTA0IDM4LjVhNDggNDggMCAwIDEgMTcuNSA2NS41QTQ4IDQ4IDAgMCAxIDU2IDEyMS41IDQ4IDQ4IDAgMCAxIDM4LjUgNTYgNDggNDggMCAwIDEgMTA0IDM4LjQiLz4NCiAgPHBhdGggZD0iTTkyIDU5LjJhMjQgMjQgMCAwIDEgOC44IDMyLjggMjQgMjQgMCAwIDEtMzIuOCA4LjhBMjQgMjQgMCAwIDEgNTkuMiA2OCAyNCAyNCAwIDAgMSA5MiA1OS4yIi8+DQo8L3N2Zz4=");
+	background-size: 100% 100%;
+    content: "";
+    display: block;
+    height: 20px;
+    width: 20px;
+    opacity: 0.45;
+}
+.multiButtonBar.hoverButton .cmsState:first-child span:before {
+	content:"\e903";
+    background: transparent;
+    opacity: 1;
+}
+
+.overlayButtonPanel .multiButtonBar.hoverButton .cmsState:first-child span:before {
+    content:"\e902";
+}
+
+.tabDescription.tabDescription {
+	padding-left: 4px;
+	padding-top: 4px;
+	margin-bottom: 8px; 
+	color: value("constants.css.textColorEditorLabel");
+	font-weight: 400;
+	line-height: normal !important;
+}
+
+.tabDescription.tabDescription {
+	font-size: 17px; 
+}
+
+.tabDescription.tabDescription h1 {
+	font-size: 200%; 
+}
+
+.tabDescription.tabDescription h2 {
+	font-size: 159%; 
+}
+
+.tabDescription.tabDescription h3 {
+	font-size: 126%; 
+}
+
+.tabDescription.tabDescription .tabDescriptionPanel, .tabDescription.tabDescription.tabDescriptionPanel{
+	background-color: #ffffcc;
+	color: value("constants.css.textColor");
+	border: 1px solid value("constants.css.borderColor");
+	border-radius: value("constants.css.borderRadius");
+	padding: 6px;
+	margin: 8px 25px 2px 3px; 
+	font-size: value("constants.css.fontSize");
+}
+
+.tabDescription.tabDescription .tabDescriptionPanel a, .tabDescription.tabDescription.tabDescriptionPanel a{
+	color: value("constants.css.textColorImportant");
+}
+
+.tabDescription.tabDescription .tabDescriptionPanel b, .tabDescription.tabDescription.tabDescriptionPanel b,
+.tabDescription.tabDescription .tabDescriptionPanel strong, .tabDescription.tabDescription.tabDescriptionPanel strong{
+	font-weight: 700;
+}
+

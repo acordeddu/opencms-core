@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -14,12 +14,12 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * Lesser General Public License for more details.
  *
- * For further information about Alkacon Software GmbH, please see the
- * company website: http://www.alkacon.com
+ * For further information about Alkacon Software GmbH & Co. KG, please see the
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -68,10 +68,10 @@ import org.apache.commons.logging.Log;
 /**
  * A list that displays properties .
  * <p>
- * 
+ *
  * Caution: The list ID argument has to be dynamic to prevent caching causing exception in case of varying collumns.
  * <p>
- * 
+ *
  * @since 7.5.1
  */
 public class CmsPropertyviewList extends A_CmsListDialog {
@@ -103,6 +103,9 @@ public class CmsPropertyviewList extends A_CmsListDialog {
     /** The request parameter for the properties to work on. */
     public static final String PARAM_PROPERTIES = "props";
 
+    /** The request parameter for the property value to search for. */
+    public static final String PARAM_PROPERTY_VALUE = "propvalue";
+
     /** The request parameter for the paths to work on. */
     public static final String PARAM_RESOURCES = "paths";
 
@@ -121,15 +124,18 @@ public class CmsPropertyviewList extends A_CmsListDialog {
     /** The properties. */
     private String[] m_props;
 
+    /** The value of the properties to check. */
+    private String m_propvalue;
+
     /** Flag for showing siblings. */
     private boolean m_siblings;
 
     /**
      * Public constructor.
      * <p>
-     * 
+     *
      * @param jsp an initialized JSP action element
-     * 
+     *
      * @throws CmsException if something goes wrong.
      * @throws FileNotFoundException if something goes wrong.
      */
@@ -145,7 +151,7 @@ public class CmsPropertyviewList extends A_CmsListDialog {
      * @param jsp an initialized JSP action element
      * @param listId the id of the list
      * @param listName the list name
-     * 
+     *
      * @throws CmsException if something goes wrong.
      * @throws FileNotFoundException if something goes wrong.
      */
@@ -164,7 +170,7 @@ public class CmsPropertyviewList extends A_CmsListDialog {
      * @param sortedColId the a priory sorted column
      * @param sortOrder the order of the sorted column
      * @param searchableColId the column to search into
-     * 
+     *
      * @throws CmsException if something goes wrong.
      * @throws FileNotFoundException if something goes wrong.
      */
@@ -187,13 +193,13 @@ public class CmsPropertyviewList extends A_CmsListDialog {
     /**
      * Public constructor.
      * <p>
-     * 
+     *
      * Public constructor with JSP variables.
      * <p>
      * @param context the JSP page context
      * @param req the JSP request
      * @param res the JSP response
-     * 
+     *
      * @throws CmsException if something goes wrong.
      * @throws FileNotFoundException if something goes wrong.
      */
@@ -240,9 +246,20 @@ public class CmsPropertyviewList extends A_CmsListDialog {
     }
 
     /**
+     * Returns the property value parameter.<p>
+     *
+     * @return the property value
+     *
+     */
+    public String getParamPropvalue() {
+
+        return m_propvalue;
+    }
+
+    /**
      * Returns true if siblings are shown.
      * <p>
-     * 
+     *
      * @return true if siblings are shown.
      */
     public String getParamSiblings() {
@@ -267,9 +284,19 @@ public class CmsPropertyviewList extends A_CmsListDialog {
     }
 
     /**
+     * Sets the property value parameter.<p>
+     *
+     * @param propvalue the property value to set
+     */
+    public void setParamPropvalue(final String propvalue) {
+
+        m_propvalue = propvalue;
+    }
+
+    /**
      * Set if siblings should be shown.
      * <p>
-     * 
+     *
      * @param showSiblings if siblings should be shown.
      */
     public void setParamSiblings(final String showSiblings) {
@@ -290,8 +317,7 @@ public class CmsPropertyviewList extends A_CmsListDialog {
      * @see org.opencms.workplace.list.A_CmsListDialog#getListItems()
      */
     @Override
-    @SuppressWarnings("unchecked")
-    protected List getListItems() {
+    protected List<CmsListItem> getListItems() {
 
         List<CmsListItem> result = new ArrayList<CmsListItem>();
         // get content
@@ -407,9 +433,8 @@ public class CmsPropertyviewList extends A_CmsListDialog {
         CmsListColumnDefinition propCol;
         for (String property : m_props) {
             propCol = new CmsListColumnDefinition(getPropertyColumnID(property));
-            propCol.setName(Messages.get().container(
-                Messages.GUI_LIST_PROPERTYVIEW_COL_PROPERTY_NAME_1,
-                new Object[] {property}));
+            propCol.setName(
+                Messages.get().container(Messages.GUI_LIST_PROPERTYVIEW_COL_PROPERTY_NAME_1, new Object[] {property}));
             propCol.setHelpText(Messages.get().container(Messages.GUI_LIST_PROPERTYVIEW_COL_PROPERTY_HELP_0));
             propCol.setAlign(CmsListColumnAlignEnum.ALIGN_LEFT);
             propCol.setSorteable(false);
@@ -445,9 +470,13 @@ public class CmsPropertyviewList extends A_CmsListDialog {
      * @param isSibling if false no boldface markup will be marked.
      * @param id used for the ID column.
      *
-     * @return true if the item contains at least one property with content, false if there is no property with content 
+     * @return true if the item contains at least one property with content, false if there is no property with content
      */
-    private boolean fillItem(final CmsResource resource, final CmsListItem item, final boolean isSibling, final int id) {
+    private boolean fillItem(
+        final CmsResource resource,
+        final CmsListItem item,
+        final boolean isSibling,
+        final int id) {
 
         item.set(LIST_COLUMN_ID, ID_NUMBER_FORMAT.format(id));
         I_CmsResourceType type;
@@ -464,12 +493,19 @@ public class CmsPropertyviewList extends A_CmsListDialog {
         for (String property : m_props) {
             CmsProperty prop;
             try {
+
                 prop = cms.readPropertyObject(resource, property, false);
                 if (prop.isNullProperty()) {
                     pathValue = m_messages.key("GUI_LIST_PROPERTYVIEW_NOTFOUND_0");
                 } else {
                     pathValue = prop.getValue();
-                    onePropCont = true;
+                    if (CmsStringUtil.isNotEmptyOrWhitespaceOnly(getParamPropvalue())) {
+                        if (prop.getValue().contains(getParamPropvalue())) {
+                            onePropCont = true;
+                        }
+                    } else {
+                        onePropCont = true;
+                    }
                 }
                 item.set(getPropertyColumnID(property), pathValue);
 
@@ -527,10 +563,9 @@ public class CmsPropertyviewList extends A_CmsListDialog {
 
     /**
      * Internally reads the resources to use.<p>
-     * 
-     * @return the resources to use. 
+     *
+     * @return the resources to use.
      */
-    @SuppressWarnings("unchecked")
     private List<CmsResource> getResources() {
 
         List<CmsResource> result = new LinkedList<CmsResource>();
@@ -552,9 +587,9 @@ public class CmsPropertyviewList extends A_CmsListDialog {
 
     /**
      * Checks if the resource is in the selected path.<p>
-     * 
+     *
      * @param resource the resource to check
-     * 
+     *
      * @return true, if the resource is in the selected path, otherwise false
      */
     private boolean isInPaths(final CmsResource resource) {

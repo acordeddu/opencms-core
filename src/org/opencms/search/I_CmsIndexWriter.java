@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -14,12 +14,12 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * Lesser General Public License for more details.
  *
- * For further information about Alkacon Software GmbH, please see the
- * company website: http://www.alkacon.com
+ * For further information about Alkacon Software GmbH & Co. KG, please see the
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -27,54 +27,58 @@
 
 package org.opencms.search;
 
-import java.io.IOException;
+import org.opencms.db.CmsPublishedResource;
 
-import org.apache.lucene.document.Document;
+import java.io.IOException;
 
 /**
  * Abstracts the index writer implementation for the most important index manipulation operations.
- * 
- * @since 8.0.2 
+ *
+ * @since 8.0.2
  */
 public interface I_CmsIndexWriter {
 
     /**
      * Close this IndexWriter.<p>
-     * 
-     * @throws IOException
+     *
+     * @throws IOException thrown if the close action fails.
      */
     void close() throws IOException;
 
     /**
      * Commit all previous operations.<p>
-     * 
-     * @throws IOException
+     *
+     * @throws IOException thrown if the commit action fails.
      */
     void commit() throws IOException;
 
     /**
      * Delete a document from the index.<p>
-     * 
-     * @param rootPath the root path of the document to delete
-     * 
+     *
+     * @param resource the resource to delete
+     *
      * @throws IOException in case something goes wrong
      */
-    void deleteDocuments(String rootPath) throws IOException;
+    void deleteDocument(CmsPublishedResource resource) throws IOException;
 
     /**
      * Optimizes the index.<p>
-     * 
-     * @throws IOException
+     *
+     * Please note that as of Lucene 3.5, the direct use of optimize is discouraged
+     * as Lucene apparently is now able to manage the file structure so efficiently that
+     * frequent optimizations are not longer required.<p>
+     *
+     * @throws IOException thrown if the optimization fails.
      */
     void optimize() throws IOException;
 
     /**
      * Update a document in the index.<p>
-     * 
+     *
      * @param rootPath the root path of the document to update
      * @param document the document to update
-     * 
+     *
      * @throws IOException in case something goes wrong
      */
-    void updateDocument(String rootPath, Document document) throws IOException;
+    void updateDocument(String rootPath, I_CmsSearchDocument document) throws IOException;
 }

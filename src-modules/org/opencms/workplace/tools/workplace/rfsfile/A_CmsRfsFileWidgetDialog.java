@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -14,12 +14,12 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * Lesser General Public License for more details.
  *
- * For further information about Alkacon Software GmbH, please see the
- * company website: http://www.alkacon.com
+ * For further information about Alkacon Software GmbH & Co. KG, please see the
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -41,14 +41,14 @@ import javax.servlet.http.HttpServletResponse;
 import javax.servlet.jsp.PageContext;
 
 /**
- * Extending this class enables different 
- * <code>{@link org.opencms.workplace.CmsWidgetDialog}</code> implementations to 
+ * Extending this class enables different
+ * <code>{@link org.opencms.workplace.CmsWidgetDialog}</code> implementations to
  * share the access to a file in the RFS via the member {@link #m_logView}.<p>
- * 
- * Here the support for the init / commit lifecycle of this RFS file access is 
+ *
+ * Here the support for the init / commit lifecycle of this RFS file access is
  * added transparently.<p>
- * 
- * @since 6.0.0 
+ *
+ * @since 6.0.0
  */
 public abstract class A_CmsRfsFileWidgetDialog extends CmsWidgetDialog {
 
@@ -59,9 +59,9 @@ public abstract class A_CmsRfsFileWidgetDialog extends CmsWidgetDialog {
     protected CmsRfsFileViewer m_logView;
 
     /**
-     * Initializes the dialog object: a <code>{@link CmsRfsFileViewer}</code> bean that 
+     * Initializes the dialog object: a <code>{@link CmsRfsFileViewer}</code> bean that
      * is shared amongst all related dialog classes (subclasses of this class). <p>
-     * 
+     *
      * @param jsp the bundle of all request-response related information
      */
     public A_CmsRfsFileWidgetDialog(CmsJspActionElement jsp) {
@@ -69,9 +69,9 @@ public abstract class A_CmsRfsFileWidgetDialog extends CmsWidgetDialog {
         super(jsp);
     }
 
-    /** 
+    /**
      * Delegates to the 2nd constructor. <p>
-     * 
+     *
      * @param context a PageContext
      * @param req the HttpServletRequest
      * @param res the HttpServletResponse
@@ -82,14 +82,15 @@ public abstract class A_CmsRfsFileWidgetDialog extends CmsWidgetDialog {
     }
 
     /**
-     * Commits the <code>{@link CmsRfsFileViewer}</code> to the 
+     * Commits the <code>{@link CmsRfsFileViewer}</code> to the
      * <code>{@link org.opencms.workplace.CmsWorkplaceManager}</code>. <p>
-     * 
+     *
      * @see org.opencms.workplace.CmsWidgetDialog#actionCommit()
      */
+    @Override
     public void actionCommit() {
 
-        List errors = new ArrayList();
+        List<Throwable> errors = new ArrayList<Throwable>();
         try {
             OpenCms.getWorkplaceManager().setFileViewSettings(getCms(), m_logView);
         } catch (CmsRoleViolationException e) {
@@ -100,11 +101,12 @@ public abstract class A_CmsRfsFileWidgetDialog extends CmsWidgetDialog {
     }
 
     /**
-     * Subclasses have to invoke this method with <code>super.defineWidgets()</code> 
+     * Subclasses have to invoke this method with <code>super.defineWidgets()</code>
      * as here the internal bean <code>{@link #m_logView}</code> is retrieved. <p>
-     *  
+     *
      * @see org.opencms.workplace.CmsWidgetDialog#defineWidgets()
      */
+    @Override
     protected void defineWidgets() {
 
         initLogfileViewBean();
@@ -113,6 +115,7 @@ public abstract class A_CmsRfsFileWidgetDialog extends CmsWidgetDialog {
     /**
      * @see org.opencms.workplace.CmsWidgetDialog#getPageArray()
      */
+    @Override
     protected String[] getPageArray() {
 
         return PAGES;
@@ -120,9 +123,9 @@ public abstract class A_CmsRfsFileWidgetDialog extends CmsWidgetDialog {
 
     /**
      * Initializes the login message object for this dialog.<p>
-     * 
-     * The {@link CmsRfsFileViewer} instance is obtained from the 
-     * <code>{@link org.opencms.workplace.CmsWorkplaceManager}</code>. 
+     *
+     * The {@link CmsRfsFileViewer} instance is obtained from the
+     * <code>{@link org.opencms.workplace.CmsWorkplaceManager}</code>.
      */
     protected void initLogfileViewBean() {
 
@@ -133,11 +136,12 @@ public abstract class A_CmsRfsFileWidgetDialog extends CmsWidgetDialog {
     /**
      * @see org.opencms.workplace.CmsWorkplace#initMessages()
      */
+    @Override
     protected void initMessages() {
 
         // add specific dialog resource bundle
         addMessages(Messages.get().getBundleName());
-        // also include top-level messages to allow the admin navigation access messages of the module top-package 
+        // also include top-level messages to allow the admin navigation access messages of the module top-package
         // that is shared with other tools.
         addMessages(org.opencms.workplace.tools.workplace.Messages.get().getBundleName());
         // add default resource bundles

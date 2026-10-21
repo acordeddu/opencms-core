@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -14,12 +14,12 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * Lesser General Public License for more details.
  *
- * For further information about Alkacon Software GmbH, please see the
- * company website: http://www.alkacon.com
+ * For further information about Alkacon Software GmbH & Co. KG, please see the
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -31,9 +31,9 @@ import org.opencms.i18n.A_CmsMessageBundle;
 import org.opencms.i18n.I_CmsMessageBundle;
 
 /**
- * Convenience class to access the localized messages of this OpenCms package.<p> 
- * 
- * @since 6.0.0 
+ * Convenience class to access the localized messages of this OpenCms package.<p>
+ *
+ * @since 6.0.0
  */
 public final class Messages extends A_CmsMessageBundle {
 
@@ -108,9 +108,6 @@ public final class Messages extends A_CmsMessageBundle {
 
     /** Message constant for key in the resource bundle. */
     public static final String GUI_DB_PUBLOCKS_NOTICE_0 = "GUI_DB_PUBLOCKS_NOTICE_0";
-
-    /** Message constant for key in the resource bundle. */
-    public static final String GUI_DB_PUBLOCKS_THREAD_NAME_0 = "GUI_DB_PUBLOCKS_THREAD_NAME_0";
 
     /** Message constant for key in the resource bundle. */
     public static final String GUI_EDITOR_HELP_EXPORTFILE_1 = "GUI_EDITOR_HELP_EXPORTFILE_1";
@@ -209,9 +206,6 @@ public final class Messages extends A_CmsMessageBundle {
     public static final String GUI_STATEXP_ADMIN_TOOL_NAME_0 = "GUI_STATEXP_ADMIN_TOOL_NAME_0";
 
     /** Message constant for key in the resource bundle. */
-    public static final String GUI_STATEXP_THREAD_NAME_0 = "GUI_STATEXP_THREAD_NAME_0";
-
-    /** Message constant for key in the resource bundle. */
     public static final String GUI_TITLE_STATICEXPORT_0 = "GUI_TITLE_STATICEXPORT_0";
 
     /** Message constant for key in the resource bundle. */
@@ -234,21 +228,6 @@ public final class Messages extends A_CmsMessageBundle {
 
     /** Message constant for key in the resource bundle. */
     public static final String RPT_CREATE_INDEX_0 = "RPT_CREATE_INDEX_0";
-
-    /** Message constant for key in the resource bundle. */
-    public static final String RPT_DB_PUBLOCKS_BEGIN_0 = "RPT_DB_PUBLOCKS_BEGIN_0";
-
-    /** Message constant for key in the resource bundle. */
-    public static final String RPT_DB_PUBLOCKS_END_0 = "RPT_DB_PUBLOCKS_END_0";
-
-    /** Message constant for key in the resource bundle. */
-    public static final String RPT_DB_PUBLOCKS_FAILED_0 = "RPT_DB_PUBLOCKS_FAILED_0";
-
-    /** Message constant for key in the resource bundle. */
-    public static final String RPT_DB_PUBLOCKS_READLOCKS_1 = "RPT_DB_PUBLOCKS_READLOCKS_1";
-
-    /** Message constant for key in the resource bundle. */
-    public static final String RPT_DB_PUBLOCKS_UNLOCKING_1 = "RPT_DB_PUBLOCKS_UNLOCKING_1";
 
     /** Message constant for key in the resource bundle. */
     public static final String RPT_HTML_DELETE_0 = "RPT_HTML_DELETE_0";
@@ -287,7 +266,7 @@ public final class Messages extends A_CmsMessageBundle {
 
     /**
      * Returns an instance of this localized message accessor.<p>
-     * 
+     *
      * @return an instance of this localized message accessor
      */
     public static I_CmsMessageBundle get() {
@@ -297,7 +276,7 @@ public final class Messages extends A_CmsMessageBundle {
 
     /**
      * Returns the bundle name for this OpenCms package.<p>
-     * 
+     *
      * @return the bundle name for this OpenCms package
      */
     public String getBundleName() {

@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -14,12 +14,12 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * Lesser General Public License for more details.
  *
- * For further information about Alkacon Software GmbH, please see the
- * company website: http://www.alkacon.com
+ * For further information about Alkacon Software GmbH & Co. KG, please see the
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -34,6 +34,8 @@ import org.opencms.i18n.CmsEncoder;
 import org.opencms.jsp.CmsJspActionElement;
 import org.opencms.main.CmsLog;
 import org.opencms.main.OpenCms;
+import org.opencms.security.CmsRole;
+import org.opencms.security.CmsRoleViolationException;
 import org.opencms.util.CmsRequestUtil;
 import org.opencms.util.CmsStringUtil;
 import org.opencms.workplace.CmsDialog;
@@ -49,13 +51,13 @@ import org.apache.commons.logging.Log;
 
 /**
  * Handles the actions that should be performed before opening the editor frameset.<p>
- * 
+ *
  * For each resource type, a pre editor action class can be defined that is triggered in the workplace JSP
  * <code>/system/workplace/editors/editor.jsp</code> before the editor is initially opened.
- * If an action was performed, be sure to use the static method {@link #sendForwardToEditor(CmsDialog, Map)} 
+ * If an action was performed, be sure to use the static method {@link #sendForwardToEditor(CmsDialog, Map)}
  * to open the editor after the action.<p>
- * 
- * @since 6.5.4 
+ *
+ * @since 6.5.4
  */
 public class CmsPreEditorAction extends CmsDialog {
 
@@ -67,7 +69,7 @@ public class CmsPreEditorAction extends CmsDialog {
 
     /**
      * Public constructor with JSP action element.<p>
-     * 
+     *
      * @param jsp an initialized JSP action element
      */
     public CmsPreEditorAction(CmsJspActionElement jsp) {
@@ -77,7 +79,7 @@ public class CmsPreEditorAction extends CmsDialog {
 
     /**
      * Public constructor with JSP variables.<p>
-     * 
+     *
      * @param context the JSP page context
      * @param req the JSP request
      * @param res the JSP response
@@ -100,7 +102,7 @@ public class CmsPreEditorAction extends CmsDialog {
 
     /**
      * Forwards to the editor and opens it after the action was performed.<p>
-     * 
+     *
      * @param dialog the dialog instance forwarding to the editor
      */
     public static void sendForwardToEditor(CmsDialog dialog) {
@@ -110,16 +112,16 @@ public class CmsPreEditorAction extends CmsDialog {
 
     /**
      * Forwards to the editor and opens it after the action was performed.<p>
-     * 
+     *
      * @param dialog the dialog instance forwarding to the editor
      * @param additionalParams eventual additional request parameters for the editor to use
      */
-    public static void sendForwardToEditor(CmsDialog dialog, Map additionalParams) {
+    public static void sendForwardToEditor(CmsDialog dialog, Map<String, String[]> additionalParams) {
 
         // create the Map of original request parameters
-        Map params = CmsRequestUtil.createParameterMap(dialog.getParamOriginalParams());
+        Map<String, String[]> params = CmsRequestUtil.createParameterMap(dialog.getParamOriginalParams());
         // put the parameter indicating that the pre editor action was executed
-        params.put(PARAM_PREACTIONDONE, CmsStringUtil.TRUE);
+        params.put(PARAM_PREACTIONDONE, new String[] {CmsStringUtil.TRUE});
         if (additionalParams != null) {
             // put the additional parameters to the Map
             params.putAll(additionalParams);
@@ -138,7 +140,7 @@ public class CmsPreEditorAction extends CmsDialog {
     /**
      * Returns if an action has to be performed before opening the editor depending on the resource to edit
      * and request parameter values.<p>
-     * 
+     *
      * @return true if an action has to be performed, then the editor frameset is not generated
      */
     public boolean doPreAction() {
@@ -150,7 +152,8 @@ public class CmsPreEditorAction extends CmsDialog {
                 // pre editor action not executed yet now check if a pre action class is given for the resource type
                 CmsResource resource = getCms().readResource(resourceName, CmsResourceFilter.ALL);
                 I_CmsResourceType type = OpenCms.getResourceManager().getResourceType(resource.getTypeId());
-                I_CmsPreEditorActionDefinition preAction = OpenCms.getWorkplaceManager().getPreEditorConditionDefinition(type);
+                I_CmsPreEditorActionDefinition preAction = OpenCms.getWorkplaceManager().getPreEditorConditionDefinition(
+                    type);
                 if (preAction != null) {
                     return preAction.doPreAction(resource, this, getOriginalParams());
                 }
@@ -167,7 +170,7 @@ public class CmsPreEditorAction extends CmsDialog {
 
     /**
      * Returns the original request parameters for the editor to pass to the pre editor action dialog.<p>
-     * 
+     *
      * @return the original request parameters for the editor
      */
     public String getOriginalParams() {
@@ -176,6 +179,17 @@ public class CmsPreEditorAction extends CmsDialog {
             m_originalParams = CmsEncoder.decode(CmsRequestUtil.encodeParams(getJsp().getRequest()));
         }
         return m_originalParams;
+    }
+
+    /**
+     * Checks that the current user is a workplace user.<p>
+     *
+     * @throws CmsRoleViolationException if the user does not have the required role
+     */
+    @Override
+    protected void checkRole() throws CmsRoleViolationException {
+
+        OpenCms.getRoleManager().checkRole(getCms(), CmsRole.ELEMENT_AUTHOR);
     }
 
 }

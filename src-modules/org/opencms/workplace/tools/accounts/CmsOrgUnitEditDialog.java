@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -14,12 +14,12 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * Lesser General Public License for more details.
  *
- * For further information about Alkacon Software GmbH, please see the
- * company website: http://www.alkacon.com
+ * For further information about Alkacon Software GmbH & Co. KG, please see the
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -50,7 +50,7 @@ import javax.servlet.jsp.PageContext;
 
 /**
  * Dialog to edit new or existing organizational unit in the administration view.<p>
- * 
+ *
  * @since 6.5.6
  */
 public class CmsOrgUnitEditDialog extends A_CmsOrgUnitDialog {
@@ -60,7 +60,7 @@ public class CmsOrgUnitEditDialog extends A_CmsOrgUnitDialog {
 
     /**
      * Public constructor with JSP action element.<p>
-     * 
+     *
      * @param jsp an initialized JSP action element
      */
     public CmsOrgUnitEditDialog(CmsJspActionElement jsp) {
@@ -70,7 +70,7 @@ public class CmsOrgUnitEditDialog extends A_CmsOrgUnitDialog {
 
     /**
      * Public constructor with JSP variables.<p>
-     * 
+     *
      * @param context the JSP page context
      * @param req the JSP request
      * @param res the JSP response
@@ -83,14 +83,15 @@ public class CmsOrgUnitEditDialog extends A_CmsOrgUnitDialog {
     /**
      * @see org.opencms.workplace.CmsWidgetDialog#actionCommit()
      */
+    @Override
     public void actionCommit() {
 
-        List errors = new ArrayList();
+        List<Throwable> errors = new ArrayList<Throwable>();
 
         try {
             // if new create it first
             if (isNewOrgUnit()) {
-                List resourceNames = CmsFileUtil.removeRedundancies(m_orgUnitBean.getResources());
+                List<String> resourceNames = CmsFileUtil.removeRedundancies(m_orgUnitBean.getResources());
                 CmsOrganizationalUnit newOrgUnit = OpenCms.getOrgUnitManager().createOrganizationalUnit(
                     getCms(),
                     m_orgUnitBean.getFqn(),
@@ -100,12 +101,12 @@ public class CmsOrgUnitEditDialog extends A_CmsOrgUnitDialog {
 
                 if (!resourceNames.isEmpty()) {
                     resourceNames.remove(0);
-                    Iterator itResourceNames = CmsFileUtil.removeRedundancies(resourceNames).iterator();
+                    Iterator<String> itResourceNames = CmsFileUtil.removeRedundancies(resourceNames).iterator();
                     while (itResourceNames.hasNext()) {
                         OpenCms.getOrgUnitManager().addResourceToOrgUnit(
                             getCms(),
                             newOrgUnit.getName(),
-                            (String)itResourceNames.next());
+                            itResourceNames.next());
                     }
                 }
             } else {
@@ -114,28 +115,28 @@ public class CmsOrgUnitEditDialog extends A_CmsOrgUnitDialog {
                     m_orgUnitBean.getFqn());
                 orgunit.setDescription(m_orgUnitBean.getDescription());
                 orgunit.setFlags(m_orgUnitBean.getFlags());
-                List resourceNamesNew = CmsFileUtil.removeRedundancies(m_orgUnitBean.getResources());
-                List resourcesOld = OpenCms.getOrgUnitManager().getResourcesForOrganizationalUnit(
+                List<String> resourceNamesNew = CmsFileUtil.removeRedundancies(m_orgUnitBean.getResources());
+                List<CmsResource> resourcesOld = OpenCms.getOrgUnitManager().getResourcesForOrganizationalUnit(
                     getCms(),
                     orgunit.getName());
-                List resourceNamesOld = new ArrayList();
-                Iterator itResourcesOld = resourcesOld.iterator();
+                List<String> resourceNamesOld = new ArrayList<String>();
+                Iterator<CmsResource> itResourcesOld = resourcesOld.iterator();
                 while (itResourcesOld.hasNext()) {
-                    CmsResource resourceOld = (CmsResource)itResourcesOld.next();
+                    CmsResource resourceOld = itResourcesOld.next();
                     resourceNamesOld.add(getCms().getSitePath(resourceOld));
                 }
-                Iterator itResourceNamesNew = resourceNamesNew.iterator();
+                Iterator<String> itResourceNamesNew = resourceNamesNew.iterator();
                 // add new resources to ou
                 while (itResourceNamesNew.hasNext()) {
-                    String resourceNameNew = (String)itResourceNamesNew.next();
+                    String resourceNameNew = itResourceNamesNew.next();
                     if (!resourceNamesOld.contains(resourceNameNew)) {
                         OpenCms.getOrgUnitManager().addResourceToOrgUnit(getCms(), orgunit.getName(), resourceNameNew);
                     }
                 }
-                Iterator itResourceNamesOld = resourceNamesOld.iterator();
+                Iterator<String> itResourceNamesOld = resourceNamesOld.iterator();
                 // delete old resources from ou
                 while (itResourceNamesOld.hasNext()) {
-                    String resourceNameOld = (String)itResourceNamesOld.next();
+                    String resourceNameOld = itResourceNamesOld.next();
                     if (!resourceNamesNew.contains(resourceNameOld)) {
                         OpenCms.getOrgUnitManager().removeResourceFromOrgUnit(
                             getCms(),
@@ -157,6 +158,7 @@ public class CmsOrgUnitEditDialog extends A_CmsOrgUnitDialog {
     /**
      * @see org.opencms.workplace.CmsWidgetDialog#createDialogHtml(java.lang.String)
      */
+    @Override
     protected String createDialogHtml(String dialog) {
 
         StringBuffer result = new StringBuffer(1024);
@@ -190,6 +192,7 @@ public class CmsOrgUnitEditDialog extends A_CmsOrgUnitDialog {
     /**
      * @see org.opencms.workplace.CmsWidgetDialog#defineWidgets()
      */
+    @Override
     protected void defineWidgets() {
 
         super.defineWidgets();
@@ -214,15 +217,18 @@ public class CmsOrgUnitEditDialog extends A_CmsOrgUnitDialog {
             }
             addWidget(new CmsWidgetDialogParameter(m_orgUnitBean, "webusers", PAGES[0], new CmsDisplayWidget()));
         }
-        addWidget(new CmsWidgetDialogParameter(m_orgUnitBean, "resources", PAGES[0], new CmsVfsFileWidget(
-            false,
-            getCms().getRequestContext().getSiteRoot(),
-            false)));
+        addWidget(
+            new CmsWidgetDialogParameter(
+                m_orgUnitBean,
+                "resources",
+                PAGES[0],
+                new CmsVfsFileWidget(false, getCms().getRequestContext().getSiteRoot(), false)));
     }
 
     /**
      * @see org.opencms.workplace.CmsWidgetDialog#validateParamaters()
      */
+    @Override
     protected void validateParamaters() throws Exception {
 
         OpenCms.getRoleManager().checkRole(getCms(), CmsRole.ACCOUNT_MANAGER.forOrgUnit(getParamOufqn()));

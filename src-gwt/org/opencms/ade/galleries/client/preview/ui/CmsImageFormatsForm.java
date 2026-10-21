@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -15,11 +15,11 @@
  * Lesser General Public License for more details.
  *
  * For further information about Alkacon Software, please see the
- * company website: http://www.alkacon.com
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -31,7 +31,7 @@ import org.opencms.ade.galleries.client.Messages;
 import org.opencms.ade.galleries.client.preview.CmsImageFormatHandler;
 import org.opencms.gwt.client.ui.CmsPushButton;
 import org.opencms.gwt.client.ui.CmsToggleButton;
-import org.opencms.gwt.client.ui.css.I_CmsImageBundle;
+import org.opencms.gwt.client.ui.I_CmsButton;
 import org.opencms.gwt.client.ui.input.CmsLabel;
 import org.opencms.gwt.client.ui.input.CmsSelectBox;
 import org.opencms.gwt.client.ui.input.CmsTextBox;
@@ -40,7 +40,6 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.event.dom.client.ClickEvent;
-import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.event.dom.client.KeyPressEvent;
 import com.google.gwt.event.dom.client.KeyPressHandler;
@@ -48,16 +47,17 @@ import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
+import com.google.gwt.uibinder.client.UiHandler;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.HTMLPanel;
 import com.google.gwt.user.client.ui.Widget;
 
 /**
  * Image format form.<p>
- * 
+ *
  * @since 8.0.0
  */
-public class CmsImageFormatsForm extends Composite implements ValueChangeHandler<String>, KeyPressHandler, ClickHandler {
+public class CmsImageFormatsForm extends Composite implements ValueChangeHandler<String>, KeyPressHandler {
 
     /** GWT ui-binder. */
     protected interface I_CmsImageFormatsFormUiBinder extends UiBinder<Widget, CmsImageFormatsForm> {
@@ -124,25 +124,24 @@ public class CmsImageFormatsForm extends Composite implements ValueChangeHandler
 
     /**
      * Constructor.<p>
-     * 
+     *
      * @param formatHandler the image format handler
      */
     public CmsImageFormatsForm(CmsImageFormatHandler formatHandler) {
 
         initWidget(uiBinder.createAndBindUi(this));
-
+        // form is enabled by default
+        m_formEnabled = true;
         m_formatHandler = formatHandler;
         m_selectBoxLabel.setText(Messages.get().key(Messages.GUI_PREVIEW_LABEL_FORMAT_0));
         m_selectBoxLabel.truncate(TM_PREVIEW_TAB_IMAGEFORMATS, LABEL_WIDTH);
 
         // set localized values of the labels
         m_cropButton.setText(Messages.get().key(Messages.GUI_PREVIEW_BUTTON_CROP_0));
-        m_cropButton.setImageClass(I_CmsImageBundle.INSTANCE.style().croppingIcon());
-        m_cropButton.addClickHandler(this);
+        m_cropButton.setImageClass(I_CmsButton.ICON_FONT + " " + I_CmsButton.CROP);
 
         m_removeCropButton.setText(Messages.get().key(Messages.GUI_PREVIEW_BUTTON_REMOVECROP_0));
-        m_removeCropButton.setImageClass(I_CmsImageBundle.INSTANCE.style().removeCroppingIcon());
-        m_removeCropButton.addClickHandler(this);
+        m_removeCropButton.setImageClass(I_CmsButton.ICON_FONT + " " + I_CmsButton.CROP_REMOVE);
 
         m_widthLabel.setText(Messages.get().key(Messages.GUI_PREVIEW_LABEL_WIDTH_0));
         m_widthLabel.truncate(TM_PREVIEW_TAB_IMAGEFORMATS, LABEL_WIDTH);
@@ -150,12 +149,10 @@ public class CmsImageFormatsForm extends Composite implements ValueChangeHandler
         m_heightLabel.setText(Messages.get().key(Messages.GUI_PREVIEW_LABEL_HEIGHT_0));
         m_heightLabel.truncate(TM_PREVIEW_TAB_IMAGEFORMATS, LABEL_WIDTH);
 
-        m_ratioLock.setImageClass(I_CmsImageBundle.INSTANCE.style().lockedIcon());
-        m_ratioLock.setDownImageClass(I_CmsImageBundle.INSTANCE.style().unlockedIcon());
-        m_ratioLock.addClickHandler(this);
+        m_ratioLock.setImageClass(I_CmsButton.ICON_FONT + " " + I_CmsButton.LOCK_CLOSED);
+        m_ratioLock.setDownImageClass(I_CmsButton.ICON_FONT + " " + I_CmsButton.LOCK_OPEN);
 
-        m_resetSize.setImageClass(I_CmsImageBundle.INSTANCE.style().resetIcon());
-        m_resetSize.addClickHandler(this);
+        m_resetSize.setImageClass(I_CmsButton.ICON_FONT + " " + I_CmsButton.RESET);
         m_selectBox.addValueChangeHandler(this);
         m_heightBox.addValueChangeHandler(this);
         m_heightBox.addKeyPressHandler(this);
@@ -167,9 +164,9 @@ public class CmsImageFormatsForm extends Composite implements ValueChangeHandler
 
     /**
      * Parses <code>String</code> to <code>int</code>. Return -1 for invalid input.<p>
-     * 
+     *
      * @param value the value to parse
-     * 
+     *
      * @return the int-value
      */
     private static native int parseInt(String value) /*-{
@@ -182,7 +179,7 @@ public class CmsImageFormatsForm extends Composite implements ValueChangeHandler
 
     /**
      * Adds a format select option.<p>
-     * 
+     *
      * @param value the option value
      * @param label the option label
      */
@@ -193,7 +190,7 @@ public class CmsImageFormatsForm extends Composite implements ValueChangeHandler
 
     /**
      * Returns the selected format value.<p>
-     * 
+     *
      * @return the selected format value
      */
     public String getFormatSelectValue() {
@@ -203,7 +200,7 @@ public class CmsImageFormatsForm extends Composite implements ValueChangeHandler
 
     /**
      * Returns the height input or -1 if input is empty or not valid.<p>
-     * 
+     *
      * @return the height input
      */
     public int getHeightInput() {
@@ -213,35 +210,12 @@ public class CmsImageFormatsForm extends Composite implements ValueChangeHandler
 
     /**
      * Returns the width input or -1 if input is empty or not valid.<p>
-     * 
+     *
      * @return the width input
      */
     public int getWidthInput() {
 
         return parseInt(m_widthBox.getFormValueAsString());
-    }
-
-    /**
-     * @see com.google.gwt.event.dom.client.ClickHandler#onClick(com.google.gwt.event.dom.client.ClickEvent)
-     */
-    public void onClick(ClickEvent event) {
-
-        Object source = event.getSource();
-        if (source == m_cropButton) {
-            m_formatHandler.openCropping();
-            return;
-        }
-        if (source == m_removeCropButton) {
-            m_formatHandler.onRemoveCropping();
-            return;
-        }
-        if (source == m_ratioLock) {
-            m_formatHandler.onLockRatio(!((CmsToggleButton)source).isDown());
-            return;
-        }
-        if (source == m_resetSize) {
-            m_formatHandler.onResetSize();
-        }
     }
 
     /**
@@ -296,7 +270,7 @@ public class CmsImageFormatsForm extends Composite implements ValueChangeHandler
 
     /**
      * Enables/disables buttons and input fields necessary if the image if cropped.<p>
-     * 
+     *
      * @param cropped <code>true</code> if the image is cropped
      */
     public void setCropped(boolean cropped) {
@@ -307,6 +281,7 @@ public class CmsImageFormatsForm extends Composite implements ValueChangeHandler
             m_selectBox.setEnabled(false);
             m_resetSize.disable(Messages.get().key(Messages.GUI_PREVIEW_BUTTON_DIS_CROPPED_0));
             m_ratioLock.disable(Messages.get().key(Messages.GUI_PREVIEW_BUTTON_DIS_CROPPED_0));
+            m_cropButton.disable(Messages.get().key(Messages.GUI_PREVIEW_BUTTON_DIS_CROPPED_0));
             if (m_formEnabled) {
                 m_removeCropButton.enable();
             }
@@ -326,7 +301,7 @@ public class CmsImageFormatsForm extends Composite implements ValueChangeHandler
 
     /**
      * Sets the format select value.<p>
-     * 
+     *
      * @param value the value
      */
     public void setFormatSelectValue(String value) {
@@ -336,7 +311,7 @@ public class CmsImageFormatsForm extends Composite implements ValueChangeHandler
 
     /**
      * Sets the format form enabled.<p>
-     * 
+     *
      * @param enabled if <code>true</code> the form will be enabled
      */
     public void setFormEnabled(boolean enabled) {
@@ -356,7 +331,7 @@ public class CmsImageFormatsForm extends Composite implements ValueChangeHandler
 
     /**
      * Sets the height input field.<p>
-     * 
+     *
      * @param height the value
      */
     public void setHeightInput(int height) {
@@ -366,7 +341,7 @@ public class CmsImageFormatsForm extends Composite implements ValueChangeHandler
 
     /**
      * Enables the height input field.<p>
-     * 
+     *
      * @param enabled <code>true</code> to enable the input field
      */
     public void setHeightInputEnabled(boolean enabled) {
@@ -376,7 +351,7 @@ public class CmsImageFormatsForm extends Composite implements ValueChangeHandler
 
     /**
      * Sets the state of the ratio lock button.<p>
-     * 
+     *
      * @param down if <code>true</code> button will be set down / lock open
      * @param enabled if <code>true</code> button will be enabled
      * @param disableMessage message to show for disabled button
@@ -393,7 +368,7 @@ public class CmsImageFormatsForm extends Composite implements ValueChangeHandler
 
     /**
      * Sets the width input field.<p>
-     * 
+     *
      * @param width the value
      */
     public void setWidthInput(int width) {
@@ -403,11 +378,55 @@ public class CmsImageFormatsForm extends Composite implements ValueChangeHandler
 
     /**
      * Enables the width input field.<p>
-     * 
+     *
      * @param enabled <code>true</code> to enable the input field
      */
     public void setWidthInputEnabled(boolean enabled) {
 
         m_widthBox.setEnabled(enabled);
+    }
+
+    /**
+     * Opens the cropping dialog on crop button click.<p>
+     *
+     * @param event the click event
+     */
+    @UiHandler("m_cropButton")
+    protected void openCropping(ClickEvent event) {
+
+        m_formatHandler.openCropping();
+    }
+
+    /**
+     * Removes the cropping on button click.<p>
+     *
+     * @param event the click event
+     */
+    @UiHandler("m_removeCropButton")
+    protected void removeCropping(ClickEvent event) {
+
+        m_formatHandler.onRemoveCropping();
+    }
+
+    /**
+     * Resets the size on button click.<p>
+     *
+     * @param event the click event
+     */
+    @UiHandler("m_resetSize")
+    protected void resetSize(ClickEvent event) {
+
+        m_formatHandler.onResetSize();
+    }
+
+    /**
+     * Toggle the ratio lock on button click.<p>
+     *
+     * @param event the click event
+     */
+    @UiHandler("m_ratioLock")
+    protected void toggleRatioLock(ClickEvent event) {
+
+        m_formatHandler.onLockRatio(!m_ratioLock.isDown());
     }
 }

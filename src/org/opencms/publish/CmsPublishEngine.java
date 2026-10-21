@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -14,12 +14,12 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * Lesser General Public License for more details.
  *
- * For further information about Alkacon Software GmbH, please see the
- * company website: http://www.alkacon.com
+ * For further information about Alkacon Software GmbH & Co. KG, please see the
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -38,6 +38,7 @@ import org.opencms.file.CmsRequestContext;
 import org.opencms.file.CmsResource;
 import org.opencms.file.CmsUser;
 import org.opencms.lock.CmsLockType;
+import org.opencms.main.CmsBroadcast.ContentMode;
 import org.opencms.main.CmsEvent;
 import org.opencms.main.CmsException;
 import org.opencms.main.CmsInitException;
@@ -59,7 +60,7 @@ import org.apache.commons.logging.Log;
 
 /**
  * This class is responsible for the publish process.<p>
- * 
+ *
  * @since 6.5.5
  */
 public final class CmsPublishEngine {
@@ -99,22 +100,22 @@ public final class CmsPublishEngine {
 
     /**
      * Default constructor.<p>
-     * 
+     *
      * @param dbContextFactory the initialized OpenCms runtime info factory
-     * 
-     * @throws CmsInitException if the configured path to store the publish reports is not accessible 
+     *
+     * @throws CmsInitException if the configured path to store the publish reports is not accessible
      */
     public CmsPublishEngine(I_CmsDbContextFactory dbContextFactory)
     throws CmsInitException {
 
         if (OpenCms.getRunLevel() > OpenCms.RUNLEVEL_2_INITIALIZING) {
             // OpenCms is already initialized
-            throw new CmsInitException(org.opencms.main.Messages.get().container(
-                org.opencms.main.Messages.ERR_ALREADY_INITIALIZED_0));
+            throw new CmsInitException(
+                org.opencms.main.Messages.get().container(org.opencms.main.Messages.ERR_ALREADY_INITIALIZED_0));
         }
         if (dbContextFactory == null) {
-            throw new CmsInitException(org.opencms.main.Messages.get().container(
-                org.opencms.main.Messages.ERR_CRITICAL_NO_DB_CONTEXT_0));
+            throw new CmsInitException(
+                org.opencms.main.Messages.get().container(org.opencms.main.Messages.ERR_CRITICAL_NO_DB_CONTEXT_0));
         }
         // initialize the db context factory
         m_dbContextFactory = dbContextFactory;
@@ -144,10 +145,11 @@ public final class CmsPublishEngine {
         } else {
             // thread is not dead, and we suppose it hangs :(
             if (LOG.isWarnEnabled()) {
-                LOG.warn(Messages.get().getBundle().key(
-                    Messages.LOG_THREADSTORE_PUBLISH_THREAD_INTERRUPT_2,
-                    m_currentPublishThread.getName(),
-                    m_currentPublishThread.getUUID()));
+                LOG.warn(
+                    Messages.get().getBundle().key(
+                        Messages.LOG_THREADSTORE_PUBLISH_THREAD_INTERRUPT_2,
+                        m_currentPublishThread.getName(),
+                        m_currentPublishThread.getUUID()));
             }
             m_currentPublishThread.interrupt();
         }
@@ -215,16 +217,16 @@ public final class CmsPublishEngine {
 
     /**
      * Enqueues a new publish job with the given information in publish queue.<p>
-     * 
+     *
      * All resources should already be locked.<p>
-     * 
+     *
      * If possible, the publish job starts immediately.<p>
-     * 
+     *
      * @param cms the cms context to publish for
      * @param publishList the resources to publish
      * @param report the report to write to
-     * 
-     * @throws CmsException if something goes wrong while cloning the cms context  
+     *
+     * @throws CmsException if something goes wrong while cloning the cms context
      */
     public void enqueuePublishJob(CmsObject cms, CmsPublishList publishList, I_CmsReport report) throws CmsException {
 
@@ -242,7 +244,7 @@ public final class CmsPublishEngine {
         // create the publish job
         CmsPublishJobInfoBean publishJob = new CmsPublishJobInfoBean(cms, publishList, report);
         try {
-            // enqueue it and 
+            // enqueue it and
             m_publishQueue.add(publishJob);
             // notify all listeners
             m_listeners.fireEnqueued(new CmsPublishJobBase(publishJob));
@@ -252,9 +254,9 @@ public final class CmsPublishEngine {
                 m_publishQueue.remove(publishJob);
             }
             // throw the exception again
-            throw new CmsException(Messages.get().container(
-                Messages.ERR_PUBLISH_ENGINE_QUEUE_1,
-                publishJob.getPublishHistoryId()), t);
+            throw new CmsException(
+                Messages.get().container(Messages.ERR_PUBLISH_ENGINE_QUEUE_1, publishJob.getPublishHistoryId()),
+                t);
         }
         // try to start the publish job immediately
         checkCurrentPublishJobThread();
@@ -262,11 +264,11 @@ public final class CmsPublishEngine {
 
     /**
      * Returns a publish job based on its publish history id.<p>
-     * 
+     *
      * The returned publish job may be an enqueued, running or finished publish job.<p>
-     * 
+     *
      * @param publishHistoryId the publish history id to search for
-     * 
+     *
      * @return the publish job with the given publish history id, or <code>null</code>
      */
     public CmsPublishJobBase getJobByPublishHistoryId(CmsUUID publishHistoryId) {
@@ -297,7 +299,7 @@ public final class CmsPublishEngine {
 
     /**
      * Sets the driver manager instance.<p>
-     * 
+     *
      * @param driverManager the driver manager instance
      */
     public void setDriverManager(CmsDriverManager driverManager) {
@@ -316,23 +318,24 @@ public final class CmsPublishEngine {
 
     /**
      * Shuts down all this static export manager.<p>
-     * 
+     *
      * NOTE: this method may or may NOT be called (i.e. kill -9 in the stop script), if a system is stopped.<p>
-     * 
+     *
      * This is required since there may still be a thread running when the system is being shut down.<p>
      */
-    public void shutDown() {
+    public synchronized void shutDown() {
 
         if (CmsLog.INIT.isInfoEnabled()) {
-            CmsLog.INIT.info(org.opencms.main.Messages.get().getBundle().key(
-                org.opencms.main.Messages.INIT_SHUTDOWN_START_1,
-                this.getClass().getName()));
+            CmsLog.INIT.info(
+                org.opencms.main.Messages.get().getBundle().key(
+                    org.opencms.main.Messages.INIT_SHUTDOWN_START_1,
+                    this.getClass().getName()));
         }
 
         // prevent new publish jobs are accepted
         m_shuttingDown = true;
 
-        // if a job is currently running, 
+        // if a job is currently running,
         // wait the specified amount of time,
         // then write an abort message to the report
         if (m_currentPublishThread != null) {
@@ -373,21 +376,22 @@ public final class CmsPublishEngine {
         }
 
         if (CmsLog.INIT.isInfoEnabled()) {
-            CmsLog.INIT.info(org.opencms.staticexport.Messages.get().getBundle().key(
-                org.opencms.staticexport.Messages.INIT_SHUTDOWN_1,
-                this.getClass().getName()));
+            CmsLog.INIT.info(
+                org.opencms.staticexport.Messages.get().getBundle().key(
+                    org.opencms.staticexport.Messages.INIT_SHUTDOWN_1,
+                    this.getClass().getName()));
         }
     }
 
     /**
      * Aborts the given publish job.<p>
-     * 
-     * @param userId the id of user that wants to abort the given publish job 
+     *
+     * @param userId the id of user that wants to abort the given publish job
      * @param publishJob the publish job to abort
      * @param removeJob indicates if the job will be removed or added to history
-     * 
+     *
      * @throws CmsException if there is some problem during unlocking the resources
-     * @throws CmsPublishException if the publish job can not be aborted 
+     * @throws CmsPublishException if the publish job can not be aborted
      */
     protected void abortPublishJob(CmsUUID userId, CmsPublishJobEnqueued publishJob, boolean removeJob)
     throws CmsException, CmsPublishException {
@@ -395,12 +399,13 @@ public final class CmsPublishEngine {
         // abort event should be raised before the job is removed implicitly
         m_listeners.fireAbort(userId, publishJob);
 
-        if ((m_currentPublishThread == null) || !publishJob.m_publishJob.equals(m_currentPublishThread.getPublishJob())) {
+        if ((m_currentPublishThread == null)
+            || !publishJob.m_publishJob.equals(m_currentPublishThread.getPublishJob())) {
             // engine is currently publishing another job or is not publishing
             if (!m_publishQueue.abortPublishJob(publishJob.m_publishJob)) {
                 // job not found
-                throw new CmsPublishException(Messages.get().container(
-                    Messages.ERR_PUBLISH_ENGINE_MISSING_PUBLISH_JOB_0));
+                throw new CmsPublishException(
+                    Messages.get().container(Messages.ERR_PUBLISH_ENGINE_MISSING_PUBLISH_JOB_0));
             }
         } else if (!m_shuttingDown) {
             // engine is currently publishing the job to abort
@@ -432,7 +437,7 @@ public final class CmsPublishEngine {
 
     /**
      * Adds a publish listener to listen on publish events.<p>
-     * 
+     *
      * @param listener the publish listener to add
      */
     protected void addPublishListener(I_CmsPublishEventListener listener) {
@@ -440,7 +445,7 @@ public final class CmsPublishEngine {
         m_listeners.add(listener);
     }
 
-    /** 
+    /**
      * Disables the publish engine, i.e. publish jobs are not accepted.<p>
      */
     protected void disableEngine() {
@@ -449,7 +454,7 @@ public final class CmsPublishEngine {
     }
 
     /**
-     * Enables the publish engine, i.e. publish jobs are accepted.<p> 
+     * Enables the publish engine, i.e. publish jobs are accepted.<p>
      */
     protected void enableEngine() {
 
@@ -462,7 +467,7 @@ public final class CmsPublishEngine {
 
     /**
      * Returns the current running publish job.<p>
-     * 
+     *
      * @return the current running publish job
      */
     protected CmsPublishThread getCurrentPublishJob() {
@@ -472,9 +477,9 @@ public final class CmsPublishEngine {
 
     /**
      * Returns the a new db context object.<p>
-     * 
-     * @param ctx optional request context, can be <code>null</code> 
-     * 
+     *
+     * @param ctx optional request context, can be <code>null</code>
+     *
      * @return the a new db context object
      */
     protected CmsDbContext getDbContext(CmsRequestContext ctx) {
@@ -484,7 +489,7 @@ public final class CmsPublishEngine {
 
     /**
      * Returns the driver manager instance.<p>
-     * 
+     *
      * @return the driver manager instance
      */
     protected CmsDriverManager getDriverManager() {
@@ -494,7 +499,7 @@ public final class CmsPublishEngine {
 
     /**
      * Returns the publish history list with already publish job.<p>
-     * 
+     *
      * @return the publish history list with already publish job
      */
     protected CmsPublishHistory getPublishHistory() {
@@ -504,7 +509,7 @@ public final class CmsPublishEngine {
 
     /**
      * Returns the queue with still waiting publish job.<p>
-     * 
+     *
      * @return the queue with still waiting publish job
      */
     protected CmsPublishQueue getPublishQueue() {
@@ -514,10 +519,10 @@ public final class CmsPublishEngine {
 
     /**
      * Returns the content of the publish report assigned to the given publish job.<p>
-     * 
+     *
      * @param publishJob the published job
      * @return the content of the assigned publish report
-     * 
+     *
      * @throws CmsException if something goes wrong
      */
     protected byte[] getReportContents(CmsPublishJobFinished publishJob) throws CmsException {
@@ -538,9 +543,9 @@ public final class CmsPublishEngine {
 
     /**
      * Returns the user identified by the given id.<p>
-     * 
+     *
      * @param userId the id of the user to retrieve
-     * 
+     *
      * @return the user identified by the given id
      */
     protected CmsUser getUser(CmsUUID userId) {
@@ -559,11 +564,11 @@ public final class CmsPublishEngine {
 
     /**
      * Initializes the publish engine.<p>
-     * 
+     *
      * @param adminCms the admin cms
      * @param publishQueuePersistance flag if the queue is persisted
      * @param publishQueueShutdowntime amount of time to wait for a publish job during shutdown
-     * 
+     *
      * @throws CmsException if something goes wrong
      */
     protected void initialize(CmsObject adminCms, boolean publishQueuePersistance, int publishQueueShutdowntime)
@@ -586,14 +591,15 @@ public final class CmsPublishEngine {
 
     /**
      * Returns the working state, that is if no publish job
-     * is waiting to be processed and there is no current running 
+     * is waiting to be processed and there is no current running
      * publish job.<p>
-     * 
+     *
      * @return the working state
      */
     protected boolean isRunning() {
 
-        return (((m_engineState == CmsPublishEngineState.ENGINE_STARTED) && !m_publishQueue.isEmpty()) || (m_currentPublishThread != null));
+        return (((m_engineState == CmsPublishEngineState.ENGINE_STARTED) && !m_publishQueue.isEmpty())
+            || (m_currentPublishThread != null));
     }
 
     /**
@@ -624,7 +630,7 @@ public final class CmsPublishEngine {
 
     /**
      * Signalizes that the publish thread finishes.<p>
-     * 
+     *
      * @param publishJob the finished publish job
      */
     protected void publishJobFinished(CmsPublishJobInfoBean publishJob) {
@@ -651,17 +657,21 @@ public final class CmsPublishEngine {
             CmsEvent afterPublishEvent = new CmsEvent(I_CmsEventListener.EVENT_PUBLISH_PROJECT, eventData);
             OpenCms.fireCmsEvent(afterPublishEvent);
         } catch (Throwable t) {
-            dbc.rollback();
-            LOG.error(t);
+            if (dbc != null) {
+                dbc.rollback();
+            }
+            LOG.error(t.getLocalizedMessage(), t);
             // catch every thing including runtime exceptions
             publishJob.getPublishReport().println(t);
         } finally {
-            try {
-                dbc.clear();
-            } catch (Throwable t) {
-                // ignore
+            if (dbc != null) {
+                try {
+                    dbc.clear();
+                } catch (Throwable t) {
+                    // ignore
+                }
+                dbc = null;
             }
-            dbc = null;
         }
         try {
             // fire the publish finish event
@@ -696,7 +706,7 @@ public final class CmsPublishEngine {
 
     /**
      * A publish job has been permanently removed from the history.<p>
-     * 
+     *
      * @param publishJob the removed publish job
      */
     protected void publishJobRemoved(CmsPublishJobInfoBean publishJob) {
@@ -707,7 +717,7 @@ public final class CmsPublishEngine {
 
     /**
      * Signalizes that the publish thread starts.<p>
-     * 
+     *
      * @param publishJob the started publish job
      */
     protected void publishJobStarted(CmsPublishJobInfoBean publishJob) {
@@ -721,7 +731,7 @@ public final class CmsPublishEngine {
 
     /**
      * Removes the given publish listener.<p>
-     * 
+     *
      * @param listener the publish listener to remove
      */
     protected void removePublishListener(I_CmsPublishEventListener listener) {
@@ -731,7 +741,7 @@ public final class CmsPublishEngine {
 
     /**
      * Sends a message to the given user, if publish notification is enabled or an error is shown in the message.<p>
-     * 
+     *
      * @param toUserId the id of the user to send the message to
      * @param message the message to send
      * @param hasErrors flag to determine if the message to send shows an error
@@ -744,7 +754,7 @@ public final class CmsPublishEngine {
             CmsUserSettings settings = new CmsUserSettings(toUser);
             if (settings.getShowPublishNotification() || hasErrors) {
                 // only show message if publish notification is enabled or the message shows an error
-                OpenCms.getSessionManager().sendBroadcast(null, message, toUser);
+                OpenCms.getSessionManager().sendBroadcast(null, message, toUser, ContentMode.plain);
             }
         } catch (CmsException e) {
             dbc.rollback();
@@ -769,7 +779,7 @@ public final class CmsPublishEngine {
     }
 
     /**
-     * Stops the publish engine, i.e. publish jobs are still accepted but not published.<p> 
+     * Stops the publish engine, i.e. publish jobs are still accepted but not published.<p>
      */
     protected void stopEngine() {
 
@@ -778,7 +788,7 @@ public final class CmsPublishEngine {
 
     /**
      * Removes all publish locks of resources in a publish list of a publish job.<p>
-     * 
+     *
      * @param publishJob the publish job
      * @throws CmsException if something goes wrong
      */
@@ -805,7 +815,7 @@ public final class CmsPublishEngine {
 
     /**
      * Returns <code>true</code> if the login manager allows login.<p>
-     * 
+     *
      * @return if enabled
      */
     private boolean isEnabled() {

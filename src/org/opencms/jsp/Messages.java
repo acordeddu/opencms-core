@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -14,12 +14,12 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * Lesser General Public License for more details.
  *
- * For further information about Alkacon Software GmbH, please see the
- * company website: http://www.alkacon.com
+ * For further information about Alkacon Software GmbH & Co. KG, please see the
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -42,27 +42,27 @@ import javax.servlet.jsp.PageContext;
 /**
  * Convenience class to access the localized messages of this OpenCms package.
  * <p>
- * 
- * 
+ *
+ *
  * Additionally two utility methods for localization in the context of
  * {@link javax.servlet.jsp.tagext.TagSupport} implementations of the <code>org.opencms.jsp</code>
  * package are provided .
  * <p>
- * 
+ *
  * The <code>javax.servlet.jsp.tagext.TagSupport</code> API constraint only allows to throw
  * certain <code>Exception</code> types which forbids to use {@link org.opencms.main.CmsException}
  * which will be localized with the current user's locale at the time the request is evaluated.
  * <p>
- * 
+ *
  * At the same time <code>TagSupport</code> implementations may use their member
  * <code>pageContext</code> to get the <code>CmsObject</code> and therefore the user request's
  * locale.
  * <p>
- * 
+ *
  * These methods provided here factor out the localization of exception messages and return Strings
  * for the <code>org.opencms.jsp</code> pacakge.
  * <p>
- * 
+ *
  * @since 6.0.0
  */
 public final class Messages extends A_CmsMessageBundle {
@@ -89,7 +89,13 @@ public final class Messages extends A_CmsMessageBundle {
     public static final String ERR_IMAGE_TAG_VFS_ACCESS_1 = "ERR_IMAGE_TAG_VFS_ACCESS_1";
 
     /** Message constant for key in the resource bundle. */
+    public static final String ERR_INVALID_CONTAINER_PARENT_2 = "ERR_INVALID_CONTAINER_PARENT_2";
+
+    /** Message constant for key in the resource bundle. */
     public static final String ERR_MISSING_CMS_CONTROLLER_1 = "ERR_MISSING_CMS_CONTROLLER_1";
+
+    /** Message constant for key in the resource bundle. */
+    public static final String ERR_NO_CUSTOM_BEAN_1 = "ERR_NO_CUSTOM_BEAN_1";
 
     /** Message constant for key in the resource bundle. */
     public static final String ERR_PARENTLESS_TAG_1 = "ERR_PARENTLESS_TAG_1";
@@ -99,6 +105,9 @@ public final class Messages extends A_CmsMessageBundle {
 
     /** Message constant for key in the resource bundle. */
     public static final String ERR_READING_REQUIRED_RESOURCE_1 = "ERR_READING_REQUIRED_RESOURCE_1";
+
+    /** Message constant for key in the resource bundle. */
+    public static final String ERR_RESOURCE_IS_NOT_RELEASE_OR_EXPIRED_1 = "ERR_RESOURCE_IS_NOT_RELEASE_OR_EXPIRED_1";
 
     /** Message constant for key in the resource bundle. */
     public static final String ERR_RUNTIME_1 = "ERR_RUNTIME_1";
@@ -116,6 +125,9 @@ public final class Messages extends A_CmsMessageBundle {
     public static final String ERR_TAG_CONTENTLOAD_MISSING_PARAM_0 = "ERR_TAG_CONTENTLOAD_MISSING_PARAM_0";
 
     /** Message constant for key in the resource bundle. */
+    public static final String ERR_TAG_INVALID_LOCALE_1 = "ERR_TAG_INVALID_LOCALE_1";
+
+    /** Message constant for key in the resource bundle. */
     public static final String ERR_TAG_RESOURCELOAD_INDEX_SIZE_0 = "ERR_TAG_RESOURCELOAD_INDEX_SIZE_0";
 
     /** Message constant for key in the resource bundle. */
@@ -129,12 +141,6 @@ public final class Messages extends A_CmsMessageBundle {
 
     /** Message constant for key in the resource bundle. */
     public static final String ERR_XSD_NO_TEMPLATE_FORMATTER_3 = "ERR_XSD_NO_TEMPLATE_FORMATTER_3";
-
-    /** Message constant for key in the resource bundle. */
-    public static final String GUI_CONTAINERPAGE_TYPE_NOT_CREATABLE_1 = "GUI_CONTAINERPAGE_TYPE_NOT_CREATABLE_1";
-
-    /** Message constant for key in the resource bundle. */
-    public static final String GUI_ELEMENT_RESOURCE_CAN_NOT_BE_EDITED_0 = "GUI_ELEMENT_RESOURCE_CAN_NOT_BE_EDITED_0";
 
     /** Message constant for key in the resource bundle. */
     public static final String GUI_ERR_ACTIONELEM_NOT_INIT_0 = "GUI_ERR_ACTIONELEM_NOT_INIT_0";
@@ -179,6 +185,9 @@ public final class Messages extends A_CmsMessageBundle {
     public static final String GUI_TAG_USER_ADDITIONALINFO_0 = "GUI_TAG_USER_ADDITIONALINFO_0";
 
     /** Message constant for key in the resource bundle. */
+    public static final String GUI_TOOLBAR_ENABLE_EDIT_MODE_0 = "GUI_TOOLBAR_ENABLE_EDIT_MODE_0";
+
+    /** Message constant for key in the resource bundle. */
     public static final String LOG_CONTAINER_NOT_FOUND_3 = "LOG_CONTAINER_NOT_FOUND_3";
 
     /** Message constant for key in the resource bundle. */
@@ -221,6 +230,9 @@ public final class Messages extends A_CmsMessageBundle {
     public static final String LOG_MAXELEMENTS_NOT_SET_2 = "LOG_MAXELEMENTS_NOT_SET_2";
 
     /** Message constant for key in the resource bundle. */
+    public static final String LOG_TAG_SEARCH_SEARCH_FAILED_0 = "LOG_TAG_SEARCH_SEARCH_FAILED_0";
+
+    /** Message constant for key in the resource bundle. */
     public static final String LOG_WRONG_CONTAINER_MAXELEMENTS_3 = "LOG_WRONG_CONTAINER_MAXELEMENTS_3";
 
     /** Message constant for key in the resource bundle. */
@@ -247,7 +259,7 @@ public final class Messages extends A_CmsMessageBundle {
     /**
      * Returns an instance of this localized message accessor.
      * <p>
-     * 
+     *
      * @return an instance of this localized message accessor
      */
     public static I_CmsMessageBundle get() {
@@ -259,11 +271,11 @@ public final class Messages extends A_CmsMessageBundle {
      * Returns the String for the given CmsMessageContainer localized to the current user's locale
      * if available or to the default locale else.
      * <p>
-     * 
+     *
      * This method is needed for localization of non- {@link org.opencms.main.CmsException}
      * instances that have to be thrown here due to API constraints (javax.servlet.jsp).
      * <p>
-     * 
+     *
      * @param container A CmsMessageContainer containing the message to localize.
      * @param cms the <code>CmsObject</code> belonging to the current user (e.g. obtained with
      *            <code>CmsFlexController.getCmsObject(ServletRequest)</code>).
@@ -287,11 +299,11 @@ public final class Messages extends A_CmsMessageBundle {
      * Returns the String for the given CmsMessageContainer localized to the current user's locale
      * if available or to the default locale else.
      * <p>
-     * 
+     *
      * This method is needed for localization of non- {@link org.opencms.main.CmsException}
      * instances that have to be thrown here due to API constraints (javax.servlet.jsp).
      * <p>
-     * 
+     *
      * @param container A CmsMessageContainer containing the message to localize.
      * @param context The page context that is known to any calling
      *            {@link javax.servlet.jsp.tagext.TagSupport} instance (member
@@ -309,11 +321,11 @@ public final class Messages extends A_CmsMessageBundle {
      * Returns the String for the given CmsMessageContainer localized to the current user's locale
      * if available or to the default locale else.
      * <p>
-     * 
+     *
      * This method allows a static method ({@link CmsJspTagInfo#infoTagAction(String, javax.servlet.http.HttpServletRequest)})
      * that has no <code>pageContext</code> in scope to lookup the locale at request time.
      * <p>
-     * 
+     *
      * @see #getLocalizedMessage(CmsMessageContainer, PageContext)
      * @param container A CmsMessageContainer containing the message to localize.
      * @param request The current request.
@@ -331,7 +343,7 @@ public final class Messages extends A_CmsMessageBundle {
     /**
      * Returns the bundle name for this OpenCms package.
      * <p>
-     * 
+     *
      * @return the bundle name for this OpenCms package
      */
     public String getBundleName() {

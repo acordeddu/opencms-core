@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -14,12 +14,12 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * Lesser General Public License for more details.
  *
- * For further information about Alkacon Software GmbH, please see the
- * company website: http://www.alkacon.com
+ * For further information about Alkacon Software GmbH & Co. KG, please see the
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -38,16 +38,16 @@ import org.apache.commons.collections.buffer.UnboundedFifoBuffer;
 
 /**
  * Stores information about a user that has authenticated himself the OpenCms security system.<p>
- * 
- * This object is used to provide information about all authenticated users in the system 
- * with the {@link org.opencms.main.CmsSessionManager}.<p> 
- * 
+ *
+ * This object is used to provide information about all authenticated users in the system
+ * with the {@link org.opencms.main.CmsSessionManager}.<p>
+ *
  * This object is available for all authenticated users after login.
  * If a user has not logged in, he may have a session on the servlet engine,
  * but he will have no session info object attached. For example the "Guest" user
- * may have multiple sessions, but no session info is created for him.<p> 
- * 
- * @since 6.0.0 
+ * may have multiple sessions, but no session info is created for him.<p>
+ *
+ * @since 6.0.0
  */
 public class CmsSessionInfo implements Comparable<CmsSessionInfo>, Serializable {
 
@@ -62,6 +62,9 @@ public class CmsSessionInfo implements Comparable<CmsSessionInfo>, Serializable 
 
     /** The broadcast queue buffer for the user of this session info. */
     private transient Buffer m_broadcastQueue;
+
+    /** The optional label of the client this session was created for. */
+    private String m_clientLabel;
 
     /** The maximum time, in seconds, this session info is allowed to be inactive. */
     private int m_maxInactiveInterval;
@@ -84,12 +87,15 @@ public class CmsSessionInfo implements Comparable<CmsSessionInfo>, Serializable 
     /** The time this session info was last updated. */
     private long m_timeUpdated;
 
+    /** The time of the last user action. */
+    private long m_timeLastAction;
+
     /** The id of user to which this session info belongs. */
     private CmsUUID m_userId;
 
     /**
      * Creates a new CmsSessionInfo object.<p>
-     * 
+     *
      * @param context the user context to create this session info for
      * @param sessionId OpenCms id of the (http) session this session info belongs to
      * @param maxInactiveInterval the maximum time, in seconds, this session info is allowed to be inactive
@@ -100,12 +106,39 @@ public class CmsSessionInfo implements Comparable<CmsSessionInfo>, Serializable 
         m_sessionId = sessionId;
         m_maxInactiveInterval = maxInactiveInterval;
         m_userId = context.getCurrentUser().getId();
+        m_clientLabel = (String)context.getAttribute(CmsRequestContext.ATTRIBUTE_CLIENT_LABEL);
         update(context);
     }
 
     /**
+     * Returns a string for given time.<p>
+     *
+     * @param time as timestamp
+     * @return string array containing string for hours, minutes, seconds
+     */
+    public static String[] getHourMinuteSecondTimeString(long time) {
+
+        int hours = (int)time / (1000 * 60 * 60);
+        int min = (int)(time - (hours * 1000 * 60 * 60)) / (1000 * 60);
+        int sec = (int)(time - (hours * 1000 * 60 * 60) - (min * 1000 * 60)) / 1000;
+
+        return new String[] {getTwoDigitsString(hours), getTwoDigitsString(min), getTwoDigitsString(sec)};
+    }
+
+    /**
+     * Formats an integer to a two chars string.<p>
+     *
+     * @param number to be formatted
+     * @return the string representation
+     */
+    private static String getTwoDigitsString(int number) {
+
+        return number < 10 ? "0" + number : String.valueOf(number);
+    }
+
+    /**
      * Allows sorting session info according to the user names.<p>
-     * 
+     *
      * @see java.lang.Comparable#compareTo(java.lang.Object)
      */
     public int compareTo(CmsSessionInfo obj) {
@@ -132,8 +165,20 @@ public class CmsSessionInfo implements Comparable<CmsSessionInfo>, Serializable 
     }
 
     /**
+     * Gets the age of the session formattet as HOURS:MINUTES.<p>
+     *
+     * @return string representation of session age
+     */
+    public String getAgeOfSession() {
+
+        String[] ret = getHourMinuteSecondTimeString(System.currentTimeMillis() - m_timeCreated);
+        return ret[0] + ":" + ret[1];
+
+    }
+
+    /**
      * Returns the broadcast queue of the user to which this session info belongs.<p>
-     * 
+     *
      * @return the broadcast queue of the user to which this session info belongs
      */
     public Buffer getBroadcastQueue() {
@@ -145,14 +190,25 @@ public class CmsSessionInfo implements Comparable<CmsSessionInfo>, Serializable 
     }
 
     /**
+     * Returns the optional label of the client this session was created for, taken once at session
+     * creation from the {@link CmsRequestContext#ATTRIBUTE_CLIENT_LABEL} context attribute.<p>
+     *
+     * @return the client label, or <code>null</code> for a session created without one
+     */
+    public String getClientLabel() {
+
+        return m_clientLabel;
+    }
+
+    /**
      * Returns the maximum time, in seconds, this session info is allowed to be inactive.<p>
      *
-     * The inactive time is the time since the last call to the {@link #update(CmsRequestContext)} 
+     * The inactive time is the time since the last call to the {@link #update(CmsRequestContext)}
      * method. If the inactive time is greater then the maximum allowed time, this
      * session info will be removed from the session manager.<p>
      *
      * @return the maximum time, in seconds, this session info is allowed to be inactive
-     * 
+     *
      * @see javax.servlet.http.HttpSession#getMaxInactiveInterval()
      */
     public int getMaxInactiveInterval() {
@@ -162,7 +218,7 @@ public class CmsSessionInfo implements Comparable<CmsSessionInfo>, Serializable 
 
     /**
      * Returns the fully qualified name of the organizational unit for this session.<p>
-     * 
+     *
      * @return the fully qualified name of the organizational unit for this session
      */
     public String getOrganizationalUnitFqn() {
@@ -172,7 +228,7 @@ public class CmsSessionInfo implements Comparable<CmsSessionInfo>, Serializable 
 
     /**
      * Returns the id of the project of the user.<p>
-     * 
+     *
      * @return the id of the project
      */
     public CmsUUID getProject() {
@@ -184,7 +240,7 @@ public class CmsSessionInfo implements Comparable<CmsSessionInfo>, Serializable 
      * Returns the id of the OpenCms (http) session this session info belongs to.<p>
      *
      * @return the id of the OpenCms (http) session this session info belongs to
-     * 
+     *
      * @see javax.servlet.http.HttpSession#getId()
      */
     public CmsUUID getSessionId() {
@@ -194,7 +250,7 @@ public class CmsSessionInfo implements Comparable<CmsSessionInfo>, Serializable 
 
     /**
      * Returns the current site root of the user.<p>
-     * 
+     *
      * @return the current site root of the user
      */
     public String getSiteRoot() {
@@ -204,8 +260,8 @@ public class CmsSessionInfo implements Comparable<CmsSessionInfo>, Serializable 
 
     /**
      * Returns the time, in milliseconds, this session has been active,
-     * that is the time of the last update minus the creation time.<p> 
-     * 
+     * that is the time of the last update minus the creation time.<p>
+     *
      * @return the time, in milliseconds, this session has been active
      */
     public long getTimeActive() {
@@ -224,6 +280,16 @@ public class CmsSessionInfo implements Comparable<CmsSessionInfo>, Serializable 
     }
 
     /**
+     * Returns the time of the last user action.<p>
+     *
+     * @return the list user action time
+     */
+    public long getTimeLastAction() {
+
+        return m_timeLastAction;
+    }
+
+    /**
      * Returns the time this session info was last updated.<p>
      *
      * @return the time this session info was last updated
@@ -235,7 +301,7 @@ public class CmsSessionInfo implements Comparable<CmsSessionInfo>, Serializable 
 
     /**
      * Returns the id of the user to which this session info belongs.<p>
-     * 
+     *
      * @return the id of the user to which this session info belongs
      */
     public CmsUUID getUserId() {
@@ -253,9 +319,9 @@ public class CmsSessionInfo implements Comparable<CmsSessionInfo>, Serializable 
     }
 
     /**
-     * Returns <code>true</code> if this session info has expired, that 
+     * Returns <code>true</code> if this session info has expired, that
      * is it has not been updated in the time set by the maximum inactivity interval.<p>
-     *  
+     *
      * @return <code>true</code> if this session info has expired
      */
     public boolean isExpired() {
@@ -285,7 +351,7 @@ public class CmsSessionInfo implements Comparable<CmsSessionInfo>, Serializable 
 
     /**
      * Sets the id of the current project of the user of this session info.<p>
-     * 
+     *
      * @param projectId the project id to set
      */
     protected void setProject(CmsUUID projectId) {
@@ -296,12 +362,27 @@ public class CmsSessionInfo implements Comparable<CmsSessionInfo>, Serializable 
     /**
      * Updates the session info object with the information from
      * the given request context.<p>
-     * 
+     *
      * @param context the request context to update the session with
      */
     protected void update(CmsRequestContext context) {
 
+        update(context, false);
+    }
+
+    /**
+     * Updates the session info object with the information from
+     * the given request context.<p>
+     *
+     * @param context the request context to update the session with
+     * @param isHeartBeatRequest in case of heart beat requests
+     */
+    protected void update(CmsRequestContext context, boolean isHeartBeatRequest) {
+
         m_timeUpdated = System.currentTimeMillis();
+        if (!isHeartBeatRequest) {
+            m_timeLastAction = m_timeUpdated;
+        }
         m_siteRoot = context.getSiteRoot();
         setProject(context.getCurrentProject().getUuid());
         m_ouFqn = context.getOuFqn();

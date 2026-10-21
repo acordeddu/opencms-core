@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -15,11 +15,11 @@
  * Lesser General Public License for more details.
  *
  * For further information about Alkacon Software, please see the
- * company website: http://www.alkacon.com
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -28,20 +28,31 @@
 package org.opencms.loader;
 
 import org.opencms.jsp.CmsJspTagImage;
+import org.opencms.test.OpenCmsTestRunner;
 import org.opencms.util.CmsFileUtil;
 
-import junit.framework.TestCase;
+import java.io.ByteArrayOutputStream;
+import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
+
+import org.junit.jupiter.api.MethodOrderer;
+import org.junit.jupiter.api.Order;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestMethodOrder;
 
 /**
  * Tests the OpenCms image scaler.<p>
  */
-public class TestCmsImageScaler extends TestCase {
+@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
+public class TestCmsImageScaler extends OpenCmsTestRunner {
 
     /**
      * Tests the image downscaling option.<p>
-     * 
+     *
      * @throws Exception in case the test fails
      */
+    @Order(3)
+    @Test
     public void testDownScaling() throws Exception {
 
         // read the image from the test directory, usually this would be from the VFS
@@ -53,7 +64,7 @@ public class TestCmsImageScaler extends TestCase {
         assertEquals(800, image.getWidth());
         assertEquals(600, image.getHeight());
 
-        // now create a downscaler 
+        // now create a downscaler
         CmsImageScaler downScaler = new CmsImageScaler("w:800,h:600,t:1,q:80");
 
         // downscaling should not be required because the image fits
@@ -100,7 +111,7 @@ public class TestCmsImageScaler extends TestCase {
         assertEquals(480, image.getWidth());
         assertEquals(643, image.getHeight());
 
-        // now create a downscaler 
+        // now create a downscaler
         downScaler = new CmsImageScaler("w:800,h:600,t:1,q:80");
         assertFalse(image.isDownScaleRequired(downScaler));
         downScaler = new CmsImageScaler("w:600,h:800,t:1,q:80");
@@ -113,9 +124,11 @@ public class TestCmsImageScaler extends TestCase {
 
     /**
      * Tests the image scaling type 5.<p>
-     * 
+     *
      * @throws Exception in case the test fails
      */
+    @Order(1)
+    @Test
     public void testScaleType5() throws Exception {
 
         CmsImageScaler baseImage;
@@ -174,9 +187,11 @@ public class TestCmsImageScaler extends TestCase {
 
     /**
      * Tests the image scaling type 5 in the image tag (with cropping).<p>
-     * 
+     *
      * @throws Exception in case the test fails
      */
+    @Order(4)
+    @Test
     public void testScaleType5InImageTag() throws Exception {
 
         CmsImageScaler baseImage;
@@ -235,5 +250,97 @@ public class TestCmsImageScaler extends TestCase {
         assertEquals(100, resultScaler.getHeight());
         assertTrue(resultScaler.isCropping());
         assertEquals(5, resultScaler.getType());
+    }
+
+    /**
+     * Tests the image scaling type 9.<p>
+     *
+     * @throws Exception in case the test fails
+     */
+    @Order(2)
+    @Test
+    public void testScaleType9() throws Exception {
+
+        CmsImageScaler baseImage;
+        CmsImageScaler rescaler;
+        CmsImageScaler resultScaler;
+
+        // Test with a larger square image
+        baseImage = new CmsImageScaler("w:250,h:250");
+        rescaler = new CmsImageScaler();
+        rescaler.setWidth(100);
+        rescaler.setHeight(100);
+        rescaler.setType(9);
+        resultScaler = baseImage.getReScaler(rescaler);
+        assertEquals(100, resultScaler.getWidth());
+        assertEquals(100, resultScaler.getHeight());
+        assertEquals(9, resultScaler.getType());
+
+        // Test with a larger rectangular image
+        baseImage = new CmsImageScaler("w:400,h:300");
+        rescaler = new CmsImageScaler();
+        rescaler.setWidth(100);
+        rescaler.setHeight(100);
+        rescaler.setType(9);
+        resultScaler = baseImage.getReScaler(rescaler);
+        assertEquals(100, resultScaler.getWidth());
+        assertEquals(75, resultScaler.getHeight());
+        assertEquals(9, resultScaler.getType());
+
+        // Test with a smaller image
+        baseImage = new CmsImageScaler("w:50,h:25");
+        rescaler = new CmsImageScaler();
+        rescaler.setWidth(100);
+        rescaler.setHeight(100);
+        rescaler.setType(9);
+        resultScaler = baseImage.getReScaler(rescaler);
+        assertEquals(50, resultScaler.getWidth());
+        assertEquals(25, resultScaler.getHeight());
+        assertEquals(9, resultScaler.getType());
+    }
+
+    /**
+     * Tests that unsupported image types are written unchanged.<p>
+     *
+     * @throws Exception in case the test fails
+     */
+    @Order(5)
+    @Test
+    public void testScalingUnsupportedImageType() throws Exception {
+
+        byte[] content = ("<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"100\" height=\"85\">"
+            + "<rect width=\"100\" height=\"85\" fill=\"#cccccc\"/></svg>").getBytes(StandardCharsets.UTF_8);
+        CmsImageScaler scaler = new CmsImageScaler("w:100,h:85,t:9,q:80");
+
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        scaler.scaleImageTo(content, null, "/test/logo.svg", out);
+
+        assertTrue(Arrays.equals(content, out.toByteArray()));
+    }
+
+    /**
+     * Tests the image scaler stream output.<p>
+     *
+     * @throws Exception in case the test fails
+     */
+    @Order(4)
+    @Test
+    public void testStreamScaling() throws Exception {
+
+        String img01 = "org/opencms/loader/img_01.jpg";
+        byte[] content = CmsFileUtil.readFile(img01);
+        CmsImageScaler scaler = new CmsImageScaler("w:640,h:480,t:1,q:80");
+
+        byte[] scaled = scaler.scaleImage(content, img01);
+        CmsImageScaler scaledImage = new CmsImageScaler(scaled, img01);
+        assertEquals(640, scaledImage.getWidth());
+        assertEquals(480, scaledImage.getHeight());
+
+        ByteArrayOutputStream byteContentOut = new ByteArrayOutputStream();
+        scaler.scaleImageTo(content, null, img01, byteContentOut);
+        CmsImageScaler byteContentImage = new CmsImageScaler(byteContentOut.toByteArray(), img01);
+        assertEquals(640, byteContentImage.getWidth());
+        assertEquals(480, byteContentImage.getHeight());
+
     }
 }

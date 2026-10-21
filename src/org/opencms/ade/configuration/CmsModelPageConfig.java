@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (C) Alkacon Software (http://www.alkacon.com)
+ * Copyright (C) Alkacon Software (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -15,11 +15,11 @@
  * Lesser General Public License for more details.
  *
  * For further information about Alkacon Software, please see the
- * company website: http://www.alkacon.com
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -31,14 +31,14 @@ import org.opencms.file.CmsResource;
 
 /**
  * This class contains the model page configuration for a sitemap region.<p>
- * 
+ *
  * @author Georg Westenberger
- * 
+ *
  * @version $Revision: 1.0 $
- * 
+ *
  * @since 8.0.0
  */
-public class CmsModelPageConfig implements I_CmsConfigurationObject<CmsModelPageConfig> {
+public class CmsModelPageConfig implements I_CmsConfigurationObject<CmsModelPageConfig>, Cloneable {
 
     /** The model page resource. */
     private CmsResource m_resource;
@@ -51,10 +51,10 @@ public class CmsModelPageConfig implements I_CmsConfigurationObject<CmsModelPage
 
     /**
      * Creates a new model page configuration bean.<p>
-     * 
-     * @param res the model page resource 
-     * @param isDefault true if this is a default model page 
-     * @param isDisabled true if this is a disabled model page 
+     *
+     * @param res the model page resource
+     * @param isDefault true if this is a default model page
+     * @param isDisabled true if this is a disabled model page
      */
     public CmsModelPageConfig(CmsResource res, boolean isDefault, boolean isDisabled) {
 
@@ -82,8 +82,8 @@ public class CmsModelPageConfig implements I_CmsConfigurationObject<CmsModelPage
 
     /**
      * Gets the model page resource.<p>
-     * 
-     * @return the model page resource 
+     *
+     * @return the model page resource
      */
     public CmsResource getResource() {
 
@@ -92,8 +92,8 @@ public class CmsModelPageConfig implements I_CmsConfigurationObject<CmsModelPage
 
     /**
      * Returns true if this is a default model page.<p>
-     * 
-     * @return true if this is a default model page 
+     *
+     * @return true if this is a default model page
      */
     public boolean isDefault() {
 
@@ -102,8 +102,8 @@ public class CmsModelPageConfig implements I_CmsConfigurationObject<CmsModelPage
 
     /**
      * Returns true if this entry disables the model page.<p>
-     *  
-     * @return true if this entry disables the model page 
+     *
+     * @return true if this entry disables the model page
      */
     public boolean isDisabled() {
 

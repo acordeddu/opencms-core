@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -14,12 +14,12 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * Lesser General Public License for more details.
  *
- * For further information about Alkacon Software GmbH, please see the
- * company website: http://www.alkacon.com
+ * For further information about Alkacon Software GmbH & Co. KG, please see the
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -29,12 +29,17 @@ package org.opencms.db;
 
 import org.opencms.main.OpenCms;
 
+import java.io.Serializable;
+
 /**
  * Contains the data of a single export point.<p>
- * 
+ *
  * @since 6.0.0
  */
-public class CmsExportPoint {
+public class CmsExportPoint implements Serializable {
+
+    /** The serial version id. */
+    private static final long serialVersionUID = -4743473053188740993L;
 
     /** The configured destination path. */
     private String m_configuredDestination;
@@ -57,9 +62,9 @@ public class CmsExportPoint {
 
     /**
      * Creates a new export point.<p>
-     * 
+     *
      * @param uri the folder in the OpenCms VFS to write as export point
-     * @param destination the destination folder in the "real" file system, 
+     * @param destination the destination folder in the "real" file system,
      *     relative to the web application root
      */
     public CmsExportPoint(String uri, String destination) {
@@ -67,6 +72,17 @@ public class CmsExportPoint {
         m_uri = uri;
         m_configuredDestination = destination;
         m_destinationPath = null;
+    }
+
+    /**
+     * @see java.lang.Object#clone()
+     */
+    @Override
+    public Object clone() {
+
+        CmsExportPoint clone = new CmsExportPoint(m_uri, m_configuredDestination);
+        clone.setDestinationPath(getDestinationPath());
+        return clone;
     }
 
     /**
@@ -86,12 +102,12 @@ public class CmsExportPoint {
 
     /**
      * Returns the configured destination path.<p>
-     * 
-     * The configured destination path is always relative to the 
+     *
+     * The configured destination path is always relative to the
      * web application path.<p>
-     * 
+     *
      * @return the configured destination path
-     * 
+     *
      * @see #getDestinationPath()
      */
     public String getConfiguredDestination() {
@@ -101,7 +117,7 @@ public class CmsExportPoint {
 
     /**
      * Returns the destination path in the "real" file system.<p>
-     * 
+     *
      * @return the destination
      */
     public String getDestinationPath() {
@@ -115,7 +131,7 @@ public class CmsExportPoint {
 
     /**
      * Returns the uri of the OpenCms VFS folder to write as export point.<p>
-     * 
+     *
      * @return the uri
      */
     public String getUri() {
@@ -134,14 +150,14 @@ public class CmsExportPoint {
 
     /**
      * Sets the configured destination path.<p>
-     * 
-     * The configured destination path is always relative to the 
+     *
+     * The configured destination path is always relative to the
      * web application path.<p>
-     * 
+     *
      * This set method will automatically set the destination path as well.<p>
-     * 
+     *
      * @param value the configured destination path
-     * 
+     *
      */
     public void setConfiguredDestination(String value) {
 
@@ -151,13 +167,13 @@ public class CmsExportPoint {
 
     /**
      * Dummy method to expose the destination path as bean property.<p>
-     * 
+     *
      * This is required by the {@link org.apache.commons.beanutils.BeanUtils} package in order to
      * enable using this Object with the digester.<p>
-     * 
+     *
      * The method does not actually change the value of the destination path.
      * Use the <code>{@link #setConfiguredDestination(String)}</code> method instead.
-     * 
+     *
      * @param value the destination path (will be ignored)
      */
     public void setDestinationPath(String value) {
@@ -169,7 +185,7 @@ public class CmsExportPoint {
 
     /**
      * Sets the uri of the OpenCms VFS folder to write as export point.<p>
-     * 
+     *
      * @param value the uri to set
      */
     public void setUri(String value) {

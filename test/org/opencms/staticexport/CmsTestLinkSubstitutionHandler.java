@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -15,11 +15,11 @@
  * Lesser General Public License for more details.
  *
  * For further information about Alkacon Software, please see the
- * company website: http://www.alkacon.com
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -50,13 +50,13 @@ public class CmsTestLinkSubstitutionHandler extends CmsDefaultLinkSubstitutionHa
     /** Path to the system news folder (for newslink replacement). */
     private static final String FOLDER_SYSTEM_NEWS = FOLDER_SYSTEM + "news/";
 
-    /** 
+    /**
      * Checks if the given path is pointing to a system news folder (like <code>/system/news/</code>),
-     * and in this case replaces it with the localized news path (like <code>/en/news/</code>).<p> 
-     * 
+     * and in this case replaces it with the localized news path (like <code>/en/news/</code>).<p>
+     *
      * @param path the path to check and replace
      * @param locale the locale to build the news path with
-     * 
+     *
      * @return the localized news path if the path points to the system news folder, or the path parameter if not
      */
     private static String replaceNewsUri(String path, Locale locale) {
@@ -74,8 +74,8 @@ public class CmsTestLinkSubstitutionHandler extends CmsDefaultLinkSubstitutionHa
             if ((pos > 0) && (newsPath.indexOf(CmsLocaleManager.PARAMETER_LOCALE, pos) >= 0)) {
                 // locale parameter was found
                 String query = newsPath.substring(pos);
-                Map params = CmsRequestUtil.createParameterMap(query);
-                String[] locs = (String[])params.get(CmsLocaleManager.PARAMETER_LOCALE);
+                Map<String, String[]> params = CmsRequestUtil.createParameterMap(query);
+                String[] locs = params.get(CmsLocaleManager.PARAMETER_LOCALE);
                 if ((locs != null) && (locs.length > 0)) {
                     // remove locale from parameters and change URI to target language
                     loc = locs[0];
@@ -92,10 +92,10 @@ public class CmsTestLinkSubstitutionHandler extends CmsDefaultLinkSubstitutionHa
     /**
      * Checks if the given path is pointing to a localized news path(like <code>/en/news/</code>),
      * and in this case replaces it with the system news folder (like <code>/system/news/</code>).<p>
-     * 
+     *
      * @param path the path to check and replace
      * @param addLocale if true, the locale parameter <code>__locale=xx</code> is appended
-     * 
+     *
      * @return the system news folder if the path points to a localized news path, or the path parameter if not
      */
     private static String replaceSystemUri(String path, boolean addLocale) {
@@ -124,7 +124,7 @@ public class CmsTestLinkSubstitutionHandler extends CmsDefaultLinkSubstitutionHa
     @Override
     public String getLink(CmsObject cms, String link, String siteRoot, boolean forceSecure) {
 
-        // do link replacement for news 
+        // do link replacement for news
         link = replaceNewsUri(link, cms.getRequestContext().getLocale());
         // the rest is just like the default
         return super.getLink(cms, link, siteRoot, forceSecure);

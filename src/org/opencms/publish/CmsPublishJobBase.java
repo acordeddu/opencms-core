@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -14,12 +14,12 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * Lesser General Public License for more details.
  *
- * For further information about Alkacon Software GmbH, please see the
- * company website: http://www.alkacon.com
+ * For further information about Alkacon Software GmbH & Co. KG, please see the
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -35,7 +35,7 @@ import java.util.Locale;
 
 /**
  * Defines a read-only publish job.<p>
- * 
+ *
  * @since 6.5.5
  */
 public class CmsPublishJobBase {
@@ -44,8 +44,8 @@ public class CmsPublishJobBase {
     protected CmsPublishJobInfoBean m_publishJob;
 
     /**
-     * Internal constructor.<p> 
-     * 
+     * Internal constructor.<p>
+     *
      * @param job the job used to initialize
      */
     protected CmsPublishJobBase(CmsPublishJobBase job) {
@@ -55,7 +55,7 @@ public class CmsPublishJobBase {
 
     /**
      * Default constructor.<p>
-     * 
+     *
      * @param publishJob the delegate publish job
      */
     protected CmsPublishJobBase(CmsPublishJobInfoBean publishJob) {
@@ -65,7 +65,7 @@ public class CmsPublishJobBase {
 
     /**
      * Returns the locale for this publish job.<p>
-     * 
+     *
      * @return the locale for this publish job
      */
     public Locale getLocale() {
@@ -76,7 +76,7 @@ public class CmsPublishJobBase {
     /**
      * Returns the project name or {@link org.opencms.publish.Messages#GUI_DIRECT_PUBLISH_PROJECT_NAME_0}
      * if it is a direct publish job.<p>
-     * 
+     *
      * @return the project name
      */
     public String getProjectName() {
@@ -86,7 +86,7 @@ public class CmsPublishJobBase {
 
     /**
      * Returns the publish history id.<p>
-     * 
+     *
      * @return the publish history id
      */
     public CmsUUID getPublishHistoryId() {
@@ -96,7 +96,7 @@ public class CmsPublishJobBase {
 
     /**
      * Returns the number of resources in the publish list.<p>
-     * 
+     *
      * @return the number of resources in the publish list
      */
     public int getSize() {
@@ -106,7 +106,7 @@ public class CmsPublishJobBase {
 
     /**
      * Returns the id of the user who initialized this publish job.<p>
-     * 
+     *
      * @return the id of the user who initialized this publish job
      */
     public CmsUUID getUserId() {
@@ -116,9 +116,9 @@ public class CmsPublishJobBase {
 
     /**
      * Returns the name of the user who initialized this publish job.<p>
-     * 
+     *
      * @param cms the cms object
-     * 
+     *
      * @return the name of the user who initialized this publish job
      */
     public String getUserName(CmsObject cms) {
@@ -134,7 +134,7 @@ public class CmsPublishJobBase {
 
     /**
      * Returns the direct publish state.<p>
-     * 
+     *
      * @return the direct publish state
      */
     public boolean isDirectPublish() {

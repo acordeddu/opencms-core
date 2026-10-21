@@ -1,0 +1,279 @@
+@external cmsState-up-hovering, cmsState-down-hovering;
+
+.popup{
+    z-index: value("constants.css.zIndexPopup");
+}
+
+.popup, .popup *, .frameDialog *, .popup table tr td{
+	margin: 0;
+	padding: 0;
+	border: none;
+	color: value("constants.css.textColor");
+	font-family: value("constants.css.fontFamily");
+	font-size: value("constants.css.fontSize");
+	font-weight: normal;
+	line-height: value("constants.css.lineHeight");
+	background: transparent;
+	text-align: left;
+	height: auto;
+	width: auto;
+	min-height: 0;
+	max-height: none;
+	min-width: 0;
+	max-width: none;
+	box-sizing: border-box;
+	-moz-box-sizing: border-box;
+}
+
+.popup table { 
+	border-collapse: separate;
+	border-spacing: inherit;
+}
+
+.leftButtonBox.leftButtonBox.leftButtonBox { 
+	margin-left: 0px; 
+}
+
+.leftButtonBox > *:first-child { 
+	margin-left: 0px; 
+}
+
+.leftButtonBox > * {
+	margin-left: 10px; 
+}
+
+
+.closePopup{
+    position: absolute;
+    right: 1px;
+    top: 0px;
+    cursor: pointer;
+    height: 31px;
+    width: 28px;
+    z-index: value("constants.css.zIndexDND");
+}
+span.closePopupImage:after{
+	content: "\00d7";
+	font-family: value("constants.css.fontFamily");
+	font-weight: bold;
+	font-size: 17px;
+	color: value("constants.css.textColorCaption");
+	line-height: 29px;
+}
+div.cmsState-up-hovering span.closePopupImage:after, div.cmsState-down-hovering span.closePopupImage:after{
+	color: #2197DB;
+}
+
+.invertClose span.closePopupImage:after{
+	color: value("constants.css.textColor");
+}
+
+.dragOverlay{
+	display: none;
+}
+.popup.dragging .dragOverlay{
+	display: block;
+	position: absolute;
+	top: 0px;
+	left: 0px;
+	height: 100%;
+	width: 100%;
+	z-index: value("constants.css.zIndexInline");
+}
+div.popup.popupContent, div.popupContent{
+	background-image: value("constants.css.gradientDialogHeader");
+	background-size: 100% 31px;
+	background-repeat: no-repeat;
+	background-position: top;
+    height: auto;
+    background-color: value("constants.css.backgroundColorDialogBorder");
+    padding: 6px 5px 5px 5px;
+    position: relative;
+    font-family: value("constants.css.fontFamily");
+    font-weight: normal;
+    overflow: visible;
+    box-sizing: content-box !important;
+    -moz-box-sizing: content-box !important;
+}
+
+.contextMenu div.popupContent {
+	padding: 4px;
+	background: value("constants.css.backgroundColorDialogBorder");
+} 
+
+div.frameDialog div.popupMainContent {
+	position: absolute;
+	top:0px;
+	left:0px;
+	right:0px;
+	bottom:0px;
+	overflow: auto;
+}
+
+div.frameDialog div.popupButtonPanel {
+	position:absolute;
+	left:0px;
+	right:0px;
+	bottom:0px;
+}
+
+.popupContent{
+	box-shadow: value("constants.css.boxShadow");
+	border-radius: value("constants.css.borderRadius");
+}
+.popupMainContent, .caption{
+	border-radius: value("constants.css.borderRadius");
+}
+
+
+.popupOverlay{
+    background: value("constants.css.backgroundColorOverlay");
+    z-index: value("constants.css.zIndexPopup");
+    opacity: value("constants.css.overlayOpacity");
+    width: 100vw !important; 
+    height: 100vh !important;
+    position: fixed !important;
+}
+
+.popup .popupMainContent{
+	height: auto;
+    font-size: value("constants.css.fontSize");
+    position:relative;
+}
+
+.popup .popupMainContent.contentPadding, .popupMainContent.contentPadding {
+	background-color: value("constants.css.backgroundColorDialog");
+	background-position: top;
+	background-repeat: repeat-x;
+	padding: value("constants.css.defaultSpace");
+	overflow:visible;
+}
+
+.contentSpacer{
+	margin-top: 5px;
+	margin-bottom: 10px;
+}
+
+div.menuArrowTop, div.menuArrowBottom{
+	width: 40px;
+	height: 10px;
+	position: absolute;
+	overflow: hidden;
+}
+
+div.menuArrowTop:after, div.menuArrowBottom:after {
+	content: "";
+	height: 40px;
+	width: 40px;
+	position: absolute;
+	transform: rotate(45deg);
+}
+
+div.menuArrowTop:after{
+	background: #3E4654;
+	top: 8px;
+}
+
+div.menuArrowBottom:after {
+	bottom: 8px;
+}
+
+.contextMenu div.menuArrowTop:after, div.menuArrowBottom:after {
+	background: value("constants.css.backgroundColorDialogBorder");
+}
+
+.hideCaption .caption{
+	display: none;
+}
+
+.popupHead, .caption{
+	color: value("constants.css.textColorCaption");
+    font-size: value("constants.css.fontSizeBig");
+    font-weight: bold;
+    cursor: move;
+    padding: 0px 4px 5px 4px;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    overflow: hidden;
+    height: 28px;
+    line-height: 18px;
+}
+
+.hideButtonPanel{
+	display: none;
+}
+
+.popupButtonPanel{
+    margin-top: 5px;
+    text-align: right;
+}
+.popupButtonPanel>div{
+	margin-left: 10px;
+}
+
+
+
+.alertMainContent table {
+	min-height: 90px;
+}
+.alertTopContent {
+	margin-bottom: value("constants.css.defaultSpace");
+}
+.alertBottomContent {
+	margin-top: value("constants.css.defaultSpace");
+} 
+
+.popup div.logReportScrollPanel {
+	position: relative;
+	overflow: auto;
+	margin: 5px 0px 0px 0px;
+}
+
+.popup  div.logReportScrollPanel ul{
+	margin: 2px;
+}
+
+.borderPadding {
+	bottom: 0;
+    left: 0;
+    margin: value("constants.css.defaultSpace");
+    padding: value("constants.css.defaultSpace");
+    overflow: auto;
+    position: absolute;
+    right: 0;
+    top: 0;
+    border:1px solid value("constants.css.borderColor");
+    background-color: value("constants.css.backgroundColorDialog");
+}
+
+.popup ul.modelSelectList{
+	overflow: auto;
+	/* position relative is required to hide overflowing content caused by layout bug in IE7 */
+	position: relative;
+	border: 1px solid value("constants.css.borderColor");
+	padding: 0 2px;
+	background: value("constants.css.backgroundColorDialog");
+	margin-top: 5px;
+}
+
+iframe.embeddedDialogFrame{
+	position: fixed; 
+	height: 100%; 
+	width: 100%; 
+	background: transparent; 
+	z-index: value("constants.css.zIndexFramePopup");
+	top: 0; 
+	left: 0; 
+	border: none;
+	display: block;
+}
+
+iframe.embeddedDialogFrame.embeddedDialogFrameHidden {
+    visibility: hidden;
+    pointer-events: none;
+}
+
+
+
+
+ 

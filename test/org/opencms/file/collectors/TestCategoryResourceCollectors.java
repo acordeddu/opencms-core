@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -14,12 +14,12 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * Lesser General Public License for more details.
  *
- * For further information about Alkacon Software GmbH, please see the
- * company website: http://www.alkacon.com
+ * For further information about Alkacon Software GmbH & Co. KG, please see the
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -34,8 +34,7 @@ import org.opencms.file.types.CmsResourceTypeJsp;
 import org.opencms.file.types.CmsResourceTypePlain;
 import org.opencms.relations.CmsCategory;
 import org.opencms.relations.CmsCategoryService;
-import org.opencms.test.OpenCmsTestCase;
-import org.opencms.test.OpenCmsTestProperties;
+import org.opencms.test.OpenCmsTestRunner;
 import org.opencms.util.CmsDateUtil;
 import org.opencms.util.CmsStringUtil;
 
@@ -45,31 +44,24 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 
-import junit.extensions.TestSetup;
-import junit.framework.Test;
-import junit.framework.TestSuite;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.MethodOrderer;
+import org.junit.jupiter.api.Order;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInfo;
+import org.junit.jupiter.api.TestMethodOrder;
 
 /**
  * Unit test for the {@link CmsCategoryResourceCollector}.<p>
- * 
  */
-public class TestCategoryResourceCollectors extends OpenCmsTestCase {
-
-    /**
-     * Default JUnit constructor.<p>
-     * 
-     * @param arg0 JUnit parameters
-     */
-    public TestCategoryResourceCollectors(String arg0) {
-
-        super(arg0);
-    }
+@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
+public class TestCategoryResourceCollectors extends OpenCmsTestRunner {
 
     /**
      * Initializes the resources needed for the tests.<p>
-     * 
+     *
      * @param cms the cms object
-     * 
+     *
      * @throws Exception if something goes wrong
      */
     public static void initResources(CmsObject cms) throws Exception {
@@ -133,54 +125,51 @@ public class TestCategoryResourceCollectors extends OpenCmsTestCase {
     }
 
     /**
-     * Test suite for this test class.<p>
-     * 
-     * @return the test suite
+     * Prints the given list of search results to STDOUT.<p>
+     *
+     * @param resources the list to print
      */
-    public static Test suite() {
+    public static void printResults(List resources) {
 
-        OpenCmsTestProperties.initialize(org.opencms.test.AllTests.TEST_PROPERTIES_PATH);
+        Iterator i = resources.iterator();
+        int count = 0;
+        i = resources.iterator();
+        System.out.println("\n\n--------------------------");
+        while (i.hasNext()) {
+            CmsResource res = (CmsResource)i.next();
+            count++;
+            System.out.print(CmsStringUtil.padRight("" + count, 4));
+            System.out.print(CmsStringUtil.padRight(res.getRootPath(), 40));
+            System.out.println(
+                CmsStringUtil.padRight(
+                    "" + CmsDateUtil.getDateTime(new Date(res.getDateLastModified()), DateFormat.LONG, Locale.GERMAN),
+                    17));
+        }
+    }
 
-        TestSuite suite = new TestSuite();
-        suite.setName(TestCategoryResourceCollectors.class.getName());
+    /**
+     * @see org.opencms.test.OpenCmsTestRunner#$openCmsSetUp(org.junit.jupiter.api.TestInfo)
+     */
+    @Override
+    @BeforeAll
+    public void $openCmsSetUp(TestInfo testInfo) {
 
-        suite.addTest(new TestCategoryResourceCollectors("testCollectAllInFolderResourceType"));
-        suite.addTest(new TestCategoryResourceCollectors("testCollectAllInFolderSortByCategory"));
-        suite.addTest(new TestCategoryResourceCollectors("testCollectAllInFolderSortByDate"));
-        suite.addTest(new TestCategoryResourceCollectors("testCollectAllResourcesResourceType"));
-        suite.addTest(new TestCategoryResourceCollectors("testCollectAllResourcesSortByCategory"));
-        suite.addTest(new TestCategoryResourceCollectors("testCollectAllResourcesSortByDate"));
-        suite.addTest(new TestCategoryResourceCollectors("testCollectAllInFolderSubTree"));
-
-        TestSetup wrapper = new TestSetup(suite) {
-
-            @Override
-            protected void setUp() {
-
-                CmsObject cms = setupOpenCms(null, null, false);
-                try {
-                    initResources(cms);
-                } catch (Exception exc) {
-                    exc.printStackTrace();
-                    fail(exc.getMessage());
-                }
-            }
-
-            @Override
-            protected void tearDown() {
-
-                removeOpenCms();
-            }
-        };
-
-        return wrapper;
+        setupOpenCms(testInfo);
+        try {
+            initResources(getCmsObject());
+        } catch (Exception e) {
+            e.printStackTrace();
+            fail(e.getMessage());
+        }
     }
 
     /**
      * Test the collection of resources for a category in a given folder filtered by a resource type and no specified resource type.<p>
-     * 
+     *
      * @throws Throwable if something goes wrong
      */
+    @Test
+    @Order(1)
     public void testCollectAllInFolderResourceType() throws Throwable {
 
         CmsObject cms = getCmsObject();
@@ -189,9 +178,10 @@ public class TestCategoryResourceCollectors extends OpenCmsTestCase {
 
         I_CmsResourceCollector collector = new CmsCategoryResourceCollector();
 
-        List resources = collector.getResults(cms, "allKeyValuePairFiltered", "resource=/folder1/|resourceType="
-            + resTypeIdPlain
-            + "|categoryTypes=business/");
+        List resources = collector.getResults(
+            cms,
+            "allKeyValuePairFiltered",
+            "resource=/folder1/|resourceType=" + resTypeIdPlain + "|categoryTypes=business/");
 
         assertEquals(1, resources.size());
 
@@ -202,9 +192,11 @@ public class TestCategoryResourceCollectors extends OpenCmsTestCase {
 
     /**
      * Test the collection of resources for given categories in a given folder sorted by the category.<p>
-     * 
+     *
      * @throws Throwable if something goes wrong
      */
+    @Test
+    @Order(2)
     public void testCollectAllInFolderSortByCategory() throws Throwable {
 
         CmsObject cms = getCmsObject();
@@ -236,9 +228,11 @@ public class TestCategoryResourceCollectors extends OpenCmsTestCase {
 
     /**
      * Test the collection of resources for given categories in a given folder sorted by the date.<p>
-     * 
+     *
      * @throws Throwable if something goes wrong
      */
+    @Test
+    @Order(3)
     public void testCollectAllInFolderSortByDate() throws Throwable {
 
         CmsObject cms = getCmsObject();
@@ -283,31 +277,12 @@ public class TestCategoryResourceCollectors extends OpenCmsTestCase {
     }
 
     /**
-     * Prints the given list of search results to STDOUT.<p>
-     * 
-     * @param resources the list to print
-     */
-    public static void printResults(List resources) {
-
-        Iterator i = resources.iterator();
-        int count = 0;
-        i = resources.iterator();
-        System.out.println("\n\n--------------------------");
-        while (i.hasNext()) {
-            CmsResource res = (CmsResource)i.next();
-            count++;
-            System.out.print(CmsStringUtil.padRight("" + count, 4));
-            System.out.print(CmsStringUtil.padRight(res.getRootPath(), 40));
-            System.out.println(CmsStringUtil.padRight(""
-                + CmsDateUtil.getDateTime(new Date(res.getDateLastModified()), DateFormat.LONG, Locale.GERMAN), 17));
-        }
-    }
-
-    /**
      * Test the collection of resources for a category / given categories in a given folder with inculding the sub tree of the folder.<p>
-     * 
+     *
      * @throws Throwable if something goes wrong
      */
+    @Test
+    @Order(7)
     public void testCollectAllInFolderSubTree() throws Throwable {
 
         CmsObject cms = getCmsObject();
@@ -342,9 +317,11 @@ public class TestCategoryResourceCollectors extends OpenCmsTestCase {
 
     /**
      * Test the collection of resources for a category filtered by a resource type and no specified resource type.<p>
-     * 
+     *
      * @throws Throwable if something goes wrong
      */
+    @Test
+    @Order(4)
     public void testCollectAllResourcesResourceType() throws Throwable {
 
         CmsObject cms = getCmsObject();
@@ -353,9 +330,10 @@ public class TestCategoryResourceCollectors extends OpenCmsTestCase {
 
         I_CmsResourceCollector collector = new CmsCategoryResourceCollector();
 
-        List resources = collector.getResults(cms, "allKeyValuePairFiltered", "resourceType="
-            + resTypeIdPlain
-            + "|categoryTypes=business/");
+        List resources = collector.getResults(
+            cms,
+            "allKeyValuePairFiltered",
+            "resourceType=" + resTypeIdPlain + "|categoryTypes=business/");
 
         assertEquals(2, resources.size());
 
@@ -366,9 +344,11 @@ public class TestCategoryResourceCollectors extends OpenCmsTestCase {
 
     /**
      * Test the collection of resources for given categories sorted by category.<p>
-     * 
+     *
      * @throws Throwable if something goes wrong
      */
+    @Test
+    @Order(5)
     public void testCollectAllResourcesSortByCategory() throws Throwable {
 
         CmsObject cms = getCmsObject();
@@ -415,9 +395,11 @@ public class TestCategoryResourceCollectors extends OpenCmsTestCase {
 
     /**
      * Test the collection of resources for given categories sorted by date.<p>
-     * 
+     *
      * @throws Throwable if something goes wrong
      */
+    @Test
+    @Order(6)
     public void testCollectAllResourcesSortByDate() throws Throwable {
 
         CmsObject cms = getCmsObject();

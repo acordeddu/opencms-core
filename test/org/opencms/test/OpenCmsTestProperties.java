@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -14,12 +14,12 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * Lesser General Public License for more details.
  *
- * For further information about Alkacon Software GmbH, please see the
- * company website: http://www.alkacon.com
+ * For further information about Alkacon Software GmbH & Co. KG, please see the
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -31,6 +31,7 @@ import org.opencms.configuration.CmsParameterConfiguration;
 import org.opencms.file.CmsResource;
 import org.opencms.main.CmsLog;
 import org.opencms.util.CmsFileUtil;
+import org.opencms.util.CmsStringUtil;
 
 import java.io.File;
 import java.io.IOException;
@@ -42,7 +43,7 @@ import org.apache.commons.logging.Log;
 
 /**
  * Reads and manages the test.properties file.<p>
- * 
+ *
  * @since 6.0.0
  */
 public final class OpenCmsTestProperties {
@@ -50,14 +51,20 @@ public final class OpenCmsTestProperties {
     /** The log object for this class. */
     public static final Log LOG = CmsLog.getLog(OpenCmsTestProperties.class);
 
-    /** Property / Environmant name for "db.product". */
+    /** Property / Environment name for "db.product". */
     public static final String PROP_DB_PRODUCT = "db.product";
 
-    /** Property / Environmant name for "test.data.path".  */
+    /** Property / Environment name for "test.build.folder". */
+    public static final String PROP_TEST_BUILD_FOLDER = "test.build.folder";
+
+    /** Property / Environment name for "test.data.path".  */
     public static final String PROP_TEST_DATA_PATH = "test.data.path";
 
-    /** Property / Environmant name for "test.webapp.path". */
+    /** Property / Environment name for "test.webapp.path". */
     public static final String PROP_TEST_WEBAPP_PATH = "test.webapp.path";
+
+    /** Configuration key for the project path. */
+    private static final String PROP_TEST_PROJECT_PATH = "test.project.path";
 
     /** The configuration from <code>opencms.properties</code>. */
     private static CmsParameterConfiguration m_configuration;
@@ -65,17 +72,26 @@ public final class OpenCmsTestProperties {
     /** The singleton instance. */
     private static OpenCmsTestProperties m_testSingleton;
 
+    /** Path for the test.properties file. */
+    public static final String TEST_PROPERTIES_PATH = getResourcePathFromClassloader("");
+
     /** The path to the test.properties file. */
     private String m_basePath;
 
     /** The database to use. */
     private String m_dbProduct;
 
+    /** The path to the build folder of the test classes. */
+    private String m_testBuildFolder;
+
     /** The path to the data test folder. */
     private String m_testDataPath;
 
     /** The path to the webapp test folder. */
     private String m_testWebappPath;
+
+    /** Path of the project. */
+    private String m_testProjectPath;
 
     /**
      * Private default constructor.
@@ -97,25 +113,25 @@ public final class OpenCmsTestProperties {
     }
 
     /**
-     * Returns the absolute path name for the given relative 
-     * path name if it was found by the context Classloader of the 
+     * Returns the absolute path name for the given relative
+     * path name if it was found by the context Classloader of the
      * current Thread.<p>
-     * 
-     * The argument has to denote a resource within the Classloaders 
-     * scope. A <code>{@link java.net.URLClassLoader}</code> implementation for example would 
-     * try to match a given path name to some resource under it's URL 
+     *
+     * The argument has to denote a resource within the Classloaders
+     * scope. A <code>{@link java.net.URLClassLoader}</code> implementation for example would
+     * try to match a given path name to some resource under it's URL
      * entries.<p>
-     * 
-     * As the result is internally obtained as an URL it is reduced to 
-     * a file path by the call to <code>{@link java.net.URL#getFile()}</code>. Therefore 
+     *
+     * As the result is internally obtained as an URL it is reduced to
+     * a file path by the call to <code>{@link java.net.URL#getFile()}</code>. Therefore
      * the returned String will start with a '/' (no problem for java.io).<p>
-     * 
+     *
      * @param fileName the filename to return the path from the Classloader for
-     * 
-     * @return the absolute path name for the given relative 
-     *   path name if it was found by the context Classloader of the 
+     *
+     * @return the absolute path name for the given relative
+     *   path name if it was found by the context Classloader of the
      *   current Thread or an empty String if it was not found
-     * 
+     *
      * @see Thread#getContextClassLoader()
      */
     public static String getResourcePathFromClassloader(String fileName) {
@@ -133,10 +149,11 @@ public final class OpenCmsTestProperties {
             try {
                 URLClassLoader cl = (URLClassLoader)Thread.currentThread().getContextClassLoader();
                 URL[] paths = cl.getURLs();
-                LOG.error(Messages.get().getBundle().key(
-                    Messages.ERR_MISSING_CLASSLOADER_RESOURCE_2,
-                    fileName,
-                    Arrays.asList(paths)));
+                LOG.error(
+                    Messages.get().getBundle().key(
+                        Messages.ERR_MISSING_CLASSLOADER_RESOURCE_2,
+                        fileName,
+                        Arrays.asList(paths)));
             } catch (Throwable t) {
                 LOG.error(Messages.get().getBundle().key(Messages.ERR_MISSING_CLASSLOADER_RESOURCE_1, fileName));
             }
@@ -146,7 +163,7 @@ public final class OpenCmsTestProperties {
 
     /**
      * Reads property file test.properties and fills singleton members.<p>
-     * 
+     *
      * @param basePath the path where to find the test.properties file
      */
     public static void initialize(String basePath) {
@@ -220,9 +237,22 @@ public final class OpenCmsTestProperties {
             // unable to read environment, use only properties from file
             e.printStackTrace(System.out);
         }
-
-        m_testSingleton.m_testDataPath = m_configuration.get(PROP_TEST_DATA_PATH);
-        m_testSingleton.m_testWebappPath = m_configuration.get(PROP_TEST_WEBAPP_PATH);
+        m_testSingleton.m_testWebappPath = System.getProperty(PROP_TEST_WEBAPP_PATH);
+        if (CmsStringUtil.isEmptyOrWhitespaceOnly(m_testSingleton.m_testWebappPath)) {
+            m_testSingleton.m_testWebappPath = m_configuration.get(PROP_TEST_WEBAPP_PATH);
+        }
+        m_testSingleton.m_testDataPath = System.getProperty(PROP_TEST_DATA_PATH);
+        if (CmsStringUtil.isEmptyOrWhitespaceOnly(m_testSingleton.m_testDataPath)) {
+            m_testSingleton.m_testDataPath = m_configuration.get(PROP_TEST_DATA_PATH);
+        }
+        m_testSingleton.m_testBuildFolder = System.getProperty(PROP_TEST_BUILD_FOLDER);
+        if (CmsStringUtil.isEmptyOrWhitespaceOnly(m_testSingleton.m_testBuildFolder)) {
+            m_testSingleton.m_testBuildFolder = m_configuration.get(PROP_TEST_BUILD_FOLDER);
+        }
+        m_testSingleton.m_testProjectPath = System.getProperty(PROP_TEST_PROJECT_PATH);
+        if (CmsStringUtil.isEmptyOrWhitespaceOnly(m_testSingleton.m_testProjectPath)) {
+            m_testSingleton.m_testProjectPath = m_configuration.get(PROP_TEST_PROJECT_PATH);
+        }
         m_testSingleton.m_dbProduct = m_configuration.get(PROP_DB_PRODUCT);
     }
 
@@ -249,6 +279,27 @@ public final class OpenCmsTestProperties {
     public String getDbProduct() {
 
         return m_dbProduct;
+    }
+
+    /**
+     * Returns the project path.
+     *
+     * @return the project path
+     */
+    public String getProjectPath() {
+
+        return m_testProjectPath;
+    }
+
+    /**
+     * Returns the path to the build folder of the test classes.
+     *
+     * @return the path to the build folder of the test classes
+     */
+    public String getTestBuildFolder() {
+
+        LOG.info("Using build folder: " + m_testBuildFolder);
+        return m_testBuildFolder;
     }
 
     /**

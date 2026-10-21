@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -15,11 +15,11 @@
  * Lesser General Public License for more details.
  *
  * For further information about Alkacon Software, please see the
- * company website: http://www.alkacon.com
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -30,70 +30,181 @@ package org.opencms.ade.galleries.client.ui;
 import org.opencms.ade.galleries.client.ui.css.I_CmsLayoutBundle;
 import org.opencms.ade.galleries.shared.CmsResultItemBean;
 import org.opencms.gwt.client.CmsCoreProvider;
+import org.opencms.gwt.client.dnd.I_CmsDragHandle;
+import org.opencms.gwt.client.dnd.I_CmsDraggable;
 import org.opencms.gwt.client.ui.CmsListItemWidget;
+import org.opencms.gwt.client.ui.input.CmsLabel.I_TitleGenerator;
 import org.opencms.gwt.client.util.CmsClientStringUtil;
 import org.opencms.gwt.client.util.CmsToolTipHandler;
 import org.opencms.gwt.shared.CmsAdditionalInfoBean;
-import org.opencms.gwt.shared.CmsIconUtil;
 import org.opencms.gwt.shared.CmsListInfoBean;
 
+import com.google.gwt.dom.client.Element;
+import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.ui.HTML;
 
 /**
  * The result list item widget.<p>
- * 
+ *
  * Enabling the image tile view.<p>
- * 
+ *
  * @since 8.0.0
  */
 public class CmsResultItemWidget extends CmsListItemWidget {
 
-    /** Standard image tile scale parameter. */
-    private static final String IMAGE_SCALE_PARAM = "?__scale=w:142,h:100,t:1,c:transparent,r:2";
+    /**
+     * Widget containing the image(s) for a result list item..<p>
+     */
+    public class ImageTile extends HTML implements I_CmsDragHandle {
 
-    /** The image resource type name. */
-    private static final String IMAGE_TYPE = "image";
+        /** The draggable result list item. */
+        private I_CmsDraggable m_draggable;
+
+        /**
+         * Creates a new instance with the given content.<p>
+         *
+         * @param content the HTML content
+         */
+        public ImageTile(String content) {
+
+            super(content);
+        }
+
+        /**
+         * @see org.opencms.gwt.client.dnd.I_CmsDragHandle#getDraggable()
+         */
+        public I_CmsDraggable getDraggable() {
+
+            return m_draggable;
+        }
+
+        /**
+         * Sets the draggable widget.<p>
+         *
+         * @param draggable the draggable widget
+         */
+        public void setDraggable(I_CmsDraggable draggable) {
+
+            m_draggable = draggable;
+        }
+
+    }
+
+    /** Standard image tile scale parameter. */
+    private static final String IMAGE_SCALE_PARAM = "?__scale=t:9";
 
     /** Tile view flag. */
     private boolean m_hasTileView;
 
+    /** The image tile. */
+    private ImageTile m_imageTile;
+
+    /** The tool tip handler. */
     private CmsToolTipHandler m_tooltipHandler;
 
     /**
      * Constructor.<p>
-     * 
+     *
      * @param infoBean the resource info bean
+     * @param showPath <code>true</code> to show the resource path in sub title
      */
-    public CmsResultItemWidget(CmsResultItemBean infoBean) {
+    public CmsResultItemWidget(CmsResultItemBean infoBean, boolean showPath) {
 
         super(infoBean);
-        setIcon(CmsIconUtil.getResourceIconClasses(infoBean.getType(), infoBean.getPath(), false));
+        if (showPath) {
+            setSubtitleLabel(infoBean.getPath());
+            setSubtitleTitle(infoBean.getSubTitle());
+        } else {
+            setSubtitleTitle(infoBean.getPath());
+        }
 
         // if resourceType=="image" prepare for tile view
-        if (IMAGE_TYPE.equals(infoBean.getType())) {
+        if (CmsResultsTab.isImagelikeType(infoBean.getType())) {
             m_hasTileView = true;
             // add tile view marker css classes
-
+            String src = infoBean.getViewLink();
+            if (src == null) {
+                src = CmsCoreProvider.get().link(infoBean.getPath());
+            }
+            String timeParam = "&time=" + System.currentTimeMillis();
             // insert tile view image div
-            HTML imageTile = new HTML("<img src=\""
-                + CmsCoreProvider.get().link(infoBean.getPath())
-                + IMAGE_SCALE_PARAM
-                + "\" />");
+            ImageTile imageTile = new ImageTile("<img src=\"" + src + getBigImageScaleParam(false)
+            // add time stamp to override browser image caching
+                + timeParam
+                + "\" "
+                + " onerror='cmsJsFunctions.handleBrokenImage(this)' "
+                + (" srcset=\"" + src + getBigImageScaleParam(true) + timeParam + " 2x" + "\" ")
+                + "class=\""
+                + I_CmsLayoutBundle.INSTANCE.galleryResultItemCss().bigImage()
+                + "\" />"
+                // using a second image tag for the small thumbnail variant
+                + "<img src=\""
+                + src
+                + getSmallImageScaleParam(infoBean, false)
+                // add time stamp to override browser image caching
+                + timeParam
+                + "\" "
+                + " onerror='cmsJsFunctions.handleBrokenImage(this)' "
+                + (" srcset=\"" + src + getSmallImageScaleParam(infoBean, true) + timeParam + " 2x" + "\" ")
+                + " class=\""
+                + I_CmsLayoutBundle.INSTANCE.galleryResultItemCss().smallImage()
+                + "\" />"
+                + "<div class='"
+                + I_CmsLayoutBundle.INSTANCE.galleryResultItemCss().expiredImageOverlay()
+                + "' />");
             imageTile.setStyleName(I_CmsLayoutBundle.INSTANCE.galleryResultItemCss().imageTile());
+            if (CmsClientStringUtil.checkIsPathOrLinkToSvg(infoBean.getPath())) {
+                imageTile.addStyleName(I_CmsLayoutBundle.INSTANCE.galleryResultItemCss().svg());
+            }
+            m_imageTile = imageTile;
             m_tooltipHandler = new CmsToolTipHandler(imageTile, generateTooltipHtml(infoBean));
             m_contentPanel.insert(imageTile, 0);
         }
 
     }
 
+    private static Element appendDom(Element parent, String name) {
+
+        Element child = DOM.createElement(name);
+        parent.appendChild(child);
+        return child;
+    }
+
+    /**
+     * Gets the image tile.<p>
+     *
+     * @return the image tile
+     */
+    public ImageTile getImageTile() {
+
+        return m_imageTile;
+    }
+
     /**
      * Indicates wther there is a tile view available for this widget.<p>
-     * 
+     *
      * @return <code>true</code> if a tiled view is available
      */
     public boolean hasTileView() {
 
         return m_hasTileView;
+    }
+
+    /**
+     * Initializes the title attribute of the subtitle line.<p>
+     *
+     * @param subtitleTitle the value to set
+     */
+    public void setSubtitleTitle(final String subtitleTitle) {
+
+        m_subtitle.setTitle(subtitleTitle);
+        m_subtitle.setTitleGenerator(new I_TitleGenerator() {
+
+            public String getTitle(String originalText) {
+
+                return subtitleTitle;
+            }
+        });
     }
 
     /**
@@ -110,22 +221,57 @@ public class CmsResultItemWidget extends CmsListItemWidget {
 
     /**
      * Generates the HTML for the item tool-tip.<p>
-     * 
+     *
      * @param infoBean the item info
-     * 
+     *
      * @return the generated HTML
      */
     private String generateTooltipHtml(CmsListInfoBean infoBean) {
 
-        StringBuffer result = new StringBuffer();
-        result.append("<p><b>").append(CmsClientStringUtil.shortenString(infoBean.getTitle(), 70)).append("</b></p>");
+        Element root = DOM.createElement("div");
+        appendDom(appendDom(root, "p"), "b").setInnerText(CmsClientStringUtil.shortenString(infoBean.getTitle(), 70));
         if (infoBean.hasAdditionalInfo()) {
             for (CmsAdditionalInfoBean additionalInfo : infoBean.getAdditionalInfo()) {
-                result.append("<p>").append(additionalInfo.getName()).append(":&nbsp;");
-                // shorten the value to max 45 characters
-                result.append(CmsClientStringUtil.shortenString(additionalInfo.getValue(), 45)).append("</p>");
+                appendDom(root, "p").setInnerText(
+                    additionalInfo.getName()
+                        + ":\u00a0"
+                        + CmsClientStringUtil.shortenString(additionalInfo.getValue(), 45));
             }
         }
-        return result.toString();
+        return root.getInnerHTML();
+    }
+
+    /**
+     * Returns the scale parameter for big thumbnail images.<p>
+     *
+     * @return the scale parameter
+     */
+    private String getBigImageScaleParam(boolean highres) {
+
+        int m = highres ? 2 : 1;
+        String suffix = highres ? ",q:85" : "";
+        return IMAGE_SCALE_PARAM
+            + ",w:"
+            + (m * I_CmsLayoutBundle.INSTANCE.galleryResultItemCss().bigImageWidth())
+            + ",h:"
+            + (m * I_CmsLayoutBundle.INSTANCE.galleryResultItemCss().bigImageHeight())
+            + suffix;
+    }
+
+    /**
+     * Returns the scale parameter for small thumbnail images.<p>
+     *
+     * @param infoBean the resource info
+     *
+     * @return the scale parameter
+     */
+    private String getSmallImageScaleParam(CmsResultItemBean infoBean, boolean highres) {
+
+        int m = highres ? 2 : 1;
+        return IMAGE_SCALE_PARAM
+            + ",w:"
+            + (m * I_CmsLayoutBundle.INSTANCE.galleryResultItemCss().smallImageWidth())
+            + ",h:"
+            + (m * I_CmsLayoutBundle.INSTANCE.galleryResultItemCss().smallImageHeight());
     }
 }

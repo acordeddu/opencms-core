@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -14,12 +14,12 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * Lesser General Public License for more details.
  *
- * For further information about Alkacon Software GmbH, please see the
- * company website: http://www.alkacon.com
+ * For further information about Alkacon Software GmbH & Co. KG, please see the
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -29,6 +29,7 @@ package org.opencms.workplace.tools.workplace.broadcast;
 
 import org.opencms.file.CmsUser;
 import org.opencms.jsp.CmsJspActionElement;
+import org.opencms.main.CmsBroadcast.ContentMode;
 import org.opencms.main.CmsException;
 import org.opencms.main.CmsIllegalStateException;
 import org.opencms.main.CmsLog;
@@ -55,8 +56,8 @@ import org.apache.commons.logging.Log;
 
 /**
  * Dialog to send a new email to the selected groups.<p>
- * 
- * @since 6.5.6 
+ *
+ * @since 6.5.6
  */
 public class CmsSendPopupGroupsDialog extends CmsWidgetDialog {
 
@@ -79,11 +80,11 @@ public class CmsSendPopupGroupsDialog extends CmsWidgetDialog {
     private String m_paramGroups;
 
     /** The list of all members of the selected groups. */
-    private List m_users;
+    private List<CmsUser> m_users;
 
     /**
      * Public constructor with JSP action element.<p>
-     * 
+     *
      * @param jsp an initialized JSP action element
      */
     public CmsSendPopupGroupsDialog(CmsJspActionElement jsp) {
@@ -93,7 +94,7 @@ public class CmsSendPopupGroupsDialog extends CmsWidgetDialog {
 
     /**
      * Public constructor with JSP variables.<p>
-     * 
+     *
      * @param context the JSP page context
      * @param req the JSP request
      * @param res the JSP response
@@ -106,23 +107,27 @@ public class CmsSendPopupGroupsDialog extends CmsWidgetDialog {
     /**
      * Commits the edited project to the db.<p>
      */
+    @Override
     public void actionCommit() {
 
-        List errors = new ArrayList();
+        List<Throwable> errors = new ArrayList<Throwable>();
 
         if (getUsers().isEmpty()) {
-            setCommitErrors(Collections.singletonList((Throwable)new CmsIllegalStateException(Messages.get().container(
-                Messages.ERR_NO_SELECTED_USER_WITH_EMAIL_0))));
+            setCommitErrors(
+                Collections.singletonList(
+                    (Throwable)new CmsIllegalStateException(
+                        Messages.get().container(Messages.ERR_NO_SELECTED_USER_WITH_EMAIL_0))));
             return;
         }
         try {
-            Iterator itUsers = getUsers().iterator();
+            Iterator<CmsUser> itUsers = getUsers().iterator();
             while (itUsers.hasNext()) {
-                CmsUser user = (CmsUser)itUsers.next();
+                CmsUser user = itUsers.next();
                 OpenCms.getSessionManager().sendBroadcast(
                     getCms().getRequestContext().getCurrentUser(),
                     m_msgInfo.getMsg(),
-                    user);
+                    user,
+                    ContentMode.html);
             }
         } catch (Throwable t) {
             errors.add(t);
@@ -136,7 +141,7 @@ public class CmsSendPopupGroupsDialog extends CmsWidgetDialog {
      *
      * @return the selected groups
      */
-    public List getGroups() {
+    public List<String> getGroups() {
 
         return CmsStringUtil.splitAsList(getParamGroups(), CmsHtmlList.ITEM_SEPARATOR);
     }
@@ -164,6 +169,7 @@ public class CmsSendPopupGroupsDialog extends CmsWidgetDialog {
     /**
      * @see org.opencms.workplace.CmsWidgetDialog#createDialogHtml(java.lang.String)
      */
+    @Override
     protected String createDialogHtml(String dialog) {
 
         StringBuffer result = new StringBuffer(1024);
@@ -193,6 +199,7 @@ public class CmsSendPopupGroupsDialog extends CmsWidgetDialog {
     /**
      * Creates the list of widgets for this dialog.<p>
      */
+    @Override
     protected void defineWidgets() {
 
         // initialize the project object to use for the dialog
@@ -208,6 +215,7 @@ public class CmsSendPopupGroupsDialog extends CmsWidgetDialog {
     /**
      * @see org.opencms.workplace.CmsWidgetDialog#getPageArray()
      */
+    @Override
     protected String[] getPageArray() {
 
         return PAGES;
@@ -215,15 +223,15 @@ public class CmsSendPopupGroupsDialog extends CmsWidgetDialog {
 
     /**
      * Returns a semicolon separated list of user names.<p>
-     * 
+     *
      * @return a semicolon separated list of user names
      */
     protected String getToNames() {
 
         StringBuffer result = new StringBuffer(256);
-        Iterator itUsers = getUsers().iterator();
+        Iterator<CmsUser> itUsers = getUsers().iterator();
         while (itUsers.hasNext()) {
-            CmsUser user = (CmsUser)itUsers.next();
+            CmsUser user = itUsers.next();
             result.append(user.getFullName());
             if (itUsers.hasNext()) {
                 result.append("; ");
@@ -242,7 +250,7 @@ public class CmsSendPopupGroupsDialog extends CmsWidgetDialog {
                 // create a new message info object
                 m_msgInfo = new CmsMessageInfo();
             } else {
-                // this is not the initial call, get the message info object from session  
+                // this is not the initial call, get the message info object from session
                 m_msgInfo = (CmsMessageInfo)getDialogObject();
             }
         } catch (Exception e) {
@@ -256,6 +264,7 @@ public class CmsSendPopupGroupsDialog extends CmsWidgetDialog {
     /**
      * @see org.opencms.workplace.CmsWorkplace#initMessages()
      */
+    @Override
     protected void initMessages() {
 
         // add specific dialog resource bundle
@@ -268,6 +277,7 @@ public class CmsSendPopupGroupsDialog extends CmsWidgetDialog {
     /**
      * @see org.opencms.workplace.CmsWorkplace#initWorkplaceRequestValues(org.opencms.workplace.CmsWorkplaceSettings, javax.servlet.http.HttpServletRequest)
      */
+    @Override
     protected void initWorkplaceRequestValues(CmsWorkplaceSettings settings, HttpServletRequest request) {
 
         // initialize parameters and dialog actions in super implementation
@@ -280,6 +290,7 @@ public class CmsSendPopupGroupsDialog extends CmsWidgetDialog {
     /**
      * @see org.opencms.workplace.CmsWidgetDialog#validateParamaters()
      */
+    @Override
     protected void validateParamaters() throws Exception {
 
         if ((getUsers() == null) || getUsers().isEmpty()) {
@@ -289,14 +300,14 @@ public class CmsSendPopupGroupsDialog extends CmsWidgetDialog {
 
     /**
      * Returns a list of all members of the selected groups.<p>
-     * 
+     *
      * @return a list of user objects
      */
-    private List getUsers() {
+    private List<CmsUser> getUsers() {
 
         if (m_users == null) {
-            m_users = new ArrayList();
-            List manageableUsers = new ArrayList();
+            m_users = new ArrayList<CmsUser>();
+            List<CmsUser> manageableUsers = new ArrayList<CmsUser>();
             try {
                 manageableUsers = OpenCms.getRoleManager().getManageableUsers(getCms(), "", true);
             } catch (CmsException e) {
@@ -304,13 +315,13 @@ public class CmsSendPopupGroupsDialog extends CmsWidgetDialog {
                     LOG.error(e.getLocalizedMessage(), e);
                 }
             }
-            Iterator itGroups = getGroups().iterator();
+            Iterator<String> itGroups = getGroups().iterator();
             while (itGroups.hasNext()) {
-                String groupName = (String)itGroups.next();
+                String groupName = itGroups.next();
                 try {
-                    Iterator itUsers = getCms().getUsersOfGroup(groupName, true).iterator();
+                    Iterator<CmsUser> itUsers = getCms().getUsersOfGroup(groupName, true).iterator();
                     while (itUsers.hasNext()) {
-                        CmsUser user = (CmsUser)itUsers.next();
+                        CmsUser user = itUsers.next();
                         if (OpenCms.getSessionManager().getSessionInfos(user.getId()).isEmpty()) {
                             continue;
                         }

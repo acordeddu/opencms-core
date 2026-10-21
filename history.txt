@@ -2,18 +2,1523 @@
  * This file is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  */
 
 History of changes for the OpenCms project.
 
 Changes are chronologically ordered from top (most recent) to bottom (least recent).
-For more information about the OpenCms project, see the OpenCms website at http://www.opencms.org.
+For more information about the OpenCms project, see the OpenCms website at https://www.opencms.org.
 
 Legend:
 ! New Feature
+- Minor improvement or general comment
 * Bug fixed
-- General comment
+
+OpenCms 22.0.0 - October 6, 2026
+
+! Support for Jakarta EE with Tomcat 10 / 11 and Jetty 12, a legacy Java EE 8 variant for Tomcat 9 is also available
+! New storage layer with SHA-512 based deduplication of binary and image content, optionally stored in S3-compatible object storage
+! Display of release and expiration dates for time-controlled elements in the page editor
+! Placeholder texts for widgets and settings in the XML content editor
+! Improved selection of global and local categories
+! Search for partial words in galleries
+! Redirects in navigations can optionally be opened in a new window
+
+- Workplace: Date fields accept 24:00 as midnight of the following day
+- Workplace: The link gallery widget no longer uses an iframe
+- Workplace: Optional client label in the request context and the session table
+- Workplace: Cache app supports time-based cleanup of the image cache with progress reporting
+- Workplace: The "About" dialog shows the Java EE version and a shortened Git message
+- Workplace: More robust CSV user import with better error handling
+- Core API: Detail page resolution without a servlet request
+- Core API: Methods to find out where an ADE configuration value is defined
+- Core API: Configurable element marker handler for container pages
+- Core API: The publish history uses the online path for files moved out of deleted folders
+- Core API: Fewer permission cache flushes and cached OU lookups for role checks
+- Core API: Custom EL resolver for better JSP performance on Jetty
+- Core API: Content extraction policy API for formatters
+- Solr: Basic auth credentials for external Solr servers
+- Solr: Exclude containers from indexing by name or type via sitemap attributes
+- Solr: Option to skip metadata extraction for PDF, RTF and MS Office documents
+- Solr: Content fields keep the order of the XML content
+- Solr: More reliable clients with fixed timeouts, HTTP/1.1 and proper shutdown
+- Solr: Improved normalization of folder values in search queries
+- Solr: Search results of an unknown resource type are now permission checked
+- WebDAV: All init parameters of the Jackrabbit WebDAV servlet can be configured
+- Shell: New commands to add a bookmark with a title and to remove a user from a role
+- Gradle build: Updated to Gradle 9.4 with Java 25 support
+- Gradle build: Tests migrated to JUnit 6
+- Gradle build: Source formatting enforced with Spotless
+- Gradle build: New opencms_variant property to add a suffix to generated Maven artifacts
+- Libraries: Migrated to commons-fileupload2, commons-email2 and Jakarta Mail
+- Libraries: Updated GWT
+
+- Pull request #849 fixes the CSV user import with UTF-8 BOM and improves its error handling, provided by rgaviras (https://github.com/alkacon/opencms-core/pull/849)
+- Pull request #848 fixes silently swallowed Solr core initialization failures, provided by gallardo (https://github.com/alkacon/opencms-core/pull/848)
+- Pull request #846 reports a NullPointerException in CmsADEConfigData.hasFormatters() for resource types without a schema, provided by gallardo, not merged but fixed independently (https://github.com/alkacon/opencms-core/pull/846)
+- Pull request #845 adds the missing HttpOnly flag in CmsFlexResponse#addCookie, provided by Thyodas (https://github.com/alkacon/opencms-core/pull/845)
+- Pull request #844 fixes typos in the German localization, provided by Rainer559 (https://github.com/alkacon/opencms-core/pull/844)
+
+* Security: Fixed remote code execution through static export of .jspx files
+* Security: Fixed deserialization vulnerability in the database import
+* Security: Fixed XXE vulnerability in OpenOffice document indexing
+* Security: Fixed unauthenticated Solr aggregation leak by removing the OpenCmsSolrHandler
+* Security: Fixed path traversal through the "exportname" property, reported by pig-tail (https://github.com/pig-tail)
+* Security: Fixed issue #843 login bean accepting protocol-relative redirect URIs, reported by Fushuling (https://github.com/alkacon/opencms-core/issues/843)
+* Security: Fixed missing HttpOnly flag in CmsFlexResponse#addCookie, see pull request #845
+
+* Fixed category selection when overlapping categories are displayed by repository
+* Fixed removing a category from a folder also removing it from all resources in that folder
+* Fixed accidental relation removal caused by missing escaping of underscores
+* Fixed nested setting includes not being resolved from the ADE configuration
+* Fixed content folder type index for types configured in a master configuration
+* Fixed inconsistent handling of formatters for types with a missing content definition, also reported in pull request #846
+* Fixed default path prefixes in OpenCmsUrlServletFilter also matching longer names, for example "/services" blocking "/services_page"
+* Fixed GWT RPC exception messages not reaching the client
+* Fixed CmsSolrQuery#createTextQuery for multiple text search fields
+* Fixed CmsContainerBean#getSimpleName()
+* Fixed MIME types for .ott, .tcl and .tk in opencms-vfs.xml
+* Fixed Jetty components pulled in by Solr conflicting with container libraries
+
+OpenCms 21.0.0 - April 14, 2026
+
+! AI/LLM based translation added to the XML content editor
+! AI/LLM translation workflows for OpenAI and DeepL API
+! Configurable secret provider for securely storing encrypted passwords or API keys
+! Edit properties of multiple files in the upload dialog
+! Added support for Java 25
+! OpenCms now requires at least Java 21
+
+- Sitemap editor: Option to hide the “Detail Pages” tab
+- Page editor: Allow copying write-protected elements
+- Workplace: Added users’ full names to the principal selection dialog
+- Workplace: Improved the “Edit new module” dialog
+- Workplace: Optimize gallery new option "Sort by file size"
+- Workplace: Optimize gallery new option "Delete all unused images at once"
+- Workplace: Improved folder size formatting in the resource info dialog
+- Workplace: Confirm file selection filter with Enter key
+- Gradle build: Updated configuration for Gradle 8.10
+- Gradle build: Improved handling of module JARs
+- Solr: added update option for searchcontent in XSD searchsettings
+- Solr: Improved module import performance for external servers
+- Solr: Improved indexing performance for resources with relations
+- Solr: Updated Solr to version 10
+- Added test case for improved handling of missing XSDs
+- Cleaned up redundant legacy javax.* and jakarta.* API JARs in WEB-INF/lib
+
+- Pull request #825 file sorting by name in explorer table and tree (partial merge)
+- Pull request #827 removes mavenLocal for more stable Gradle dependency resolution
+- Pull request #831 modernizes Gradle plugin usage and build directory handling
+- Pull request #832 updates Gradle to use lazy task registration
+- Pull request #833 standardizes test execution for Gradle and IDE integration
+- Pull request #837 Added .csv and .ai file type mappings to VFS resource types
+
+* Security: Fixed RCE vulnerability related to UGC
+* Security: Fixed CVEs by upgrading Apache Tika
+* Security: Fixed XXE issue for old import versions
+
+* Fixed flex cache issue with wrong entry after direct page open following publish
+* Fixed wrong accordion heading in the container page “Info” dialog
+* Fixed inactive save buttons in the i18n bundle editor
+* Fixed Solr highlighter configuration to use hl.method
+* Fixed dummy elements displayed on default detail pages
+* Fixed missing input validation in the resource type app
+* Fixed edge case issue when moving a user between OUs
+* Fixed upgrade wizard including demo template JARs
+* Fixed exception for unreadable content folders in resource type config
+* Fixed websites app error when server URL has no protocol
+* Fixed websites app removing a site on empty or invalid input
+* Fixed issue with reloaded element HTML sanitation breaking inline editing
+* Fixed issue #836 edit button shown for non-editable resources in the publish dialog
+* Fixed issue #838 undelete for Element Authors without the Editor role
+
+
+OpenCms 20.0.0 - October 14, 2025
+
+! Support for "online only" folders
+! Move detail containers if a detail page is moved
+! Link finisher can generate uniform link endings
+! Calculate the disk space size of all resources in a folder
+! Optional whitelist for the resource upload dialog
+! Option to automatically add a class to external links in WYSIWYG fields
+
+- Page editor: Hide "detail only" containers with a layer when editing a detail page
+- Page / Form editor: Display of "Page editor" and "Form editor" when editing pages or resources
+- Workplace: Added filter option to the resource dialog in the explorer
+- Workplace: Access the list of users in a group directly from the permission dialog
+- Workplace: Property dialog keeps "Resource Box" visible when scrolling
+- Workplace: Support for folder-based content creation rules
+- Workplace: Allow "local content elements" creation in a configured folder
+- Image scaler: Improved handling of scaling multiple images simultaneously
+- Core API: Using java.nio.* classes for some core operations
+- Core API: Minimum supported Servlet version is now 4.0
+- Core API: Remove old entries from the CMS_STATICEXPORT_LINKS database table
+- Core API: Improved job for deleting historic resource versions
+- Core API: Improved support for accessing a website using the IPv6 address without DNS
+- Core API: Migrate Maven publish process to use Central Portal
+- Core API: Spread z-index for toolbar and dialogs
+
+- Pull request #817 sets the 'Title' property when creating a file after synchronizing it from the RFS (https://github.com/alkacon/opencms-core/pull/817)
+
+* Fixed issue with setting the "Content-Type" header in JSPs in Jetty
+* Fixed issue with setting HTTP headers in JSPs and instances of CmsJspActionElement in Jetty
+* Fixed issue with core shell and setup scripts not working in Jetty
+* Fixed issue with "Compare locales" where the icon would appear "grayed out" for hidden entries
+* Fixed issue with form editor not using the localized title property when inserting an image
+* Fixed issue with permission check for role ROOT_ADMIN not seeing all explorer types
+* Fixed issue with orphaned relations leading to errors when deleting files
+* Fixed issue with FileTable column display for other apps that use the table (not the explorer)
+* Fixed issue with I_CmsWorkplaceStylesheetProvider loading CSS files twice
+* Fixed issue with text area width in WYSIWYG editor not correctly initialized in case of tabs
+* Fixed issue #811 with frequent exceptions from CmsFileTable in the log (https://github.com/alkacon/opencms-core/issues/811)
+* Fixed issue #815 with 'Element Author' role missing the 'Undo' context menu option (https://github.com/alkacon/opencms-core/issues/815)
+* Fixed issue #815 with 'Element Author' role with edit buttons in info dialog not working (https://github.com/alkacon/opencms-core/issues/815)
+* Fixed issue #816 with OpenCms not working on CentOS (https://github.com/alkacon/opencms-core/issues/816)
+
+
+OpenCms 19.0.0 - April 2, 2025
+
+! Show available languages as buttons in the form editor for quick switching
+! The "Compare locales" dialog in the sitemap now shows a context menu for both languages
+! XML content now supports mapping values to localized file properties
+! The upload dialog has been improved with image preview and filename checks
+! Quick access to recently used categories in the editor
+! Improved display of validation errors in the form editor
+! The "Website" and "Module" apps in the workplace "remember" the selected filter
+
+- Page editor: Default element settings are no longer written to the container page
+- Page editor: Allow access to the "Optimize gallery" dialog without workplace access
+- Page editor: "Delete unused element" is now supported on detail only pages
+- Page / Form editor: Image galleries now use retina thumbnais and optimized CSS
+- Form editor: Always use "date descending" sort order when opening the gallery view
+- Sitemap editor: The folder path is now displayed in the in "Properties" editor
+- Sitemap editor: Creation of nested galleries has been disabled
+- Optimize gallery: Added note in case there are no "unused" images
+- Optimize gallery: Show count of images without copyright or description set
+- Workplace: Experimental option to display categories in an explorer column
+- Workplace: Improved saving of user's explorer column selection
+- Workplace: OpenCms "About" dialog now shows a "Build date" for a custom local build
+- JSP API: Added EL functions to check if a resource has certain categories
+- JSP API: Added EL functions for WCAG color test / calculation
+- JSP API: Added EL function CmsJspResourceWrapper#getToLink
+- JSP API: Added option to manipulate element settings before passing them to the formatter
+- JSP API: Added method to get the id of the current page, accounting for detail only and new pages
+- JSP API: Extended I_CmsInfoWrapper implementations to support description.addon
+- Core API: Optionally pass ids not in the table to the tables update method
+- Core API: Extended detail page configuration with optional folder field
+- Core API: Copy groups now all to set the "Copy this element" option
+- Core API: Deleted detail-only content is now automatically published together with the detail content
+- Detail page handler: Return 404 instead of 401 response for unavailable resources
+- Updated SOLR and several other dependencies to the latest version
+
+* Security: Fixed 2 "Cross Site Scripting in OpenCms" issues reported by INCIBE (INC-2025-0031)
+* Fixed some issues in the place element mode introduced in OpenCms 18
+* Fixed issue with workplace explorer context menus not functional after title change operations in explorer list
+* Fixed issue where clicking the icon in the "Links to element" dialog not using the same action as "Open page"
+* Fixed issue in content editor where validation errors for VFS links could be displayed in the wrong locale
+* Fixed issue with CSS for SVG in "Optimize gallery" dialog that caused distorted SGV display
+* Fixed issue with CSS for internal "diff" showing too much space between lines
+* Fixed issue with NPE in CmsJspContentAccessValueWrapper that could occur during scripted setup
+* Fixed issue where an unnecessary password change email was send to a "web user"
+* Fixed issue with removing broken links to restricted areas
+* Fixed issue in Chrome where using the browser "Back" button may cause the workplace to freeze or become nonfunctional
+* Fixed issue #808 with redirects not working in the offline project when triggered by container elements (https://github.com/alkacon/opencms-core/issues/808)
+* Fixed issue #809 with device-specific contents being lost when modifying a container page GitHub (https://github.com/alkacon/opencms-core/issues/809)
+* Fixed issue #810 with location picker widget not being correctly initialized when used in an optional content field GitHub (https://github.com/alkacon/opencms-core/issues/810)
+
+
+OpenCms 18.0.0 - October 8, 2024
+
+! New "Place element" mode in the page editor as alternative to drag & drop
+! Reused content in the page and form editor is now clearly marked
+! Automatic typographical correction of quotation marks in Editors
+! "Dead links" in content from a WYSIWYG editor are now automatically disabled
+! Support for the Jetty 12 servlet container as an alternative for Tomcat
+
+- Page editor: Use custom <oc-...> tags instead of <div> for inserted 'edit points' in lists
+- Page editor: Added improved JavaScript events for page editor actions
+- Workplace: Added CSV user import/export dialog option for root OU
+- Workplace: 'Direct publish' added to context menu of gallery dialog
+- Workplace: Improved file list update behavior in apps after direct publish
+- Workplace: Improved 'Open page' option in context menus for elements on detail pages
+- Workplace: Optimized element settings dialog for multiline labels
+- Workplace: Added option to hide specific categories in category select widget
+- Configuration: Added sitemap attribute for loading of external TinyMCE configuration file
+- Configuration: Added option to use custom error messages in XSDs for built-in widgets like 'datetime'
+- Configuration: Added API fallback option for context menu items
+- JSP API: Added .toURI method to CmsJspLinkWrapper
+- JSP API: Added cms.formatterSettingDefault to get the default formatter setting
+- JSP API: Added cms.formatterKey to read the currently used formatter key
+- JSP API: Added support for formatter keys in <cms:displayFormatter> tag
+- JSP API: Added 'containerType' attribute to <cms:display> tag
+- Optimized log output for JSP compiler errors
+- Using UTF-8 for all resource bundle @.properties@ files instead of ISO-8859-1
+- Updated SOLR to version 9.5
+- Pull request #799 updated Russian translation org.opencms.locale.ru. (https://github.com/alkacon/opencms-core/pull/799)
+
+* Security: Do not log password on failed user login attempts
+* Fixed issue with updater not adding required nodes in @opencms-system.xml@ for the 'personal data search' app
+* Fixed issue with caching for search > document factories > content
+* Fixed issue when moving a redirect in the sitemap editor
+* Fixed issue with renaming the image when uploading an image in a content
+* Fixed issue with uploading files of size 0 bytes
+* Fixed issue with module import overwriting parent folders that are not part of the module
+* Fixed issue with wrong functions being inserted when multiple functions are placed directly after another
+* Fixed issue where moving a page in the sitemap editor to a folder containing a same-named redirect could cause DB corruption
+* Fixed issue with category detail pages not resolving correctly for expired resources
+* Fixed issue in the publish dialog where 'My changes' are not cleared when more than 1000 changes are present
+* Fixed issue where selecting a folder in the log download dialog resulted in an NPE
+* Fixed issue with 404 error after leaving the sitemap editor
+* Fixed issue where publishing a page after moving it is not possible when contents use "store with page" setting
+* Fixed issue where a sitemap configuration using a combination of category specific detail pages is not working correctly
+* Fixed issue with explorer folder location input sometimes showing a scrollbar
+* Fixed issue where editor for legacy 'xmlpage' type content could not be accessed from page editor
+* Fixed issue with 'Undelete' operation failing for resources that are of an unknown type
+* Fixed issue with dynamic functions not usable in template pages if the page locale is not 'en'
+* Fixed hardcoded version number in updater
+* Fixed deprecation warning for 'DOMNodeInserted mutation' event in Chrome console
+* Fixed deprecation warning for 'unload' event in Chrome console
+* Fixed issue #805 with unpublished relations on siblings (https://github.com/alkacon/opencms-core/issues/805)
+* Fixed issue #804 with missing edit markers in AJAX lists (https://github.com/alkacon/opencms-core/issues/804)
+
+
+OpenCms 17.0.0 - April 9, 2024
+
+! New app "Date search" to find contents changed in a date range
+! Export complete site contents for archiving in the "Websites" app
+! Option to hide contents with restricted "availability" date even in the Offline project
+! Support for Java 17 and 21 (in addition to Java 8 and 11)
+! This is the last OpenCms release that keeps Java 8 compatibility, future releases will require at least Java 11
+
+- Page editor: The "Project" switch is now available in the toolbar
+- Page editor: The "Move" Dialog is available from the edit point "info" context menu
+- Page editor: The fade animation on the toolbar has been removed
+- "Element Author" users can now upload images
+- "Element Author" users can now access 'Rename', 'Undo changes' and 'Properties' in the galleries dialog
+- Source search app: New type restriction "All except images and binaries"
+- Source search app: Improved search when using "XML content values only"
+- Explorer: The real deletion date is shown when restoring deleted resources
+- Folder with locked resources: Allow "Undo Changes" on the folders itself
+- Folder with locked resources: Allow access to the "Permissions" dialog
+- Settings: Translations for renamed values and / or properties
+- Settings: Support escaping of chars in Default and WidgetConfig nodes
+- Configuration: Add filter options for two select widgets in master sitemap configuration
+- Localization: Added french workplace localization
+- Build using Gradle 8
+- Pull request #792 extended shell with multiple classes (https://github.com/alkacon/opencms-core/pull/792)
+- Pull request #784 Remove unnecessary logs to the Servlet Container (https://github.com/alkacon/opencms-core/pull/784)
+- Pull request #794 Code review (https://github.com/alkacon/opencms-core/pull/794)
+
+* The site selectbox sometimes does not show all options when using a filter
+* <Synchronization> nodes now work in nested XSD schemas
+* Added several missing DB indices for MS SQL Server
+* Macros in <Search>listtitle</Search> are now resolved
+* Unused content finder: Fixed NPE if explorer type configuration is missing for a type
+* Sorting for display type in lists is now using the rank correctly
+* CmsJspElementSettingValueWrapper#getExists wrongly returned false in some cases
+* It is not longer possible to create two projects with the same name in the "Projects" app
+* Expired resources are now correctly handled in the "Database export" app
+* Fixed wrong module version in the zip file name for auto-incremented version numbers
+* Fixed issue where the link dialog in inline editor mode sometimes showed the wrong locale
+* Fixed issue where switching display formatters in a list did not work as expected
+* Fixed issue when configuring a serial date for monthly events
+* Fixed issue with NPE in element setting dialog for formatters that do not fit the container
+* Fixed issue with incorrect detail page link generated for contents in a foreign site
+* Fixed issue #782 where CmsShell command "replaceModuleFromDefault" did not work (https://github.com/alkacon/opencms-core/issues/782)
+* Fixed issue #796 with data view widget (https://github.com/alkacon/opencms-core/issues/796)
+* Fixed issue #768 with detail-only pages not being properly unlocked on logout (https://github.com/alkacon/opencms-core/issues/768)
+
+
+OpenCms 16.0.0 - October 2, 2023
+
+! New app to find "Unused contents"
+! Category based detail pages
+! Grouping of galleries in the "Galleries" tab of the gallery dialog
+! Search for sites in the site selector on the "Folders" tab of the gallery dialog
+! Search for types in the "Create new resource" dialog in the explorer
+! Option to force all users to set a new password after login
+
+- Page editor: The element settings dialog layout has been improved
+- Page editor: The gallery dialog layout has been slightly improved
+- Workplace: The "Projects" app now allows filtering by OU
+- Workplace: Temporary instead of permanent redirects are used in the offline project for "HTML redirect" resources
+- Lists: cms:display for "binary" resources now supports adding new files with [+] on the list
+- JSP API: Extension of the cms:link tag to support var and type attributes
+- JSP API: OpenCms link object for the EL
+- JSP API: Added replaceInvalid option to cms:secureparams to replace invalid parameters with a default text
+- JSP API: Several shortcut methods have been added to the CmsJspStandardContextBean
+- Configuration: The element setting configuration now allows alternatives for values and property names
+- A possible update to Tomcat 10 has been evaluated
+- Pull request #769 implemented support for putting detail contents of different types in the same folder (https://github.com/alkacon/opencms-core/issues/769)
+- Pull request #773 added updated Spanish localization provided by rgaviras (https://github.com/alkacon/opencms-core/pull/773)
+- Pull request #767 added support for Apple Wallet .pkpass files (https://github.com/alkacon/opencms-core/pull/767)
+
+* Security: Fixed issues in several dependencies by bumping the affected dependencies to the latest version
+* Security: Fixed issue with the Solr Handler related to the qt parameter
+* Workplace: After "Undo changes" on a detail page element, the wait screen did sometimes not close
+* Workplace: The "About" dialog did not correctly display for users without role "Workplace User"
+* Workplace: The "Rename" option for images was shown in the gallery dialog even if user has no permissions for this action
+* XML: Content correction did not correct empty nested contents
+* Configuration: ResourceType configuration for "modelgroup" did ignore the order
+* Configuration: Content storage location for detail containers in storage mode "with page" did not work as expected
+* Search: Offline indexing results on module update during setup were sometimes incorrect
+* Caching: Incorrect caching for "Password reset" state was used for user lists
+* Caching: Container page caching did not take user permissions on container elements into account
+* Fixed issue with multiple OpenCms instances in one Tomcat all writing to the same log file
+* Fixed XSS issue with HTML-valued properties in the explorer
+* Fixed XSS issue with HTML in the gallery search field
+* Fixed issue #763 with XSS in module info dialog (https://github.com/alkacon/opencms-core/issues/763)
+* Fixed issue #764 where a filter query "search_exclude:false" would be set multiple times in CmsSolrQuery objects (https://github.com/alkacon/opencms-core/issues/764)
+* Fixed issue #772 in the "Show online" function for detail pages (https://github.com/alkacon/opencms-core/issues/772)
+* Fixed issue #779 with broken calendar widget in Czech locale (https://github.com/alkacon/opencms-core/issues/779)
+
+
+OpenCms 15.0.0 - April 25, 2023
+
+! Restrict write access to sitemap .config file to a configured role
+! Added configurable sitemap attribute editor for all content managers
+! In the "Add content" dialog, content types that are not supported in the current page can now be hidden instead of shown disabled
+! Launchpad app "Person data search" reveals personal user data stored in the VFS
+! Improved native WebDAV support for macOS
+! Lists now allow to add new elements without existing elements
+! Optimize gallery dialog now features a context menu that allows to rename, replace or delete images
+! Results from the "Source search" app can now be exported to a CSV file
+
+- Sitemap: More options for creating contents via new-dialog and lists
+- Form Editor: Active tab is remembered when language is switched
+- Form editor: Allow calendar widget for dates without time
+- Page editor: Recent and favorites options reflect sitemap settings
+- Page editor: Added editable "Description" field to image gallery selection dialog
+- Page editor: Improved HTML/CSS in element setting dialog
+- Page editor: Show functions that do not fit on the current page as disabled / hide them
+- Page editor: Speed up loading of Vaadin widgets by reusing the iframe
+- Page / Form editor: Improved CSS formatting options for tooltip help texts
+- TinyMCE: Allow to pass a JSON configuration
+- TinyMCE: Added option to set the CSS path for WYSIWYG editor in the template JSP code
+- JSP API: EL functions that provide information about the editor capabilities / options
+- JSP API: Added "cachable=false" option to cms:container tag
+- JSP API: Allow to render named container X of page A in code
+- Lists: Added simplified rule syntax to specify complex SOLR filter queries
+- XML: Added "visible" option for <Visibility> schema config node
+- CmsShell: Added "reindexResources" command
+- Pull request #752 improved error handling during XML validation
+- Pull request #753 added WYSIWYG editor option 'link_default_protocol' which is passed to TinyMCE
+- Pull request #766 added option for showing full groups names to multi-group selector widget
+- Updated multiple dependency libs that contained security vulnerabilities
+
+* Source search app: Replacing result with empty string or only whitespace not possible
+* Codemirror editor not usable in iPad
+* XML: Schema macros not always resolved as expected
+* Form editor: Disabled select default is not displayed correctly
+* Form editor: Calendar widget did interpret two-digit year numbers literally
+* Form editor: Category widget did not work correctly when category paths were substrings of the subsite path
+* Page editor: Edit points mess up the page layout with Bootstrap "row-cols"
+* Page editor: Z-Index for "disabled" overlay is too low
+* Page editor: Pointer events for edit point do "bubble"
+* Page editor: Attachment container elements could get removed when editing their settings
+* Page editor: Editing copied model groups simultaneously lead to issues
+* Page editor: For long notification messages the scroll bar did not work
+* Sitemap editor: "Switch Site" dialog in did not work anymore
+* Element settings: Help icon after formatter selection did not show description
+* Workplace: GWT context menu has wrong position after the first click
+* Workplace: HTML tags sometimes shown in "title" attribute for editor components
+* Workplace: Removing site selection by clicking on "x" did not work in gallery view
+* JSP API: UGC did not work if scripts were loaded with "defer"
+* JSP API: "cms:link" detailPage parameter did not work as expected
+* JSP API: <x:transform> tag in JSPs erroneously deleted attributes
+* Fixed issue where dots '.' in the detail page title leads to bad detail page URLs
+* Fixed issue with context menu replace function and file translations
+* Fixed issue #751 with missing list pagination when maxReturnedResults is -1
+* Fixed issue #760 with missing scrollbar in multi-group selector widget
+* Fixed issue #761 where creating a bookmark in the shared folder causes an error
+
+
+OpenCms 14.0.0 - October 11, 2022
+
+! XML schema versioning with automatic content rewrite
+! Support for 2 factor authentication (2FA) in the user workplace login
+! Source code widget for the form editor based on CodeMirror
+! Mercury template: Updated to use Bootstrap 5.2, dropped some jQuery dependencies
+! Improved the documentation website (work in progress)
+
+- Page editor: The "add content" dialog now shows the site and text filters directly on the the result page
+- Page editor: HTML marker html.opencms-editor-active is added in case the user is actively editing
+- Form editor: CSS can now be configured with the sitemap attribute template.editor.css
+- JSP API: Added cms.readAttributeOrProperty allows to read either attribute or property
+- JSP API: Added cms.functionDetailPageExact returning null in case the requested detail page is not configured
+- Websites app: Alias redirects can now be configured as 301, 302 or direct display
+- User preferences: Locale selection now lists locales configured for the VFS first
+- Shell: New commands createOU and addResourceToOU to create / modify OUs
+- The delete resource dialog now provides editing options for conflicting resources
+- Improved use of <script> tags in page editor and workplace
+- Better handling of errors during file import
+- Support for setting the start project when using HTTP Basic authentication
+- Added configurable option to control which user settings are applied when using HTTP Basic authentication
+- Added configurable upload restrictions for target folders and upload-able file types
+- Master sitemap: "Content element configuration > Availability" is now optional with inheritance
+
+* Sitemap editor: Redirects require reload before fully editable
+* Accounts app: User language selection does not show the available workplace locales
+* Accounts app: Information on institution, zip code, address and city can't be removed anymore
+* Form editor: Problems when changing the link target of an existing link with a hash fragment
+* Form editor: Help texts wrongly positioned
+* Form editor: Fixed problem with 'column' layout (github issue #743)
+* Page / form editor: Percent-encoded ampersands do not work correctly in links
+* Page editor: Adding a new content element via drag&drop does not default to the last used formatter
+* Page editor: Edit point function symbol not displayed for all users
+* Page editor: Page not scrolling on element drag&drop when scroll-behavior: smooth CSS is present
+* Translation Tool: Improved scrolling behavior with filter
+* Sessions app: Empty login message causes error during startup
+* Source search app: URL is sometimes escaped too often
+* XML content schemas: Using ampersands in values for the <xsd:appinfo> element in XSDs causes errors
+* Sitemap editor: Issue when creating function detail pages without function detail container
+* Password reset dialog: Email address is checked case-sensitive during password reset
+* Documentation: Fixed broken burger menu (github issue #16)
+
+
+OpenCms 13.0.0 - April 13, 2022
+! Plugins: Introduced a plugin system for formatters and dynamic functions as a more flexible replacement of the "headincludes" feature.
+! Plugins: Added ${cms.plugins} EL function to access plugin definitions in a JSP page.
+! Plugins: Added "Site plugins" that can be automatically activated for all pages that share a site configuration.
+! Geo Search: Introduced a Geo search feature in order to retrieve XML contents by geo coordinates.
+! Geo Search: Added Geo mapping syntax for XML content schemas, even if coordinates are stored in linked contents.
+! Page editor: Extended the <cms:display> tag to handle upload for binary resources in lists.
+- Security: Updated Log4j to the latest version to solve the Log4j security vulnerability.
+- Workplace: Improved the image upload so that pictures taken with a mobile device are rotated correctly.
+- Workplace: Improved the "Image preview" dialog to better display SVG images.
+- Workplace: Improved the "Page editor" and the "Form editor" to better work with touch devices.
+- Workplace: Improved the "Publish directly" dialog options depending on whether folders or files are selected.
+- Workplace: Improved the usage of <script> tags in the page editor and in the workplace.
+- Workplace: Added an option to manually define the resources in the "Add content" dialog.
+- Template Variants: Element setting overrides allow to change formatter settings by master configuration.
+- Template Variants: Shared settings and overrides can be defined for specific formatters only.
+- Template Variants: Shared setting definitions now have an optional comment node.
+- Template Variants: Container pages now support an alias option for formatter keys.
+- Template Variants: Container pages now support a fallback mechanism for formatter keys.
+- Page editor: Improved the layout of the "Element settings" dialog.
+- Page editor: Improved the lock removal when publishing directly from the form editor.
+- Page editor: Improved the detail page mechanism to allow multiple default elements for different types.
+- Search: Extended the search implementation to facet and filter XML contents by date range.
+- Search: Improved the performance when re-indexing container pages containing model groups.
+- General: Improved the import process so that it continues if a file throws an error during import.
+- General: Improved the role and permission cache by reworking the flushing with regard to efficiency.
+- General: The "Image Preview" dialog now has a checkerboard background, improving the display of white or transparent images.
+- General: Optional logging of certain user activities such as login, logout and password change.
+- Updated TinyMCE editor to version 5.10.3.
+- Updated CodeMirror editor to version 5.65.2.
+* Fixed issue with localization in the TinyMCE link dialog.
+* Fixed issue where the explorer view in the workplace was not always updated correctly for deleted resources.
+* Fixed issue where the layout of the "Resources to export" tab in the DB export app was broken.
+* Fixed issue where a folder with an expired expiration date could not be renamed in the explorer.
+* Fixed issue where scheduled publishing did not clean up publish locks correctly.
+* Fixed issue where the layout of the "Bookmarks" dialog was broken in Safari.
+* Fixed issue where the layout of the "RFS Synchronization" report view was broken.
+* Fixed issue where the "New Resource Type" dialog did throw a NPE if no module was selected.
+* Fixed issue where the "Reload page automatically" mechanism did not work if a hash was at the end of the URL.
+* Fixed issue where the layout of the "Edit point" icon bar in the form editor was broken.
+* Fixed issue 611: NPE in custom error pages.
+* Fixed issue 641: Added tool tips for resource tables.
+* Fixed issue 645: TinyMCE style select menu could become unreadable due to text color.
+* Fixed issue 657: Full static export report now shown in a popup dialog.
+* Fixed issue 658: Improved button labels for RFS synchronisation tool.
+* Fixed issue 665: Missing JPedal dependency in build scripts.
+* Fixed issue 685: Realm attribute for HTTP Basic Authentication changed from context path to server name.
+* Fixed issue 721: Vulnerability in profile picture upload.
+* Fixed issue 726: Log management tool producing unnecessary warnings in the log.
+
+OpenCms 12.0.0 - October 12, 2021
+! Headless API: Access XML contents as JSON objects.
+! Headless API: List all resources in a folder tree as JSON.
+! Headless API: Load the results of a user defined list as JSON.
+! Headless API: Load structure and settings of a container page as JSON.
+! Headless API: React demo applications showcase the use of the new features.
+! Template Variants: Introducing a new container page format (the old format can still be read).
+! Template Variants: Store "formatter keys" instead of UUIDs of configuration files in new container pages.
+! Template Variants: Sitemap attributes allow to display different element settings per variant.
+! Template Variants: Add and remove content types, formatters and / or functions per master configuration.
+! Template Variants: Master configurations can be chained to allow variant specific adjustments of a base variant.
+! Workplace: New "Optimize gallery" dialog for image and download galleries.
+! Workplace: It's now possible to change properties of a folder without locking all resources in the folder.
+! Workplace: "Optimize gallery" dialog allows to find and delete unused images / documents.
+! Workplace: "Optimize gallery" dialog allows editing the properties of several images / documents.
+! Workplace: Changing the availability date released / expired in the explorer will now also update an XML content that contains a mapping to these properties.
+! Workplace: Added a "show password" button on the login dialog.
+! Workplace: Combined the "Versioning" workplace apps into a single app.
+! Workplace: Added an option to clean up the publish history in the "Versioning" app.
+! Workplace: Added "Advanced > Reindex" option in the Explorer context menu to update selected parts of the search index.
+! Workplace: Added support for custom gallery upload actions in the explorer.
+! Editor: Added editing and other context menu actions on the publish dialog "broken links" panel.
+! Editor: Added support for custom gallery upload actions to the gallery dialog and the form editor.
+! Editor: Improved "edit point" icon and menu for functions.
+! Editor: Disabled editing of elements on a page for types disabled in the sitemap configuration.
+! Editor: Preventing session timeout in page editor preview mode.
+! Template API: Added support for external URLs in headinclude links.
+! Template API: Added support for request parameters in headinclude links.
+! Template API: Added "ignore" flex cache directive for dynamic function JSPs.
+! Template API: Extended the XSD widget configuration to allow macros in widget names.
+! Template API: Added tag "cms:setBundle" as substitute for "fmt:setBundle" with additional support for the OpenCms bundle loader mechanism.
+! Template API: Added "isDetailPage?" macro for choosing different element settings depending on whether an element is displayed on a detail page or not.
+! Search: Added a list configuration option to limit the maximal number of search results.
+! Search: Extended the document factory configuration for indexing, allowing to use different document factories for different search indexes.
+! Search: Added an option to configure external SOLR servers per index.
+! General: Greatly improved WebDAV implementation, allowing to mount the OpenCms virtual file system from any WebDAV client.
+! General: Added new 404/500 error handler page with "spin" and "snow" CSS animations.
+! General: Added "sort by display order" option to the sitemap configuration.
+- General: Expanded the list of default static export suffixes and mime types.
+- General: Added .webp as suffix to detect uploaded files as image resources.
+- General: Enabled XML content correction during import.-
+- General: Use mariadb client instead of mysql connector for MariaDB / MySQL by default.
+- General: Using the default table engine for MariaDB / MySQL instead of forcing MyIsam.
+- Components: Updated GWT libraries version to 2.9.0.
+- Components: Updated Vaadin libraries version to 8.11.2.
+- Components: Updated SOLR libraries version to 8.6.2.
+- Components: Updated HikariCP libraries version to 4.0.2.
+- Components: Updated Xerces libraries version to 2.12.0.
+- Components: Updated Gradle version to 6.4.1.
+* Fixed a number of security issues.
+* Fixed issue #706 wrong list item indentation in editor tooltip.
+* Fixed issue #709 so the publish dialog does not list resources invisible to a user.
+* Fixed issue #711 where using <cms:display> before the first <cms:container> tag caused an NPE in the Offline project.
+* Fixed issue #712 with illegal reflexive operation from GWT-Servlet 2.8.2.
+* Fixed issue #713 where import module disables new content editing.
+* Fixed issue #714 with sorting by title in the gallery dialog.
+* Fixed issue #716 with problems displaying offline content with a future release date.
+* Fixed issue #719 with anyGroups filter in user search API.
+
+OpenCms 11.0.2 - August 18, 2020
+- Extended import/export so that unknown resource types are kept.
+! Extended list type by combined category and folder restrictions.
+- Improved column sorting in file tables.
+- Changed 'LOCALE_VARIANT' relation type to weak, preventing unintended publishing of related resources.
+- Removed mimetype check on CSV user import.
+- Improved <cms:search> to ignore facet filter parameters with empty values.
+- Restricted 'wt' parameter in SOLR handler to 'json' and 'xml' to prevent security issues.
+- Improved date mappings in SOLR - always fill instancedatecurrenttill_dt.
+- Improved searchfield mappings with locale 'none'.
+- Added support for the 'prefix' attribute to the <cms:bundle> tag.
+- CmsLockInactiveAccountsJob now disables inactive users instead of locking them.
+- Updated TinyMCE to version 5.1.5.
+- Updated CodeMirror to version 5.50.2.
+- Updated icu4j dependency to version 62.1.
+* Fixed issue where some caches are not cleared when static export is disabled.
+* Fixed issue where automatically generated file names matched existing ones.
+* Fixed issue where edited container pages were not unlocked (using Chrome).
+* Fixed issue where 'This page' publish mode ignored search-based lists.
+* Fixed issue where <cms:edit> displayed edit points in the wrong element view.
+* Fixed issue where links with question marks in their fragments (http://...#aaa?bbb) were not saved correctly.
+* Fixed issue with moving/copying expired resources in the explorer.
+* Fixed issue where preview mode would not work on detail pages after changing the title.
+* Fixed issue with TinyMCE covering edit points in the content editor.
+* Fixed session timeout errors in the login dialog.
+* Fixed issue with expired resources not being included in the gallery search.
+* Fixed issue where Solr handler returned wrong JSON.
+* Fixed issue where flex cache could become corrupted if JSPs threw exceptions.
+* Fixed issue where viewing help texts for nested contents caused errors in the content editor.
+* Fixed issue where users could not be removed from default groups unless they had the corresponding role.
+* Fixed issue with the layout of reuse groups in the page editor.
+* Fixed issue where the date picker in the editor did not work correctly when the __locale request parameter was used.
+* Fixed issue where single selection mode did not work for repository-grouped category widgets.
+* Fixed issue where trailing empty values in a user CSV file caused the user import to fail.
+* Fixed issue with the module update function not handling expired resources correctly.
+* Fixed issue where the "Creation disabled" setting in sitemap configuration was not inherited in sub-sitemaps.
+* Fixed issue where the site switcher in the page editor didn't work correctly for multiple workplace URLs.
+* Fixed issue where updating a module would fail if it contained moved folders with renamed direct subfolders.
+* Fixed issue with gallery dialog resizing in folder/sitemap tabs.
+* Fixed issue where some user publish list data was never cleaned up in the database.
+* Fixed issue where content change handlers were not working correctly for contents with xsd:choice elements.
+* Fixed issue where CmsLockInactiveAccountsJob would lock/disable new users that had not logged in yet.
+* Fixed issue with the configuration for custom file name generators.
+* Fixed issue with module actions not being executed when installing modules.
+* Fixed issue where contents from the clipboards 'Favorites' did not get a new element instance id.
+* Fixed issue #674 with color picker popup positioning.
+* Fixed issue #669 with month filtering in list manager app.
+* Fixed issue #700 where the user edit dialog didn't work because of an invalid start view.
+* Fixed issue #693 with uploading to expired folders.
+* Fixed issue #682 by adding missing localization for htmlredirect fields.
+* Fixed issue #688 by adding missing encoding to CMS_HISTORY_PROPERTIES table definition.
+* Fixed wrong reference to UGC formatter JSP (github pull request #699).
+
+OpenCms 11.0.1 - September 4, 2019
+! Added site/project switch to bookmark dialog.
+! Added title editing option for entries to bookmark dialog.
+! Added option to remove all functions in the sitemap configuration.
+! Added support for more than one master configuration in the sitemap configuration.
+! Added new sort order "Result score" to gallery dialog.
+! Added easier to use color picker to XML content editor.
+! Added "baseUri" attribute to <cms:display> tag to control formatter lookup when used in a JSP called via AJAX.
+! Added "filename" attribute to <cms:pdf> tag for customizing the file name in PDF links.
+! Added method to read the categories of a resource from CmsJspResourceWrapper.
+! Added method getElementBeansInContainers to CmsJspStandardContextBean.
+! Added method isHistoryContent to CmsContainerElementBean.
+! Added Italian localization for CodeMirror integration in TinyMCE (pull request #654).
+- Improved handling of detail pages.
+- Improved options for detail page configuration.
+- Improved error message for failed validation in the inline editor.
+- Improved session manager tool to not mark user sessions as active if the only activity are heartbeat requests.
+- Improved error handling to avoid false "Session expired" error messages.
+- Improved positioning of the preview element when starting drag/drop in the page editor.
+- Improved indexer with new option "content" to also include linked files when indexing.
+- Improved compatibility with MacOS High Sierra by adding ignoreWriteErrors parameter.
+- Improved behavior of stripHtml EL function so that it does not insert unnecessary spaces.
+- Improved gallery dialog to use the localized version of the Title property for titles if available.
+- Updated TinyMCE version to 5.0.14.
+- Updated CodeMirror version to 5.48.4.
+* Fixed issue where the context menu in the explorer would not work for empty/invalid XML contents.
+* Fixed issue where native inline widget initialization where onAttach was not called.
+* Fixed issue where inline editing of multivalued simple fields did not work with the form overlay.
+* Fixed issue with setup wizard to allow setup without database creation.
+* Fixed issue in user management app where the OU/Group tree wasn't updated when making changes.
+* Fixed issue with saving Emojis in XML contents.
+* Fixed issue with image.size property being set to the wrong value when updating modules with images.
+* Fixed issue where manually placing edit buttons would not work in display formatters.
+* Fixed issue where renaming an existing content element without publishing it would prevent creation of new content elements of the same type in the page editor.
+* Fixed issue where a module update would stop immediately if importing a resource relation failed.
+* Fixed issue where setting the sitemap editor as the start view for a user would not work correctly.
+* Fixed issue with bookmark dialog where the site was sometimes not set correctly when navigating between bookmarks in different sites.
+* Fixed issue where an invalid formatter reference in a sitemap configuration would cause that sitemap configuration to be ignored.
+* Fixed issue with Flex cache which could happen when the number of keys exceeded the configured limit.
+* Fixed issue #632 where new resources were unnecessarily published if a moved parent folder was published.
+* Fixed issue #652 where an XSS vulnerability existed in gallery dialog.
+* Fixed issue #655 where location picker widget could become unclickable depending on its configuration.
+* Fixed issue #659 where the Scheduled Publish dialog did not work without the legacy workplace module installed.
+* Fixed issue #662 where the date picker did not work correctly when selecting Spanish as a workplace locale.
+* Fixed issue #663 where updating a filtered folder content list in the explorer caused NPEs to be written to the log.
+
+OpenCms 11.0.0 final - April 30, 2019
+! Updated Vaadin libraries to version 8.7.1.
+- Fixed issue #646 where edit module dialog localization was not complete.
+- Fixed issue #643 where PDF links pointing to non existing resource would trigger a response code 500 instead of a 404.
+- Fixed issue #642 where static export app localization was not complete.
+- Fixed issue #640 where workplace dialog scrolling failed to show the complete dialog content.
+- Fixed issue #639 where log file viewer failed on Windows based servers.
+- Fixed issue #634 where link selector was not showing in WYSIWYG editor.
+- Fixed issue #627 where DateTimeWidget would not respect the users workplace locale.
+
+OpenCms 11.0.0 release candidate - March 29, 2019
+! Includes the new 'Mercury' default template.
+- Setup wizard: Modernized the user interface.
+- Updater: Modernized the user intreface and provided updater for 10.5, 10.0 and 9.5 versions.
+- Usability: Allowing Mac CMD key as modifier for keyboard shortcuts.
+- Configuration: Added option to prevent specific resource types to be created in page editor.
+- Template API: Added optional 'Attributes' to formatter configuration.
+- Template API: Added .contains() option to value wrappers.
+- Components: Updated WYSIYWG editor TinyMCE to version 5.0.3.
+- Components: Updated SOLR/Lucene search enginge to version 8.0.0.
+- Components: Updated MySQL JDBC driver to version 8.0.15.
+- Workplace: Removed deprecated HTML and table galleries.
+- Workplace: Improved breadcrumb navigation for narrow screens.
+- Fixed spell check index initialization.
+- Fixed spell check in WYSIWYG editor.
+- Fixed legacy XML page editor initialization.
+
+OpenCms 11.0 beta 2 - February 28, 2019
+! Workplace: Added bookmarks dialog for workplace locations.
+! Workplace: New 'SQL console' app to query the configured database pools.
+! Setup: Removed all legacy workplace modules, leaving only two core modules.
+! Setup: Optional support for legacy workplace tools still provided by 'legacy support' modules.
+! Editor: Allowing to edit element settings in form editor.
+! Editor: Maps widget allows specific workplace Google API key and reduced number of API calls.
+! Updater: Switched to XSL transformation based mechanism to update configuration files.
+- Workplace: Finally removed the deprecated legacy explorer.
+- Configuration: Removed deprecated legacy context menu configuration.
+- Components: Updated WYSIYWG editor TinyMCE to version 5.0.0.
+- Search: Reducing number of default fields and limiting result size to avoid memory issues.
+* Fixed issue where 'Log files' app failed on Windows servers.
+* Fixed issue #620 where resource type configuration form was not validated properly.
+
+OpenCms 11.0 beta - November 11, 2018
+! Workplace: Completely restructured the workplace for improved usability using a modern GUI.
+! Workplace: All images are now vector graphics with high resolution (retina) display support.
+! Workplace: New 'Lists' app for management of default 'List configuration' based content lists using SOLR.
+! Workplace: New 'Resource types' app allows to create, read, edit and delete individual resource types.
+! Workplace: New 'Script terminal' app allows to interactively run OpenCms shell scripts in the workplace.
+! Workplace: New 'Sessions' app allows to manage current user sessions and send messages to users.
+! Workplace: Improved 'Accounts' app for user and group management.
+! Workplace: Improved 'Websites' app for site and sub-site management with extended https support.
+! Workplace: Improved 'Modules' app for module management.
+! Workplace: Improved 'Source search' app with several search options in the OpenCms database.
+! Workplace: Improved 'Scheduled jobs', 'Log files', 'Database', 'Caches' and 'Versioning' apps.
+! Workplace: New resource copy mode 'Copy files and adjust internal links' in the Explorer.
+! Editor: Added image 'focal point' feature to allow automatic image cropping around this point.
+! Editor: The new 'List configuration' setting dialog can inherit settings from the display formatters used in the list.
+! Editor: Added support for SVG files in images galleries.
+! Editor: Added support for WYSIWYG text and select combo widgets in the resource property dialog.
+! Editor: Container page editor now injects less markup in the HTML, resulting in better readable HTML source code.
+! Template API: New meta mapping feature allows to inherit values from XML contents to the page template (for SEO meta infos).
+! Template API: Image variations for 'srcset' or 'picture' can now be generated using a simple EL API.
+! Template API: The new 'List configuration' type provides standard filter and sort options for title / date / category / folder.
+! Template API: Added <cms:addparams>-tag to inherit parameters into nested container levels.
+! Template API: Alternative notation for resource type schemas, grouping content fields configuration similar to formatter settings.
+! Template API: Added option to provide a default formatter settings file, containing commonly used settings.
+! Template API: Updated dynamic function configurations to use the same notation as formatter configurations.
+! Template API: Added new 'Flex formatter' type, allowing to use a StringTemplate for simple HTML rendering logic.
+! Template API: Added option to reuse detail only contents from different sites.
+! Template API: Added a 'serial date' widget with extended functionality in the page editor.
+! Template API: Added optional mapper to transfer an old template structure into a new one, mapping containers and formatters.
+! Template API: Added option to provide default detail pages to reduce manual detail page configuration.
+! Setup: Updating a module will now import only the changes instead of deleting and reinstalling the module.
+! Setup: Added auto versioning for modules, incrementing the version number on export only in case of changes.
+! Setup: Improved Gradle build to better support IDEs like Eclipse and IntelliJ IDEA.
+! Setup: Reorganized core modules ans JARs for a streamlined update process with less resources.
+! Setup: Reorganized XML configuration files placing site-, scheduler- and variables-configuration in separate files.
+! Management: New option to execute OpenCms shell commands in a running OpenCms instance using RMI.
+! Management: New option to provide meaningful return codes when executing an OpenCms shell script.
+! Management: Added flex-cache bucket feature to allow selective flex-cache purging.
+! Management: Support for static export of resources in non-public folders.
+! Management: Added option to write content from OpenCms to external SOLR indexes.
+! Updated external library dependencies to current versions.
+! Provided Java 11 support.
+
+OpenCms 10.5.4 - May 17, 2018
+! Updated CodeMirror to version 5.37.0.
+! Updated TinyMCE to version 4.7.12.
+! Added 'publish scheduled' option to page editor context menu.
+! Improved security by always starting a new HttpSession on login.
+! Improved security by using a client id token to prevent session hijacking.
+* Fixed issue where sitemap modified and deleted lists could exceed the user "additional info" DB size limit.
+* Fixing potential memory leak during PDF extraction.
+* Fixed issue #513 where XML contents with locales not configured in opencms-system.xml would jeopardize the locale handling.
+* Fixed issue #547 where selecting a date with the date picker failed.
+* Fixed issue #548 where missing detail pages would lead to null pointer exceptions.
+* Fixed issue #553 where adding a model group to a page failed, PR by koronchik.
+* Fixed issue #558 where flying saucer PDF library was updated to improve security, PR by andreasrosdal.
+* Fixed issue #564 with improved handling of invalid formatter configurations, PR by gallardo.
+* Fixed issue #565 with improved logging in XML entity resolver, PR by gallardo.
+* Fixed issue #570 with improved logging when creating of SOLR containers failed, PR by gallardo.
+* Fixed issue #573 where displaying the gallery dialog failed due to missing explorer types.
+* Fixed issue #590 where request parameters configured in the jsp-search configuration where not taken into account.
+
+OpenCms 10.5.3 - October 18, 2017
+* Fixed issue #535 with UI element positioning in Chrome 61.
+* Fixed performance issue with relations in PostgreSQL DB.
+* Fixed issue with network share where files were not unlocked after deletion.
+* Fixed issue with network share module export not handling non-folder module resources correctly.
+* Fixed issue with explorer type attributes being lost when editing modules.
+* Fixed issue with publishing moved folders from a different site.
+* Fixed issue where changing a model group root element could lead to invalid formatter settings.
+* Fixed issue with TinyMCE not being able to scroll to bottom of content in fullscreen mode.
+* Fixed issue with TinyMCE not being able to open the gallery dialog when editing XML pages with Chrome.
+* Fixed issue where switching the project in the explorer to an offline project caused the page editor to open.
+
+
+OpenCms 10.5.2 - July 12, 2017
+! Copy / move dialog now allows naming of target files and better handles deleted and unreleased resources.
+! Added option to configure multiple URLs for the workplace server.
+! Updated TinyMCE to version 4.6.2 to fix issue #508.
+- Performance: Reduced synchronization.
+- Performance: Updated LRUMap implementation.
+- Performance: Improved role inheritance to avoid unnecessary UUID generation.
+- Performance: Improved workplace bundle access.
+- Performance: Option to speed up XML unmarshalling by setting SAX parser configuration in system properties.
+- Security: Fixed permission issue on account manager dialogs where non account manager users where able to view users list.
+- Improved unique file name generator to also check for existing online resources.
+- ADE configuration initialization now happens at startup to avoid long response times on first page view.
+* Fixed issue with accessing related resources from other sites in various workplace dialogs.
+* Fixed issue where closing the HTML source view would introduce additional tags.
+* Fixed issue #478 where validation state was not cleared on editor close.
+* Fixed issue #484 where dynamic function content HTML was sometimes not replaced after edit.
+* Fixed issue #485 where drop down menus in TinyMCE where shown at the wrong position in case of a body position 'relative'.
+* Fixed issue #486 where location position was changed on picker dialog close.
+* Fixed issue #487 where 'Show in device' preview would show edit tool bar.
+* Fixed issue #488 where an optional scroll bar would reduce the screen size of the 'Show in device' preview.
+* Fixed issue #490 where exceptions where written to the web server log and not to the opencms.log file.
+* Fixed issue #491 where misleading API error message was shown in location picker widget if no default value was set.
+* Fixed issue #493 where gallery dialog would fail in case of folders only configurations.
+* Fixed issue #495 where a missing explorer type declaration would cause null pointers in the explorer view.
+* Fixed issue #497 where export links where cached locale independent for sites using the single tree localization mode.
+* Fixed issue #500 where parsing of the CmsShell command line would fail on special characters, PR by gallardo.
+
+
+OpenCms 10.5.1 - February 15, 2017
+! Rewritten and improved source search app.
+! Rewritten and improved integrated source code editor.
+! Page editor now offers filter options in most tabs of the "Add content" dialog.
+! Page editor: Added access to context menu in element settings dialog.
+! Page editor: Added option to configure the element deletion default in the "remove element" dialog.
+! Localization: Formatter names can now be localized.
+! Localization: Bundle translator now stores message properties in alphabetical order.
+! Localization: Bundle translator now offers a direct publish button in the toolbar.
+! Localization: Allowing locale specific detail only container contents.
+! Sitemap editor: Copy function now allows manual editing of target folder.
+! Template API: Added multiple utility functions to the <cms> taglib.
+! Detail pages: Settings on matching elements are now reused for detail content display.
+! Detail pages: <cms:link> tag now supports manually forcing a specific detail page.
+! Properties: Added text area widget option for editing properties.
+- Improved the project management app.
+- Improved writing of container pages to store containers and element settings in a reproducible order.
+- Improved handling of model groups.
+- Improved handling of locales with country variant.
+- Improved email validation regex to allow more valid email addresses.
+- Improved touch function to use automatic XML correction.
+- Improved copy element function to use automatic XML correction.
+- Improved link generation for static resources to use VFS prefix settings.
+- Updated CMIS Java libraries.
+- Defined calendar mime-type for .ics files, PR provided by gallardo.
+- Removed password output from standard out, PR provided by adrianrm.
+- Improved message in delete dialog if deleting is not allowed, PR provided by AnnJul.
+- Renamed copy dialog label 'Target folder' to 'Target', PR provided by gallardo.
+* Fixed issue with element settings not being saved on newly placed content elements.
+* Fixed issue with double conversion of dates in search field mappings for attributes.
+* Fixed issue with order of content elements mapped to multi-valued Solr-fields.
+* Fixed issue with context menu for deleted resources in publish dialog not displaying correctly.
+* Fixed issue with project tool tip not being displayed in file tables.
+* Fixed issue #408 with permanent redirects.
+* Fixed issue #457 in the Apollo template where user blog articles generation failed.
+* Fixed issue #462 where gallery dialog would not open on preselected values.
+* Fixed issue #475 where dynamic functions disappeared from a containerpage.
+* Fixed issue #477 where create containerpage with content elements would not work for non Admin users.
+
+
+OpenCms 10.5.0 Final - November 30, 2016
+! The user interface now uses mostly font icons for better support in high resolution (retina) screens.
+! New and improved Project Management app.
+! Expired / unreleased resources in lists can now be shown on their detail page.
+! Added OpenCmsUrlServletFilter to easily remove the /opencms servlet name.
+! Added <cms:jsonpart> tag and CmsJsonPartFilter to split the output of a page to JSON fragments.
+! Added <cms:scaleImage> tag for creating responsive image variations, provided by mwxwidmann.
+! Improved behavior when switching between page editor, sitemap and explorer views.
+! Explorer: Displays of icon overlays on folders showing the default file type.
+! Explorer: Resources that are part of a sitemap are shown with a bold title.
+! Explorer: Option to sort by navigation position by click on icon column.
+! Explorer: Improved Display / Edit default actions when clicking on a file.
+! Explorer: Improved Copy / Move / Rename functions and dialogs.
+! Explorer: Values for Title, Navigation, Copyright and Cache columns can be edited directly by clicking.
+! Keyboard shortcuts: Added option to switch the Explorer view to the "Online" project (Ctrl-O).
+! Added "Show Online" option to page editor (requires correct site configuration).
+! Added option to disable all formatter in a subsitemap configuration.
+! Added support for connecting with encrypted email servers.
+! Added support for Google API keys to the location picker widget that uses Google Maps.
+! Improved model group handling to keep all group data in a single resource.
+! Improved user info dialog.
+! Enhanced <cms:link> tag to allow links to specific detail pages.
+! Updated Chinese and Japanese localization, provided by twofisher.
+! Updated Russian localization, provided by makarov-iliya.
+! Updated CodeMirror to version 5.21.0.
+! Updated TinyMCE to version 4.4.3.
+! Updated Lucene/SOLR to Version 5.5.3.
+* Fixed performance issues with inheritance groups.
+* Fixed issue #422 with bad performance of 'Choice' elements for XML contents, provided by mwxwidmann.
+* Fixed issue #425 where wrong content encoding header was set for GWT dialog messages by gallardo.
+* Fixed issue #451 where too many tabs caused layout problems in content editor.
+* Fixed issue #455 with TinyMCE when using Portuguese as workplace language.
+
+
+OpenCms 10.5.0 Beta - September 26, 2016
+! Localization: Compare localized subsites side-by-side.
+! Localization: Copy pages from one language to another, including content.
+! Localization: Connect the same page in different languages using locale relations.
+! Localization: Message bundle translator.
+! Localization: Support for localized properties.
+! Asset Connection: Data view widget API allows to natively integrate external assets in the content editor.
+! Asset Connection: Support for using external assets in templates through EL functions.
+! Enhanced online preview in the page editor hides all OpenCms added markup for HTML debugging.
+! The Apollo Template has been greatly enhanced with new options and functionality.
+! Security: Added password expiration option.
+! Security: Added password strength indicator in password dialog.
+! Security: Added dialog "Edit user" so users can update their personal information.
+! Security: Added optional "Confirm personal information" dialog after user login.
+! Unified toolbar appearance and context menus for editors and workplace.
+! Improved behaviour when switching between workplace and editor views.
+! Support for high resolution retina screens by using font icons.
+! Keyboard shortcuts: Added "step through element views" to page editor (Ctrl-E).
+! Keyboard shortcuts: Added "step through overlapping edit points" to page editor (Ctrl-Shift-E).
+! Keyboard shortcuts: Added "save" and "save and exit" to content editor (Ctrl-S, Ctrl-Shift-S).
+! Keyboard shortcuts: Added option to show "copy or reuse" dialog after drag & drop (Ctrl + mouse up).
+! Page editor now "remembers" the last formatter set for a content type as default.
+! Added optional "Copyright" and "Cache" columns to the Explorer.
+! Categories attached to contents are now by default stored in the relation engine, not the XML.
+! Added JSP EL functions to read categories from a resource.
+! Added JSP EL functions to read locale relations for a page.
+- Transferred edit JSP permission from "Template developer" role to "VFS manager" role.
+- Extended macro formatters for better handling of new contents.
+
+OpenCms 10.0.1 - June 14, 2016
+- Improved drag and drop performance in container page editor for pages with many containers
+- Improved performance of the clipboard and favorites menu
+* Fixed issue #388 where reading macro formatters failed in case a ".formatters" folder did not exist
+* Fixed issue #389 where GWT serialization policy files could not be loaded
+* Fixed issue #396 where user generated blog entries could not be saved
+* Fixed issue #400 where reading formatter configuration could cause NPE
+* Pull request #361 improves Spanish localization (by serrapos)
+* Pull request #371 fixes issue with reading configuration when no Offline project is present (by StephanSchrader)
+* Pull request #374 improves German localization (by veggie)
+* Pull request #399 fixes issue with wrong keyboard shortcut being displayed in CodeMirror plugin (by gallardo)
+* Fixed issue with synchronization start button not being correctly displayed
+* Fixed issue with non UTF-8 system encoding for macro formatters
+* Fixed issue with opening the quick launch menu failing sometimes
+* Fixed issue with inline editing not matching selected element view
+* Fixed issue with explorer lock conflict warning not shown before direct publish
+* Fixed issue with explorer context menu entry visibility
+* Fixed issue with internal cache performance
+* Fixed issue with macro formatter caching
+
+OpenCms 10.0.0 Final - March 23, 2016
+! Added user info dialog and quick launch menu to Page and Sitemap editor toolbar
+! Added editor to allow individual customization of the quick launch menu
+! Added option to upload a personal image in the user info dialog
+- Improved workplace dialog key bindings with 'Enter' and 'Esc' shortcuts
+- Improved binary and image file indexing for all configured locales
+- Improved error dialog in direct edit view with "Copy to clipboard" function
+- Improved site selector paging in the Explorer
+- Improved copy/move dialog to preset target folder to current folder
+* Fixed issue with role checks and permission for the new workplace apps
+* Fixed issue with visibility check in explorer context menu in case of multi selects
+* Fixed issue in permission dialog where it was not possible to add role based entries
+* Fixed issue in permission dialog where inherited entries where not displayed correctly
+* Fixed issue with "Create new" dialog where resources where created to early
+* Fixed issue in the Page editor where elements where wrongly marked as new
+* Fixed issue with invisible scroll bars in select boxes on Mac OS
+
+OpenCms 10.0.0 Beta - February 25, 2016
+! Added permission dialog to the new explorer
+! Added history dialog to the new explorer
+! Added "step through" feature to the properties dialog
+! Added "copy stack trace" function to the error dialog
+! Added <cms:display> tag for output generation in search list results
+! Added personal user image upload to the toolbar user info dialog
+! Added replace dialog to the new explorer
+! Added edit pointer dialog to the new explorer
+! Added tool tips for disabled context menu entries in the new explorer
+! Added option to edit the current sitemap configuration from the sitemap editor
+! Added publish queue dialog to new explorer
+! Added siblings tab to info dialog in the new explorer
+! Added optional text info fields for tabs in the form based editor
+! Added support for grouping content types in sub views for the "add new" dialog
+! Added template select widget to the site manager "add new site" dialog
+! Added options to SOLR search for multiple facets on one field
+! Added support for macro formatters
+- The Git integration app now allows to pull and import selected modules
+- The improvements / fixes made in OpenCms 9.5.3 have been integrated in 10 Beta
+- Improved and unified error dialog layout
+- Improved container page XML cleanup on save
+- Improved toolbar buttons to be disabled in online project
+- Removed no longer required core modules
+- Separated old workplace classes and resources from standard core
+
+OpenCms 10.0.0 Alpha 2 - December 9, 2015
+! Copy or move resources with drag and drop in the new explorer.
+! Upload files with drag and drop from the local desktop to the new explorer.
+! Quick navigation with keyboard shortcuts in the new explorer.
+! Added create resource dialog to new explorer.
+! Added change resource type dialog to new explorer.
+! Added lock/unlock/steal lock dialog to new explorer.
+! Added copy to project dialog to new explorer.
+! Added publish scheduled dialog to new explorer.
+! Added restore deleted dialog to new explorer.
+! Added secure/export dialog to new explorer.
+! Added resource info dialog to new explorer.
+! Added assign categories dialog to new explorer.
+! Added gallery dialog to new explorer.
+! Added project select dialog to new explorer.
+! Nicer default error page used for 404 and 500 server errors.
+! Separated several old workplace dialog classes from the core.
+! Support for static resource loading from classpath.
+! Merged all GWT based modules into a single one to improve page load time.
+- Improved workplace error dialog.
+* Fixed security issue advisory ID SYSS-2015-063 with XSS in displayresource.jsp.
+* Fixed security issue related to commons collections library.
+
+OpenCms 10.0.0 Alpha 1 - September 28, 2015
+! Modernized the look & feel of the overall user interface.
+! Introduced the Launchpad as the central starting place for the user.
+! New file explorer with support for column sorting, filtering and large folders.
+! Developers can now export and import modules through a SMB network share.
+! New Git App allows committing of module content directly from the workplace.
+! New <cms:search> tag combines SOLR based resource collection and full text searches.
+! Drag and Drop of images directly in the page editor.
+! Copy groups allow creation of boiler plate layouts with text / images.
+! Reuse groups allow reusing nested container structures on several pages.
+! Users are identified with an identicon in the toolbar.
+! Improved the template editor with support for inherited and disabled templates.
+! New <cms:edit> tag allows editing of arbitary resources based on UID.
+! Added a reset password option to the login dialog.
+! Nested container structures can now be copied using the clipboard.
+! Support for local configuration change sets based on XSLT.
+! Modules can be exported with a reduced manifest.xml to avoid merge conflicts.
+! Optimized resources types, formatters and views in the demo template application.
+! Updated the responsive demo template based on Bootstrap.
+- Extended lookup of login-form property to also work with detail pages.
+- Made pointers/htmlredirects work for internationalized domain names.
+- Improved synchronization in SQL manager and content type definitions.
+* Fixed issue #323 with missing manifest entries for Russian localization.
+* Fixed script tag generation in action elements for better IE compatibility.
+* Fixed issue where import failed due to missing principals.
+* Fixed issue with null pointers during inline editing.
+* Fixed issue with null pointers when reading search document dependencies.
+* Fixed issue where validation messages were not displayed in the workplace locale.
+
+OpenCms 9.5.3 - January 13, 2016
+! Added Java 8 support.
+! Improved the source code editor in WYSIWYG fields.
+! Gallery dialog now memorizes the last search result sort order.
+! Demo template updated to Bootstrap 3.3.6 and jQuery 1.11.3.
+* Fixed issue #231 where lower case SQL statements failed on MSSQL DBs.
+* Fixed issue #240/#307 where invalid dates were not handled properly by the content editor.
+* Fixed issue #279 related to Java 8 support.
+* Fixed issue #282 with MySQLSyntaxErrorException for DROP DATABASE in setup.sh (pr #346 by gallardo).
+* Fixed issue #296 with wrong order of choice elements after XSD change or saving in control code editor (fix by mwxwidmann).
+* Fixed issue #321 where download galleries would not show any images.
+* Fixed issue #331 where permalinks to resources beneath /shared/ where not generated properly.
+* Fixed issue #333 where non VFS documents in Solr indices where not considered in the result size calculation (fix by kartobi).
+* Fixed issue #339 where "stylesformat" setting would not always work for TinyMCE widget.
+* Fixed issue #340 where the log file viewer failed due to spaces in the web application path.
+* Fixed issue #344 where malformed HTML was inserted in direct edit mode.
+* Fixed issue #350 where direct editing of collector list content would fail in Firefox 41.
+* Fixed issue #353 by improving login cookie generation.
+* Fixed issue #357 by improving default file name generation.
+* Fixed issue #359 where some context menu entries did have the wrong visibility settings.
+* Fixed issue #360 where quick search within the category widget failed.
+* Fixed issue #365 where link excludes where not considered during link generation.
+* Fixed issue #369 where sort by title did not work for images in gallery dialog.
+* Pull request #188 adds support for specifying a custom charset for notification mails (pr by t-nasu).
+* Pull request #338 fixes issue with sourceSets in Gradle scripts (pr by gallardo).
+* Pull request #351 adds support for JPA enhancement of java 8 classes (pr by gallardo).
+* Pull request #354 fixes an issue with NPE in log during shutdown when Solr is disabled (pr by gallardo).
+* Pull request #356 fixes another issue with NPE in log during shutdown (pr by gallardo).
+* Updated the source code editor to latest version of CodeMirror (5.10).
+* Updated the WYSIWYG editor to latest version of TinyMCE (4.3.2).
+* Security: Fixed advisory SYSS-2015-063 regarding XSS vulnerabilities in workplace login (reported by SySS GmbH).
+* Security: Updated "Commons Collections" dependency to avoid deserialization security issue.
+* Security: Fixed several XSS issues, mostly in the demo content.
+* Security: Added stronger role checks when users access an editor.
+* Solr: Added "decodeUrl" option to Solr collector.
+* Solr: Added field-to-containerpage mapping in Solr indexer.
+* Solr: Improved Solr shutdown to avoid memory leaks.
+* Solr: Fixed URL decoding issue in content collector.
+* Solr: Fixed NPE when reading document dependencies while indexing.
+* Solr: renamed field/type _cs to _comma to avoid conflict with Czech locale.
+* Fixed issue with the login-form property not working correctly for detail pages.
+* Fixed issue with editor change handlers not being able to change values of invisible fields.
+* Fixed issue where links were invalidated in the content editor and thus became uneditable.
+* Fixed issue with pointers / htmlredirects not working for internationalized domain names.
+* Fixed issue with type name replacement in module clone dialog.
+* Fixed issue where toolbar buttons would become enabled for non editable resources.
+* Fixed issue with content editor fields becoming unselectable in IE11.
+* Fixed issue with limited Lucene date range queries.
+* Fixed issue with widget for selection of organizational units.
+* Fixed issue with NPE during formatter selection.
+* Fixed issue with NPE during inline editing.
+* Fixed issue where users could not be added to a virtual group if already member of a related role.
+* Fixed issue with selecting multiple formatters defined in schema.
+* Fixed issue with caching of formatter configurations defined in schema.
+* Fixed issue with language detection for locales having the same language like en_GB and en_US.
+* Fixed issue where import failed due to missing principals.
+
+OpenCms 9.5.2 - June 24, 2015
+! Added Japanese localization (provided by Yuta Aoki).
+! Added Czech localization (provided by Filip Kratochvil).
+! Added additional search settings in XSD for mapping of Solr fields to container pages.
+- Improved loading times for VfsFileWidget (and other widgets based on the gallery dialog).
+- Changed HtmlWidget to list styles from the content CSS in the style select box.
+- Demo template updated to Bootstrap 3.3.5.
+- Updated Spanish localization (provided by Sergio Raposo Vargas).
+- Updated Russian localization (provided by Iliya Makarov).
+- Add use pages to Javadocs (provided by Alberto Gallardo).
+- Improved 'This page' option in publish dialog to show changed contents of detail containers.
+- Improved availability handling in conjunction with the sitemap editor and navigation builder.
+* Fixed issue #236 with wrong localization of "Direct Edit" in the workplace's preferences (provided by rohtake).
+* Fixed issue #278 with mangled javadocs when compiling with JDK 8.
+* Fixed issue #304 to resolve some XSS vulnerabilities.
+* Fixed issue #312 with modified MySQL create tables to support innodb (provided by Enrico Marongiu).
+* Fixed issue #313 with the demo pages tabs formatter not working online.
+* Fixed issue #314 regarding setup with JPA supported DBMSs (provided by Smyatkin Maxim).
+* Fixed issue #315 with workplace search not working when selecting a specific site.
+* Fixed issue #320 with the demo pages tabs (duplicate of #313).
+* Fixed a number of XSS issues in the workplace.
+* Fixed issue where the types in the container page editor's 'Add' menu were not updated after changes to nested containers.
+* Fixed issue where the information for locked images was copied to the title attribute in the WYSIWYG editor.
+* Fixed issue with the toolbar being blocked by an overlay when using the model selection dialog in the page editor.
+* Fixed issue in the publish dialog where sometimes publishing resources in the root folder caused an error.
+* Fixed stack overflow error caused by incomplete preference configuration after running the updater.
+* Fixed issue with message bundle caching where sometimes XML message bundles were not found.
+* Fixed issue with secure server links on error pages referred to the non-secure server instead to the secure server..
+* Fixed issue with workplace search not working for indexes other than the Gallery index.
+* Fixed issue where detail container pages failed to be unlocked after editing.
+* Fixed issue with Lucene index for container pages where content for locales other than "en" was not indexed.
+* Fixed issue where registering change listeners in custom content editor widgets could cause a stack overflow.
+* Fixed doctype for workplace dialogs to avoid compatibility mode in IE.
+* Fixed corrupted images in updater.
+* Fixed issue where the resource info dialog crashed when reading a relation whose source did not exist anymore.
+* Fixed issue where the category folder name configured on /system/categories was ignored by the sitemap editor.
+* Fixed IE browser mode issue which sometimes caused problems with the upload dialog.
+* Fixed issue with legacy direct edit text button provider not showing localized messages.
+
+OpenCms 9.5.1 - March 2, 2015
+! Added "DependentSelectWidget" that obtains values depending on other content fields.
+! Added alternative login handler to authorize users with a cookie.
+! Added option to search for expired/unreleased resources to all gallery dialogs.
+! Added option "galleryselect" to select a gallery to file selector widget.
+! Added further configuration options for OpenCms auto-setup.
+! Added option to use permanent instead of temporary redirects from a non-secure to a secure server.
+! Added Solr "rows" parameter in workplace's source search.
+! Added support for configuring a JDBC connection in the OpenCms db properties.
+- Demo template updated to Bootstrap 3.3.2.
+* Fixed issue #197 with static export links being generated even if the static export was disabled.
+* Fixed issue #240 with malfunctioning "invalid date" error message in date select widget.
+* Fixed issue #258 with URL name mappings not working correctly with locales of the form "language_COUNTRY".
+* Fixed issue #285 with encoding problems / wrong escape character handling in CmsParameterConfiguration.
+* Fixed issue #287 with external link validation failing for expired resources.
+* Fixed issue #289 with opening the gallery tab in the workplace preferences dialog.
+* Fixed issue #291 that occurred when using "Assign categories" in the legacy xmlpage direct edit provider.
+* Fixed issue #292 that an exception was thrown when editing settings for the "content check" tool.
+* Fixed issue #295 with user administration when using MS SQL Server.
+* Fixed issue #296 with XML content correction saving a wrong order of choice elements after a schema change.
+* Fixed XSS security issues affecting the request parameter based locale handler.
+* Fixed several issues with secure site handling.
+* Fixed issue in page editor where a selected formatter was reset to the default when content was dragged to a different container.
+* Fixed issue where detail page URLs with fragments were not processed correctly in the editor.
+* Fixed issue that the "Keep permissions" option was ignored during database imports.
+* Fixed issue where database entries were not removed after a deleted file was published if versioning was disabled.
+* Fixed issue where only the latest historic version was actually saved when the file history was set to "unlimited".
+* Fixed issue where OU deletion caused server timeouts with large VFS repositories.
+* Fixed issue where new roles were not created for existing sub OUs of the root OU.
+* Fixed issue with slow performance for systems using many web user OUs.
+* Fixed issue where the initial role given to a new user was always in the root OU.
+* Fixed issue with "editableby" attribute of <cms:container> not working correctly for roles of users outside the root OUs.
+* Fixed issue where modified JSPs were infrequently not updated after publishing.
+* Fixed issue where new resources were removed from offline search indexes if a user modified them.
+* Fixed issue with Solr returning expired documents by default.
+* Fixed issue where the workplace search dialog lost the current directory.
+* Fixed issue with the "Create new" option not always appearing in the settings dialog.
+* Fixed issue where model page elements on which the "Create new" option was set were treated as new elements.
+* Fixed issue where enabling detail views in traditional workplace lists affected all other users.
+* Fixed issue in link substitution with folders using the OpenCms servlet name when OpenCms is installed as ROOT application.
+* Fixed issue with editor change handler not updating optional fields in the content editor.
+* Fixed issue with validation of hidden fields in the content editor.
+* Fixed issue with <cms:bundle> tag not using the default locale as a fallback.
+* Fixed issue in cmsshell.sh and setup.sh so that running the scripts outside of WEB-INF is now possible.
+* Fixed issue with CodeMirror editor configuration not working for Internet Explorer 11.
+
+OpenCms 9.5.0 - November 3, 2014
+! Drag & drop template and layout creation with nested containers.
+! User generated content for website visitors.
+! Editors don't need to access the workplace anymore.
+! Managing of galleries, categories and templates in the sitemap editor.
+! Greatly enhanced documentation.
+! Generate PDF documents on the fly.
+! Grid based responsive demo website build with Bootstrap.
+! Integrated Spell Checker for the WYSIWYG editor component.
+! New roles for fine grained access to the content management functions.
+! Element views allow easy grouping and permission setting for content types.
+! Create, copy or reuse options when using existing contents.
+! Updated user preferences dialog accessible in the page editor.
+! Added broadcast messages to be shown in the page editor.
+! Added feature to generate thumbnail images of PDF documents.
+! Added option to show historic versions of elements, available in element info dialog.
+! Added editor visibility handler for content fields in the XSD.
+! Added locale synchronization for content fields in the XSD.
+! Added dynamic field handlers for content fields in the XSD.
+! Added new mappings to generate gallery descriptions in the XSD.
+! Added "generic locale" for container pages so that elements are valid for all languages.
+! Added support for CMYK .jpg images.
+! Added thumbnail size display options for images galleries.
+! Added option to run a script with CmsShell commands on module import.
+- Updated to latest version of TinyMCE.
+- Improved password encryption with strong scrypt algorithm.
+- Improved screen usage, dialog adjusts to available screen size.
+- Improved publishing dialog, especially for thousands of resources.
+- Improved user preferences definition to be flexible instead of hard coded.
+- Improved status information for new or changed elements in the gallery lists.
+- Improved collector list edit points to have a full set of options.
+- Improved result lists displayed in ADE to show more infos and options.
+- Removed default group "Projectmanagers", use the PROJECT_MANAGER role instead if required.
+* Fixed issue with checking "secure" property for resources in some cases.
+* Fixed issues with duplicate elements in inheritance groups.
+* Fixed several issues in the default link substitution handler.
+* Fixed issue with wrong resource filter usage during the relation check before deleting sitemap entries.
+* Fixed issue with 'subsite' search scope in the gallery dialog not working correctly.
+* Fixed issue with order of settings from formatter configuration not being used.
+* Fixed issue with detail containers if detail contents and detail page are located in different sites.
+* Fixed issue with detail links where the detail content was located in a different site.
+* Fixed issue with redirection to secure site for detail pages.
+* Fixed issue with incorrect wildcard handling on SMB network shares.
+* Fixed issue with file copying on SMB network shares.
+* Fixed issue with scrollbar not appearing for text area widget if very long lines without spaces were entered.
+* Fixed issue with creating files in expired folders.
+* Fixed issue with head includes not working correctly for container elements in some cases.
+* Fixed issue with editor CSS handler related to changed template provider configuration syntax.
+* Fixed issue with handling of locale-available property in the editor.
+* Fixed issue with the editor calendar display in some environments.
+* Fixed issue with the editor VFS file widget configuration.
+* Fixed caching issue with XML message bundles.
+* Fixed caching issue with default template context provider.
+* Fixed search filtering for the search scope "Everything".
+* Fixed issue with link handling for detail contents in HTML fields.
+* Fixed issue with container page search indexing.
+* Fixed issue #192 where the HTML cleanup inserted invalid characters.
+* Fixed issue #203 where source search was referring to a non existing constant.
+* Fixed issue #205 where message bundles were accessed without locale.
+
+OpenCms 9.0.1 - February 6, 2014
+! New 'Add resource type' dialog added to the module management.
+! New 'Clone Module' dialog added to the module management.
+! Added option to show expired or unreleased resources in content collector lists in the offline project.
+! The 'Source search' administration tool has been greatly enhanced.
+! Detail pages now support permalinks.
+! Further improved the publish dialog with better detection of changed dependencies.
+! Added several improvements to the JSP EL context beans.
+! An instance of  CmsJspStandardContextBean is now automatically available on all JSPs.
+* Fixed issue with optional text-area widgets in the form editor.
+* Fixed issue with expired container elements not being displayed correctly in the online project.
+* Fixed issue where 'resources' folder was not created in a new module.
+* Fixed issue where overflowing container elements remain hidden after drag and drop.
+* Fixed issue where IE8+ browsers would not load updated resource versions.
+* Fixed issue with gallery upload in the editor not available if no image is selected.
+* Fixed issue with incorrect handling of the 'formatselect.options' option in the HTML widget.
+* Fixed issue where copying a file on a network share inside the same folder on Windows 7 caused a hanging dialog.
+* Fixed issue with generating secure links to detail pages.
+* Fixed issue with alias deletion for folders.
+* Fixed issue with content mappings to dateReleased / dateExpired attributes for deleted optional values not being reset.
+* Fixed issue with links to exported resources pasted in the content editor not being correctly resolved.
+* Fixed issue #158 by adding properties 'keywords' and 'description' to the <cms:info> tag.
+* Fixed issue #178 where the start folder configuration was ignored by the VfsFileWidget.
+* Fixed issue #192 where HTML cleanup inserted invalid characters in some cases.
+* Fixed issue #203 where source search refers a not existing constant.
+* Fixed issue #204 by allowing type name translation for 'formatter_config' files.
+* Fixed issue #205 where message bundles were accessed without locale.
+* Fixed issue #208 with rare null pointer exceptions during Flex cache key generation.
+* Fixed issue #210 where localization of TinyMCE failed for some languages.
+* Fixed issue #211 with missing JPA dependencies.
+* Fixed issue #215 where container page content was not indexed correctly for SOLR indices.
+* Fixed issue #217 where expired resources in container pages caused error messages in the log file.
+* Fixed issue #219 by adding properties 'keywords' and 'description' to the <cms:info> tag.
+- Demo template updated to Bootstrap 3.1.0.
+- The Bootstrap / JQuery resources from the demo template have been moved to a separate module.
+- TinyMCE editor updated to version 4.0.16.
+- Improved browser support for IE 10 and IE 11.
+- Added more options to the widget combo box for formatter configurations.
+- The classic workplace theme now uses fixed colors that work better in non-windows environments.
+- Updated Russian localization.
+- Disabled CMS_LOG database logging by default.
+- Improved Gradle build script to generate additional artifacts, also added 'install' task.
+
+OpenCms 9.0.0 - November 8, 2013
+! Improved configuration for content formatters
+! Updated responsive demo template based on Bootstrap 3
+! Added multi-field annotation expression to EL for better inline edit support
+! Added support for inline CSS and JavaScript in formatter configuration
+* Fixed issue #186 regarding XSS vulnerabilities of the workplace
+* Fixed issue #194 where the date picker widget sometimes selected the wrong moth depending on the current date
+* Fixed potential memory leak when using Solr multi-core features by updating Solr to version 4.3 (@see http://wiki.apache.org/solr/LotsOfCores)
+* Fixed issue where the container page document factory was used for extracting content of elements, instead using the factory of the element itself
+* Fixed issue where deleted resources were leftover in the search index
+* Fixed issue with scheduled publishing failing for resources with long paths
+* Fixed issue with the performance of the content editor undo/redo handler when editing large contents
+* Fixed issue with missing TinyMCE buttons
+* Fixed issue where context menu entries in TinyMCE would not consider the widget configuration
+* Fixed issue with missing TinyMCE button bar background in the inline editor
+* Fixed issue where links to a different site were not being set correctly when using the WYSIWYG editor
+* Fixed issue with creating function detail pages when using the template selection mechanism
+* Fixed issue with detail contents not appearing in publish lists for the "This page" publish mode
+* Fixed issue where the principal widget failed to set the selected value
+* Fixed issue where some configurations of the OrgUnit widget failed to work
+* Fixed issue where the group select widget failed to fire the value change event
+* Fixed issue with element and container highlighting during drag and drop
+* Fixed issue where the edit buttons still appeared for container elements for which the current user had no 'view' permission
+* Fixed issue where in a chain of modified resources connected by strong links, some of the resources where not showing in the publish dialog in some cases.
+* Fixed issue with /shared having state 'changed' after update
+* Fixed issue with updater where categories were overwritten during update
+- Changed default start view to 'Direct Edit'
+- Removed no longer supported widgets
+- Added additional fields to the Solr schema: state, userLastModified, userCreated, version, filename, search_exclude, mimetype, containerTypes
+
+
+OpenCms 8.9.0 (aka 9.0 RC) - September 30, 2013
+! Improved "in place" editing of web pages for text and also for images and other content types.
+! Enhanced support for different devices with preview and device specific content output control.
+! Access to the content repository over a shared network drive.
+! Detail pages now allow individual content to be added with drag & drop.
+! A new site management tool allows simple configuration of multiple sites.
+! Automated / scripted setup option, great for continuous integration builds.
+! Optimized build process using Gradle.
+! A new responsive demo template based on Bootstrap as a base for customization.
+! Added gallery access to the toolbar.
+! Added enhanced page / element info dialog, accessible from the toolbar.
+! Added undo / redo function to the form content editor.
+! Added direct upload option to image widget in the form content editor.
+! Added automatic optimized layout of widgets in the from content editor.
+! Added 'This page' publishing mode and other improvements to the publish dialog.
+! Added option to create new contents for empty collector lists.
+! Added XML content based resource bundles.
+! Added dynamic HTML update during in place editing.
+! Added option to configure an individual error page per site.
+! Added global permission overview dialog
+! Added option to retrieve the database password from a configurable source.
+! Added optional feature to prevent users from having more than one session.
+! Added feature to destroy sessions of logged in users.
+! Added feature to unlock users who are locked out because of too many login attempts.
+- Updated Italian localization
+- Updated Spanish localization
+- Updated Russian localization
+- Removed upload applet
+- Removed obsolete FCKEditor and EditArea
+- Updated Solr and Lucene libraries
+- Improved Solr search field mapping for multi-lingual XML contents that are using nested elements
+- Improved text based language detection.
+* Fixed issue #23 where parsing the publish scheduled date failed due to a wrong locale
+* Fixed issue #61 where the removal of mapped properties failed
+* Fixed issue #67 where a malformed nested XML content schema resulted in misleading error messages
+* Fixed issue #130 where container page elements where removed without confirmation
+* Fixed issue #168 where the source code contained some spelling errors
+* Fixed issue #180 where database names where not validated during setup
+* Fixed issue #187 where sort by title did not work in the gallery dialogs
+
+
+OpenCms 8.5.2 - July 10, 2013
+! Improved lock behavior for group editor.
+! Improved offline indexing to index content changes immediately.
+! Improved PDF extraction with new library version.
+! Improved module import by pausing offline indexing while importing or deleting modules.
+! Improved IE10 compatibility.
+! Updated CodeMirror source code editor to version 3.14.
+! Updated commons DBCP library.
+! Improved purging of container pages after publish.
+* Fixed issue #50 with encoding links in pointer resources.
+* Fixed issue #114 with locale handling on embedded message bundles in schemas.
+* Fixed issue #152 where the layout of the VfsImageWidget was broken.
+* Fixed issue #155 where error messages where not displayed correctly.
+* Fixed issue #156 where newly created container pages from model pages did not have the right template property.
+* Fixed issue #159 where another resource was locked when creating a new one.
+* Fixed issue #167 where editing expired resources from direct edit caused errors.
+* Fixed issue #169 where Solr rebuild doesn't update unmodified resources.
+* Fixed issue #170 where folders without default files did deliver a blank page instead of the 404 error code.
+* Fixed issue #173 where XSS was possible.
+* Fixed issue #175 where depending on the current date certain dates could not be set.
+* Fixed issue with element language select.
+* Fixed issue with possible XSS exploit using the CmsRequestUtil.
+* Fixed issue with in-line editing of choice attributes.
+* Fixed issue when saving a container page that contained inconsistent links.
+* Fixed issue where expired resources were not availably using the gallery select dialogs.
+* Fixed issue where head includes for elements did not work, if the element was part of an inheritance group.
+* Fixed issue with history view for no longer existing historic resource versions.
+* Fixed issue with memory leak related to GWT RPC services.
+* Fixed issue with publishing moved resources with categories.
+* Fixed issue where selecting "Undo changes" in the context menu for a JSP, the corresponding JSP in the RFS JSP repository is not deleted or updated.
+* Fixed issue with context menu for expired resources.
+* Fixed issue with determining the content CSS in the XML content editor.
+* Fixed issue with memory leaks using Solr.
+
+OpenCms 8.5.1 - February 7, 2013
+! Improved file selector widget to show resource information.
+! Improved image gallery widget to show image thumb nails.
+! Integrated the ADE properties dialog into the workplace.
+! Added content editor selector, to detect whether the old or new XML content editor should be used.
+! Added text based language detection utilities.
+! Improved Solr field configuration for indexing nested contents with multiple occurrences.
+! Added configuration option that allows to index contents only when they occur on container pages.
+! Added ability to exclude file names from VFS sync with pull request #86, provided by Daniel Latzer.
+* Fixed issue #20 where browsing a download gallery with custom resource types showed up empty.
+* Fixed issue #37 where a "white page" appeared after clicking on the advanced button of the property dialog.
+* Fixed issue #44 where it was not possible to save property values for old xmlpage contents.
+* Fixed issue #56 where content tool "Language node copier" was broken.
+* Fixed issue #64 where CmsResource had an incorrect resource state after de-serialization.
+* Fixed issue #68, #70 where file name translation rules were missing, provided by Christian Steinert.
+* Fixed issue #73 where HTTP error 409 was returned when importing contents using WebDAV servlet.
+* Fixed issue #75 where sorting column "display name" of the field configuration was incorrect.
+* Fixed issue #77 where XML content boolean data types should return plain text values, provided by Wolfgang Illmeyer.
+* Fixed issue #83 where the new content editor had a problem with comments and JavaScript.
+* Fixed issue #84 where saving + exit in the new content editor was possible even if a validation rule was invalid.
+* Fixed issue #87 where OU names containing "." would lead to a 404 error on log out.
+* Fixed issue #88, #119 where the selector widget had problems with the default value.
+* Fixed issue #89 where help bubbles were shown with no text configured.
+* Fixed issue #90 where too many tabs were displayed in the new content editor.
+* Fixed issue #92 where clicking on a link in the inline editor caused an error.
+* Fixed issue #93 where file selector widget did not find any container pages that were part of the default site.
+* Fixed issue #95, #96, #97 where FireFox changed user agent string.
+* Fixed issue #98 where new content editor did not work for expired resources.
+* Fixed issue #99 where displaying XSD choice options at the bottom of the editor window were cropped.
+* Fixed issue #102 where renamed resources were remaining within gallery dialogs.
+* Fixed issue #104 where TinyMCE entity-escaping resulted in broken links.
+* Fixed issue #105 where the category widget showed all categories even if a pre-selection was configured.
+* Fixed issue #106 where gallery dialogs popped up empty when opening them with the gallery buttons of the rich text editor.
+* Fixed issue #107 where CMIS only found the default locale of XML contents.
+* Fixed issue #108 where SEO file JSP had the wrong cache property.
+* Fixed issue #110 where the TinyMCE toolbar overflowed unexpectedly in Chrome browsers.
+* Fixed issue #111 where the login bean always switched to the users default site.
+* Fixed issue #112 where the content access bean performed wrong empty check for nested element types.
+* Fixed issue #113 where "CreateNew" in model pages was not behaving as expected.
+* Fixed issue #115 where no error message was provided when the password field was left blank, provided by Yuta Aoki.
+* Fixed issue #116 where the upload did not work from gallery folder tab.
+* Fixed issue #117 where xsd:choice nesting another xsd:choice caused errors in new content editor.
+* Fixed issue #121 where the gallery items were sorted incorrect.
+* Fixed issue #123 where the new content editor created a new default locale node even when a none-default locale already exists.
+* Fixed issue #124 where search excerpt was missing when using wildcards.
+* Fixed issue #126 where newly added xsd:choice elements did not show choices.
+* Fixed issue #127 where the image gallery widget did not open correctly using Internet Explorer.
+* Fixed issue #128 where an exception was thrown when indexing dependent documents.
+* Fixed issue #131 where a NPE was thrown when using custom widgets in the new content editor.
+* Fixed issue #132 where index selection in the workplace search had no effect.
+* Fixed issue #135 where upload to gallery was displaying errors.
+* Fixed issue #136 where using custom styles for TinyMCE Editor with "style_formats" caused problems, provided by David Landreman.
+* Fixed issue #139 where image URLs treated wrongly as external when they contain scale parameters and workplace server was HTTPS.
+* Fixed issue #141 where JavaScript animations were flickering in Chrome 24.
+* Fixed issue #142 where TinyMCE toolbar was positioned inside the text area.
+* Fixed issue #144 where database schema for HSQLDB was improved, provided by Georgi Naplatanov.
+* Fixed issue where fall-back locale was not used.
+* Fixed issue where file selector widget did ignore the start gallery.
+* Fixed issue where file selector widget text overflowed unexpectedly.
+* Fixed issue where radio select widget did handle the default value wrongly.
+* Fixed issue where HTML widget initialization failed for choice options.
+* Fixed issue where string widget added unwanted line breaks.
+* Fixed issue where writing search configuration failed when Solr index configured.
+* Fixed issue where 'Publish with related resources' did not work as expected.
+* Fixed issue where view permissions were not handled correctly in gallery dialogs.
+- Improved performance due to increased content definition cache size.
+- Improved performance of the new content editor significantly.
+- Improved locale handling when opening the new content editor.
+- Improved Solr field mappings defined within XSDs.
+- Improved JPA persistence context and updated HSQLDB to version 2.2.8 within pull #57, provided by Georgi Naplatanov.
+
+OpenCms 8.5.0 - September 24, 2012
+! Added new inline content editor allows to edit content "in place" on the web page.
+! Added form based content editor has been completely rewritten for improved speed and ease-of-use.
+! Added integration of SEO features with automatic sitemap.xml generation and page alias support.
+! Added integration of Solr for improved search and noSQL like content queries.
+! Added integration of CMIS access to the content repository.
+! Added support for "Inheritance Groups".
+! Added option to undo all changes done on a page (or resource) that have not been published.
+! Added option to hide a page in the sitemap, so that it does not appear in the navigation.
+! Added option to edit content directly from the clipboard favorites.
+! Added option to directly delete an element removed from a page when it is no longer used anywhere.
+! Added CodeMirror syntax-highlighting source code editor with code folding, visible tabs and better performance.
+! Added new "Navigation level" function in the sitemap.
+! Added new "Attribute information" dialog for all content items on a page, gallery and sitemap.
+! Added new and improved dialog for assigning or selecting content categories.
+! Added new Log file tool in the OpenCms Administration allows to switch on/off log channels on the fly.
+* Fixed issue with categories not properly set on expired resources with category widget.
+* Fixed issue in the XML content correction where a total change of the schema was not processed
+- Improved layout in most of the new onscreen dialogs.
+- Improved content is now directly saved when you edit a page, no more confirmation required.
+
+
+OpenCms 8.0.4 - April 11, 2012
+! Added configurable ADE context menu dialogs.
+! Added Italian localization contributed by Antonio Cordeddu of coranto.it
+! Added Russian localization contributed by Alexey Chirkov of itdt.ru
+! Added TinyMCE WYSIWYG editor.
+! Added scheduled job for search index optimization.
+* Fixed issue with VFS image widget preview function.
+* Fixed various image widget format and cropping issues.
+* Fixed issue 1999 where VFS image gallery widget would not open if 'useformats' was set to 'false'.
+* Fixed issue 2018 + 2024 typo in group permissions JSP resulting in a compile error.
+* Fixed issue 2019 incorrect form height in "Preferences -> Galleries" tab.
+* Fixed issue 2021 method org.opencms.jsp.CmsJspActionElement#link(java.util.String target, java.util.String detailPage) was not using second parameter.
+* Fixed issue 2026 CmsDefaultLinkSubstitutionHandle wrongly construct URL.
+* Fixed issue 2027 CmsFileUtil misses a value assignment.
+* Fixed issue 2028 CmsMirDirectPublish misses a return value.
+* Fixed issue 2029 where workplace crashed on occasions when using the publish dialog from the administration view.
+* Fixed issue 2032 where image gallery widget did not display images from /system/galleries/pics.
+* Fixed issue 2037 where proportional image cropping was not possible for certain formats.
+* Fixed issue 2039 with class cast exception in content tools dialogs.
+* Fixed issue 2040 where source search replacement didn't consider the content encoding.
+* Fixed issue 2041 where Static Export failed for files named 'index.html' with URL parameters.
+* Fixed issue 2045 where the width of workplace dialog buttons was fixed and not sufficient for other translations.
+- Improved handling of deleted users in permissions dialog.
+- Improved sitemap editor change handling.
+- Improved synchronized lock behavior for offline indexing.
+- Updated Lucene to version 3.5.
+- Updated OpenJPA to version 2.2.0
 
 OpenCms 8.0.3 - November 16, 2011
 ! With the introduction of "Function Pages", JSP based dynamic pages can be added with simple drag and drop in the sitemap editor.
@@ -52,7 +1557,7 @@ OpenCms 8.0.3 - November 16, 2011
 * Fixed issue with timeout in Send-to-user function in a multi-user scenario.
 * Fixed issue that links to other sites were saved wrong in the editor.
 * Fixed issue that title property of uploaded image was set to source path when using IE7.
-* Fixed issue in creation of Sub-Sitemap as "common" user in the workplace throwing exception. 
+* Fixed issue in creation of Sub-Sitemap as "common" user in the workplace throwing exception.
 * Fixed issue that missing "en" locale in sitemap configuration makes resource types vanish.
 * Fixed issue that GWT Upload did not work with Firefox 7 and Mac OS.
 * Fixed issue in property dialog in ADE that deleting once set values was not possible.
@@ -136,13 +1641,13 @@ OpenCms 8.0.2 - August 18, 2011
 * Fixed issue in Sitemap Editor that icon of a subsitemap moved in tree changed to "normal containerpage icon.
 * Fixed issues with "Favorites" Dialog in ADE Clipboard where elements appeared multiple times or removal of elements failed.
 * Fixed issue in Property Dialog where inherited values were displayed ambiguously after mouse click.
-* Fixed issue #1989: When leaving the ADE sitemap �/cms/� (servlet-mapping) remains in the path.
+* Fixed issue #1989: When leaving the ADE sitemap �/cms/� (servlet-mapping) remains in the path.
 * Fixed issue #1983: Can't create user under sub "Webuser organizational unit".
 * Fixed issue #1988: ADE toolbar covers <cms:editable/> "direct edit" button.
 * Fixed issue #1986: ADE toolbar cannot be closed when using <cms:editable />.
 * Fixed issue #1982: "change navigation" fails on expired resources.
 * Fixed issue #1976:  Error in ADE to create new section.
-- I_CmsConfigurationParameterHandler.getConfiguration() now returns a CmsParameterConfiguration. 
+- I_CmsConfigurationParameterHandler.getConfiguration() now returns a CmsParameterConfiguration.
 
 OpenCms 8.0.1 - June 29, 2011
 ! The sitemap and ADE configuration has been greatly simplified and improved.
@@ -152,18 +1657,18 @@ OpenCms 8.0.1 - June 29, 2011
 ! A "log out" option has been added to the menu in the ADE editor.
 ! In the sitemap editor there is a new option to go back to the last page viewed in the ADE editor.
 ! The sitemap editor now displays the lock status of pages and sub-pages and handles lock conflicts.
-! A dialog in the sitemap editor allows to display and change the lock status of all sub-pages of a page. 
+! A dialog in the sitemap editor allows to display and change the lock status of all sub-pages of a page.
 ! The sitemap editor now shows different icons for container pages and detail pages.
 ! The boundaries of a group container are now highlighted when the elements in the group are edited.
 ! Modules can now automatically add new resource types to the sitemap configuration with default settings.
 ! It's now possible to disable selected resource types in the configuration of sub-sitemaps.
 ! A development demo (dev.demo) module and content has been added to document the new OpenCms 8 features for developers.
 ! Container element settings are accessible in a formatter JSP using the EL with ${cms.element.settings}.
-! Localization strings can now be directly added to an XSD schema for an XML content document. 
+! Localization strings can now be directly added to an XSD schema for an XML content document.
 * Fixed issue with the ADE editor overlay that sometimes crashed and / or could not be closed.
 * Fixed issue with group containers not being properly saved after editing.
 * Fixed issue where an idle users browser session expired even if the ADE editor was open.
-* Fixed issue where two users that open a page in the ADE editor concurrently could overwrite each others work.  
+* Fixed issue where two users that open a page in the ADE editor concurrently could overwrite each others work.
 * Fixed issue with concurrent lock states in the sitemap editor.
 * Fixed issue with recent list not being properly updated if the individual settings where edited.
 * Fixed issue in the new property dialog where an inherited or shared value remained visible and changeable.
@@ -186,7 +1691,7 @@ OpenCms 8.0.0 - May 8, 2011
 ! JPA support has been added to the database layer, so there's support for 10+ additional databases.
 ! New XML content element type "CmsXmlPlainTextStringValue" with no HTML code in the search results
 ! New workplace content tool to update XML contents
-! New search management tool to search and replace contents in the workplace resources 
+! New search management tool to search and replace contents in the workplace resources
 ! New OpenCms user address attribute "institution" and new <cms:contentshow> tag attribute "escapeHtml"
 ! Added optional configurable user agreement dialog that has to be accepted after a successful workplace login
 ! Added project selector to the new user and edit user dialog in the account management
@@ -195,7 +1700,7 @@ OpenCms 8.0.0 - May 8, 2011
 * Fixed issue #1717: DB deadlock if OpenCms hits db.pool.default.maxActive when db.pool.default.whenExhaustedAction=block
 * Fixed issue #1858: Entering email Address of user not possible
 * Fixed issue #1870: JS calendar generated by DateTimeWidget does not show up if lithuanian (lt) locale is selected in workplace
-* Fixed issue #1872: anchor of URL being encoded incorrectly 
+* Fixed issue #1872: anchor of URL being encoded incorrectly
 * Fixed issue #1895: "All others" entry in permission dialog misses summary of permissions
 * Fixed issue #1886: Error when displaying historic version after a resource has been moved
 * Fixed issue #1892: CmsContentInfoBean - The functions isFirstOnPage and isLastOnPage return the wrong values
@@ -234,7 +1739,7 @@ OpenCms 8.0.0 - May 8, 2011
 - Remove validations for XML content element actions: add, remove, move up, move down
 - Renamed context menu entry "Comment content" in "Edit metadata"
 - Allow undo changes after changing availability
-- Workplace search with selectable search index 
+- Workplace search with selectable search index
 - In content tool "Change Property Values" it is possible to use a place holder in the old and the change property value
 - In content tool "Change Property Values"  the folder itself is changed if the checkbox "Include all subfolders" is selected
 - In content tool "Change Property Values" it is possible to use more than one place holder
@@ -245,17 +1750,17 @@ OpenCms 8.0.0 - May 8, 2011
 OpenCms 7.9.2 - February 24, 2010
 ! Added request attributes support for flex cache
 ! Added new feature: Sitemap Editor
-! Added generic configuration parameters for resource types 
-! Added support for device detection via <cms:device type="...">-Tag 
+! Added generic configuration parameters for resource types
+! Added support for device detection via <cms:device type="...">-Tag
 ! Added new feature: Action Log
-* Fixed issue #1791: Template Two Content external link check fails for two resources 
+* Fixed issue #1791: Template Two Content external link check fails for two resources
 * Fixed issue #1787: Error when browsing the next result pages in the OpenCms backend search
 * Fixed issue #1751: Static Export: export-resources doesn't match a file resource
 * Fixed issue #1782: Publish dialog in Project overview list hangs
 * Fixed issue #1542: Links to exported files containing anchors are not resolved correctly
 * Fixed search score
 * Fixed close button when an error occurs while changing password in the preferences
-* Fixed list search filter caching problem 
+* Fixed list search filter caching problem
 * Fixed 'go up' button in account management view
 * Fixed access to indirect group users
 * Fixed double explorer action execution
@@ -271,7 +1776,7 @@ OpenCms 7.9.2 - February 24, 2010
 * Fixed issue #1809: Left site tree view is shown duplicated when creating a new folder in any site
 * Fixed issue #1807: CmsImportVersion7 contains a counter error in INFO log level
 * Fixed issue #1808: OpenCms.getLinkManager().getOnlineLink(CmsObject, link) does not work
-* Fixed issue #1817: Fail to load Download/HTML/Link/Table Gallery from HTMLWidget on Websphere 6.1 
+* Fixed issue #1817: Fail to load Download/HTML/Link/Table Gallery from HTMLWidget on Websphere 6.1
 - Assign roles also to indirect group users when updating from v6 to v7
 - Purge jsp repository after module import
 - Improved handling writing user's additional infos
@@ -381,11 +1886,11 @@ OpenCms 7.5.1 - October 1, 2009
 ! Added context menu entry "Comment content" to view and change the default properties of all files in a folder
 ! Added option to limit full text search to certain resource types only
 ! Added fields query option to full text search by which you can search for different terms in several fields
-! Added backup re-indexing option to Lucene index generation 
+! Added backup re-indexing option to Lucene index generation
 ! Added support for servlet container Sun GlassFish Enterprise Server v2.1
 ! Added support for servlet container GlassFish/v3 (preview release, builds earlier than 25-Aug-2009)
-! Improved detection of the context-root path (support for GlassFish) 
-! Added feature #1636: SMTP ports are now configurable 
+! Improved detection of the context-root path (support for GlassFish)
+! Added feature #1636: SMTP ports are now configurable
 ! Added feature #1741: Out of the box support for JBOSS servlet container
 ! Added detection of email addresses in editor link dialog
 ! Added option to use the current site macro in the template one form module
@@ -393,7 +1898,7 @@ OpenCms 7.5.1 - October 1, 2009
 - Updated Lucene to version 2.4.1
 - Full text search in documents: exceptions are now catched while extracting the text from documents
 * Fixed issue #1708: User creation settings 'enabled' and 'selfManaged' were not saved
-* Fixed issue #1711: HtmlDecorater problem with html-entities 
+* Fixed issue #1711: HtmlDecorater problem with html-entities
 * Fixed issue #1734: normalizePath will now remove leading double slashes of the path
 * Fixed issue #1735: Resolved problems with CmsLinkManager and absolute internal links
 * Fixed issue #1739: Deleted or moved project resources cannot be removed from project
@@ -403,11 +1908,11 @@ OpenCms 7.5.1 - October 1, 2009
 * Fixed issue #1759: Fixed XSS security issues reported by Security Focus
 * Fixed issue #1775: Endless loop on project names
 * Fixed issue #1779: Resolved problem with import of additional CSS stylesheet for template two
-* Fixed issue with OU users being unable to work after OU resource has been renamed 
+* Fixed issue with OU users being unable to work after OU resource has been renamed
 * Fixed issue with pointer targets stored in XML contents (instead of the URI to pointers) when selecting them in a link gallery
 * Fixed issue with transfer permissions of a deleted user to another user
 * Fixed issue with consumed exception messages for email sending
-* Fixed issue with noAutoCloseTags attribute of <cms:parse> tag only supporting DIV 
+* Fixed issue with noAutoCloseTags attribute of <cms:parse> tag only supporting DIV
 * Switched icons from ascending/descending order in lists
 
 OpenCms 7.5.0 - June 15, 2009
@@ -424,7 +1929,7 @@ OpenCms 7.3.0 (aka 7.5 beta 1) - May 18, 2009
 ! Simapi and Image scaler now support image cropping
 ! Added event which is fired after a user was modified
 ! Added support for "offline" indexes in the Lucene based full text search
-! CmsTimeFrameCategoryCollector now allows line breaks and whitespaces in param attribute 
+! CmsTimeFrameCategoryCollector now allows line breaks and whitespaces in param attribute
 ! Undo changes operation now shows an additional warning dialog with option to cancel in case siblings are found
 ! Extended authorization configuration and handling in order to allow support of alternative mechanisms
 ! Added support for alternative lib folder structure of tomcat on windows for cmsshell
@@ -445,31 +1950,31 @@ OpenCms 7.3.0 (aka 7.5 beta 1) - May 18, 2009
 - New property read strategy - always read all properties of a resource, even if only one is needed
 * Fixed security issue with the history handler
 * Fixed issue #1016: JSP send mail example out of order
-* Fixed issue #1122: JSTL Examples do not work in the Alkacon Documentation 
+* Fixed issue #1122: JSTL Examples do not work in the Alkacon Documentation
 * Fixed issue #1173: Misuse of saveSiteRoot causes synchronizing to fail but is wider problem
-* Fixed issue #1125: Admin user in Guest Group causes issues 
+* Fixed issue #1125: Admin user in Guest Group causes issues
 * Fixed issue #1144: Prevent jsp files to be cached in setup
-* Fixed issue #1177: Language selector in editor shows too much entries for certain locales 
+* Fixed issue #1177: Language selector in editor shows too much entries for certain locales
 * Fixed issue #1181: Change Element Locale - Content Tool does not display country locale variants
-* Fixed issue #1182: Import of pure user data fails 
-* Fixed issue #1209: Webusers should be able to delete themselves from the system 
+* Fixed issue #1182: Import of pure user data fails
+* Fixed issue #1209: Webusers should be able to delete themselves from the system
 * Fixed issue #1210: Changing ACL to a resource does not set the "last modified" date
 * Fixed issue #1220: CmsJspTagContentLoad cannot be constructed with PageIndex nor PageSize
 * Fixed issue #1231: Blocking scenario for simultaneous content editing using direct edit
-* Fixed issue #1232: Intermittent template JSP compile error 
+* Fixed issue #1232: Intermittent template JSP compile error
 * Fixed issue #1258: No logging if secure page is requested without a secure site configured
-* Fixed issue #1665: CmsExtractorPdf does not remove control characters 
+* Fixed issue #1665: CmsExtractorPdf does not remove control characters
 * Fixed issue #1268: Trouble getting AdditionalInfo for user
 * Fixed issue #1269: FileChooser manipulation replaces servleturl AND path
-* Fixed issue #1270: Can not embed Flash animation for Firefox 
-* Fixed issue #1277: Problem with MIME type settings 
+* Fixed issue #1270: Can not embed Flash animation for Firefox
+* Fixed issue #1277: Problem with MIME type settings
 * Fixed issue #1281: CmsUser.isSystemUser() fails to identify system user
-* Fixed issue #1282: Problem with duplicate "exportname" properties 
-* Fixed issue #1283: Link button missing in FCK widget 
+* Fixed issue #1282: Problem with duplicate "exportname" properties
+* Fixed issue #1283: Link button missing in FCK widget
 * Fixed issue #1284: Use short name by default in Admin view
 * Fixed issue #1285/1310: Scroll position lost in XML content editor (IE)
 * Fixed issue #1295: Gallery widgets should not allow specifying target in XML editor
-* Fixed issue #1297: Rendering of top bar in XML editor can fail 
+* Fixed issue #1297: Rendering of top bar in XML editor can fail
 * Fixed issue #1298: Tab key in FCK widget behaves badly in IE
 * Fixed issue #1311: editoptions in opencms-modules.xml inhibits the import
 * Fixed issue #1738: CmsShellCommands.uploadFile(...) not working
@@ -477,27 +1982,27 @@ OpenCms 7.3.0 (aka 7.5 beta 1) - May 18, 2009
 * Fixed issue with performance when serving JSP pages
 * Fixed issue with SQL query not running on MS SQL server
 * Fixed issue with cleaning up threads for publish progress dialog
-* Fixed issue with &lt; and &gt; in extended HTML import 
-* Fixed issue with deleting historical versions when date is specified 
+* Fixed issue with &lt; and &gt; in extended HTML import
+* Fixed issue with deleting historical versions when date is specified
 * Fixed issue with cmsshell commands that have arguments of type long not working
-* Fixed issue with historical versions of deleted files never being deleted 
+* Fixed issue with historical versions of deleted files never being deleted
 * Fixed issue with VFS driver where a file like "xy.html" could be read like a folder "xy.html/"
-* Fixed issue with <cms:jquery> not working for authenticated web users 
-* Fixed issue with wrong redirect for http - requests to https secured resources 
+* Fixed issue with <cms:jquery> not working for authenticated web users
+* Fixed issue with wrong redirect for http - requests to https secured resources
 * Fixed issue with object other than String in user.additionalInfo causing the csv export to fail.
 * Fixed issue with publish queue hanging up if the connection to the database is lost
 * Fixed issue with moved files where the previous folder was deleted
 * Fixed issue with advanced properties
-* Fixed issue with CmsMultiselectWidget keeping previous values when trying to unselect every entry 
-* Fixed issue with copy locale dialog of XML content editor being too small for Internet Explorer on Vista 
+* Fixed issue with CmsMultiselectWidget keeping previous values when trying to unselect every entry
+* Fixed issue with copy locale dialog of XML content editor being too small for Internet Explorer on Vista
 * Fixed issue with failing database export in case of deleted relation / category
-* Fixed rendering issue of template two in webkit based browsers (Konqueror, Chrome, ...) 
+* Fixed rendering issue of template two in webkit based browsers (Konqueror, Chrome, ...)
 * Fixed issue with duplicate openoffice document type in opencms-search.xml
 
 OpenCms 7.0.5 - July 2, 2008
 ! Added editor with syntax highlighting functionality for all text based files (e.g. XML, HTML, JSP)
-! Added option for copying content from one locale to another in the XML content editor 
-! Added Spanish Localization, contributed by OpenCmsHispano 
+! Added option for copying content from one locale to another in the XML content editor
+! Added Spanish Localization, contributed by OpenCmsHispano
 ! Added administration tool for image cache flushing
 ! Added new preference option for displaying all projects or only the ones in the current OU in the project selector
 ! Added new site alias attribute to manipulate request time
@@ -524,9 +2029,9 @@ OpenCms 7.0.5 - July 2, 2008
 * Fixed issue #1491: Incorrect behavior of language selector in editor with 3-symbols locales
 * Fixed issue #1568: Broken calendar widget for locale ES
 * Fixed issue #1571: Publishing of strongly related resource ignores locking
-* Fixed issue #1580: Publishing and Static export run with too high priority and lock out other tasks 
+* Fixed issue #1580: Publishing and Static export run with too high priority and lock out other tasks
 * Fixed issue #1581: Logic error for temporary disabled user accounts
-* Fixed issue #1586: Broken calendar widgets for locale PT 
+* Fixed issue #1586: Broken calendar widgets for locale PT
 * Fixed issue #1591: OpenCms does not start if configured scheduled job class is missing
 * Fixed issue #1593: CmsFormHandler of Template One generates invalid HTML/XHTML code
 * Fixed issue #1594: Location bar in workplace malfunctioning without ending '/'
@@ -534,20 +2039,20 @@ OpenCms 7.0.5 - July 2, 2008
 * Fixed issue #1596: Projects can be created being in the Online project
 * Fixed issue #1602: Editor for xmlpages has a dependency to the welcome module
 * Fixed issue #1610: Specific CSS selectors used for placing JQuery direct edit images
-* Fixed issue #1617: CmsImageScaler throws Exception when scaling images from/to certain dimensions    
+* Fixed issue #1617: CmsImageScaler throws Exception when scaling images from/to certain dimensions
 * Fixed issue #1621: Pagination in the Explorer view fails if the number of items is equal to number of files per page
-* Fixed issue #1626: NPE while uploading with the upload applet on some application servers 
+* Fixed issue #1626: NPE while uploading with the upload applet on some application servers
 * Fixed issue #1627: Security Issue in Logviewer
 * Fixed issue #1628: Deploying on different servlet containers
 * Fixed issue #1630: Configuration of creating internal resources is lost
 * Fixed issue with highlighting context menu entries in Internet Explorer 7
 * Fixed issue while deleting a folder containing a file previously deleted in another project
 * Fixed issue with NPE in MacroResolver
-* Fixed issue with importing / exporting CSV user data 
+* Fixed issue with importing / exporting CSV user data
 * Fixed issue with broken workplace when startup folder does not exist or misses /
 * Fixed issue with NPE when trying to direct delete after restart without workplace login
 * Fixed issue with concurrent JSP page requests when writing to RFS is needed
-* Fixed issue with broken calendar widget in French or Italian localization 
+* Fixed issue with broken calendar widget in French or Italian localization
 * Fixed issue with the <cms:editable> tag, it now detects if it has to include the script files or not
 * Fixed issue with trailing "/" when reading resources in the VFSDriver
 * Fixed issue with the "'" character not being allowed in email addresses
@@ -556,19 +2061,19 @@ OpenCms 7.0.5 - July 2, 2008
 * Fixed issue with using the category collector without resource type restrictions
 
 OpenCms 7.0.4 - March 3rd, 2008
-! Added new "TemplateTwo" demo template with improved demo content, replacing the old "TemplateOne" demo 
+! Added new "TemplateTwo" demo template with improved demo content, replacing the old "TemplateOne" demo
 ! Added "default template" which is used by default if no template is found for a resource
 ! Added new JQuery based direct edit provider with much improved positioning of the DE buttons
 ! Added better highlighting of selected content to new JQuery direct edit provider
-! Added new <cms:export> tag, which allows to write unprocessed JSP code to the static export 
-! Added support to import/export user roles, organizational units and projects 
-! Added 'webusers' only organizational units 
+! Added new <cms:export> tag, which allows to write unprocessed JSP code to the static export
+! Added support to import/export user roles, organizational units and projects
+! Added 'webusers' only organizational units
 ! Added support for full text searching in OpenOffice documents (.odf,.ods), contributed by Dirk Oelkers
 ! Added option to organizational units to be hidden from the login form
-! Added new resource type parameter to automatically set the 'internal' flag 
+! Added new resource type parameter to automatically set the 'internal' flag
 ! Added new module group selection dialog to the Setup Wizard
-! Added support for resource type limitation settings from "New" dialog to the "Change type" dialog 
-! Added option to CmsTimeFrameCategoryCollector, category filter may be turned off by leaving out collector parameter 
+! Added support for resource type limitation settings from "New" dialog to the "Change type" dialog
+! Added option to CmsTimeFrameCategoryCollector, category filter may be turned off by leaving out collector parameter
 ! Added new version of the import/export API, using Apache Digester instead of SAX
 ! Added #getStringValue() method to CmsJspContentAccessValueWrapper for better support of 'empty' EL operator
 ! Added option to resolve macros in XML contents read with the EL using the .resolveMacros method
@@ -599,34 +2104,34 @@ OpenCms 7.0.4 - March 3rd, 2008
 * Fixed issue with XML content attribute mapping when siblings are involved
 * Fixed issue with XML content model file selection of expired model files
 * Fixed issue with direct edit button HTML not being valid XHTML
-* Fixed issue with the history dialog when setting an unlimited number of historic versions 
+* Fixed issue with the history dialog when setting an unlimited number of historic versions
 * Fixed issue with the history dialog not displaying the names of deleted users
 * Fixed issue with the permissions dialog not displaying the names of deleted users or groups
 * Fixed issue with blank pages appearing for JSP while including/forwarding in Tomcat
 * Fixed issue with synchronizing an expired or not yet released resource
 * Fixed issue with editor preview when the user does not have the visible permission
-* Fixed issue with HTTP 500 error if clients send the "If-Modified-Since" date header in a wrong format 
+* Fixed issue with HTTP 500 error if clients send the "If-Modified-Since" date header in a wrong format
 * Fixed issue with login form direct access URL still being available for hidden OUs
 * Fixed issue with the lock icon when logged in an OU different from the root OU
 * Fixed issue with the disabled context menu item for direct publishing showing a wrong message related to permissions
-* Fixed issue with moving a folder containing resources the user does not have write permissions for 
-* Fixed issue with deleting a folder containing resources you do not have write permissions for 
-* Fixed issue with displaying the settings from the "Content check" tool in the admin view 
+* Fixed issue with moving a folder containing resources the user does not have write permissions for
+* Fixed issue with deleting a folder containing resources you do not have write permissions for
+* Fixed issue with displaying the settings from the "Content check" tool in the admin view
 * Fixed issue with role check not working if an organizational unit resource was deleted
 * Fixed issue with some parameters of SQL queries passed to JDBC with the wrong type
-* Fixed issue with OpenCmsColor widget not working with CSS 2 system colors names 
+* Fixed issue with OpenCmsColor widget not working with CSS 2 system colors names
 * Fixed issue with PostgreSQL driver with version 8.3, thanks to Ivan Codarin and Georgi Naplatanov
 
 OpenCms 7.0.3 - November 7, 2007
 * Fixed issue #1266: Improved robustness of default workplace tool handler implementation
 * Fixed issue #1303: Corrected style sheets path in static export configuration
 * Fixed issue #1304: In static export configuration the rfs-prefix parameter accepts URLs again
-* Fixed issue #1319: Updated comments on renaming servlets in web.xml 
-* Fixed issue #1320: Added warning to 'readme.txt' about overwriting the web.xml file in update wizard 
-* Fixed issue #1321: Servlet name is no longer hard-coded in setup wizard 
+* Fixed issue #1319: Updated comments on renaming servlets in web.xml
+* Fixed issue #1320: Added warning to 'readme.txt' about overwriting the web.xml file in update wizard
+* Fixed issue #1321: Servlet name is no longer hard-coded in setup wizard
 * Fixed issue #1326: Corrected typos in logout message (German locale)
 * Fixed issue #1335: Corrected typos in content-file of 404-handler (German locale)
-* Fixed issue #1420: Allowing workplace login page to be customized 
+* Fixed issue #1420: Allowing workplace login page to be customized
 * Fixed issue #1433: Uninstalling xmlcontentdemo does not damage other module any more
 * Fixed issue #1468: Missing encoding property for German localization property files
 * Fixed issue #1477: User with "workplace user" role can again choose a template when creating file with free text
@@ -670,9 +2175,9 @@ OpenCms 7.0.2 - September 12, 2007
 * Fixed issue #1503: CmsScheduleManager now uses the current time as the request time
 * Fixed issue #1508: Publish notification popup can now be switched off in the user preferences dialog (errors are always shown)
 * Fixed issue #1513: Trying to disable an indirect assigned role now displays an error message
-* Fixed issue #1516: Resource type array has been replaced by a self-expanding HashMap 
+* Fixed issue #1516: Resource type array has been replaced by a self-expanding HashMap
 * Fixed issue #1519: Roots field in search index now always uses Whitespace analyzer (search index rebuild is required)
-* Fixed issue #1521: The change navigation dialog was having problems with special characters like '+' 
+* Fixed issue #1521: The change navigation dialog was having problems with special characters like '+'
 * Fixed issue #1522: Fixed problems with temporary file creation when the user does not have write permissions on the parent folder
 * Fixed issue #1523: Fixed implementation of the deprecated version of the CmsObject#importUser method
 * Fixed issue with validation errors using the display widget on boolean values
@@ -690,8 +2195,8 @@ OpenCms 7.0.2 - September 12, 2007
 * Fixed issue with anchor links in XML Pages
 * Fixed issue with imported overwriting files not being correctly published
 * Fixed issue with workplace AJAX requests not working in IE if ActiveX is disabled
-* Fixed issue with context menu sometimes appearing at the wrong position in the workplace explorer 
-* Fixed issue with aging request time in combination with date released in CmsObject instances stored by core classes 
+* Fixed issue with context menu sometimes appearing at the wrong position in the workplace explorer
+* Fixed issue with aging request time in combination with date released in CmsObject instances stored by core classes
 * Fixed issue with creating a new resource in a locked folder
 * Fixed issue with validating links during publishing while deleting several linked resources
 * Fixed issue with FCKeditor saving HTML contents in one long line
@@ -719,7 +2224,7 @@ OpenCms 7.0.2 - September 12, 2007
 ! Added a state column to the list of publish reports
 ! Added server time information to the new/edit schedule job dialog
 ! Added new database tool to remove publish locks
-! Added support for using %(property.XXX) in XML default values to the CmsDefaultXmlContentHandler 
+! Added support for using %(property.XXX) in XML default values to the CmsDefaultXmlContentHandler
 ! Added cause messages to inactive context menu entries to Explorer view
 ! Sites are now also sorted by the NavPos property
 ! Added I_CmsPermissionHandler that allows customization of VFS permissions
@@ -732,9 +2237,9 @@ OpenCms 7.0.1 - July 11, 2007
 * Fixed issue not displaying project state flag in explorer view when resources not locked
 * Fixed issue with lost relations on folders
 * Fixed issue being unable to edit permissions outside of the /system/ folder
-* Fixed issue with upload applet failing when uploading large amounts of files  
+* Fixed issue with upload applet failing when uploading large amounts of files
 - Added jdbc driver for MsSql
-* Fixed display issue with resources across sites in the show sibling and show relations dialogs 
+* Fixed display issue with resources across sites in the show sibling and show relations dialogs
 - Updated alkacon-simapi.jar to version 0.9.5, fixed an issue with scaling of screenshots
 * Fixed issue with history displaying control code for xmlpages and XML contents
 * Updated MySql driver to work with versions 4.0.x
@@ -765,7 +2270,7 @@ OpenCms 7.0.0 - July 4, 2007
 * Fixed NPE bug in flex cache
 * Fixed synchronization problem while merging two publish lists
 * Fixed bug in the login dialog with temporary disabled users
-- Improved publish dialog's robustness 
+- Improved publish dialog's robustness
 * Fixed bug validating links to folders during publishing
 * Publish project dialog now correctly returns to the explorer
 - Improved history dialog
@@ -780,7 +2285,7 @@ OpenCms 7.0.0 - July 4, 2007
 * Publish queue working in online project
 * Fixed NPE bug in the back-office html list
 * Fixed bug in the VFS file widget
-! New org.opencms.util.CmsHtmlStripper supports removing of all unwanted HTML tags in Strings. 
+! New org.opencms.util.CmsHtmlStripper supports removing of all unwanted HTML tags in Strings.
 ! Added configuration check for conflicting resource type ids or names
 * Fixed issue with Extra bytes at the end of files (e.g. classfiles) when importing with upload applet
 ! No direct edit buttons are shown if a temporary file is displayed
@@ -790,7 +2295,7 @@ OpenCms 7.0.0 - July 4, 2007
 * Fixed issue with publish queue persistence ignoring deleted resources to publish
 * Fixed issue with editor content scrambled after save, when top-folder content-encoding is set to non-default
 * Fixed issue with reading uncommitted changes if using transactions and separate database pools
-- Added update wizard for Oracle databases 
+- Added update wizard for Oracle databases
 * Fixed issue while deleting organizational units cleaning up projects
 * Fixed issue while deleting organizational units due to a missing event
 - Improved handling of inactive publish job threads
@@ -800,13 +2305,13 @@ OpenCms 7.0.0 - July 4, 2007
 ! History view now shows source code of jsp resources in plain text
 * Fixed issue that mixed up resources in two different sites where the name of one is prefix of the other
 ! Property activation / deactivation checkboxes are now always shown in property dialogs
-! Added new type "CmsXmlVarLinkValue" for XML contents, this is a link with either internal or external target 
-* Fixed issue with empty default resource name for XML content index pages when creating a folder 
+! Added new type "CmsXmlVarLinkValue" for XML contents, this is a link with either internal or external target
+* Fixed issue with empty default resource name for XML content index pages when creating a folder
 - Added file type description in new resource dialog
 - Added configuration feature to HTML-Widget: fullpage editing
 
 OpenCms 6.9.2 (aka 7.0 RC2) - June 6, 2007
-! Added context menue entry to get a two lists dialog to assign categories to a resource 
+! Added context menue entry to get a two lists dialog to assign categories to a resource
 ! Added new collector to retrieve a resource list for one or more given categories
 - Improved check for the availability of a VFS resource in the full text search component
 - Changed internal message buffer
@@ -817,7 +2322,7 @@ OpenCms 6.9.2 (aka 7.0 RC2) - June 6, 2007
 
 OpenCms 6.9.1 (aka 7.0 RC1) - May 2, 2007
 ! Historical publish reports are now stored in the publish job record, not in the file system
-! Reinitialization/Restart of pending jobs from the publish queue during startup is now configurable, 
+! Reinitialization/Restart of pending jobs from the publish queue during startup is now configurable,
   the amount of time the system waits for a running publish jub during shutdown is now configurable, also
 ! Publish queue and publish history are now persisted and based on buffers managed by memory monitor
   (i.e. after a restart, pending jobs (but not the job running during shutdown) are published after startup)
@@ -829,8 +2334,8 @@ OpenCms 6.9.1 (aka 7.0 RC1) - May 2, 2007
 * Fixed issue not detecting the workplace server URL as internal while adjusting links
 - Added some servlet options to ensure BEA WLS 9.x compatibility
 - Lock dialog is now able to hide and show the own locks
-- Cleaned database: Removed CONTENT_ID from content tables 
-- Added a type for property definitions at database and API level for future support of manageable link properties 
+- Cleaned database: Removed CONTENT_ID from content tables
+- Added a type for property definitions at database and API level for future support of manageable link properties
 - Added a content date to the CmsResource for improving the performance during publishing
 - Updated dialog for creating new resources
 * Added "search.exclude" property that allows exclusion of files (or folders) from the search index generation
@@ -856,7 +2361,7 @@ OpenCms 6.9.1 (aka 7.0 RC1) - May 2, 2007
 * Fixed issue in XML content creating localized default values in nested schemas using always english locale
 - Removed unfinished workflow implementation
 - Removed old unused editors (HtmlArea, Ledit and MSdhtml)
-* Fixed issue "Server Not Found" error (wrong redirect url) when displaying a resource online with apache and https configured. 
+* Fixed issue "Server Not Found" error (wrong redirect url) when displaying a resource online with apache and https configured.
 
 OpenCms 6.7.2 (aka 7.0 beta) - March 21, 2007
 * Move/Rename operation now uses filename translation like the "create new" operation
@@ -869,7 +2374,7 @@ OpenCms 6.7.2 (aka 7.0 beta) - March 21, 2007
 - Search index now stores the VFS type name of an indexed resource, this is also available in the search result bean
 - Ids of projects are no longer integers, UUIDs are now used. CMS_SYSTEMID table removed since no longer needed
 * Last timestamp field replaced by long, so are now backups always consistent along different database providers
-- Improved handling of project flags and type 
+- Improved handling of project flags and type
 * Fixed issue with upload applet showing a zip-error when unchecking all potential overwrites and 0 files remain
 - Improved publish permission check
 * Fixed issue #1323: 304 Not Modified Status not working because seconds were compared to milliseconds
@@ -905,7 +2410,7 @@ OpenCms 6.5.5 - December 14, 2006
 - Improved workplace search feature making the used search index and the search result view configurable
 - The deprecated legacy / compatibility packages have been removed from the distribution
 ! Redesigned publish process, adding a publish job queue and publish locks
-! The publish queue makes it possible to continue working without waiting for the publish job to finish and 
+! The publish queue makes it possible to continue working without waiting for the publish job to finish and
   the publish locks prevent that a file that is waiting to be published can be modified before it really gets published
 - Improved direct and project publish dialogs to fit the new publish process semantics
 ! The static export performance has been improved, by first writting to a temporary folder
@@ -919,12 +2424,12 @@ OpenCms 6.5.5 - December 14, 2006
 
 OpenCms 6.5.4 - November 27, 2006
 * Fixed error when searching in sites with uppercase letters in site path
-! Added some configuration options to the HTML Widget for structured contents: show buttons for table or image dialog, 
+! Added some configuration options to the HTML Widget for structured contents: show buttons for table or image dialog,
   use a CSS in the editor area, show the style selector for individual styles (for FCKeditor widget)
 * Fixed error when appending html extension to new resource
-- Extended the Account Management: Details for set permissions in group list and extended list for users in group 
+- Extended the Account Management: Details for set permissions in group list and extended list for users in group
 ! Added link management to JSP files using the new 'link' macro
-! Dependencies in JSP files because of <@include ...> tags will will now be detected if the new 'link.strong' macro 
+! Dependencies in JSP files because of <@include ...> tags will will now be detected if the new 'link.strong' macro
   is used to reference the include target - in this case the JSP will be updated if the included target has changed
 - Refactored link types in XML Content: 'reference' to 'weak' and 'attachment' to 'strong'
 - Updated lucene-core.jar to version 2.0.0
@@ -972,18 +2477,18 @@ OpenCms 6.5.4 - November 27, 2006
 - The CmsObject#createSibling method now returns the new created sibling to be consistent with the createResource method
 - The CmsObject#readResourcesWithProperty(String) method is now site dependent (as the others readResourcesWithProperty methods)
 - All CmsObject#readResourcesWithProperty methods now check read permissions for the given folder
-! Added function to switch the user out of the account management view. 
+! Added function to switch the user out of the account management view.
 ! Allow choice of stylesheet class for links in FCKeditor controlled by editor configuration "option.linkstyleinputs"
 ! Performance improvement for log file viewer admin tool
 
 OpenCms 6.5.3 - October 10, 2006
 * Fixed issue #1247: Display issue for multiple select boxes and help texts in IE
 ! History list optionally shows project name and description
-! New configuration option for initial checkbox state on new folder dialog in opencms-workplace.xml 
+! New configuration option for initial checkbox state on new folder dialog in opencms-workplace.xml
 ! Content tool for property change allows to set property values for resources that have an empty old value
 * Fixed javascript errror on workplace admin search dialog for internet explorer
 * Fixed issue with readResourcesWithProperty and getResourceInTimeRange not applying user permissions
-! Extended <cms:parse>/<cms:decorate> by attribute "noAutoCloseTags" for tag names that must not be auto-closed 
+! Extended <cms:parse>/<cms:decorate> by attribute "noAutoCloseTags" for tag names that must not be auto-closed
 * Workplace search tool generated invalid result links if current site is not root
 ! Temporary files are now invisible for members of the groups Users and Projectmanagers
 * Fixed issue #1229: Synchronisation settings are lost when user changes workplace preferences
@@ -1022,7 +2527,7 @@ OpenCms 6.5.3 - October 10, 2006
 
 OpenCms 6.5.2 - September 1st, 2006
 - Improved delete dialog
-* Writing an individual property does not change the shared resource state 
+* Writing an individual property does not change the shared resource state
 * Improved lock manager to avoid concurrent modifications
 * Fixed a number of issues introduced by fixing the issues reported by the "Findbugs" tool in 6.5.1
 
@@ -1043,7 +2548,7 @@ OpenCms 6.5.0 - August 21, 2006
 ! Added option to delete locales in XML content and page editor
 - Improved locking semantic, refactored "int" controls to CmsLockType instances
 ! New widget StringWidgetPlaintext that strips html tags from user input before storing
-! New widget TextareaWidgetPlaintext that strips html tags from user input before storing 
+! New widget TextareaWidgetPlaintext that strips html tags from user input before storing
 ! File upload button can now be removed based on the opencms-workplace.xml <show-fileuploadbutton> setting (boolean flag)
 ! Added "time warp" feature to the OpenCms Workplace
 
@@ -1100,7 +2605,7 @@ OpenCms 6.3.0 - May 2, 2006
 
 OpenCms 6.2.0 - March 31, 2006
 * Fixed issue #1105: Added entry for MS IE 7 in editor_configuration.xml
-* Fixed issue #1106: User name validation is now always using the same constraints 
+* Fixed issue #1106: User name validation is now always using the same constraints
 - Renamed most JSP pages in the workplace to *.jsp in order to better support JSP code editors (like Eclipse web tools)
 
 OpenCms 6.1.13 - March 27, 2006
@@ -1115,7 +2620,7 @@ OpenCms 6.1.11 - March 25, 2006
 * Fixed issue #1051: admin menu width is now adjusted during refresh
 * Fixed issue #1030: Detail issues fixed in the 'admin view' list
 * Detail issues fixed in the 'admin view' explorer list
-* Removed strict Javascript warnings in the admin view 
+* Removed strict Javascript warnings in the admin view
 * Fixed issues with PostgreSQL driver thanks to Ivan Codarin
 - Introducing the new OpenCms logo
 * Fixed issue #999: addCookie() and sendRedirect() can now be used on a JSP page
@@ -1151,7 +2656,7 @@ OpenCms 6.1.9 - March 13, 2006
   to easily create new web pages from from predefined paragraph layouts
 * Fixed localization issue in synchronisation JSP dialog
 
-OpenCms 6.1.8 (aka 6.2 beta) - February 9, 2006 
+OpenCms 6.1.8 (aka 6.2 beta) - February 9, 2006
 - Some improvements in decorator
 - Different validation rules for task titles
 - Some improvements for HTML converter
@@ -1183,7 +2688,7 @@ OpenCms 6.1.7 - January 18, 2006
 OpenCms 6.1.6 - December 13, 2005
 * Fixed issue in locale handler if non-existant resource has been requested
 * Fixed issue in FlexController that sometimes caused NPE errors during system startup
-! Added schema validation of <appinfo> node for XML content definitions that use the default content XML handler 
+! Added schema validation of <appinfo> node for XML content definitions that use the default content XML handler
 - Some improvements to handling of ACL/ACE entries
 * Fixed issue #997: Static export of scaled images don't work
 * Fixed issue in Simapi that causes bad quality when small thumbnails are generated
@@ -1281,7 +2786,7 @@ OpenCms 6.1.0 - October 4, 2005
 ! Added 'content nofification' function
 ! Added improved handling of user deletions in Account manager tool
 ! Added option to create default directories and export points in Module manager tool
-* Fixed issue with URI splitting causing an NPE if URI was invalid 
+* Fixed issue with URI splitting causing an NPE if URI was invalid
 ! Integrated WYSIWYG editor API for XML content html widgets
 ! Added configurable options to html widget to enable dialogs for link, anchor, galleries etc.
 * Fixed issue (using workaround) with lost image paths in HtmlArea editor widget after drag & drop
@@ -1296,7 +2801,7 @@ OpenCms 6.0.1 - September 14, 2005
 - Replaced use of "sendCmsRedirect" in Workplace with "sendForward" to reduce issues in IBM Websphere AS
 ! Property values can now be read and written as a list
 ! XML content mappings can map multiple occurences of a value to a property list value
-! For XML content values mapped to a property, the property is deleted if no value is available in the XML content 
+! For XML content values mapped to a property, the property is deleted if no value is available in the XML content
 - Added patch for use of CmsJspStatusBean with mod_jk contributed by Thorsten Ludewig
 ! Added resource collector to collect all files that have been "mapped" to another file
 ! Added "preload" option to <cms:contentload> tag for better control of displayed content
@@ -1307,13 +2812,13 @@ OpenCms 6.0.1 - September 14, 2005
 ! Search indexes are now incrementally updated after publishing of resoures if rebuild mode is "auto"
 ! Added methods to copy and move the content of a locale in XML pages or XML contents
 ! Added "site" parameter to Flex cache language for creating elements for a specific site only
-* Fixed issue in XML content so that "Articles"-"Article" node naming schema 
+* Fixed issue in XML content so that "Articles"-"Article" node naming schema
   is not longer required for creation of new content items
 * Fixed issue with client side caching of expired documents because of missing http headers
 * Fixed issue with display of historic resource versions in external programs (*.doc, *.pdf)
 * Fixed issue in external link checker if link is not a http link
 ! Added support for maxDB/sapDB contributed by Clovis Wichoski and Fabiano Rech
-* Included (experimental) fix to disable multiple setting of "Content-Type" header contributed by Jason Trump 
+* Included (experimental) fix to disable multiple setting of "Content-Type" header contributed by Jason Trump
 * Removed references to static user/group name variables, using only the methods that return the configurable names
 
 OpenCms 6.0.0 - June 30, 2005
@@ -1324,8 +2829,8 @@ OpenCms 6.0.0 - June 30, 2005
 - No more silly version "names", just numbers like 6.0.0
 * Fixed issue with HtmlArea widget converting &lt;a&gt; to <a>
 * Fixed issues with PostgreSQL thanks to Antonio Cores contribution
-* Fixed issue with user / date last modified being wrong after resource copy 
-* Fixed several issues in the English and German localization 
+* Fixed issue with user / date last modified being wrong after resource copy
+* Fixed several issues in the English and German localization
 * Fixed issue with logfile viewer box being too big
 * Fixed several issues with Templateone and demo modules
 * Fixed issue with direct edit buttons overlapping the headline text
@@ -1342,7 +2847,7 @@ OpenCms 5.9.2 Corrin (aka 6.0 RC 2) - June 17, 2005
 * Fixed issue that the synchronization report does not return to the workplace after clicking the 'ok'-button
 ! Tool for the (new) Administration to edit the synchronization settings
 - Update of the 'howto_workplace_translation' documentation and its localization tool to the new localization scheme
-! New module for the german localization of OpenCms 
+! New module for the german localization of OpenCms
 * Fixed issue with folders when moving a folder to it's own subfolder
 ! New JSP based login dialog
 ! A user account is now temporarily disabled for login after a configurable number of failed login attempts
@@ -1475,7 +2980,7 @@ OpenCms 5.7.1 Corrin (aka 6.0 beta 1) - February 21, 2005
 ! Added selector widget for XML content
 - Updated PDFbox for better results searching in PDF documents
 ! Added "contentcheck" tag to provide information about XML content loops
-! Paramaters to "contentload" tag can now be passed as macro variables, 
+! Paramaters to "contentload" tag can now be passed as macro variables,
   including properties, request parameters etc.
 ! Added support for paging of results from "contentload" tag
 * Fixed issue with stray locks of deleted new resources sticking in the lock manager
@@ -1491,7 +2996,7 @@ OpenCms 5.7.1 Corrin (aka 6.0 beta 1) - February 21, 2005
 OpenCms 5.5.4 Caladan (aka 6.0 alpha 3) - December 22, 2004
 * Fixed issue with search engine not correctly indexing pages based on non-ISO encoding
 ! Source code for the 'templateone' default module is now available in the src-modules CVS subfolder
-* Fixed issue with password change being broken in the user administration 
+* Fixed issue with password change being broken in the user administration
 * VFS resource types and Workplace context menus can now be added by a module
 - Configuration of default files moved to opencms-vfs.xml
 ! Modified VFS to allow multiple folder resource types
@@ -1499,8 +3004,8 @@ OpenCms 5.5.4 Caladan (aka 6.0 alpha 3) - December 22, 2004
 ! Added XML content handler interface for special action in the XML content lifecycle
 ! Default implementation of XML content handler is org.opencms.xml.content.CmsDefaultXmlContentHandler
 ! Resource "type change" dialog can now also change the type of a folder (e.g. to a gallery type)
-! Added new "Image gallery" dialog for WYSIWYG editor (also available as XML content widget) 
-* Fixed issue with deleted users or groups causing "orphan" ACE entries 
+! Added new "Image gallery" dialog for WYSIWYG editor (also available as XML content widget)
+* Fixed issue with deleted users or groups causing "orphan" ACE entries
  (causing NPE errors in the Workplace permission dialog)
 * Fixed issue with upload applet not working in root site "/"
 * Fixed issue with HTML comments in editor causing invalid HTML documents
@@ -1514,9 +3019,9 @@ OpenCms 5.5.4 Caladan (aka 6.0 alpha 3) - December 22, 2004
 - Optimized DB queries and index generation for MySQL
 * Fixed issue with "https" scheme not correctly working in site configuration
 ! Added support for the PostgeSQL database, thanks to Antonio Core for his contribution
-! Added new "Download gallery" dialog for WYSIWYG editor (also available as XML content widget) 
-! Added new "External link gallery" dialog for WYSIWYG editor (also available as XML content widget) 
-! Added new "HTML gallery" dialog for WYSIWYG editor (also available as XML content widget) 
+! Added new "Download gallery" dialog for WYSIWYG editor (also available as XML content widget)
+! Added new "External link gallery" dialog for WYSIWYG editor (also available as XML content widget)
+! Added new "HTML gallery" dialog for WYSIWYG editor (also available as XML content widget)
 ! XML content now allows variable mapping of XML content widgets to schema types
 ! Added support for language - country based locales in the Workplace
 ! Added support for nesting XML content definitions
@@ -1539,7 +3044,7 @@ OpenCms 5.5.3 Caladan (aka 6.0 alpha 2) - October 26, 2004
 ! XML content editor now allows "direct publish" from the editor
 * Fixed issue with link replace mode in XML content editor operating in the root site
 * Fixed issue with default XML default value creation not having an OpenCms context available
-! Added support for MySQL 4.1 
+! Added support for MySQL 4.1
 ! Added feature to set web application context name in web.xml (required e.g. for Jboss)
 ! Explorer "History" dialog with version information has been rebuild in JSP
 ! New "displayresource.jsp" replaced XML template based "show resource" file
@@ -1548,12 +3053,12 @@ OpenCms 5.5.2 Caladan - October 22, 2004
 ! Locale handler for the workplace has been made configurable
 * Fixed issue with translated module name not correctly written to log
 * Fixed issues with legacy master module permissions and history
-* Fixed issue with Lucene search query not working with "OR" logic 
+* Fixed issue with Lucene search query not working with "OR" logic
 * Fixed issue with old temporary file lock owned by wrong user
 * Fixed issue with cached page element in request attribute not being properly initialized
 ! Made XML content types configurable in opencms-vfs.xml
 ! Made XML content type filters configurable in opencms-vfs.xml
-! Added new tags "contentload", "contentcheck", "contentloop", "contentshow" to 
+! Added new tags "contentload", "contentcheck", "contentloop", "contentshow" to
   OpenCms JSP taglib for display of XML content in templates
 ! Added option "clean up after Copy&Paste from Word" to all XML page editors
 ! New "content-conversion" property allows automatic conversion of
@@ -1570,11 +3075,11 @@ OpenCms 5.5.2 Caladan - October 22, 2004
 
 OpenCms 5.5.1 Caladan (aka 6.0 alpha 1) - September 20, 2004
 ! Junit test suites now have nice display names
-* Improved "Cache-Control" headers by adding a "max-age=0" for all Workplace requests 
-  to prevent caching, this should allow operation with a browser 
+* Improved "Cache-Control" headers by adding a "max-age=0" for all Workplace requests
+  to prevent caching, this should allow operation with a browser
   setting "Check for new version of a page" of "Auto"
 ! Removed "CmsObject" member from CmsEvent
-! Added first implementation of XmlContent packages 
+! Added first implementation of XmlContent packages
 ! Refacored XmlPage to use the same code as XmlContent objects where possible
 ! Changed validation for XmlPage from DTD to W3C XML schema
 ! Changed DB schema: "FILES" tables are now named "CONTENT"
@@ -1614,7 +3119,7 @@ OpenCms 5.3.6 Ix - August 2, 2004
 ! Additional methods for creation of a user in a well defined context added
 - Configuration of static export moved from opencms.properties to opencms-importexport.xml
 - Improved the JavaDocs
-- Officially deprecated everything in com.opencms.* 
+- Officially deprecated everything in com.opencms.*
 ! New module mechanism in package org.opencms.module
 ! Modules are now Objects of type CmsModule
 ! Modules are now managed by a CmsModuleManager
@@ -1627,7 +3132,7 @@ OpenCms 5.3.6 Ix - August 2, 2004
 - CmsRegistry moved to package com.opencms.legacy and deprecated (likley to be fully deleted soon)
 - Access to registry now through CmsRegistry singleton, not longer through OpenCms object
 ! Implemented writing of new XML configuration after a configuration change
-! The FlexCache can now generate variations for session attributes, 
+! The FlexCache can now generate variations for session attributes,
   use "session=(a,b)" as cache property values
 
 OpenCms 5.3.5 Ix - June 16, 2004
@@ -1639,18 +3144,18 @@ OpenCms 5.3.5 Ix - June 16, 2004
 ! All editors now ensure that the selected encoding/charset is used for
   the content, if chars are not available these are escaped with HTML entities
 ! If the encoding property of a file is changed, all HTML entities that are
-  available in the new encoding are converted to characters and vice versa  
+  available in the new encoding are converted to characters and vice versa
 ! Elements available in the control file but not declared using the template-elements
-  property are now also displayed in the editor element selection 
+  property are now also displayed in the editor element selection
 ! If a template property points to a template that is not located in a 'regular'
-  template folder, this template is now added to the template selection as well  
-! Added 'update workplace' event to re-initialize the Workplace after changes are made  
+  template folder, this template is now added to the template selection as well
+! Added 'update workplace' event to re-initialize the Workplace after changes are made
 ! Resource locales are now cached
-* Fixed issue with galleries not working when in root site  
+* Fixed issue with galleries not working when in root site
 * Fixed issue with NPE in CmsXmlPage.initBookmarks() method
 * If a xmlPage is read from a CmsFile, the byte array is now directly used for the
   generation of the xml document (fixing an encoding issue)
-! All user Workplace preferences are now fully configurable 
+! All user Workplace preferences are now fully configurable
   in the opencms-workplace.xml file
 * The "internal use only" flag has been placed on the permission dialog again
 - Refactored package org.opencms.page to org.opencms.xml.page
@@ -1659,7 +3164,7 @@ OpenCms 5.3.5 Ix - June 16, 2004
 ! Added Junit test setup for OpenCms VFS tests
 ! Added a couple of initial Junit test cases for the CmsObject
 ! Added target "unittests" to build.xml to execute all OpenCms Junit tests
-- Now using dom4j 1.5 (beta2) because version 1.4 apparently has issues in CDATA handling 
+- Now using dom4j 1.5 (beta2) because version 1.4 apparently has issues in CDATA handling
 - Added jaxen as separate jar (jaxen-1.1-beta-2.jar) since it is not longer included in dom4j.jar
 - Now using the latest htmlparser version 1.41
 * Fixed issue with links that contain escaped characters like '%20'
@@ -1673,7 +3178,7 @@ OpenCms 5.3.5 Ix - June 16, 2004
 ! "Release Date" and "Expire Date" are now also displayed in the OpenCms Explorer
 - Property definitions are now shared among ALL resources, not per resource type
 - Improved locale handling in XmlPage
-- Added "Cache-Control" "must-revalidate" for all Workplace requests to prevent caching, this 
+- Added "Cache-Control" "must-revalidate" for all Workplace requests to prevent caching, this
   should allow operation with a browser setting "Check for new version of a page" of "Auto"
 * Better error message when file upload size is exceeded
 ! Added setting in user preferences "Start with site" and "Start in folder"
@@ -1689,28 +3194,28 @@ OpenCms 5.3.4 Ix - April 14, 2004
 ! Added new package org.opencms.configuration that will hold
   all new XML configuration classes
 ! New XML configuration is split into separate files,
-  one file for each configuration class  
+  one file for each configuration class
 ! New XML configuration is read by Apache Digester
 ! New XML configuration is DTD validated when it's read,
   each configuration class can have it's own DTD
 ! VFS configuration moved to new "opencms.xml" configuration
 ! Import / Export configuration moved to new XML configuration
-! Import now supports conversion of multiple page bodies to xmlpage elements  
+! Import now supports conversion of multiple page bodies to xmlpage elements
 ! Workplace configuration moved to new XML configuration
 ! System configuration moved to new XML configuration
-- Improved state handling for the Workplace, so that e.g. "Cancel" and "Ok" 
+- Improved state handling for the Workplace, so that e.g. "Cancel" and "Ok"
   buttons on dialogs can always restore the previous screen state
 ! Configuration of resource types is now done in XML configuration,
-  this includes context menus entries which are not longer generated by 
+  this includes context menus entries which are not longer generated by
   the files in the /system/wokplace/restypes folder
 ! Simplified the "aaaa dddd" etc. states of the context menu entries,
   only 2 + 3 blocks are left (was 2 + 8 or so)
 ! New XML configuration generates automatic backup on system start
 ! Improved "New Resource" wizard in the JSP Workplace
-- Handling of "Cancel" and "Ok" Buttons improved in the JSP Workplace 
+- Handling of "Cancel" and "Ok" Buttons improved in the JSP Workplace
 ! Added commons-fileupload package for multipart request handling
   in the JSP workplace
-! Added loader implementations for improved handling of "304 - Not Modified" 
+! Added loader implementations for improved handling of "304 - Not Modified"
   response for "If-Modified-Since" requests (this item was on the TODO list for 2 years!)
 ! XmlPages are now correctly cached in the Flex cache
 ! New "direct publish" (+d) permission allows user to directly publish
@@ -1718,13 +3223,13 @@ OpenCms 5.3.4 Ix - April 14, 2004
 ! Properties can now be attached either to the resource or the structure
   record, so that siblings can optionally share properties
 - Properties are not longer of type String but of type CmsPropety,
-  String signature methods still exists but will be deprecated  
+  String signature methods still exists but will be deprecated
 ! Static export "on publish" re-implemented using new and improved handling
-! Static export now atomatically detects changes in dependency resources, e.g. if 
+! Static export now atomatically detects changes in dependency resources, e.g. if
   one entry in the navigation changes it will export all pages that use this navigation
-! Static export can also be triggered with a button in the Administration for a 
-  "full static render" export of the complete website  
-! During setup, the output visible for the workplace import is now written 
+! Static export can also be triggered with a button in the Administration for a
+  "full static render" export of the complete website
+! During setup, the output visible for the workplace import is now written
   to a "setup.log" file
 
 OpenCms 5.3.3 Ix - March 01, 2004
@@ -1737,7 +3242,7 @@ OpenCms 5.3.3 Ix - March 01, 2004
 ! Improved the CmsShell, providing direct access to the CmsObject
 - Rewrote import routines, import now uses dom4j Xml API
 - Setup wizard: Updated to use new Workplace layout
-! Setup wizard: Added new database selection scheme, 
+! Setup wizard: Added new database selection scheme,
   so that additional DBs can be more easily be integrated into the setup
 ! Setup wizard: Added facility to select modules during installation
 ! Setup wizard: Improved help, addded context help
@@ -1767,14 +3272,14 @@ OpenCms 5.3.1 Ix - January 23, 2004
 ! Workplace reports now feature a "simple" mode that can be switched with a "Details..." button
 ! New linkchecker for XmlPages added that finds broken links in an XmlPage
 ! Removed old linkcheck code since it didn't work as expected anyway
-! Re-implemented all Workplace Editors in JSP 
+! Re-implemented all Workplace Editors in JSP
 ! Improved special property screen for XmlPages, also used in all Editors
 ! Updated v2 import so that XmlTemplate based page files are converted to new xmlpage type
 * Fixed backward compatiblity issues for XmlTemplate mechanism
 
 OpenCms 5.3.0 Ix - December 11, 2003
 ! User preferences dialog now JSP based
-! Added new resource type "xmlpage" 
+! Added new resource type "xmlpage"
 ! New XML page API (still in development)
 ! New XMl page API features support for multiple languages
 ! Editors for the new xmlpage are JSP based
@@ -1800,7 +3305,7 @@ OpenCms 5.1.12 Salusa Secundus - November 10, 2003
 ! Interface for overwriting the dialogs in the JSP workplace
 - Added dependency to Apache Commons Collections
 - Replaced CmsLruHashMap with LRUMap from Commons Collections
-- Replaced Collecitons and ExtendedProperties from source.apache tree 
+- Replaced Collecitons and ExtendedProperties from source.apache tree
   with ExtendedProperties from Commons Collections
 - Removed source.apache code tree
 * Fixed Workplace "show resources that changed in a project" function
@@ -1810,8 +3315,8 @@ OpenCms 5.1.12 Salusa Secundus - November 10, 2003
 OpenCms 5.1.11 Salusa Secundus - October 09, 2003
 ! Added first version of handler interface in org.opencms.main package
 * Fixed issues regarding resource project state during module import / publish
-! Added site selector in JSP file tree dialog for linking to other sites 
-! Import now supports import of files from a folder, not only 
+! Added site selector in JSP file tree dialog for linking to other sites
+! Import now supports import of files from a folder, not only
   from ZIP file
 ! Automatic VFS link conversion for links of 5.0.x in import version 2
 - Improvements in the new static export handling siblings,
@@ -1821,14 +3326,14 @@ OpenCms 5.1.11 Salusa Secundus - October 09, 2003
 ! Implemented improved behaviour for folder rename in Offline project
 * Rewrote VFS, COS and module export to use the dom4j API,
   this should take care of the dreaded "out-of-memory" error when exporting a large data set
-! Added "ip" key as FlexCache parameter, this enables caching of resources depending 
+! Added "ip" key as FlexCache parameter, this enables caching of resources depending
   on the remote ip address of a request
 - Improved some of the logging statements in the code (still a lot of work to do)
 ! Logging in OpenCms now uses the commons-logging package from Apache Jarkarta
 ! By default, OpenCms now uses log4j to generate log files
   The provided configuration specifies logfile rotation if log becomes larger then 2 mb
 - Rewrote / Renamed / Refactores several methods for a more consistent API
-- Improved JavaDocs 
+- Improved JavaDocs
 * "Create New Link" dialog now automatically fills the target name
 
 OpenCms 5.1.10 Salusa Secundus - September 10, 2003
@@ -1837,7 +3342,7 @@ OpenCms 5.1.10 Salusa Secundus - September 10, 2003
 ! Added CmsThreadStore for workplace report Threads
 ! Links to special folders are shown as labled in the explorer
 * More bug fixes for certain rare VFS use case scenarios
-- Rewrote report packages and worker threads 
+- Rewrote report packages and worker threads
 
 OpenCms 5.1.9 Salusa Secundus - September 03, 2003
 * XMLTemplate content was not updated after a publish
@@ -1850,14 +3355,14 @@ OpenCms 5.1.8 Salusa Secundus - August 28, 2003
 - Several performance improvements by optimized DB indexing and advanced caching
 ! Improved handling of file modification user and time information, this is now
   updated only if the file content is really changed, not when a folder is renamed etc.
-! OpenCms is now loaded when the servlet context is loaded, not when the servlet is 
+! OpenCms is now loaded when the servlet context is loaded, not when the servlet is
   called for the first time
 ! The Workplace explorer tree now loads the tree incrementally to improve performance
-- Added new Apache commons DBCP pool version to allow prepared statement pooling 
-! The names of the default users and groups (e.g Admin/Administrators) 
+- Added new Apache commons DBCP pool version to allow prepared statement pooling
+! The names of the default users and groups (e.g Admin/Administrators)
   are now configurable in opencms.properties
 - Several performance optimizations after some profiling sessions
-- Renamed /WEB-INF/export folder to /WEB-INF/packages to avoid confusion with 
+- Renamed /WEB-INF/export folder to /WEB-INF/packages to avoid confusion with
   static export /export folder
 ! New version of static export implemented in package org.opencms.staticexport
 ! New structure of the "main" classes in package org.opencms.main
@@ -1869,27 +3374,27 @@ OpenCms 5.1.7 Salusa Secundus - August 14, 2003
 * Fixed more issues regarding the new VFS database stucture
 
 OpenCms 5.1.6 Salusa Secundus - August 8, 2003
-! New feature in opencms.properties allows free naming of default groups / users 
+! New feature in opencms.properties allows free naming of default groups / users
 ! Export version set to 4, new format for the export, older versions are still supported
 * Fixed more issues regarding the new locking mechanism
 * Fixed more issues regarding the new VFS database stucture
 
 OpenCms 5.1.5 Salusa Secundus - August 4, 2003
-! Introduced org.opencms.security.CmsSecurityException 
+! Introduced org.opencms.security.CmsSecurityException
 ! Most of the new site management features are implemented
 * Fixed several issues regarding the new locking mechanism
 * Fixed several issues regarding the new VFS database stucture
 
 OpenCms 5.1.4 Salusa Secundus - July 22, 2003
-! Export version set to 3, new format for the export, older versions 
-  (up to 2) are still supported and will automatically convert the 
+! Export version set to 3, new format for the export, older versions
+  (up to 2) are still supported and will automatically convert the
   pages to the new format, i.e. convert resource type of "page" to "newpage"
-- Moved all access to the legacy "element cache" from the 
+- Moved all access to the legacy "element cache" from the
   CmsRequestContext to the CmsXmlTemplate loader
 - The old resource type "link" is now called "pointer"
 - Added export() methof to launcher interface for static export
 - Improved loading of resources when requested by the user,
-  improved the ResourceLoader interface, added new 
+  improved the ResourceLoader interface, added new
   package org.opencms.loader and removed all the Launcher classes
 - Removed legacy session failover (was never used anyway)
 - Removed legacy http streaming (was never used anyway)
@@ -1899,51 +3404,51 @@ OpenCms 5.1.4 Salusa Secundus - July 22, 2003
 - Improved format in the registry.xml for declaring ResourceTypes and ResourceLoaders
 - Improved handling of ResourceLoaders in CmsLauncherManager
 - Improved handling of ResourceTypes in CmsObject and CmsDriverManager
-- Refactored and improved all implementations of I_CmsResourceType 
+- Refactored and improved all implementations of I_CmsResourceType
 ! Added new resource type "newpage" for pages without traditional bodies
 - Removed chown / chgrp / chmod in resource type interface because of new ACL logic
 - OpenCms export version set to 3
-- Added optional saving of XMLTemplate body files directly in 
+- Added optional saving of XMLTemplate body files directly in
   the VFS structure without the need of the "control file"
 ! Added initial functionalty for multiple site management to the OpenCms core
-! Rewrote the "Synchronize" mechanism between VFS - FS to better deal with 
+! Rewrote the "Synchronize" mechanism between VFS - FS to better deal with
   more complex change scenarios and deleted files
 - Further improvements in the JSP workplace,
-  operations "copy", "move", "rename", "delete", "change permissions", 
+  operations "copy", "move", "rename", "delete", "change permissions",
   "change navigation", "touch" now fully functional
 - Database schema change for revised data in resources table,
   "Owner", "Group" and "Access flags" removed because of new ACL,
-  added "user who created" 
+  added "user who created"
 
 OpenCms 5.1.3 Salusa Secundus - July 7, 2003
 - OpenCms 5.1.3 is a development version.
-  The OpenCms core is currently undergoing heavy changes. 
+  The OpenCms core is currently undergoing heavy changes.
   This development version is known as unstable.
-  Users looking for updates or improvements of OpenCms 5.0.0 should use the 
-  "branch_5_0_x" CVS branch until further notice. 
+  Users looking for updates or improvements of OpenCms 5.0.0 should use the
+  "branch_5_0_x" CVS branch until further notice.
 - Further improvements in the JSP workplace
 - Fixed several issues related to the new VFS database structure
 
 OpenCms 5.1.2 Salusa Secundus - July 2, 2003
 - OpenCms 5.1.2 is a development version.
-  The OpenCms core is currently undergoing heavy changes. 
+  The OpenCms core is currently undergoing heavy changes.
   This development version is known as unstable.
-  Users looking for updates or improvements of OpenCms 5.0.0 should use the 
-  "branch_5_0_x" CVS branch until further notice. 
+  Users looking for updates or improvements of OpenCms 5.0.0 should use the
+  "branch_5_0_x" CVS branch until further notice.
 ! ACL based permission system now functional
 - Updated Import / Export to include ACL permissions
 - Further improvements in the JSP workplace
-- Added external JARs to the CVS tree for easier upgrading and installing 
+- Added external JARs to the CVS tree for easier upgrading and installing
 ! Split resource table in structure and resource table
 - Refactored database access and security packages to org.opencms.* name
 - Improved source code quality in some classes with Checkstyle
 
 OpenCms 5.1.1 Salusa Secundus - June 13, 2003
 - OpenCms 5.1.1 is a development version.
-  The core is currently undergoing heavy changes. 
+  The core is currently undergoing heavy changes.
   This development version is known as unstable.
-  Users looking for updates or improvements of OpenCms 5.0.0 should use the 
-  "branch_5_0_x" CVS branch until further notice. 
+  Users looking for updates or improvements of OpenCms 5.0.0 should use the
+  "branch_5_0_x" CVS branch until further notice.
 ! Initial version of JSP based workplace classes
 ! Initial version of ACL based permission system
 - Allowed changing of file type to JSP
@@ -1962,11 +3467,11 @@ OpenCms 5.1.1 Salusa Secundus - June 13, 2003
 
 OpenCms 5.1.0 Salusa Secundus
 * Applied fix to bug #15 contributed by ulrich.rueth@gmx.de
-! Inroduced first version of I_CmsUserAccess 
-! Splitted VFS and user management code from CmsDbAccess classes 
+! Inroduced first version of I_CmsUserAccess
+! Splitted VFS and user management code from CmsDbAccess classes
 - The OpenCms 5.1.x version are development versions only.
-  Users looking for updates or improvements of OpenCms should use the 
-  "branch_5_0_x" CVS branch until further notice. 
+  Users looking for updates or improvements of OpenCms should use the
+  "branch_5_0_x" CVS branch until further notice.
 
 OpenCms 5.0.0 (5.0 final) Kaitain - May 05, 2003
 ! Added "import.immutable.resources" setting to opencms.properties, all resources
@@ -1983,7 +3488,7 @@ OpenCms 5.0.0 (5.0 final) Kaitain - May 05, 2003
 ! Implemented "module replacement", if a module is uploaded that already exists in the system,
   the existing module is updated (simple type modules only)
 ! Default user preferences can now be set in opencms.properties
-! Improved "new module" options, it's now possible to select if exportable 
+! Improved "new module" options, it's now possible to select if exportable
   "classes/" and/or "lib/" folders should be created for the module
 ! Updated and improved english workplace online help is now available as a separate module "org.opencms.help.en"
 * Database field sizes for user, group and project names have been increased to 64 characters
@@ -1991,13 +3496,13 @@ OpenCms 5.0.0 (5.0 final) Kaitain - May 05, 2003
 * Fixed issue with JSP static export not always restoring the previous URI context
 * Fixed compatibility issues with MySQL 4.0.x, OpenCms now supports MySQL 4.0.x
 * Fixed issue #56: Links in "Text" pages edited with the WYSIWYG "Edit as HTML"
-* Fixed issue with hardcoded servlet context path in <edittemplate>, it's now possible to 
+* Fixed issue with hardcoded servlet context path in <edittemplate>, it's now possible to
   rename the servlet context and the images still work in the editor
 * Fixed issue #55 from Bugzilla (compatibility.support.oldlocales not working if no new modules installed)
 * Fixed issue where an absolute link to the local machine with an URI outside of OpenCms
   was incorrectly treated as an OpenCms internal link by the link replacement engine
 - Improved handling of cached properties in the CmsResourceBroker
-- Deleted CmsCache and CmsResourceCache and replaced them with CmsLruHashMap, 
+- Deleted CmsCache and CmsResourceCache and replaced them with CmsLruHashMap,
   also replaced a lot of Hashtable uses with Map
 - Added automatic forced exclusion of system folders for module import
 - Improved source code quality by removing unused method parameters in most (but not all) packages
@@ -2008,23 +3513,23 @@ OpenCms 5.0.0 (5.0 final) Kaitain - May 05, 2003
 - Workplace now adopts to the systems default encoding if possible instead of using only the encoding
   set in the localization file
 - Removed unused private methods and member variables in all classes
-- JSP are now stored with real path names in the jsp/ subdirectory  
+- JSP are now stored with real path names in the jsp/ subdirectory
 - When exporting a module the modules "uploadeddate" and "uploadedby" registry information is discarded
-- Added global method getOpenCmsContext() in com.opencms.core.A_OpenCms for universal access to the 
+- Added global method getOpenCmsContext() in com.opencms.core.A_OpenCms for universal access to the
   servlet context and servlet name
 - Some final touches where added to the JSP / XMLTemplate integration for easier including of sub - elements
   or multiple body pages in JSP templates
 - Updated OpenCms TLD for modified options of the <cms:include> tag
-- The "bodyloader" for the JSP / XMLTemplate integration is now a default part of the installation, 
+- The "bodyloader" for the JSP / XMLTemplate integration is now a default part of the installation,
   located in the new /system/shared/ directory
 - Improved logging output if OpenCms is initialized
 
 OpenCms 5.0 "release candidate" (rc) 2  Kaitain - 04 February 2003
-! Improved editor GUI (for both source code and WYSIWYG editor) 
-! The setup wizards now checks for the correct setting of the Java file.encoding 
+! Improved editor GUI (for both source code and WYSIWYG editor)
+! The setup wizards now checks for the correct setting of the Java file.encoding
 ! The com.opencms.flex.jsp.CmsJspNavElement now provides direct access to all properties of a file
 * Fixed issue #54 from Bugzilla (bodyselector not always working in editor)
-* Fixed issue with download galleries not displaying the file type icon 
+* Fixed issue with download galleries not displaying the file type icon
 * Fixed issue with cache setting causing binary document types (like *.doc, *.pdf) not to display in the offline project
 * Fixed various issues regarding the character encoding, as a result it is now possible to use any encoding,
   not just UTF-8 as with previous releases
@@ -2037,11 +3542,11 @@ OpenCms 5.0 "release candidate" (rc) 2  Kaitain - 04 February 2003
 - The online help is now a separate upload module (is currently available only in German and needs an update anyway)
 - The default character encoding for a new OpenCms installation is now ISO-8859-1
 - Improved the OpenCms logfile output during startup
-- The proprietary XML style localization for the workplace has been replaced by standard java.util.ResourceBundles and 
+- The proprietary XML style localization for the workplace has been replaced by standard java.util.ResourceBundles and
   support of it is disabled by default (can be enabled in opencms.properties with the "compatibility.support.oldlocales" flag)
 - The Italian locale has been moved to a separate module "com.opencms.locales.it" and is
   not longer part of the core distribution as we have no resources to continually update it
-- All ResourceBundles for localization have been combined in 
+- All ResourceBundles for localization have been combined in
   com/opencms/workplace/workplace.properties for easier translation
 - Improved language handling in workplace.CmsNewExplorerFileList, current Workplace language now stored in session
 - Removed errors in JavaDocs and added package.html to all packages
@@ -2049,7 +3554,7 @@ OpenCms 5.0 "release candidate" (rc) 2  Kaitain - 04 February 2003
 
 OpenCms 5.0 "release candidate" (rc) 1  Kaitain - 18 December 2002
 ! Added report output for module management (import / export / delete)
-! Report output is now localized 
+! Report output is now localized
 ! Static export for JSP pages and JSP based templates added
 ! Help system will now look up if a directory for the current locale exists and display the "online help" button only in this case
 ! Preference panel for startup options will not display language selection if only one locale directory exists
@@ -2063,7 +3568,7 @@ OpenCms 5.0 "release candidate" (rc) 1  Kaitain - 18 December 2002
 * JSP based templates now work when linked to in the VFS
 * Improved spelling for English language locale
 * The gallery contents are exported even if "exclude system folder" is checked in export dialog
-* Added entry for a modules  "publish class" on the workplace dialog when creating a new module 
+* Added entry for a modules  "publish class" on the workplace dialog when creating a new module
 * Fixed template selection issue when creating a new page
 * Fixed issue with response.setContentType() in JSP pages
 - The "empty" template and "empty" page body are now part of a module "org.opencms.default" which is imported during setup
@@ -2071,15 +3576,15 @@ OpenCms 5.0 "release candidate" (rc) 1  Kaitain - 18 December 2002
 - Attribute "part" in the <cms:template> and <cms:include> tags has been renamed to "element"
 - Added Ant 1.5 support for build.xml (thanks to Thorsten Guenther for the patch)
 - WYSIWYG editor now tries to preserve the HTML source code formatting
-- WYSIWYG editor now uses the "script save" variation of the control, 
-  so it should not longer be necessary to change IE security settings for this editor 
+- WYSIWYG editor now uses the "script save" variation of the control,
+  so it should not longer be necessary to change IE security settings for this editor
   (note: it is still required for the LEdit text editor)
 - Changed behaviour for deleted files that reside in a folder that is locked:
   Now the file is also shifted to the current project where the lock is applied,
   old behaviour was to stay in the project where it was deleted in
 - Improved report output for actions like "publish", "export" etc. with nicer html,
   also improved the report templates and some of the workplace classes dealing with the reports
-- Added all default directories (like "/system/") to the exclude-list in the module import 
+- Added all default directories (like "/system/") to the exclude-list in the module import
 - Modules are now exported to and read from /WEB-INF/export/modules/ (was /WEB-INF/export/ before)
 - Some cleanup of code comments
 - Removed unnecessary imports and non-static access to static resources in all classes
@@ -2087,11 +3592,11 @@ OpenCms 5.0 "release candidate" (rc) 1  Kaitain - 18 December 2002
 OpenCms 5.0 beta 2 Kaitain - 11 November 2002
 ! Default index.jsp "welcome to OpenCms" page is now included in a new installation
 ! New class "com.opencms.flex.jsp.CmsJspActionBean" to access taglib features through JSP scriplet code
-! New "replace" feature in Workplace Explorer and CmsObject, it's now possible to replace 
+! New "replace" feature in Workplace Explorer and CmsObject, it's now possible to replace
   e.g. an image in the VFS by an uploaded image with a different name directly, keepig the VFS name and file properties
 ! If an uploaded file already exists, you are now asked if you want to overwrite it (instead of OpenCms throwing an exception)
 ! New "touch" feature in Workplace Explorer and CmsObject
-! New "file name translation" feature automatically replaces illegal chars (e.g. space, ? or &) in 
+! New "file name translation" feature automatically replaces illegal chars (e.g. space, ? or &) in
   uploaded file names (also in extracted ZIP files). Replacement rules can be set in opencms.properties.
 ! The default file name for a directroy can now be defined in opencms.properties and in the folder property "default-file"
 ! 5.0 VFS file structure in place (see todo.txt)
@@ -2125,7 +3630,7 @@ OpenCms 5.0 beta 2 Kaitain - 11 November 2002
 - Changed the workplace stylesheet to fix problems displaying german umlauts. Thanks to www.gridnine.com
   for this contribution.
 - Handling of default file names (e.g. "index,html") has changed: If a  default file was found it is now returned directly
-  by OpenCms. In previous versions a redirect to "index.html" was send. This redirect is NOT longer send. 
+  by OpenCms. In previous versions a redirect to "index.html" was send. This redirect is NOT longer send.
 - Some cleanup of code and JavaDoc documentation in packages *.core and *.flex
 
 OpenCms 5.0 beta 1 Kaitain - 23 August 2002

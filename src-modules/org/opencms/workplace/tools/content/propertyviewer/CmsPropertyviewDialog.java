@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -14,12 +14,12 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * Lesser General Public License for more details.
  *
- * For further information about Alkacon Software GmbH, please see the
- * company website: http://www.alkacon.com
+ * For further information about Alkacon Software GmbH & Co. KG, please see the
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -32,8 +32,10 @@ import org.opencms.file.CmsPropertyDefinition;
 import org.opencms.jsp.CmsJspActionElement;
 import org.opencms.main.CmsException;
 import org.opencms.main.CmsLog;
+import org.opencms.util.CmsStringUtil;
 import org.opencms.widgets.CmsCheckboxWidget;
 import org.opencms.widgets.CmsDisplayWidget;
+import org.opencms.widgets.CmsInputWidget;
 import org.opencms.widgets.CmsSelectWidget;
 import org.opencms.widgets.CmsVfsFileWidget;
 import org.opencms.workplace.CmsWidgetDialog;
@@ -61,7 +63,7 @@ import org.apache.commons.logging.Log;
 /**
  * Widget dialog that collects the options for the property view.
  * <p>
- * 
+ *
  * @since 7.5.1
  */
 public class CmsPropertyviewDialog extends CmsWidgetDialog {
@@ -69,7 +71,7 @@ public class CmsPropertyviewDialog extends CmsWidgetDialog {
     /**
      * The settings bean for this dialog.
      * <p>
-     * 
+     *
      */
     public class CmsPropertyviewDialogSettings {
 
@@ -81,6 +83,9 @@ public class CmsPropertyviewDialog extends CmsWidgetDialog {
 
         /** The properties to show. */
         private List<String> m_properties = new LinkedList<String>();
+
+        /** The value of the property to search. */
+        private String m_propValue;
 
         /** If true siblings will also be inspected. */
         private boolean m_showSiblings;
@@ -121,6 +126,16 @@ public class CmsPropertyviewDialog extends CmsWidgetDialog {
         }
 
         /**
+         * Returns the value of the property to search.<p>
+         *
+         * @return the property value
+         */
+        public String getPropValue() {
+
+            return m_propValue;
+        }
+
+        /**
          * @return the showSiblings
          */
         public boolean isShowSiblings() {
@@ -150,6 +165,16 @@ public class CmsPropertyviewDialog extends CmsWidgetDialog {
         public void setProperties(final List<String> properties) {
 
             m_properties = properties;
+        }
+
+        /**
+         * Sets the property value to search.<p>
+         *
+         * @param propValue the property value to set
+         */
+        public void setPropValue(String propValue) {
+
+            m_propValue = propValue;
         }
 
         /**
@@ -187,12 +212,15 @@ public class CmsPropertyviewDialog extends CmsWidgetDialog {
     /**
      * Public constructor with JSP variables.
      * <p>
-     * 
+     *
      * @param context the JSP page context
      * @param req the JSP request
      * @param res the JSP response
      */
-    public CmsPropertyviewDialog(final PageContext context, final HttpServletRequest req, final HttpServletResponse res) {
+    public CmsPropertyviewDialog(
+        final PageContext context,
+        final HttpServletRequest req,
+        final HttpServletResponse res) {
 
         this(new CmsJspActionElement(context, req, res));
 
@@ -208,10 +236,12 @@ public class CmsPropertyviewDialog extends CmsWidgetDialog {
         List<Throwable> errors = new ArrayList<Throwable>();
         Map<String, String[]> params = new HashMap<String, String[]>();
         List<String> paths = m_settings.getPaths();
-        params.put(CmsPropertyviewList.PARAM_RESOURCES, (String[])paths.toArray());
+        params.put(CmsPropertyviewList.PARAM_RESOURCES, new String[] {CmsStringUtil.listAsString(paths, ",")});
         List<String> props = m_settings.getProperties();
-        params.put(CmsPropertyviewList.PARAM_PROPERTIES, (String[])props.toArray());
+        params.put(CmsPropertyviewList.PARAM_PROPERTIES, new String[] {CmsStringUtil.listAsString(props, ",")});
         params.put(CmsPropertyviewList.PARAM_SIBLINGS, new String[] {String.valueOf(m_settings.isShowSiblings())});
+        // value to search in property
+        params.put(CmsPropertyviewList.PARAM_PROPERTY_VALUE, new String[] {m_settings.getPropValue()});
         // set style to display report in correct layout
         params.put(PARAM_STYLE, new String[] {CmsToolDialog.STYLE_NEW});
         // set close link to get back to overview after finishing the import
@@ -243,7 +273,7 @@ public class CmsPropertyviewDialog extends CmsWidgetDialog {
 
         // create export file name block
         result.append(createWidgetBlockStart(key(Messages.GUI_PROPERTYVIEW_ADMIN_TOOL_BLOCK_0)));
-        result.append(createDialogRowsHtml(0, 3));
+        result.append(createDialogRowsHtml(0, 4));
         result.append(createWidgetBlockEnd());
 
         // close table
@@ -260,27 +290,43 @@ public class CmsPropertyviewDialog extends CmsWidgetDialog {
 
         setKeyPrefix(KEY_PREFIX);
 
-        addWidget(new CmsWidgetDialogParameter(
-            m_settings,
-            "message",
-            key(Messages.GUI_MODULES_DETAIL_DIALOG_MESSAGE_0),
-            PAGES[0],
-            new CmsDisplayWidget(),
-            1,
-            1));
-        addWidget(new CmsWidgetDialogParameter(m_settings, "paths", "/", PAGES[0], new CmsVfsFileWidget(
-            false,
-            getCms().getRequestContext().getSiteRoot()), 1, CmsWidgetDialogParameter.MAX_OCCURENCES));
-        addWidget(new CmsWidgetDialogParameter(m_settings, "properties", "/", PAGES[0], new CmsSelectWidget(
-            getPropertySelectWidgetConfiguration()), 1, CmsWidgetDialogParameter.MAX_OCCURENCES));
-        addWidget(new CmsWidgetDialogParameter(
-            m_settings,
-            "showSiblings",
-            String.valueOf(false),
-            PAGES[0],
-            new CmsCheckboxWidget(),
-            1,
-            1));
+        addWidget(
+            new CmsWidgetDialogParameter(
+                m_settings,
+                "message",
+                key(Messages.GUI_MODULES_DETAIL_DIALOG_MESSAGE_0),
+                PAGES[0],
+                new CmsDisplayWidget(),
+                1,
+                1));
+        addWidget(
+            new CmsWidgetDialogParameter(
+                m_settings,
+                "paths",
+                "/",
+                PAGES[0],
+                new CmsVfsFileWidget(false, getCms().getRequestContext().getSiteRoot()),
+                1,
+                CmsWidgetDialogParameter.MAX_OCCURENCES));
+        addWidget(
+            new CmsWidgetDialogParameter(
+                m_settings,
+                "properties",
+                "/",
+                PAGES[0],
+                new CmsSelectWidget(getPropertySelectWidgetConfiguration()),
+                1,
+                CmsWidgetDialogParameter.MAX_OCCURENCES));
+        addWidget(
+            new CmsWidgetDialogParameter(
+                m_settings,
+                "showSiblings",
+                String.valueOf(false),
+                PAGES[0],
+                new CmsCheckboxWidget(),
+                1,
+                1));
+        addWidget(new CmsWidgetDialogParameter(m_settings, "propValue", PAGES[0], new CmsInputWidget()));
     }
 
     /**
@@ -319,7 +365,7 @@ public class CmsPropertyviewDialog extends CmsWidgetDialog {
     /**
      * Reads all available properties in the system and returns a config string for a select widget.
      * <p>
-     * 
+     *
      * @return a select widget configuration String for available properties in the system.
      */
     private String getPropertySelectWidgetConfiguration() {

@@ -1,0 +1,41 @@
+.fieldsetSpacer {
+	margin: 15px 0px 0px 0px;
+}
+
+.labelColumn {
+	width: 200px;
+	float: left;
+	line-height: value("constants.css.inputHeight");
+}
+
+.inlineBlock {
+	display: inline-block;
+}
+
+.inputCombination {
+	width: auto; /* 215px; */
+	display: inline-block;
+	margin-bottom: 2px;
+}
+
+.checkBox {
+	margin-right: 5px;
+	float: left;
+	line-height: 13px;
+}
+
+.dateBox {
+	width: 192px;
+	display: inline-block;
+}
+
+.responsabilityLabel {
+	font-weight: bold;
+	margin-top: 5px;
+	margin-bottom: 2px;
+}
+
+.principalIcon {
+	display: inline-block;
+	margin-right: 5px;
+}

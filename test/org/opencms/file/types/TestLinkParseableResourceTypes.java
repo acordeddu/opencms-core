@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -14,12 +14,12 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * Lesser General Public License for more details.
  *
- * For further information about Alkacon Software GmbH, please see the
- * company website: http://www.alkacon.com
+ * For further information about Alkacon Software GmbH & Co. KG, please see the
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -37,12 +37,12 @@ import org.opencms.importexport.CmsImportParameters;
 import org.opencms.importexport.CmsVfsImportExportHandler;
 import org.opencms.main.CmsException;
 import org.opencms.main.OpenCms;
+import org.opencms.module.CmsModule.ExportMode;
 import org.opencms.relations.CmsRelation;
 import org.opencms.relations.CmsRelationFilter;
 import org.opencms.relations.CmsRelationType;
 import org.opencms.report.CmsShellReport;
-import org.opencms.test.OpenCmsTestCase;
-import org.opencms.test.OpenCmsTestProperties;
+import org.opencms.test.OpenCmsTestRunner;
 import org.opencms.xml.page.CmsXmlPage;
 import org.opencms.xml.page.CmsXmlPageFactory;
 
@@ -51,76 +51,36 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
-import junit.extensions.TestSetup;
-import junit.framework.Test;
-import junit.framework.TestSuite;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.MethodOrderer;
+import org.junit.jupiter.api.Order;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInfo;
+import org.junit.jupiter.api.TestMethodOrder;
 
 /**
  * Unit tests for the link parseable resource types.<p>
  */
-public class TestLinkParseableResourceTypes extends OpenCmsTestCase {
+@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
+public class TestLinkParseableResourceTypes extends OpenCmsTestRunner {
 
     /**
-     * Default JUnit constructor.<p>
-     * 
-     * @param arg0 JUnit parameters
+     * @see org.opencms.test.OpenCmsTestRunner#$openCmsSetUp(org.junit.jupiter.api.TestInfo)
      */
-    public TestLinkParseableResourceTypes(String arg0) {
+    @Override
+    @BeforeAll
+    public void $openCmsSetUp(TestInfo testInfo) {
 
-        super(arg0);
-    }
-
-    /**
-     * Test suite for this test class.<p>
-     * 
-     * @return the test suite
-     */
-    public static Test suite() {
-
-        OpenCmsTestProperties.initialize(org.opencms.test.AllTests.TEST_PROPERTIES_PATH);
-
-        TestSuite suite = new TestSuite();
-        suite.setName(TestLinkParseableResourceTypes.class.getName());
-
-        suite.addTest(new TestLinkParseableResourceTypes("testInitialSetup"));
-        suite.addTest(new TestLinkParseableResourceTypes("testCopyResource"));
-        suite.addTest(new TestLinkParseableResourceTypes("testCreateResource"));
-        suite.addTest(new TestLinkParseableResourceTypes("testCreateSibling"));
-        suite.addTest(new TestLinkParseableResourceTypes("testMoveResource"));
-        suite.addTest(new TestLinkParseableResourceTypes("testReplaceLinkParseableResource"));
-        suite.addTest(new TestLinkParseableResourceTypes("testReplaceNonLinkParseableResource"));
-        suite.addTest(new TestLinkParseableResourceTypes("testChTypeLinkParseable"));
-        suite.addTest(new TestLinkParseableResourceTypes("testChTypeNonLinkParseable"));
-        suite.addTest(new TestLinkParseableResourceTypes("testWriteFile"));
-        suite.addTest(new TestLinkParseableResourceTypes("testImportResourceLinkParseable"));
-        suite.addTest(new TestLinkParseableResourceTypes("testImportResourceNonLinkParseable"));
-        suite.addTest(new TestLinkParseableResourceTypes("testDeleteResource"));
-        suite.addTest(new TestLinkParseableResourceTypes("testDeleteFolder"));
-        suite.addTest(new TestLinkParseableResourceTypes("testUndoChanges"));
-
-        TestSetup wrapper = new TestSetup(suite) {
-
-            @Override
-            protected void setUp() {
-
-                setupOpenCms("simpletest", "/");
-            }
-
-            @Override
-            protected void tearDown() {
-
-                removeOpenCms();
-            }
-        };
-
-        return wrapper;
+        setupOpenCms(testInfo, "simpletest", "/");
     }
 
     /**
      * Test chType method, change type link parseable with non link parseable.<p>
-     * 
+     *
      * @throws Throwable if something goes wrong
      */
+    @Test
+    @Order(8)
     public void testChTypeLinkParseable() throws Throwable {
 
         CmsObject cms = getCmsObject();
@@ -130,7 +90,7 @@ public class TestLinkParseableResourceTypes extends OpenCmsTestCase {
         String targetName = "/folder1/image2.gif";
         CmsResource target = cms.readResource(targetName);
 
-        List relations = cms.getRelationsForResource(targetName, CmsRelationFilter.TARGETS);
+        List<CmsRelation> relations = cms.getRelationsForResource(targetName, CmsRelationFilter.TARGETS);
         assertTrue(relations.isEmpty());
         int sources = cms.getRelationsForResource(targetName, CmsRelationFilter.SOURCES).size();
 
@@ -162,9 +122,11 @@ public class TestLinkParseableResourceTypes extends OpenCmsTestCase {
 
     /**
      * Test chType method, change type non link parseable with link parseable.<p>
-     * 
+     *
      * @throws Throwable if something goes wrong
      */
+    @Test
+    @Order(9)
     public void testChTypeNonLinkParseable() throws Throwable {
 
         CmsObject cms = getCmsObject();
@@ -174,7 +136,7 @@ public class TestLinkParseableResourceTypes extends OpenCmsTestCase {
         String targetName = "/folder1/image2.gif";
         CmsResource target = cms.readResource(targetName);
 
-        List relations = cms.getRelationsForResource(targetName, CmsRelationFilter.TARGETS);
+        List<CmsRelation> relations = cms.getRelationsForResource(targetName, CmsRelationFilter.TARGETS);
         assertTrue(relations.isEmpty());
         int sources = cms.getRelationsForResource(targetName, CmsRelationFilter.SOURCES).size();
 
@@ -206,9 +168,11 @@ public class TestLinkParseableResourceTypes extends OpenCmsTestCase {
 
     /**
      * Test copyResource method.<p>
-     * 
+     *
      * @throws Throwable if something goes wrong
      */
+    @Test
+    @Order(2)
     public void testCopyResource() throws Throwable {
 
         CmsObject cms = getCmsObject();
@@ -219,7 +183,7 @@ public class TestLinkParseableResourceTypes extends OpenCmsTestCase {
         String targetName = "/folder1/image2.gif";
         CmsResource target = cms.readResource(targetName);
 
-        List relations = cms.getRelationsForResource(targetName, CmsRelationFilter.TARGETS);
+        List<CmsRelation> relations = cms.getRelationsForResource(targetName, CmsRelationFilter.TARGETS);
         assertTrue(relations.isEmpty());
         int sources = cms.getRelationsForResource(targetName, CmsRelationFilter.SOURCES).size();
 
@@ -253,9 +217,11 @@ public class TestLinkParseableResourceTypes extends OpenCmsTestCase {
 
     /**
      * Test createResource method.<p>
-     * 
+     *
      * @throws Throwable if something goes wrong
      */
+    @Test
+    @Order(3)
     public void testCreateResource() throws Throwable {
 
         CmsObject cms = getCmsObject();
@@ -266,7 +232,7 @@ public class TestLinkParseableResourceTypes extends OpenCmsTestCase {
         String targetName = "/folder1/image2.gif";
         CmsResource target = cms.readResource(targetName);
 
-        List relations = cms.getRelationsForResource(targetName, CmsRelationFilter.TARGETS);
+        List<CmsRelation> relations = cms.getRelationsForResource(targetName, CmsRelationFilter.TARGETS);
         assertTrue(relations.isEmpty());
         int sources = cms.getRelationsForResource(targetName, CmsRelationFilter.SOURCES).size();
 
@@ -299,9 +265,11 @@ public class TestLinkParseableResourceTypes extends OpenCmsTestCase {
 
     /**
      * Test createSibling method.<p>
-     * 
+     *
      * @throws Throwable if something goes wrong
      */
+    @Test
+    @Order(4)
     public void testCreateSibling() throws Throwable {
 
         CmsObject cms = getCmsObject();
@@ -312,7 +280,7 @@ public class TestLinkParseableResourceTypes extends OpenCmsTestCase {
         String targetName = "/folder1/image2.gif";
         CmsResource target = cms.readResource(targetName);
 
-        List relations = cms.getRelationsForResource(targetName, CmsRelationFilter.TARGETS);
+        List<CmsRelation> relations = cms.getRelationsForResource(targetName, CmsRelationFilter.TARGETS);
         assertTrue(relations.isEmpty());
         int sources = cms.getRelationsForResource(targetName, CmsRelationFilter.SOURCES).size();
 
@@ -346,9 +314,11 @@ public class TestLinkParseableResourceTypes extends OpenCmsTestCase {
 
     /**
      * Test deleteResource method for a folder.<p>
-     * 
+     *
      * @throws Throwable if something goes wrong
      */
+    @Test
+    @Order(14)
     public void testDeleteFolder() throws Throwable {
 
         CmsObject cms = getCmsObject();
@@ -364,10 +334,10 @@ public class TestLinkParseableResourceTypes extends OpenCmsTestCase {
         CmsResource source = cms.createResource(sourceName, CmsResourceTypeXmlPage.getStaticTypeId());
         TestLinkValidation.setContent(cms, sourceName, "<img src='" + targetName + "'>");
 
-        List relations = cms.getRelationsForResource(sourceName, CmsRelationFilter.TARGETS);
+        List<CmsRelation> relations = cms.getRelationsForResource(sourceName, CmsRelationFilter.TARGETS);
         assertEquals(1, relations.size());
         CmsRelation expected = new CmsRelation(source, target, CmsRelationType.EMBEDDED_IMAGE);
-        assertRelation(expected, (CmsRelation)relations.get(0));
+        assertRelation(expected, relations.get(0));
         relations = cms.getRelationsForResource(sourceName, CmsRelationFilter.SOURCES);
         assertTrue(relations.isEmpty());
 
@@ -387,9 +357,11 @@ public class TestLinkParseableResourceTypes extends OpenCmsTestCase {
 
     /**
      * Test deleteResource method.<p>
-     * 
+     *
      * @throws Throwable if something goes wrong
      */
+    @Test
+    @Order(13)
     public void testDeleteResource() throws Throwable {
 
         CmsObject cms = getCmsObject();
@@ -401,10 +373,10 @@ public class TestLinkParseableResourceTypes extends OpenCmsTestCase {
         String targetName = "/folder1/image2.gif";
         CmsResource target = cms.readResource(targetName);
 
-        List relations = cms.getRelationsForResource(sourceName, CmsRelationFilter.TARGETS);
+        List<CmsRelation> relations = cms.getRelationsForResource(sourceName, CmsRelationFilter.TARGETS);
         assertEquals(relations.size(), 1);
         CmsRelation expected = new CmsRelation(source, target, CmsRelationType.EMBEDDED_IMAGE);
-        assertRelation(expected, (CmsRelation)relations.get(0));
+        assertRelation(expected, relations.get(0));
         relations = cms.getRelationsForResource(sourceName, CmsRelationFilter.SOURCES);
         assertTrue(relations.isEmpty());
 
@@ -442,7 +414,7 @@ public class TestLinkParseableResourceTypes extends OpenCmsTestCase {
         relations = cms.getRelationsForResource(sourceName, CmsRelationFilter.TARGETS);
         assertEquals(1, relations.size());
         expected = new CmsRelation(source, target, CmsRelationType.EMBEDDED_IMAGE);
-        assertRelation(expected, (CmsRelation)relations.get(0));
+        assertRelation(expected, relations.get(0));
         relations = cms.getRelationsForResource(sourceName, CmsRelationFilter.SOURCES);
         assertTrue(relations.isEmpty());
 
@@ -458,9 +430,11 @@ public class TestLinkParseableResourceTypes extends OpenCmsTestCase {
 
     /**
      * Test importResource method for link parseable resources.<p>
-     * 
+     *
      * @throws Throwable if something goes wrong
      */
+    @Test
+    @Order(11)
     public void testImportResourceLinkParseable() throws Throwable {
 
         CmsObject cms = getCmsObject();
@@ -473,7 +447,7 @@ public class TestLinkParseableResourceTypes extends OpenCmsTestCase {
             "packages/testImportChangeType.zip");
 
         try {
-            List relations = cms.getRelationsForResource(targetName, CmsRelationFilter.TARGETS);
+            List<CmsRelation> relations = cms.getRelationsForResource(targetName, CmsRelationFilter.TARGETS);
             assertTrue(relations.isEmpty());
 
             // replace by link parseable
@@ -484,7 +458,7 @@ public class TestLinkParseableResourceTypes extends OpenCmsTestCase {
             assertEquals(relations.size(), 1);
 
             // export the file
-            List exportPaths = new ArrayList(1);
+            List<String> exportPaths = new ArrayList<String>(1);
             exportPaths.add(targetName);
             CmsVfsImportExportHandler vfsExportHandler = new CmsVfsImportExportHandler();
             CmsExportParameters params = new CmsExportParameters(
@@ -498,7 +472,8 @@ public class TestLinkParseableResourceTypes extends OpenCmsTestCase {
                 true,
                 0,
                 true,
-                false);
+                false,
+                ExportMode.DEFAULT);
             vfsExportHandler.setExportParams(params);
 
             OpenCms.getImportExportManager().exportData(
@@ -536,9 +511,11 @@ public class TestLinkParseableResourceTypes extends OpenCmsTestCase {
 
     /**
      * Test importResource method for non link parseable resources.<p>
-     * 
+     *
      * @throws Throwable if something goes wrong
      */
+    @Test
+    @Order(12)
     public void testImportResourceNonLinkParseable() throws Throwable {
 
         CmsObject cms = getCmsObject();
@@ -549,7 +526,7 @@ public class TestLinkParseableResourceTypes extends OpenCmsTestCase {
             "packages/testImportChangeType.zip");
         try {
 
-            List relations = cms.getRelationsForResource(sourceName, CmsRelationFilter.TARGETS);
+            List<CmsRelation> relations = cms.getRelationsForResource(sourceName, CmsRelationFilter.TARGETS);
             assertEquals(relations.size(), 1);
 
             // change the type of the resource
@@ -560,7 +537,7 @@ public class TestLinkParseableResourceTypes extends OpenCmsTestCase {
             assertTrue(relations.isEmpty());
 
             // export the file
-            List exportPaths = new ArrayList(1);
+            List<String> exportPaths = new ArrayList<String>(1);
             exportPaths.add(sourceName);
             CmsVfsImportExportHandler vfsExportHandler = new CmsVfsImportExportHandler();
             CmsExportParameters params = new CmsExportParameters(
@@ -574,7 +551,8 @@ public class TestLinkParseableResourceTypes extends OpenCmsTestCase {
                 true,
                 0,
                 true,
-                false);
+                false,
+                ExportMode.DEFAULT);
             vfsExportHandler.setExportParams(params);
 
             OpenCms.getImportExportManager().exportData(
@@ -603,9 +581,11 @@ public class TestLinkParseableResourceTypes extends OpenCmsTestCase {
 
     /**
      * Test the links after the setup.<p>
-     * 
+     *
      * @throws Throwable if something goes wrong
      */
+    @Test
+    @Order(1)
     public void testInitialSetup() throws Throwable {
 
         CmsObject cms = getCmsObject();
@@ -615,10 +595,10 @@ public class TestLinkParseableResourceTypes extends OpenCmsTestCase {
         CmsResource source = cms.readResource(sourceName);
         String targetName = "/folder1/image2.gif";
         CmsResource target = cms.readResource(targetName);
-        List relations = cms.getRelationsForResource(sourceName, CmsRelationFilter.TARGETS);
+        List<CmsRelation> relations = cms.getRelationsForResource(sourceName, CmsRelationFilter.TARGETS);
         assertEquals(1, relations.size());
         CmsRelation expected = new CmsRelation(source, target, CmsRelationType.EMBEDDED_IMAGE);
-        assertRelation(expected, (CmsRelation)relations.get(0));
+        assertRelation(expected, relations.get(0));
         relations = cms.getRelationsForResource(sourceName, CmsRelationFilter.SOURCES);
         assertTrue(relations.isEmpty());
 
@@ -630,9 +610,11 @@ public class TestLinkParseableResourceTypes extends OpenCmsTestCase {
 
     /**
      * Test moveResource method.<p>
-     * 
+     *
      * @throws Throwable if something goes wrong
      */
+    @Test
+    @Order(5)
     public void testMoveResource() throws Throwable {
 
         CmsObject cms = getCmsObject();
@@ -642,7 +624,7 @@ public class TestLinkParseableResourceTypes extends OpenCmsTestCase {
         String targetName = "/folder1/image2.gif";
         CmsResource target = cms.readResource(targetName);
 
-        List relations = cms.getRelationsForResource(targetName, CmsRelationFilter.TARGETS);
+        List<CmsRelation> relations = cms.getRelationsForResource(targetName, CmsRelationFilter.TARGETS);
         assertTrue(relations.isEmpty());
         int sources = cms.getRelationsForResource(targetName, CmsRelationFilter.SOURCES).size();
 
@@ -674,9 +656,11 @@ public class TestLinkParseableResourceTypes extends OpenCmsTestCase {
 
     /**
      * Test replaceResource method.<p>
-     * 
+     *
      * @throws Throwable if something goes wrong
      */
+    @Test
+    @Order(6)
     public void testReplaceLinkParseableResource() throws Throwable {
 
         CmsObject cms = getCmsObject();
@@ -687,7 +671,7 @@ public class TestLinkParseableResourceTypes extends OpenCmsTestCase {
         String targetName = "/folder1/image2.gif";
         CmsResource target = cms.readResource(targetName);
 
-        List relations = cms.getRelationsForResource(targetName, CmsRelationFilter.TARGETS);
+        List<CmsRelation> relations = cms.getRelationsForResource(targetName, CmsRelationFilter.TARGETS);
         assertTrue(relations.isEmpty());
         int sources = cms.getRelationsForResource(targetName, CmsRelationFilter.SOURCES).size();
 
@@ -724,9 +708,11 @@ public class TestLinkParseableResourceTypes extends OpenCmsTestCase {
 
     /**
      * Test replaceResource method.<p>
-     * 
+     *
      * @throws Throwable if something goes wrong
      */
+    @Test
+    @Order(7)
     public void testReplaceNonLinkParseableResource() throws Throwable {
 
         CmsObject cms = getCmsObject();
@@ -737,7 +723,7 @@ public class TestLinkParseableResourceTypes extends OpenCmsTestCase {
         String targetName = "/folder1/image2.gif";
         CmsResource target = cms.readResource(targetName);
 
-        List relations = cms.getRelationsForResource(targetName, CmsRelationFilter.TARGETS);
+        List<CmsRelation> relations = cms.getRelationsForResource(targetName, CmsRelationFilter.TARGETS);
         assertTrue(relations.isEmpty());
         int sources = cms.getRelationsForResource(targetName, CmsRelationFilter.SOURCES).size();
 
@@ -770,9 +756,11 @@ public class TestLinkParseableResourceTypes extends OpenCmsTestCase {
 
     /**
      * Test undoChanges method.<p>
-     * 
+     *
      * @throws Throwable if something goes wrong
      */
+    @Test
+    @Order(15)
     public void testUndoChanges() throws Throwable {
 
         CmsObject cms = getCmsObject();
@@ -783,7 +771,7 @@ public class TestLinkParseableResourceTypes extends OpenCmsTestCase {
         String targetName = "/folder1/index.html";
         CmsResource target = cms.readResource(targetName);
 
-        List relations = cms.getRelationsForResource(targetName, CmsRelationFilter.TARGETS);
+        List<CmsRelation> relations = cms.getRelationsForResource(targetName, CmsRelationFilter.TARGETS);
         assertEquals(1, relations.size());
         assertTrue(cms.getRelationsForResource(targetName, CmsRelationFilter.SOURCES).isEmpty());
 
@@ -793,10 +781,10 @@ public class TestLinkParseableResourceTypes extends OpenCmsTestCase {
 
         relations = cms.getRelationsForResource(sourceName, CmsRelationFilter.TARGETS);
         assertEquals(2, relations.size());
-        assertRelation(new CmsRelation(source, target, CmsRelationType.CATEGORY), (CmsRelation)relations.get(1));
+        assertRelation(new CmsRelation(source, target, CmsRelationType.CATEGORY), relations.get(1));
         relations = cms.getRelationsForResource(targetName, CmsRelationFilter.SOURCES);
         assertEquals(1, relations.size());
-        assertRelation(new CmsRelation(source, target, CmsRelationType.CATEGORY), (CmsRelation)relations.get(0));
+        assertRelation(new CmsRelation(source, target, CmsRelationType.CATEGORY), relations.get(0));
 
         // publish
         OpenCms.getPublishManager().publishResource(cms, sourceName);
@@ -817,17 +805,19 @@ public class TestLinkParseableResourceTypes extends OpenCmsTestCase {
 
         relations = cms.getRelationsForResource(sourceName, CmsRelationFilter.TARGETS);
         assertEquals(2, relations.size());
-        assertRelation(new CmsRelation(source, target, CmsRelationType.CATEGORY), (CmsRelation)relations.get(1));
+        assertRelation(new CmsRelation(source, target, CmsRelationType.CATEGORY), relations.get(1));
         relations = cms.getRelationsForResource(targetName, CmsRelationFilter.SOURCES);
         assertEquals(1, relations.size());
-        assertRelation(new CmsRelation(source, target, CmsRelationType.CATEGORY), (CmsRelation)relations.get(0));
+        assertRelation(new CmsRelation(source, target, CmsRelationType.CATEGORY), relations.get(0));
     }
 
     /**
      * Test writeFile method.<p>
-     * 
+     *
      * @throws Throwable if something goes wrong
      */
+    @Test
+    @Order(10)
     public void testWriteFile() throws Throwable {
 
         CmsObject cms = getCmsObject();
@@ -859,7 +849,7 @@ public class TestLinkParseableResourceTypes extends OpenCmsTestCase {
         CmsProject project = cms.getRequestContext().getCurrentProject();
         cms.getRequestContext().setCurrentProject(cms.readProject(CmsProject.ONLINE_PROJECT_ID));
 
-        List relations = cms.getRelationsForResource(targetName, CmsRelationFilter.TARGETS);
+        List<CmsRelation> relations = cms.getRelationsForResource(targetName, CmsRelationFilter.TARGETS);
         assertTrue(relations.isEmpty());
         sources = cms.getRelationsForResource(targetName, CmsRelationFilter.SOURCES).size();
         assertRelationOperation(cms, source, target, sources, 1);
@@ -982,15 +972,16 @@ public class TestLinkParseableResourceTypes extends OpenCmsTestCase {
         CmsResource source,
         CmsResource target,
         int sources,
-        int sourceRelations) throws CmsException {
+        int sourceRelations)
+    throws CmsException {
 
-        List relations = cms.getRelationsForResource(
+        List<CmsRelation> relations = cms.getRelationsForResource(
             cms.getRequestContext().removeSiteRoot(source.getRootPath()),
             CmsRelationFilter.TARGETS);
         assertEquals(relations.size(), sourceRelations);
         if (relations.size() == 1) {
             CmsRelation expected = new CmsRelation(source, target, CmsRelationType.EMBEDDED_IMAGE);
-            assertRelation(expected, (CmsRelation)relations.get(0));
+            assertRelation(expected, relations.get(0));
         }
         relations = cms.getRelationsForResource(
             cms.getRequestContext().removeSiteRoot(source.getRootPath()),

@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -15,11 +15,11 @@
  * Lesser General Public License for more details.
  *
  * For further information about Alkacon Software, please see the
- * company website: http://www.alkacon.com
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -39,9 +39,9 @@ import com.google.gwt.user.client.ui.PushButton;
 
 /**
  * Push button class.<p>
- * 
+ *
  * Uses CSS classes cmsState and dependent from 'button.css', make sure it is injected.<p>
- * 
+ *
  * @since 8.0.0
  */
 public class CmsPushButton extends PushButton implements HasHorizontalAlignment {
@@ -55,8 +55,14 @@ public class CmsPushButton extends PushButton implements HasHorizontalAlignment 
     /** Stores the button color. */
     private I_CmsButton.ButtonColor m_color;
 
+    /** The disabled reason. */
+    private String m_disabledReason;
+
     /** The down face image class. */
     private String m_downImageClass;
+
+    /** The hide from tab navigation flag. */
+    private boolean m_hideFromTabNav;
 
     /** The image class. */
     private String m_imageClass;
@@ -84,12 +90,13 @@ public class CmsPushButton extends PushButton implements HasHorizontalAlignment 
         m_align = HasHorizontalAlignment.ALIGN_RIGHT;
         setStyleName(I_CmsLayoutBundle.INSTANCE.buttonCss().cmsState());
         setButtonStyle(ButtonStyle.TEXT, ButtonColor.BLUE);
+        addStyleName(I_CmsLayoutBundle.INSTANCE.buttonCss().cmsPushButton());
         setSize(I_CmsButton.Size.medium);
     }
 
     /**
      * The constructor. Setting the button icon.<p>
-     * 
+     *
      * @param imageClass the class for the image
      */
     public CmsPushButton(String imageClass) {
@@ -100,7 +107,7 @@ public class CmsPushButton extends PushButton implements HasHorizontalAlignment 
 
     /**
      * The constructor. Setting different icons for the up and down face of the button.<p>
-     * 
+     *
      * @param imageClass the class for the up face image
      * @param downImageClass the class for the down face image
      */
@@ -111,13 +118,25 @@ public class CmsPushButton extends PushButton implements HasHorizontalAlignment 
     }
 
     /**
+     * Clears the hover state of the button.<p>
+     * Use when opening modal popups to ensure the button is not left in hovered state.<p>
+     */
+    public void clearHoverState() {
+
+        setEnabled(!isEnabled());
+        setEnabled(!isEnabled());
+    }
+
+    /**
      * Disables the button and changes the button title attribute to the disabled reason.<p>
-     *   
+     *
      * @param disabledReason the disabled reason
      */
     public void disable(String disabledReason) {
 
+        setDown(false);
         setEnabled(false);
+        m_disabledReason = disabledReason;
         super.setTitle(disabledReason);
     }
 
@@ -128,7 +147,18 @@ public class CmsPushButton extends PushButton implements HasHorizontalAlignment 
 
         m_isReenabled = true;
         setEnabled(true);
+        m_disabledReason = null;
         super.setTitle(m_title);
+    }
+
+    /**
+     * Returns the disabled reason.<p>
+     *
+     * @return the disabled reason
+     */
+    public String getDisabledReason() {
+
+        return m_disabledReason;
     }
 
     /**
@@ -143,7 +173,7 @@ public class CmsPushButton extends PushButton implements HasHorizontalAlignment 
 
     /**
      * This is the alignment of the text in reference to the image, possible values are left or right.<p>
-     * 
+     *
      * @see com.google.gwt.user.client.ui.HasHorizontalAlignment#getHorizontalAlignment()
      */
     public HorizontalAlignmentConstant getHorizontalAlignment() {
@@ -194,6 +224,15 @@ public class CmsPushButton extends PushButton implements HasHorizontalAlignment 
     }
 
     /**
+     * @see com.google.gwt.user.client.ui.CustomButton#isDown()
+     */
+    @Override
+    public boolean isDown() {
+
+        return super.isDown();
+    }
+
+    /**
      * Checks if the button is constraint to a minimal width.<p>
      *
      * @return <code>true</code> if the button is constraint to a minimal width
@@ -232,7 +271,7 @@ public class CmsPushButton extends PushButton implements HasHorizontalAlignment 
 
     /**
      * Sets the button style.<p>
-     * 
+     *
      * @param style the style to set
      * @param color the color to set
      */
@@ -269,7 +308,7 @@ public class CmsPushButton extends PushButton implements HasHorizontalAlignment 
 
     /**
      * Sets the down face text and image.<p>
-     * 
+     *
      * @param text the down face text to set, set to <code>null</code> to not show any
      * @param imageClass the down face image class to use, set to <code>null</code> to not show any
      */
@@ -290,8 +329,20 @@ public class CmsPushButton extends PushButton implements HasHorizontalAlignment 
     }
 
     /**
+     * Sets the hide from tab navigation flag.<p>
+     * If <code>true</code> the button will not be accessible by tab navigation.<p>
+     *
+     * @param hideFromTabNav the hide from tab navigation flag
+     */
+    public void setHideFromTabNav(boolean hideFromTabNav) {
+
+        m_hideFromTabNav = hideFromTabNav;
+        setTabIndex(-1);
+    }
+
+    /**
      * This is the alignment of the text in reference to the image, possible values are left or right.<p>
-     * 
+     *
      * @see com.google.gwt.user.client.ui.HasHorizontalAlignment#setHorizontalAlignment(com.google.gwt.user.client.ui.HasHorizontalAlignment.HorizontalAlignmentConstant)
      */
     public void setHorizontalAlignment(HorizontalAlignmentConstant align) {
@@ -353,7 +404,7 @@ public class CmsPushButton extends PushButton implements HasHorizontalAlignment 
 
     /**
      * Sets the up face text and image.<p>
-     * 
+     *
      * @param text the up face text to set, set to <code>null</code> to not show any
      * @param imageClass the up face image class to use, set to <code>null</code> to not show any
      */
@@ -383,14 +434,26 @@ public class CmsPushButton extends PushButton implements HasHorizontalAlignment 
 
     /**
      * Convenience method to assemble the HTML to use for a button face.<p>
-     * 
+     *
      * @param text text the up face text to set, set to <code>null</code> to not show any
      * @param imageClass the up face image class to use, set to <code>null</code> to not show any
-     * 
+     *
      * @return the HTML
      */
     protected String getFaceHtml(String text, String imageClass) {
 
         return CmsDomUtil.createFaceHtml(text, imageClass, m_align);
+    }
+
+    /**
+     * @see com.google.gwt.user.client.ui.CustomButton#onAttach()
+     */
+    @Override
+    protected void onAttach() {
+
+        super.onAttach();
+        if (m_hideFromTabNav) {
+            setTabIndex(-1);
+        }
     }
 }

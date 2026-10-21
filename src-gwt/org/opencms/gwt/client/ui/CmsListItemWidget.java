@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -15,11 +15,11 @@
  * Lesser General Public License for more details.
  *
  * For further information about Alkacon Software, please see the
- * company website: http://www.alkacon.com
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -31,7 +31,7 @@ import org.opencms.db.CmsResourceState;
 import org.opencms.gwt.client.CmsCoreProvider;
 import org.opencms.gwt.client.Messages;
 import org.opencms.gwt.client.ui.I_CmsButton.ButtonStyle;
-import org.opencms.gwt.client.ui.css.I_CmsImageBundle;
+import org.opencms.gwt.client.ui.I_CmsButton.Size;
 import org.opencms.gwt.client.ui.css.I_CmsInputLayoutBundle;
 import org.opencms.gwt.client.ui.css.I_CmsLayoutBundle;
 import org.opencms.gwt.client.ui.css.I_CmsLayoutBundle.I_CmsListItemWidgetCss;
@@ -39,8 +39,9 @@ import org.opencms.gwt.client.ui.input.CmsLabel;
 import org.opencms.gwt.client.util.CmsDomUtil;
 import org.opencms.gwt.client.util.CmsResourceStateUtil;
 import org.opencms.gwt.client.util.CmsStyleVariable;
+import org.opencms.gwt.client.util.DOMParser;
 import org.opencms.gwt.shared.CmsAdditionalInfoBean;
-import org.opencms.gwt.shared.CmsIconUtil;
+import org.opencms.gwt.shared.CmsGwtLog;
 import org.opencms.gwt.shared.CmsListInfoBean;
 import org.opencms.gwt.shared.CmsListInfoBean.LockIcon;
 import org.opencms.gwt.shared.CmsListInfoBean.StateIcon;
@@ -51,6 +52,8 @@ import java.util.Iterator;
 import java.util.List;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.dom.client.Style;
+import com.google.gwt.dom.client.Style.Cursor;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.BlurEvent;
 import com.google.gwt.event.dom.client.BlurHandler;
@@ -81,14 +84,17 @@ import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.Image;
-import com.google.gwt.user.client.ui.Panel;
+import com.google.gwt.user.client.ui.InlineLabel;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
 
+import elemental2.dom.HTMLDocument;
+import jsinterop.base.Js;
+
 /**
  * Provides a UI list item.<p>
- * 
+ *
  * @since 8.0.0
  */
 public class CmsListItemWidget extends Composite
@@ -98,12 +104,6 @@ HasClickHandlers, HasDoubleClickHandlers, HasMouseOverHandlers, I_CmsTruncable {
     /** Additional info item HTML. */
     public static class AdditionalInfoItem extends Composite implements I_CmsTruncable {
 
-        /** Text metrics key. */
-        private static final String TMA_TITLE = "AddInfoTitle";
-
-        /** Text metrics key. */
-        private static final String TMA_VALUE = "AddInfoValue";
-
         /** The title element. */
         private CmsLabel m_titleLabel;
 
@@ -112,7 +112,7 @@ HasClickHandlers, HasDoubleClickHandlers, HasMouseOverHandlers, I_CmsTruncable {
 
         /**
          * Constructor.<p>
-         * 
+         *
          * @param additionalInfo the info to display
          */
         public AdditionalInfoItem(CmsAdditionalInfoBean additionalInfo) {
@@ -122,7 +122,7 @@ HasClickHandlers, HasDoubleClickHandlers, HasMouseOverHandlers, I_CmsTruncable {
 
         /**
          * Constructor.<p>
-         * 
+         *
          * @param title info title
          * @param value info value
          * @param additionalStyle an additional class name
@@ -132,7 +132,9 @@ HasClickHandlers, HasDoubleClickHandlers, HasMouseOverHandlers, I_CmsTruncable {
             super();
             FlowPanel panel = new FlowPanel();
             initWidget(panel);
+
             I_CmsListItemWidgetCss style = I_CmsLayoutBundle.INSTANCE.listItemWidgetCss();
+            panel.addStyleName(style.itemInfoRow());
             // create title
             m_titleLabel = new CmsLabel(CmsStringUtil.isEmptyOrWhitespaceOnly(title) ? "" : title + ":");
             m_titleLabel.addStyleName(style.itemAdditionalTitle());
@@ -142,7 +144,7 @@ HasClickHandlers, HasDoubleClickHandlers, HasMouseOverHandlers, I_CmsTruncable {
             if (CmsStringUtil.isEmptyOrWhitespaceOnly(value)) {
                 m_valueLabel.setHTML(CmsDomUtil.Entity.nbsp.html());
             } else {
-                m_valueLabel.setHTML(value);
+                m_valueLabel.setText(value);
             }
             m_valueLabel.addStyleName(style.itemAdditionalValue());
             if (additionalStyle != null) {
@@ -176,10 +178,8 @@ HasClickHandlers, HasDoubleClickHandlers, HasMouseOverHandlers, I_CmsTruncable {
          */
         public void truncate(String textMetricsPrefix, int widgetWidth) {
 
-            // width fixed by css to 90 see I_CmsListItemWidgetCss#itemAdditionalTitle
-            m_titleLabel.truncate(textMetricsPrefix + TMA_TITLE, 85);
-            // the rest
-            m_valueLabel.truncate(textMetricsPrefix + TMA_VALUE, widgetWidth - 100);
+            int titleWidth = widgetWidth / 4;
+            m_titleLabel.setWidth(titleWidth + "px");
         }
     }
 
@@ -200,11 +200,11 @@ HasClickHandlers, HasDoubleClickHandlers, HasMouseOverHandlers, I_CmsTruncable {
      */
     public interface I_CmsTitleEditHandler {
 
-        /** 
+        /**
          * This method is called when the user has finished editing the title field.<p>
-         * 
-         * @param title the label containing the title 
-         * @param box the 
+         *
+         * @param title the label containing the title
+         * @param box the
          */
         void handleEdit(CmsLabel title, TextBox box);
     }
@@ -222,9 +222,6 @@ HasClickHandlers, HasDoubleClickHandlers, HasMouseOverHandlers, I_CmsTruncable {
     /** Text metrics key. */
     private static final String TM_SUBTITLE = "Subtitle";
 
-    /** Text metrics key. */
-    private static final String TM_TITLE = "Title";
-
     /** The ui-binder instance for this class. */
     private static I_CmsListItemWidgetUiBinder uiBinder = GWT.create(I_CmsListItemWidgetUiBinder.class);
 
@@ -240,6 +237,9 @@ HasClickHandlers, HasDoubleClickHandlers, HasMouseOverHandlers, I_CmsTruncable {
     @UiField
     protected FlowPanel m_contentPanel;
 
+    /** A list of click handlers for the main icon. */
+    protected List<ClickHandler> m_iconClickHandlers = new ArrayList<ClickHandler>();
+
     /** The DIV showing the list icon. */
     @UiField
     protected SimplePanel m_iconPanel;
@@ -247,16 +247,20 @@ HasClickHandlers, HasDoubleClickHandlers, HasMouseOverHandlers, I_CmsTruncable {
     /** The open-close button for the additional info. */
     protected CmsPushButton m_openClose;
 
+    /** A label which is optionally displayed after the subtitle. */
+    protected InlineLabel m_shortExtraInfoLabel;
+
     /** Sub title label. */
     @UiField
     protected CmsLabel m_subtitle;
 
-    /** A label which is optionally displayed after the subtitle. */
-    protected CmsLabel m_subtitleSuffix;
-
     /** Title label. */
     @UiField
     protected CmsLabel m_title;
+
+    /** Container for the title. */
+    @UiField
+    protected FlowPanel m_titleBox;
 
     /** The title row, holding the title and the open-close button for the additional info. */
     @UiField
@@ -274,6 +278,20 @@ HasClickHandlers, HasDoubleClickHandlers, HasMouseOverHandlers, I_CmsTruncable {
     /** The event handler registrations. */
     private List<HandlerRegistration> m_handlerRegistrations;
 
+    /** A click handler which triggers all icon click handlers. */
+    private ClickHandler m_iconSuperClickHandler = new ClickHandler() {
+
+        public void onClick(ClickEvent event) {
+
+            for (ClickHandler iconClickHandler : m_iconClickHandlers) {
+                iconClickHandler.onClick(event);
+            }
+        }
+    };
+
+    /** The main icon title. */
+    private String m_iconTitle = "";
+
     /** The lock icon. */
     private HTML m_lockIcon;
 
@@ -289,9 +307,14 @@ HasClickHandlers, HasDoubleClickHandlers, HasMouseOverHandlers, I_CmsTruncable {
     /** The text metrics prefix. */
     private String m_tmPrefix;
 
+    /** Widget for the overlay icon in the top-right corner. */
+    private HTML m_topRightIcon;
+
+    private CmsListInfoBean m_infoBean;
+
     /**
      * Constructor. Using a 'li'-tag as default root element.<p>
-     * 
+     *
      * @param infoBean bean holding the item information
      */
     public CmsListItemWidget(CmsListInfoBean infoBean) {
@@ -299,14 +322,13 @@ HasClickHandlers, HasDoubleClickHandlers, HasMouseOverHandlers, I_CmsTruncable {
         initWidget(uiBinder.createAndBindUi(this));
         m_handlerRegistrations = new ArrayList<HandlerRegistration>();
         m_backgroundStyle = new CmsStyleVariable(this);
-        m_subtitleSuffix = new CmsLabel();
-        m_subtitleSuffix.addStyleName(I_CmsLayoutBundle.INSTANCE.generalCss().inlineBlock());
+        m_shortExtraInfoLabel = new InlineLabel();
         init(infoBean);
     }
 
     /**
      * Adds an additional info item to the list.<p>
-     * 
+     *
      * @param additionalInfo the additional info to display
      */
     public void addAdditionalInfo(CmsAdditionalInfoBean additionalInfo) {
@@ -317,7 +339,7 @@ HasClickHandlers, HasDoubleClickHandlers, HasMouseOverHandlers, I_CmsTruncable {
 
     /**
      * Adds a widget to the button panel.<p>
-     * 
+     *
      * @param w the widget to add
      */
     public void addButton(Widget w) {
@@ -330,7 +352,7 @@ HasClickHandlers, HasDoubleClickHandlers, HasMouseOverHandlers, I_CmsTruncable {
 
     /**
      * Adds a widget to the front of the button panel.<p>
-     * 
+     *
      * @param w the widget to add
      */
     public void addButtonToFront(Widget w) {
@@ -367,14 +389,26 @@ HasClickHandlers, HasDoubleClickHandlers, HasMouseOverHandlers, I_CmsTruncable {
 
     /**
      * Adds a mouse click handler to the icon panel.<p>
-     * 
+     *
      * @param handler the click handler
-     * 
+     *
      * @return the handler registration
      */
-    public HandlerRegistration addIconClickHandler(ClickHandler handler) {
+    public HandlerRegistration addIconClickHandler(final ClickHandler handler) {
 
-        return m_iconPanel.addDomHandler(handler, ClickEvent.getType());
+        final HandlerRegistration internalHandlerRegistration = m_iconPanel.addDomHandler(
+            handler,
+            ClickEvent.getType());
+        m_iconClickHandlers.add(handler);
+        HandlerRegistration result = new HandlerRegistration() {
+
+            public void removeHandler() {
+
+                internalHandlerRegistration.removeHandler();
+                m_iconClickHandlers.remove(handler);
+            }
+        };
+        return result;
     }
 
     /**
@@ -408,8 +442,8 @@ HasClickHandlers, HasDoubleClickHandlers, HasMouseOverHandlers, I_CmsTruncable {
 
     /**
      * Adds a style name to the subtitle label.<p>
-     * 
-     * @param styleName the style name to add 
+     *
+     * @param styleName the style name to add
      */
     public void addSubtitleStyleName(String styleName) {
 
@@ -417,9 +451,9 @@ HasClickHandlers, HasDoubleClickHandlers, HasMouseOverHandlers, I_CmsTruncable {
     }
 
     /**
-     * Adds a style name to the title label.<p> 
-     * 
-     * @param styleName the style name to add 
+     * Adds a style name to the title label.<p>
+     *
+     * @param styleName the style name to add
      */
     public void addTitleStyleName(String styleName) {
 
@@ -440,7 +474,9 @@ HasClickHandlers, HasDoubleClickHandlers, HasMouseOverHandlers, I_CmsTruncable {
     public void forceMouseOut() {
 
         for (Widget w : m_buttonPanel) {
-            CmsDomUtil.ensureMouseOut(w);
+            if (w instanceof CmsPushButton) {
+                ((CmsPushButton)w).clearHoverState();
+            }
         }
         CmsDomUtil.ensureMouseOut(this);
         removeStyleName(I_CmsLayoutBundle.INSTANCE.stateCss().cmsHovering());
@@ -448,9 +484,9 @@ HasClickHandlers, HasDoubleClickHandlers, HasMouseOverHandlers, I_CmsTruncable {
 
     /**
      * Returns the button at the given position.<p>
-     * 
+     *
      * @param index the button index
-     * 
+     *
      * @return the button at the given position
      */
     public Widget getButton(int index) {
@@ -460,7 +496,7 @@ HasClickHandlers, HasDoubleClickHandlers, HasMouseOverHandlers, I_CmsTruncable {
 
     /**
      * Returns the number of buttons.<p>
-     * 
+     *
      * @return the number of buttons
      */
     public int getButtonCount() {
@@ -470,7 +506,7 @@ HasClickHandlers, HasDoubleClickHandlers, HasMouseOverHandlers, I_CmsTruncable {
 
     /**
      * Returns the button panel.<p>
-     * 
+     *
      * @return the button panel
      */
     public FlowPanel getButtonPanel() {
@@ -488,6 +524,26 @@ HasClickHandlers, HasDoubleClickHandlers, HasMouseOverHandlers, I_CmsTruncable {
         return m_contentPanel;
     }
 
+    public CmsListInfoBean getInfoBean() {
+
+        return m_infoBean;
+    }
+
+    public CmsPushButton getOpenClose() {
+
+        return m_openClose;
+    }
+
+    /**
+     * Returns the label after the subtitle.<p>
+     *
+     * @return the label after the subtitle
+     */
+    public InlineLabel getShortExtraInfoLabel() {
+
+        return m_shortExtraInfoLabel;
+    }
+
     /**
      * Returns the subtitle label.<p>
      *
@@ -499,18 +555,8 @@ HasClickHandlers, HasDoubleClickHandlers, HasMouseOverHandlers, I_CmsTruncable {
     }
 
     /**
-     * Returns the label after the subtitle.<p>
-     * 
-     * @return the label after the subtitle
-     */
-    public CmsLabel getSubTitleSuffix() {
-
-        return m_subtitleSuffix;
-    }
-
-    /**
      * Returns the title label text.<p>
-     * 
+     *
      * @return the title label text
      */
     public String getTitleLabel() {
@@ -519,8 +565,18 @@ HasClickHandlers, HasDoubleClickHandlers, HasMouseOverHandlers, I_CmsTruncable {
     }
 
     /**
+     * Gets the title widget.<p>
+     *
+     * @return the title widget
+     */
+    public CmsLabel getTitleWidget() {
+
+        return m_title;
+    }
+
+    /**
      * Returns if additional info items are present.<p>
-     * 
+     *
      * @return <code>true</code> if additional info items are present
      */
     public boolean hasAdditionalInfo() {
@@ -529,8 +585,30 @@ HasClickHandlers, HasDoubleClickHandlers, HasMouseOverHandlers, I_CmsTruncable {
     }
 
     /**
+     * Re-initializes the additional infos.<p>
+     *
+     * @param infoBean the info bean
+     */
+    public void reInitAdditionalInfo(CmsListInfoBean infoBean) {
+
+        m_additionalInfo.clear();
+        boolean hadOpenClose = false;
+        boolean openCloseDown = false;
+        if (m_openClose != null) {
+            hadOpenClose = true;
+            openCloseDown = m_openClose.isDown();
+            m_openClose.removeFromParent();
+            m_openClose = null;
+        }
+        initAdditionalInfo(infoBean);
+        if (hadOpenClose) {
+            m_openClose.setDown(openCloseDown);
+        }
+    }
+
+    /**
      * Removes a widget from the button panel.<p>
-     * 
+     *
      * @param w the widget to remove
      */
     public void removeButton(Widget w) {
@@ -555,8 +633,8 @@ HasClickHandlers, HasDoubleClickHandlers, HasMouseOverHandlers, I_CmsTruncable {
 
     /**
      * Removes a style name from the subtitle label.<p>
-     * 
-     * @param styleName the style name to add 
+     *
+     * @param styleName the style name to add
      */
     public void removeSubtitleStyleName(String styleName) {
 
@@ -564,9 +642,9 @@ HasClickHandlers, HasDoubleClickHandlers, HasMouseOverHandlers, I_CmsTruncable {
     }
 
     /**
-     * Removes a style name from the title label.<p> 
-     * 
-     * @param styleName the style name to add 
+     * Removes a style name from the title label.<p>
+     *
+     * @param styleName the style name to add
      */
     public void removeTitleStyleName(String styleName) {
 
@@ -575,7 +653,7 @@ HasClickHandlers, HasDoubleClickHandlers, HasMouseOverHandlers, I_CmsTruncable {
 
     /**
      * Sets the additional info value label at the given position.<p>
-     * 
+     *
      * @param index the additional info index
      * @param label the new value to set
      */
@@ -586,8 +664,8 @@ HasClickHandlers, HasDoubleClickHandlers, HasMouseOverHandlers, I_CmsTruncable {
 
     /**
      * Sets the additional info visible if present.<p>
-     * 
-     * @param visible <code>true</code> to show, <code>false</code> to hide 
+     *
+     * @param visible <code>true</code> to show, <code>false</code> to hide
      */
     public void setAdditionalInfoVisible(boolean visible) {
 
@@ -603,11 +681,12 @@ HasClickHandlers, HasDoubleClickHandlers, HasMouseOverHandlers, I_CmsTruncable {
             m_openClose.setDown(false);
             CloseEvent.fire(this, this);
         }
+        CmsDomUtil.resizeAncestor(getParent());
     }
 
     /**
      * Sets the background color.<p>
-     * 
+     *
      * @param background the color
      */
     public void setBackground(Background background) {
@@ -629,8 +708,29 @@ HasClickHandlers, HasDoubleClickHandlers, HasMouseOverHandlers, I_CmsTruncable {
     }
 
     /**
+     * Sets the extra info text, and hides or displays the extra info label depending on whether
+     * the text is null or not null.<p>
+     *
+     * @param text the text to put into the subtitle suffix
+     */
+    public void setExtraInfo(String text) {
+
+        if (text == null) {
+            if (m_shortExtraInfoLabel.getParent() != null) {
+                m_shortExtraInfoLabel.removeFromParent();
+            }
+        } else {
+            if (m_shortExtraInfoLabel.getParent() == null) {
+                m_titleBox.add(m_shortExtraInfoLabel);
+            }
+            m_shortExtraInfoLabel.setText(text);
+        }
+        updateTruncation();
+    }
+
+    /**
      * Sets the icon of this item.<p>
-     * 
+     *
      * @param image the image to use as icon
      */
     public void setIcon(Image image) {
@@ -644,30 +744,62 @@ HasClickHandlers, HasDoubleClickHandlers, HasMouseOverHandlers, I_CmsTruncable {
 
     /**
      * Sets the icon for this item using the given CSS classes.<p>
-     * 
+     *
      * @param iconClasses the CSS classes
      */
     public void setIcon(String iconClasses) {
 
+        setIcon(iconClasses, null);
+    }
+
+    /**
+     * Sets the icon for this item using the given CSS classes.<p>
+     *
+     * @param iconClasses the CSS classes
+     * @param detailIconClasses the detail type icon classes if available
+     */
+    public void setIcon(String iconClasses, String detailIconClasses) {
+
         m_iconPanel.setVisible(true);
-        Panel iconWidget = new SimplePanel();
+        HTML iconWidget = new HTML();
         m_iconPanel.setWidget(iconWidget);
-        iconWidget.addStyleName(iconClasses + " " + m_fixedIconClasses);
+        iconWidget.setStyleName(iconClasses + " " + m_fixedIconClasses);
+        // render the detail icon as an overlay above the main icon, if required
+        if (CmsStringUtil.isNotEmptyOrWhitespaceOnly(detailIconClasses)) {
+            iconWidget.setHTML(
+                "<span class=\""
+                    + detailIconClasses
+                    + " "
+                    + I_CmsLayoutBundle.INSTANCE.listItemWidgetCss().pageDetailType()
+                    + "\"></span>");
+        }
+    }
+
+    /**
+     * Sets the cursor for the icon.<p>
+     *
+     * @param cursor the cursor for the icon
+     */
+    public void setIconCursor(Cursor cursor) {
+
+        m_iconPanel.getElement().getStyle().setCursor(cursor);
+
     }
 
     /**
      * Sets the icon title.<p>
-     * 
+     *
      * @param title the new icon title
      */
     public void setIconTitle(String title) {
 
+        m_iconTitle = title;
         m_iconPanel.setTitle(title);
     }
 
     /**
      * Sets the lock icon.<p>
-     * 
+     *
      * @param icon the icon to use
      * @param iconTitle the icon title
      */
@@ -675,106 +807,105 @@ HasClickHandlers, HasDoubleClickHandlers, HasMouseOverHandlers, I_CmsTruncable {
 
         if (m_lockIcon == null) {
             m_lockIcon = new HTML();
+            m_lockIcon.addClickHandler(m_iconSuperClickHandler);
             m_contentPanel.add(m_lockIcon);
         }
         switch (icon) {
             case CLOSED:
-                m_lockIcon.setStyleName(I_CmsLayoutBundle.INSTANCE.listItemWidgetCss().lockIcon()
-                    + " "
-                    + I_CmsLayoutBundle.INSTANCE.listItemWidgetCss().lockClosed());
+                m_lockIcon.setStyleName(
+                    I_CmsLayoutBundle.INSTANCE.listItemWidgetCss().lockIcon()
+                        + " "
+                        + I_CmsLayoutBundle.INSTANCE.listItemWidgetCss().lockClosed());
                 break;
             case OPEN:
-                m_lockIcon.setStyleName(I_CmsLayoutBundle.INSTANCE.listItemWidgetCss().lockIcon()
-                    + " "
-                    + I_CmsLayoutBundle.INSTANCE.listItemWidgetCss().lockOpen());
+                m_lockIcon.setStyleName(
+                    I_CmsLayoutBundle.INSTANCE.listItemWidgetCss().lockIcon()
+                        + " "
+                        + I_CmsLayoutBundle.INSTANCE.listItemWidgetCss().lockOpen());
                 break;
             case SHARED_CLOSED:
-                m_lockIcon.setStyleName(I_CmsLayoutBundle.INSTANCE.listItemWidgetCss().lockIcon()
-                    + " "
-                    + I_CmsLayoutBundle.INSTANCE.listItemWidgetCss().lockSharedClosed());
+                m_lockIcon.setStyleName(
+                    I_CmsLayoutBundle.INSTANCE.listItemWidgetCss().lockIcon()
+                        + " "
+                        + I_CmsLayoutBundle.INSTANCE.listItemWidgetCss().lockSharedClosed());
                 break;
             case SHARED_OPEN:
-                m_lockIcon.setStyleName(I_CmsLayoutBundle.INSTANCE.listItemWidgetCss().lockIcon()
-                    + " "
-                    + I_CmsLayoutBundle.INSTANCE.listItemWidgetCss().lockSharedOpen());
+                m_lockIcon.setStyleName(
+                    I_CmsLayoutBundle.INSTANCE.listItemWidgetCss().lockIcon()
+                        + " "
+                        + I_CmsLayoutBundle.INSTANCE.listItemWidgetCss().lockSharedOpen());
                 break;
             case NONE:
             default:
                 m_lockIcon.setStyleName(I_CmsLayoutBundle.INSTANCE.listItemWidgetCss().lockIcon());
         }
-        m_lockIcon.setTitle(iconTitle);
+
+        m_lockIcon.setTitle(concatIconTitles(m_iconTitle, iconTitle));
+        m_lockIcon.getElement().getStyle().setCursor(Style.Cursor.POINTER);
     }
 
     /**
      * Sets the state icon.<p>
-     * 
+     *
      * The state icon indicates if a resource is exported, secure, etc.<p>
-     * 
+     *
      * @param icon the state icon
      */
     public void setStateIcon(StateIcon icon) {
 
         if (m_stateIcon == null) {
             m_stateIcon = new HTML();
+            m_stateIcon.addClickHandler(m_iconSuperClickHandler);
             m_contentPanel.add(m_stateIcon);
-        }
 
+        }
+        String iconTitle = null;
+        I_CmsListItemWidgetCss listItemWidgetCss = I_CmsLayoutBundle.INSTANCE.listItemWidgetCss();
+        String styleStateIcon = I_CmsLayoutBundle.INSTANCE.listItemWidgetCss().stateIcon();
         switch (icon) {
             case export:
-                m_stateIcon.setStyleName(I_CmsLayoutBundle.INSTANCE.listItemWidgetCss().stateIcon()
-                    + " "
-                    + I_CmsLayoutBundle.INSTANCE.listItemWidgetCss().export());
-                m_stateIcon.setTitle(Messages.get().key(Messages.GUI_ICON_TITLE_EXPORT_0));
+                m_stateIcon.setStyleName(styleStateIcon + " " + listItemWidgetCss.export());
+                iconTitle = Messages.get().key(Messages.GUI_ICON_TITLE_EXPORT_0);
                 break;
             case secure:
-                m_stateIcon.setStyleName(I_CmsLayoutBundle.INSTANCE.listItemWidgetCss().stateIcon()
-                    + " "
-                    + I_CmsLayoutBundle.INSTANCE.listItemWidgetCss().secure());
-                m_stateIcon.setTitle(Messages.get().key(Messages.GUI_ICON_TITLE_SECURE_0));
+                m_stateIcon.setStyleName(styleStateIcon + " " + listItemWidgetCss.secure());
+                iconTitle = Messages.get().key(Messages.GUI_ICON_TITLE_SECURE_0);
                 break;
+            case copy:
+                m_stateIcon.setStyleName(styleStateIcon + " " + listItemWidgetCss.copyModel());
+                break;
+            case standard:
             default:
                 m_stateIcon.setStyleName(I_CmsLayoutBundle.INSTANCE.listItemWidgetCss().stateIcon());
-                m_stateIcon.setTitle(null);
                 break;
         }
-
+        m_stateIcon.setTitle(concatIconTitles(m_iconTitle, iconTitle));
+        m_stateIcon.getElement().getStyle().setCursor(Style.Cursor.POINTER);
     }
 
     /**
      * Sets the subtitle label text.<p>
-     * 
+     *
      * @param label the new subtitle to set
      */
     public void setSubtitleLabel(String label) {
 
-        m_subtitle.setText(label);
-    }
-
-    /**
-     * Sets the subtitle suffix text, and hides or displays the subtitle suffix depending on whether
-     * the text is null or not null.<p>
-     * 
-     * @param text the text to put into the subtitle suffix 
-     */
-    public void setSubtitleSuffixText(String text) {
-
-        if (text == null) {
-            if (m_subtitleSuffix.getParent() != null) {
-                m_subtitleSuffix.removeFromParent();
-            }
-        } else {
-            if (m_subtitleSuffix.getParent() == null) {
-                m_titleRow.add(m_subtitleSuffix);
-            }
-            m_subtitleSuffix.setText(text);
+        if (label == null) {
+            label = "";
         }
-        updateTruncation();
+        DOMParser parser = new DOMParser();
+        HTMLDocument doc = Js.cast(parser.parseFromString(label, "text/html"));
+        String stripped = doc.body.textContent;
+        if (CmsStringUtil.isEmptyOrWhitespaceOnly(stripped) && !CmsStringUtil.isEmptyOrWhitespaceOnly(label)) {
+            CmsGwtLog.log("Empty HTML stripping output for input: " + label);
+        }
+        m_subtitle.setText(stripped);
     }
 
     /**
      * Enables or disabled editing of the title field.<p>
-     * 
-     * @param editable if true, makes the title field editable 
+     *
+     * @param editable if true, makes the title field editable
      */
     public void setTitleEditable(boolean editable) {
 
@@ -785,8 +916,9 @@ HasClickHandlers, HasDoubleClickHandlers, HasMouseOverHandlers, I_CmsTruncable {
         if (!editable) {
             m_titleClickHandlerRegistration.removeHandler();
             m_titleClickHandlerRegistration = null;
-
+            m_title.removeStyleName(I_CmsLayoutBundle.INSTANCE.listItemWidgetCss().inlineEditable());
         } else {
+            m_title.addStyleName(I_CmsLayoutBundle.INSTANCE.listItemWidgetCss().inlineEditable());
             m_titleClickHandlerRegistration = m_title.addClickHandler(new ClickHandler() {
 
                 /**
@@ -803,8 +935,8 @@ HasClickHandlers, HasDoubleClickHandlers, HasMouseOverHandlers, I_CmsTruncable {
 
     /**
      * Sets the handler for editing the list item widget's title.
-     * 
-     * @param handler the new title editing handler 
+     *
+     * @param handler the new title editing handler
      */
     public void setTitleEditHandler(I_CmsTitleEditHandler handler) {
 
@@ -813,7 +945,7 @@ HasClickHandlers, HasDoubleClickHandlers, HasMouseOverHandlers, I_CmsTruncable {
 
     /**
      * Sets the title label text.<p>
-     * 
+     *
      * @param label the new title to set
      */
     public void setTitleLabel(String label) {
@@ -822,9 +954,35 @@ HasClickHandlers, HasDoubleClickHandlers, HasMouseOverHandlers, I_CmsTruncable {
     }
 
     /**
+     * Sets the icon in the top right corner and its title.<p>
+     *
+     * @param iconClass the CSS class for the icon
+     * @param title the value for the title attribute of the icon
+     */
+    public void setTopRightIcon(String iconClass, String title) {
+
+        if (m_topRightIcon == null) {
+            m_topRightIcon = new HTML();
+            m_contentPanel.add(m_topRightIcon);
+        }
+        m_topRightIcon.setStyleName(I_CmsLayoutBundle.INSTANCE.listItemWidgetCss().topRightIcon() + " " + iconClass);
+        if (title != null) {
+            m_topRightIcon.setTitle(title);
+        }
+    }
+
+    /**
+     * Makes the content of the list info box unselectable.<p>
+     */
+    public void setUnselectable() {
+
+        m_contentPanel.addStyleName(I_CmsLayoutBundle.INSTANCE.listItemWidgetCss().unselectable());
+    }
+
+    /**
      * @see org.opencms.gwt.client.ui.I_CmsTruncable#truncate(java.lang.String, int)
      */
-    public void truncate(String textMetricsPrefix, int widgetWidth) {
+    public void truncate(final String textMetricsPrefix, final int widgetWidth) {
 
         m_childWidth = widgetWidth;
         m_tmPrefix = textMetricsPrefix;
@@ -836,16 +994,22 @@ HasClickHandlers, HasDoubleClickHandlers, HasMouseOverHandlers, I_CmsTruncable {
             width -= 32;
         }
         if (width < 0) {
-            // IE fails with a JS error if the width is negative 
+            // IE fails with a JS error if the width is negative
             width = 0;
         }
-        m_title.truncate(textMetricsPrefix + TM_TITLE, width - 10);
-        if (CmsStringUtil.isNotEmptyOrWhitespaceOnly(m_subtitleSuffix.getText())) {
-            m_subtitleSuffix.truncate(textMetricsPrefix + "_STSUFFIX", 100);
-            m_subtitle.truncate(textMetricsPrefix + TM_SUBTITLE, width - 110);
-        } else {
-            m_subtitle.truncate(textMetricsPrefix + TM_SUBTITLE, width - 10);
-        }
+        m_titleBox.setWidth(Math.max(0, width - 30) + "px");
+        m_subtitle.truncate(textMetricsPrefix + TM_SUBTITLE, width);
+        truncateAdditionalInfo(textMetricsPrefix, widgetWidth);
+    }
+
+    /**
+     * Truncates the additional info items.<p>
+     *
+     * @param textMetricsPrefix the text metrics prefix
+     * @param widgetWidth the width to truncate to
+     */
+    public void truncateAdditionalInfo(final String textMetricsPrefix, final int widgetWidth) {
+
         for (Widget addInfo : m_additionalInfo) {
             ((AdditionalInfoItem)addInfo).truncate(textMetricsPrefix, widgetWidth - 10);
         }
@@ -853,7 +1017,7 @@ HasClickHandlers, HasDoubleClickHandlers, HasMouseOverHandlers, I_CmsTruncable {
 
     /**
      * Updates the truncation of labels if needed.<p>
-     * 
+     *
      * Use after changing any text on the widget.<p>
      */
     public void updateTruncation() {
@@ -873,9 +1037,12 @@ HasClickHandlers, HasDoubleClickHandlers, HasMouseOverHandlers, I_CmsTruncable {
         box.addStyleName(I_CmsInputLayoutBundle.INSTANCE.inputCss().labelInput());
         box.addStyleName(I_CmsLayoutBundle.INSTANCE.listItemWidgetCss().titleInput());
         final String originalTitle = m_title.getText();
-        // wrap the boolean flag in an array so we can change it from the event handlers 
+        // wrap the boolean flag in an array so we can change it from the event handlers
         final boolean[] checked = new boolean[] {false};
-
+        final boolean restoreUnselectable = CmsDomUtil.hasClass(
+            I_CmsLayoutBundle.INSTANCE.listItemWidgetCss().unselectable(),
+            m_contentPanel.getElement());
+        m_contentPanel.removeStyleName(I_CmsLayoutBundle.INSTANCE.listItemWidgetCss().unselectable());
         box.addBlurHandler(new BlurHandler() {
 
             /**
@@ -883,6 +1050,9 @@ HasClickHandlers, HasDoubleClickHandlers, HasMouseOverHandlers, I_CmsTruncable {
              */
             public void onBlur(BlurEvent event) {
 
+                if (restoreUnselectable) {
+                    setUnselectable();
+                }
                 if (checked[0]) {
                     return;
                 }
@@ -917,7 +1087,7 @@ HasClickHandlers, HasDoubleClickHandlers, HasMouseOverHandlers, I_CmsTruncable {
                 }
             }
         });
-        m_titleRow.insert(box, 1);
+        m_titleBox.insert(box, 2);
         box.setFocus(true);
     }
 
@@ -927,11 +1097,10 @@ HasClickHandlers, HasDoubleClickHandlers, HasMouseOverHandlers, I_CmsTruncable {
     protected void ensureOpenCloseAdditionalInfo() {
 
         if (m_openClose == null) {
-            m_openClose = new CmsPushButton(
-                I_CmsImageBundle.INSTANCE.style().triangleRight(),
-                I_CmsImageBundle.INSTANCE.style().triangleDown());
-            m_openClose.setButtonStyle(ButtonStyle.TRANSPARENT, null);
-            m_titleRow.insert(m_openClose, 0);
+            m_openClose = new CmsPushButton(I_CmsButton.TRIANGLE_RIGHT, I_CmsButton.TRIANGLE_DOWN);
+            m_openClose.setButtonStyle(ButtonStyle.FONT_ICON, null);
+            m_openClose.setSize(Size.small);
+            m_titleBox.insert(m_openClose, 0);
             m_openClose.addClickHandler(new ClickHandler() {
 
                 /**
@@ -940,6 +1109,7 @@ HasClickHandlers, HasDoubleClickHandlers, HasMouseOverHandlers, I_CmsTruncable {
                 public void onClick(ClickEvent event) {
 
                     setAdditionalInfoVisible(!getElement().getClassName().contains(CmsListItemWidget.OPENCLASS));
+                    CmsDomUtil.resizeAncestor(CmsListItemWidget.this);
                 }
             });
         }
@@ -947,31 +1117,48 @@ HasClickHandlers, HasDoubleClickHandlers, HasMouseOverHandlers, I_CmsTruncable {
 
     /**
      * Constructor.<p>
-     * 
+     *
      * @param infoBean bean holding the item information
      */
     protected void init(CmsListInfoBean infoBean) {
 
+        m_infoBean = infoBean;
         m_iconPanel.setVisible(false);
         m_title.setText(infoBean.getTitle());
-        m_subtitle.setText(infoBean.getSubTitle());
+        setSubtitleLabel(infoBean.getSubTitle());
 
         // set the resource type icon if present
-        if (CmsStringUtil.isNotEmptyOrWhitespaceOnly(infoBean.getResourceType())) {
-            setIcon(CmsIconUtil.getResourceIconClasses(infoBean.getResourceType(), false));
+        if (CmsStringUtil.isNotEmptyOrWhitespaceOnly(infoBean.getBigIconClasses())) {
+            setIcon(infoBean.getBigIconClasses(), infoBean.getSmallIconClasses());
         }
+
         if (infoBean.getStateIcon() != null) {
             setStateIcon(infoBean.getStateIcon());
         }
         if (infoBean.getLockIcon() != null) {
             setLockIcon(infoBean.getLockIcon(), infoBean.getLockIconTitle());
         }
+
+        CmsResourceState resourceState = infoBean.getResourceState();
+
+        if ((resourceState != null) && !resourceState.isUnchanged() && infoBean.isMarkChangedState()) {
+            String title = Messages.get().key(Messages.GUI_UNPUBLISHED_CHANGES_TITLE_0);
+            if (resourceState.isNew()) {
+                title = Messages.get().key(Messages.GUI_UNPUBLISHED_CHANGES_NEW_TITLE_0);
+            }
+            setTopRightIcon(I_CmsLayoutBundle.INSTANCE.listItemWidgetCss().changed(), title);
+        }
+
+        if ((resourceState != null) && resourceState.isDeleted()) {
+            m_title.addStyleName(I_CmsLayoutBundle.INSTANCE.listItemWidgetCss().titleDeleted());
+        }
+
         initAdditionalInfo(infoBean);
     }
 
     /**
      * Initializes the additional info.<p>
-     * 
+     *
      * @param infoBean the info bean
      */
     protected void initAdditionalInfo(CmsListInfoBean infoBean) {
@@ -997,8 +1184,8 @@ HasClickHandlers, HasDoubleClickHandlers, HasMouseOverHandlers, I_CmsTruncable {
 
     /**
      * Internal method which is called when the user has finished editing the title.
-     * 
-     * @param box the text box which has been edited 
+     *
+     * @param box the text box which has been edited
      */
     protected void onEditTitleTextBox(TextBox box) {
 
@@ -1013,4 +1200,29 @@ HasClickHandlers, HasDoubleClickHandlers, HasMouseOverHandlers, I_CmsTruncable {
         m_title.setVisible(true);
 
     }
+
+    /**
+     * Combines the main icon title with the title for a status icon overlayed over the main icon.<p>
+     *
+     * @param main the main icon title
+     * @param secondary the secondary icon title
+     *
+     * @return the combined icon title for the secondary icon
+     */
+    String concatIconTitles(String main, String secondary) {
+
+        if (main == null) {
+            main = "";
+        }
+        if (secondary == null) {
+            secondary = "";
+        }
+
+        if (secondary.length() == 0) {
+            return main;
+        }
+        return main + " [" + secondary + "]";
+
+    }
+
 }

@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -14,12 +14,12 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * Lesser General Public License for more details.
  *
- * For further information about Alkacon Software GmbH, please see the
- * company website: http://www.alkacon.com
+ * For further information about Alkacon Software GmbH & Co. KG, please see the
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -31,17 +31,16 @@ import org.opencms.configuration.CmsConfigurationException;
 import org.opencms.configuration.CmsParameterConfiguration;
 import org.opencms.main.OpenCms;
 import org.opencms.util.CmsStringUtil;
-import org.opencms.workplace.explorer.CmsNewResourceFolder;
 
 /**
  * Resource type descriptor for the type "folder".<p>
- * 
- * @since 6.0.0 
+ *
+ * @since 6.0.0
  */
 public class CmsResourceTypeFolder extends A_CmsResourceTypeFolderBase {
 
     /** Configuration key for the optional list of resource types to show as available index page types. */
-    public static final String CONFIGURATION_INDEX_PAGE_TYPE = CmsNewResourceFolder.PROPERTY_RESTYPES_INDEXPAGE;
+    public static final String CONFIGURATION_INDEX_PAGE_TYPE = "restypes.indexpage";
 
     /** The type id of this resource. */
     public static final int RESOURCE_TYPE_ID = 0;
@@ -54,6 +53,9 @@ public class CmsResourceTypeFolder extends A_CmsResourceTypeFolderBase {
 
     /** The static type id of this resource type. */
     private static int m_staticTypeId;
+
+    /** The serial version id. */
+    private static final long serialVersionUID = -6627448037959709694L;
 
     /** The configured list of resource types to show as available index page types. */
     private String m_indexPageTypes;
@@ -70,7 +72,7 @@ public class CmsResourceTypeFolder extends A_CmsResourceTypeFolderBase {
 
     /**
      * Returns the static type id of this (default) resource type.<p>
-     * 
+     *
      * @return the static type id of this (default) resource type
      */
     public static int getStaticTypeId() {
@@ -80,7 +82,7 @@ public class CmsResourceTypeFolder extends A_CmsResourceTypeFolderBase {
 
     /**
      * Returns the static type name of this (default) resource type.<p>
-     * 
+     *
      * @return the static type name of this (default) resource type
      */
     public static String getStaticTypeName() {
@@ -137,27 +139,29 @@ public class CmsResourceTypeFolder extends A_CmsResourceTypeFolderBase {
 
         if ((OpenCms.getRunLevel() > OpenCms.RUNLEVEL_2_INITIALIZING) && m_staticFrozen) {
             // configuration already frozen
-            throw new CmsConfigurationException(Messages.get().container(
-                Messages.ERR_CONFIG_FROZEN_3,
-                this.getClass().getName(),
-                getStaticTypeName(),
-                new Integer(getStaticTypeId())));
+            throw new CmsConfigurationException(
+                Messages.get().container(
+                    Messages.ERR_CONFIG_FROZEN_3,
+                    this.getClass().getName(),
+                    getStaticTypeName(),
+                    Integer.valueOf(getStaticTypeId())));
         }
 
         if (!RESOURCE_TYPE_NAME.equals(name)) {
             // default resource type MUST have default name
-            throw new CmsConfigurationException(Messages.get().container(
-                Messages.ERR_INVALID_RESTYPE_CONFIG_NAME_3,
-                this.getClass().getName(),
-                RESOURCE_TYPE_NAME,
-                name));
+            throw new CmsConfigurationException(
+                Messages.get().container(
+                    Messages.ERR_INVALID_RESTYPE_CONFIG_NAME_3,
+                    this.getClass().getName(),
+                    RESOURCE_TYPE_NAME,
+                    name));
         }
 
         // freeze the configuration
         m_staticFrozen = true;
 
         super.initConfiguration(RESOURCE_TYPE_NAME, id, className);
-        // set static members with values from the configuration        
+        // set static members with values from the configuration
         m_staticTypeId = m_typeId;
     }
 }

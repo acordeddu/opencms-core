@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -14,12 +14,12 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * Lesser General Public License for more details.
  *
- * For further information about Alkacon Software GmbH, please see the
- * company website: http://www.alkacon.com
+ * For further information about Alkacon Software GmbH & Co. KG, please see the
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -36,8 +36,8 @@ import java.util.List;
 
 /**
  * Show diferent states depending on user direct/indirect group assignment.<p>
- * 
- * @since 6.0.0 
+ *
+ * @since 6.0.0
  */
 public class CmsGroupStateAction extends CmsListDefaultAction {
 
@@ -52,7 +52,7 @@ public class CmsGroupStateAction extends CmsListDefaultAction {
 
     /**
      * Default constructor.<p>
-     * 
+     *
      * @param id the id of the action
      * @param direct the direct group flag
      */
@@ -64,12 +64,12 @@ public class CmsGroupStateAction extends CmsListDefaultAction {
 
     /**
      * Default constructor.<p>
-     * 
+     *
      * @param id the id of the action
      * @param cms the cms context
      * @param direct the direct group flag
-     * 
-     * @Deprecated cms object no longer needed 
+     *
+     * Deprecated: cms object no longer needed
      */
     public CmsGroupStateAction(String id, CmsObject cms, boolean direct) {
 
@@ -114,11 +114,12 @@ public class CmsGroupStateAction extends CmsListDefaultAction {
     /**
      * @see org.opencms.workplace.tools.A_CmsHtmlIconButton#isVisible()
      */
+    @Override
     public boolean isVisible() {
 
         try {
             String groupName = (String)getItem().get(A_CmsUserGroupsList.LIST_COLUMN_NAME);
-            List dGroups = getCms().getGroupsOfUser(getUserName(), true);
+            List<CmsGroup> dGroups = getCms().getGroupsOfUser(getUserName(), true);
             CmsGroup group = getCms().readGroup(groupName);
             if (isDirect()) {
                 return dGroups.contains(group);
@@ -143,6 +144,7 @@ public class CmsGroupStateAction extends CmsListDefaultAction {
     /**
      * @see org.opencms.workplace.list.I_CmsListAction#setWp(org.opencms.workplace.list.A_CmsListDialog)
      */
+    @Override
     public void setWp(A_CmsListDialog wp) {
 
         super.setWp(wp);

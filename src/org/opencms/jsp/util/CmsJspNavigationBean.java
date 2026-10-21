@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -15,11 +15,11 @@
  * Lesser General Public License for more details.
  *
  * For further information about Alkacon Software, please see the
- * company website: http://www.alkacon.com
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -37,6 +37,7 @@ import org.opencms.util.CmsCollectionsGenericWrapper;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
 import org.apache.commons.collections.Transformer;
@@ -44,15 +45,15 @@ import org.apache.commons.collections.Transformer;
 /**
  * Allows access to the OpenCms navigation information in combination with the
  * <code>&lt;cms:navigation&gt;</code> tag.<p>
- * 
+ *
  * @since 8.0
- * 
+ *
  * @see org.opencms.jsp.CmsJspTagContentAccess
  */
 public class CmsJspNavigationBean {
 
     /**
-     * Provides a Map with Booleans that 
+     * Provides a Map with Booleans that
      * indicate if the given URI is the currently active element in the navigation.<p>
      */
     public class CmsIsActiveTransformer implements Transformer {
@@ -68,10 +69,11 @@ public class CmsJspNavigationBean {
                 try {
                     CmsResource defaultFile = m_cms.readDefaultFile(resourceName);
                     if ((defaultFile != null)
-                        && m_cms.getRequestContext().getSitePath(defaultFile).equals(m_cms.getRequestContext().getUri())) {
+                        && m_cms.getRequestContext().getSitePath(defaultFile).equals(
+                            m_cms.getRequestContext().getUri())) {
                         result = Boolean.TRUE;
                     }
-                } catch (CmsException e) {
+                } catch (@SuppressWarnings("unused") CmsException e) {
                     // error reading resource, result is false
                 }
             } else {
@@ -83,7 +85,7 @@ public class CmsJspNavigationBean {
     }
 
     /**
-     * Provides a Map with Booleans that 
+     * Provides a Map with Booleans that
      * indicate if the given navigation URI is a parent element of the current URI.<p>
      */
     public class CmsIsParentTransformer implements Transformer {
@@ -93,7 +95,18 @@ public class CmsJspNavigationBean {
          */
         public Object transform(Object input) {
 
-            return Boolean.valueOf(m_cms.getRequestContext().getUri().startsWith((String)input));
+            String resourceName = null;
+            if (input instanceof CmsJspNavElement) {
+                CmsJspNavElement navElement = (CmsJspNavElement)input;
+                if (navElement.getResource() != null) {
+                    resourceName = m_cms.getSitePath(navElement.getResource());
+                } else {
+                    resourceName = navElement.getResourceName();
+                }
+            } else {
+                resourceName = String.valueOf(input);
+            }
+            return Boolean.valueOf(m_cms.getRequestContext().getUri().startsWith(resourceName));
         }
     }
 
@@ -132,7 +145,7 @@ public class CmsJspNavigationBean {
 
     /**
      * Base constructor.<p>
-     * 
+     *
      * @param cms the current users OpenCms context to build the navigation for
      * @param type the navigation type to generate
      * @param startLevel the optional start level
@@ -148,8 +161,31 @@ public class CmsJspNavigationBean {
         String resource,
         String param) {
 
+        this(cms, type, startLevel, endLevel, resource, param, null);
+    }
+
+    /**
+     * Base constructor.<p>
+     *
+     * @param cms the current users OpenCms context to build the navigation for
+     * @param type the navigation type to generate
+     * @param startLevel the optional start level
+     * @param endLevel the optional end level
+     * @param resource the optional resource for the navigation
+     * @param param the optional parameter for the navigation
+     * @param locale the locale, for which Properties should be read.
+     */
+    public CmsJspNavigationBean(
+        CmsObject cms,
+        CmsJspTagNavigation.Type type,
+        int startLevel,
+        int endLevel,
+        String resource,
+        String param,
+        Locale locale) {
+
         m_cms = cms;
-        m_builder = new CmsJspNavBuilder(m_cms);
+        m_builder = new CmsJspNavBuilder(m_cms, locale);
         m_type = type;
         m_startLevel = startLevel;
         m_endLevel = endLevel;
@@ -157,9 +193,9 @@ public class CmsJspNavigationBean {
         m_param = param;
     }
 
-    /** 
+    /**
      * Returns the navigation element of the currently requested uri.<p>
-     * 
+     *
      * @return the navigation element of the currently requested uri
      */
     public CmsJspNavElement getCurrent() {
@@ -171,21 +207,21 @@ public class CmsJspNavigationBean {
     }
 
     /**
-     * Returns a lazy initialized Map that provides Booleans that 
+     * Returns a lazy initialized Map that provides Booleans that
      * indicate if a given navigation uri is currently active.<p>
-     * 
+     *
      * The provided Map key is assumed to be a String that represents an absolute VFS path.<p>
-     * 
+     *
      * Usage example on a JSP with the JSTL:<pre>
      * &lt;cms:navigation  type="treeForFolder" startLevel="1" endLevel="3" var="nav" /&gt;
      *     &lt;c:forEach var="entry" items="${nav.items}" ... &gt;
      *     ...
      *     &lt;c:if test="${nav.isActive[entry.resourceName]}" &gt;
-     *         This is the currently active navigation entry 
+     *         This is the currently active navigation entry
      *     &lt;/c:if&gt;
      * &lt;/c:forEach&gt;</pre>
-     *  
-     * @return a lazy initialized Map that provides Booleans that 
+     *
+     * @return a lazy initialized Map that provides Booleans that
      *      indicate if a given navigation uri is currently active
      */
     public Map<String, Boolean> getIsActive() {
@@ -197,11 +233,11 @@ public class CmsJspNavigationBean {
     }
 
     /**
-     * Returns a lazy initialized Map that provides Booleans that 
+     * Returns a lazy initialized Map that provides Booleans that
      * indicate if the given navigation URI is a parent element of the current URI.<p>
-     * 
+     *
      * The provided Map key is assumed to be a String that represents an absolute VFS path.<p>
-     * 
+     *
      * Usage example on a JSP with the JSTL:<pre>
      * &lt;cms:navigation  type="treeForFolder" startLevel="1" endLevel="3" var="nav" /&gt;
      *     &lt;c:forEach var="entry" items="${nav.items}" ... &gt;
@@ -210,8 +246,8 @@ public class CmsJspNavigationBean {
      *         The currently active navigation entry is a parent of the currently requested URI
      *     &lt;/c:if&gt;
      * &lt;/c:forEach&gt;</pre>
-     *  
-     * @return a lazy initialized Map that provides Booleans that 
+     *
+     * @return a lazy initialized Map that provides Booleans that
      *      indicate if the given navigation URI is a parent element of the current URI
      */
     public Map<String, Boolean> getIsParent() {
@@ -224,14 +260,14 @@ public class CmsJspNavigationBean {
 
     /**
      * Returns the list of selected navigation elements.<p>
-     * 
+     *
      * @return the list of selected navigation elements
      */
     public List<CmsJspNavElement> getItems() {
 
         if (m_items == null) {
             switch (m_type) {
-            // calculate the results based on the given parameters
+                // calculate the results based on the given parameters
                 case forFolder:
                     if (m_startLevel == Integer.MIN_VALUE) {
                         // no start level set
@@ -266,10 +302,10 @@ public class CmsJspNavigationBean {
                             Boolean.valueOf(m_param).booleanValue());
                     } else {
                         if (m_startLevel == Integer.MIN_VALUE) {
-                            // no start level
-                            m_items = m_builder.getNavigationBreadCrumb();
+                            // default start level is zero
+                            m_items = m_builder.getNavigationBreadCrumb(0, Boolean.valueOf(m_param).booleanValue());
                         } else {
-                            if (m_endLevel == Integer.MIN_VALUE) {
+                            if (m_endLevel != Integer.MIN_VALUE) {
                                 m_items = m_builder.getNavigationBreadCrumb(m_startLevel, m_endLevel);
                             } else {
                                 m_items = m_builder.getNavigationBreadCrumb(

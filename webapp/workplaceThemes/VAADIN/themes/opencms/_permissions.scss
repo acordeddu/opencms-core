@@ -1,0 +1,54 @@
+@mixin o-permissions{
+	.o-permissions {
+		.o-permission-details {
+			display: inline-block;
+			width: 40px;  
+		}
+		
+		.o-permission-text-content { 
+			display: inline-block;
+		}
+		
+		&.o-permission-no-details .o-permission-text-content {
+			margin-left: 5px;
+		}
+		
+		.o-permission-text {
+			width: 100%;
+			overflow-x: auto;
+			overflow-y:hidden;
+			white-space: nowrap; 
+		} 
+	
+		.o-permissions-info{
+			padding-left:5px;	
+		}
+		
+	
+		.v-button.v-button-borderless:focus:after{
+			border-color: transparent;
+			box-shadow: none;
+		}
+		.o-permissions-heading {
+			margin: round($o-layout-margin/2) 0;
+			
+		}
+		.o-permissions_delete {
+			float: right;
+			margin-right: $o-layout-margin;
+		}
+	
+		.o-permissions-hide-layout{
+			display:none;
+			}
+			
+		
+	}
+	
+	.o-permission-view-toolbar  {
+				margin-right: 5px;
+				& > * {
+					min-width: 25px !important;
+				}
+			}
+}

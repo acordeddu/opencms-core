@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -14,12 +14,12 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * Lesser General Public License for more details.
  *
- * For further information about Alkacon Software GmbH, please see the
- * company website: http://www.alkacon.com
+ * For further information about Alkacon Software GmbH & Co. KG, please see the
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -27,40 +27,43 @@
 
 package org.opencms.search.documents;
 
+import org.opencms.ade.configuration.CmsADEConfigData;
+import org.opencms.ade.configuration.CmsFormatterUtils;
 import org.opencms.file.CmsFile;
 import org.opencms.file.CmsObject;
 import org.opencms.file.CmsResource;
-import org.opencms.file.types.I_CmsResourceType;
 import org.opencms.main.CmsException;
 import org.opencms.main.CmsLog;
 import org.opencms.main.OpenCms;
 import org.opencms.search.CmsIndexException;
-import org.opencms.search.CmsSearchIndex;
+import org.opencms.search.I_CmsSearchDocument;
+import org.opencms.search.I_CmsSearchIndex;
 import org.opencms.search.extractors.CmsExtractionResult;
 import org.opencms.search.extractors.I_CmsExtractionResult;
 import org.opencms.util.CmsStringUtil;
 import org.opencms.xml.A_CmsXmlDocument;
+import org.opencms.xml.containerpage.CmsContainerBean;
 import org.opencms.xml.containerpage.CmsContainerElementBean;
 import org.opencms.xml.containerpage.CmsContainerPageBean;
 import org.opencms.xml.containerpage.CmsFormatterConfiguration;
 import org.opencms.xml.containerpage.CmsXmlContainerPage;
 import org.opencms.xml.containerpage.CmsXmlContainerPageFactory;
+import org.opencms.xml.containerpage.I_CmsFormatterBean;
 import org.opencms.xml.content.CmsXmlContentFactory;
 import org.opencms.xml.types.I_CmsXmlContentValue;
 
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
 import org.apache.commons.logging.Log;
-import org.apache.lucene.document.Document;
 
 /**
- * Lucene document factory class to extract index data from a resource 
+ * Lucene document factory class to extract index data from a resource
  * of type <code>CmsResourceTypeContainerPage</code>.<p>
- * 
- * @since 8.0 
+ *
+ * @since 8.0
  */
 public class CmsDocumentContainerPage extends A_CmsVfsDocument {
 
@@ -69,7 +72,7 @@ public class CmsDocumentContainerPage extends A_CmsVfsDocument {
 
     /**
      * Creates a new instance of this lucene document factory.<p>
-     * 
+     *
      * @param name name of the document type
      */
     public CmsDocumentContainerPage(String name) {
@@ -79,12 +82,13 @@ public class CmsDocumentContainerPage extends A_CmsVfsDocument {
 
     /**
      * Generates a new lucene document instance from contents of the given resource for the provided index.<p>
-     * 
-     * For container pages, we must not cache based on the container page content age, 
+     *
+     * For container pages, we must not cache based on the container page content age,
      * since the content of the included elements may change any time.
      */
     @Override
-    public Document createDocument(CmsObject cms, CmsResource resource, CmsSearchIndex index) throws CmsException {
+    public I_CmsSearchDocument createDocument(CmsObject cms, CmsResource resource, I_CmsSearchIndex index)
+    throws CmsException {
 
         // extract the content from the resource
         I_CmsExtractionResult content = null;
@@ -106,48 +110,62 @@ public class CmsDocumentContainerPage extends A_CmsVfsDocument {
 
     /**
      * Returns the raw text content of a VFS resource of type <code>CmsResourceTypeContainerPage</code>.<p>
-     * 
-     * @see org.opencms.search.documents.I_CmsSearchExtractor#extractContent(CmsObject, CmsResource, CmsSearchIndex)
+     *
+     * @see org.opencms.search.documents.I_CmsSearchExtractor#extractContent(CmsObject, CmsResource, I_CmsSearchIndex)
      */
-    public I_CmsExtractionResult extractContent(CmsObject cms, CmsResource resource, CmsSearchIndex index)
+    public I_CmsExtractionResult extractContent(CmsObject cms, CmsResource resource, I_CmsSearchIndex index)
     throws CmsException {
 
         logContentExtraction(resource, index);
         try {
             CmsFile file = readFile(cms, resource);
             CmsXmlContainerPage containerPage = CmsXmlContainerPageFactory.unmarshal(cms, file);
-            Locale locale = index.getLocaleForResource(cms, resource, containerPage.getLocales());
+            Locale locale = index.getLocaleForResource(cms, resource, null);
 
             // initialize return values
             StringBuffer content = new StringBuffer();
-            Map<String, String> items = new HashMap<String, String>();
+            LinkedHashMap<String, String> items = new LinkedHashMap<String, String>();
 
-            CmsContainerPageBean containerBean = containerPage.getContainerPage(cms, locale);
-            for (CmsContainerElementBean element : containerBean.getElements()) {
-                // check all elements in this container
+            CmsContainerPageBean containerBean = containerPage.getContainerPage(cms);
+            for (Map.Entry<String, CmsContainerBean> entry : containerBean.getContainers().entrySet()) {
+                for (CmsContainerElementBean element : entry.getValue().getElements()) {
+                    // check all elements in this container
 
-                // get the formatter configuration for this element
-                element.initResource(cms);
-                I_CmsResourceType type = OpenCms.getResourceManager().getResourceType(element.getResource());
-                CmsFormatterConfiguration formatters = type.getFormattersForResource(cms, element.getResource());
-
-                if (formatters.isSearchContent(element.getFormatterId())) {
-                    // the content of this element must be included for the container page
-
+                    // get the formatter configuration for this element
                     element.initResource(cms);
-                    CmsFile elementFile = readFile(cms, element.getResource());
-                    A_CmsXmlDocument elementContent = CmsXmlContentFactory.unmarshal(cms, elementFile);
-                    List<String> elementNames = elementContent.getNames(locale);
-                    for (String xpath : elementNames) {
-                        // xpath will have the form "Text[1]" or "Nested[1]/Text[1]"
-                        I_CmsXmlContentValue value = elementContent.getValue(xpath, locale);
-                        if (value.getContentDefinition().getContentHandler().isSearchable(value)) {
-                            // the content value is searchable
-                            String extracted = value.getPlainText(cms);
-                            if (CmsStringUtil.isNotEmptyOrWhitespaceOnly(extracted)) {
-                                items.put(elementFile.getRootPath() + "/" + xpath, extracted);
-                                content.append(extracted);
-                                content.append('\n');
+                    CmsADEConfigData adeConfig = OpenCms.getADEManager().lookupConfigurationWithCache(
+                        cms,
+                        file.getRootPath());
+                    CmsFormatterConfiguration formatters = adeConfig.getFormatters(cms, element.getResource());
+
+                    boolean foundFormatterWithSearchContentByKey = false;
+                    String formatterKey = CmsFormatterUtils.getFormatterKey(entry.getValue().getName(), element);
+                    if (formatterKey != null) {
+                        I_CmsFormatterBean formatter = adeConfig.findFormatter(formatterKey);
+                        if (formatter != null) {
+                            foundFormatterWithSearchContentByKey = true;
+                        }
+                    }
+                    if (foundFormatterWithSearchContentByKey
+                        || formatters.isSearchContent(element.getFormatterId())
+                        || adeConfig.isSearchContentFormatter(element.getFormatterId())) {
+                        // the content of this element must be included for the container page
+
+                        element.initResource(cms);
+                        CmsFile elementFile = readFile(cms, element.getResource());
+                        A_CmsXmlDocument elementContent = CmsXmlContentFactory.unmarshal(cms, elementFile);
+                        List<String> elementNames = elementContent.getNames(locale);
+                        for (String xpath : elementNames) {
+                            // xpath will have the form "Text[1]" or "Nested[1]/Text[1]"
+                            I_CmsXmlContentValue value = elementContent.getValue(xpath, locale);
+                            if (value.getContentDefinition().getContentHandler().isSearchable(value)) {
+                                // the content value is searchable
+                                String extracted = value.getPlainText(cms);
+                                if (CmsStringUtil.isNotEmptyOrWhitespaceOnly(extracted)) {
+                                    items.put(elementFile.getRootPath() + "/" + xpath, extracted);
+                                    content.append(extracted);
+                                    content.append('\n');
+                                }
                             }
                         }
                     }

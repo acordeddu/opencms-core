@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -14,12 +14,12 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * Lesser General Public License for more details.
  *
- * For further information about Alkacon Software GmbH, please see the
- * company website: http://www.alkacon.com
+ * For further information about Alkacon Software GmbH & Co. KG, please see the
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -37,7 +37,7 @@ import java.util.List;
 
 /**
  * Describes an OpenCms historical project entry.<p>
- * 
+ *
  * @since 6.9.1
  */
 public class CmsHistoryProject extends CmsProject {
@@ -56,7 +56,7 @@ public class CmsHistoryProject extends CmsProject {
 
     /**
      * Creates a new CmsHistoryProject.<p>
-     * 
+     *
      * @param publishTag the version id for this historical project
      * @param projectId the id to use for this project
      * @param name the name for this project
@@ -131,7 +131,7 @@ public class CmsHistoryProject extends CmsProject {
     /**
      * Returns the project manager group name.<p>
      *
-     * @param cms the current cms context 
+     * @param cms the current cms context
      *
      * @return the projects manager group name
      */
@@ -146,8 +146,8 @@ public class CmsHistoryProject extends CmsProject {
 
     /**
      * Returns the projects user group name.<p>
-     * 
-     * @param cms the current cms context 
+     *
+     * @param cms the current cms context
      *
      * @return the projects user group name
      */
@@ -163,7 +163,7 @@ public class CmsHistoryProject extends CmsProject {
     /**
      * Returns the owner name.<p>
      *
-     * @param cms the current cms context 
+     * @param cms the current cms context
      *
      * @return the owner name
      */
@@ -178,8 +178,8 @@ public class CmsHistoryProject extends CmsProject {
 
     /**
      * Returns the project resources (i.e. the "view" of the project).<p>
-     * 
-     * @return the project resources 
+     *
+     * @return the project resources
      */
     public List<String> getProjectResources() {
 
@@ -199,7 +199,7 @@ public class CmsHistoryProject extends CmsProject {
     /**
      * Returns the publishers name.<p>
      *
-     * @param cms the current cms context 
+     * @param cms the current cms context
      *
      * @return the publishers name
      */
@@ -238,7 +238,7 @@ public class CmsHistoryProject extends CmsProject {
     @Override
     public int hashCode() {
 
-        return (new Long(m_datePublished)).hashCode();
+        return (Long.valueOf(m_datePublished)).hashCode();
     }
 
     /**

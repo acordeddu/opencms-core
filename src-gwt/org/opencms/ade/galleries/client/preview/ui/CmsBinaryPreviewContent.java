@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -15,11 +15,11 @@
  * Lesser General Public License for more details.
  *
  * For further information about Alkacon Software, please see the
- * company website: http://www.alkacon.com
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -53,7 +53,6 @@ import com.google.gwt.event.logical.shared.CloseEvent;
 import com.google.gwt.event.logical.shared.CloseHandler;
 import com.google.gwt.event.logical.shared.OpenEvent;
 import com.google.gwt.event.logical.shared.OpenHandler;
-import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.Composite;
@@ -62,7 +61,7 @@ import com.google.gwt.user.client.ui.HTMLPanel;
 
 /**
  * Widget to display resource informations within the resource preview.<p>
- * 
+ *
  * @since 8.0.0
  */
 public class CmsBinaryPreviewContent extends Composite {
@@ -73,27 +72,6 @@ public class CmsBinaryPreviewContent extends Composite {
     public interface I_CmsPreviewContentUiBinder extends UiBinder<HTMLPanel, CmsBinaryPreviewContent> {
         // GWT interface, nothing to do
     }
-
-    /**
-     * The style interface.<p>
-     */
-    interface I_CmsPreviewContentStyle extends CssResource {
-
-        /** Access method.<p>
-         * 
-         * @return the CSS class name
-         */
-        String panel();
-
-        /** Access method.<p>
-         * 
-         * @return the CSS class name
-         */
-        String previewContent();
-    }
-
-    /** The preview panel height. */
-    protected static final int PREVIEW_PANEL_HEIGHT = 348;
 
     /** The ui binder instance for this widget class. */
     private static I_CmsPreviewContentUiBinder uiBinder = GWT.create(I_CmsPreviewContentUiBinder.class);
@@ -109,15 +87,11 @@ public class CmsBinaryPreviewContent extends Composite {
     @UiField
     protected HTML m_previewContent;
 
-    /** The css for this widget. */
-    @UiField
-    protected I_CmsPreviewContentStyle m_style;
-
     /**
      * Constructor.<p>
-     * 
+     *
      * @param info the resource info to display
-     * @param previewHandler the preview handler  
+     * @param previewHandler the preview handler
      */
     public CmsBinaryPreviewContent(CmsResourceInfoBean info, CmsBinaryPreviewHandler previewHandler) {
 
@@ -138,19 +112,23 @@ public class CmsBinaryPreviewContent extends Composite {
 
     /**
      * Creates the list item for the resource information bean.<p>
-     * 
+     *
      * @param resourceInfo the resource information bean
-     * @return the list item widget 
+     * @param dndHandler the drag and drop handler
+     *
+     * @return the list item widget
      */
     private CmsListItem createListItem(CmsResourceInfoBean resourceInfo, CmsDNDHandler dndHandler) {
 
         CmsListInfoBean infoBean = new CmsListInfoBean();
-        infoBean.setTitle(CmsStringUtil.isNotEmptyOrWhitespaceOnly(resourceInfo.getProperties().get(
-            CmsClientProperty.PROPERTY_TITLE))
-        ? resourceInfo.getProperties().get(CmsClientProperty.PROPERTY_TITLE)
-        : resourceInfo.getTitle());
+        infoBean.setTitle(
+            CmsStringUtil.isNotEmptyOrWhitespaceOnly(resourceInfo.getProperties().get(CmsClientProperty.PROPERTY_TITLE))
+            ? resourceInfo.getProperties().get(CmsClientProperty.PROPERTY_TITLE)
+            : resourceInfo.getTitle());
         infoBean.setSubTitle(resourceInfo.getResourcePath());
         infoBean.setResourceType(resourceInfo.getResourceType());
+        infoBean.setBigIconClasses(resourceInfo.getBigIconClasses());
+        infoBean.setSmallIconClasses(resourceInfo.getSmallIconClasses());
         infoBean.addAdditionalInfo(Messages.get().key(Messages.GUI_PREVIEW_LABEL_SIZE_0), resourceInfo.getSize());
         if (resourceInfo.getDescription() != null) {
             infoBean.addAdditionalInfo(
@@ -168,15 +146,14 @@ public class CmsBinaryPreviewContent extends Composite {
             public void onOpen(OpenEvent<CmsListItemWidget> event) {
 
                 int widgetHeight = event.getTarget().getOffsetHeight();
-                m_previewContent.getElement().getStyle().setHeight(PREVIEW_PANEL_HEIGHT - widgetHeight, Unit.PX);
+                m_previewContent.getElement().getStyle().setTop(12 + widgetHeight, Unit.PX);
             }
         });
         itemWidget.addCloseHandler(new CloseHandler<CmsListItemWidget>() {
 
             public void onClose(CloseEvent<CmsListItemWidget> event) {
 
-                int widgetHeight = event.getTarget().getOffsetHeight();
-                m_previewContent.getElement().getStyle().setHeight(PREVIEW_PANEL_HEIGHT - widgetHeight, Unit.PX);
+                m_previewContent.getElement().getStyle().clearTop();
             }
         });
         CmsListItem result = new CmsListItem(itemWidget);

@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -14,12 +14,12 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * Lesser General Public License for more details.
  *
- * For further information about Alkacon Software GmbH, please see the
- * company website: http://www.alkacon.com
+ * For further information about Alkacon Software GmbH & Co. KG, please see the
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -33,18 +33,17 @@ import java.io.IOException;
 import java.sql.SQLException;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
 /**
  * This class creates the new tables for the database version of OpenCms 8.<p>
- * 
+ *
  * The new tables in OpenCms 8 are:
  * <ul>
  * <li><code>CMS_LOG</code></li>
  * </ul>
- * 
+ *
  * @since 8.0.0
  */
 public class CmsUpdateDBNewTables extends org.opencms.setup.db.update7to8.CmsUpdateDBNewTables {
@@ -54,7 +53,7 @@ public class CmsUpdateDBNewTables extends org.opencms.setup.db.update7to8.CmsUpd
 
     /**
      * Constructor.<p>
-     * 
+     *
      * @throws IOException if the sql queries properties file could not be read
      */
     public CmsUpdateDBNewTables()
@@ -72,17 +71,20 @@ public class CmsUpdateDBNewTables extends org.opencms.setup.db.update7to8.CmsUpd
 
         System.out.println(new Exception().getStackTrace()[0].toString());
 
-        List<String> elements = Arrays.asList(new String[] {
-            "CMS_LOG",
-            "CMS_COUNTERS",
-            "CMS_OFFLINE_URLNAME_MAPPINGS",
-            "CMS_ONLINE_URLNAME_MAPPINGS",
-            "CMS_SUBSCRIPTION",
-            "CMS_SUBSCRIPTION_VISIT"});
+        List<String> elements = Arrays.asList(
+            new String[] {
+                "CMS_LOG",
+                "CMS_COUNTERS",
+                "CMS_OFFLINE_URLNAME_MAPPINGS",
+                "CMS_ONLINE_URLNAME_MAPPINGS",
+                "CMS_SUBSCRIPTION",
+                "CMS_SUBSCRIPTION_VISIT",
+                "CMS_ALIASES",
+                "CMS_REWRITES",
+                "CMS_USER_PUBLISH_LIST"});
 
         Map<String, String> replacer = Collections.singletonMap("${tableEngine}", m_poolData.get("engine"));
-        for (Iterator<String> it = elements.iterator(); it.hasNext();) {
-            String table = it.next();
+        for (String table : elements) {
             if (!dbCon.hasTableOrColumn(table, null)) {
                 String query = readQuery(table + "_MYSQL");
                 dbCon.updateSqlStatement(query, replacer, null);

@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -14,12 +14,12 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * Lesser General Public License for more details.
  *
- * For further information about Alkacon Software GmbH, please see the
- * company website: http://www.alkacon.com
+ * For further information about Alkacon Software GmbH & Co. KG, please see the
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -31,7 +31,7 @@ import java.util.Date;
 
 /**
  * The class represents a lock to a {@link I_CmsRepositoryItem}.<p>
- * 
+ *
  * @since 6.2.4
  */
 public class CmsRepositoryLockInfo {
@@ -171,7 +171,7 @@ public class CmsRepositoryLockInfo {
 
     /**
      * Return true if the lock has expired.
-     * 
+     *
      * @return true if the lock has expired
      */
     public boolean hasExpired() {
@@ -181,7 +181,7 @@ public class CmsRepositoryLockInfo {
 
     /**
      * Return true if the lock is exclusive.
-     * 
+     *
      * @return true if the lock is exclusive
      */
     public boolean isExclusive() {
@@ -262,9 +262,10 @@ public class CmsRepositoryLockInfo {
 
     /**
      * Get a string representation of this lock info.<p>
-     * 
+     *
      * @return a string representation of this lock
      */
+    @Override
     public String toString() {
 
         String result = "Type:" + m_type + "\n";

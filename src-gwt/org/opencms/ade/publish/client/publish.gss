@@ -1,0 +1,146 @@
+.relatedItem {
+	margin-left: 60px;
+	width: 390px;
+}
+
+.groupHeader {
+	display: inline-block;
+	font-weight: bold;
+	font-size: value("constants.css.fontSize");
+    margin-left: 3px; 
+}
+
+.publishRow {
+
+}
+
+.publishListItem {
+	width: 450px;
+
+}
+
+.indentedPublishRow {
+	
+}
+
+.checkmark {
+	width:32px;
+	height: 32px;
+}
+.checkmark:before{
+	content: "\e917";
+	font-family: opencms-font;
+	font-size: 32px;
+	color: #2197DB;
+	-webkit-font-smoothing: antialiased;
+	-moz-osx-font-smoothing: grayscale;
+}
+
+.itemToKeep {
+}
+
+.problemPanel {
+	font-weight: bold;
+	padding: 5px;
+	text-align: center;
+}
+
+.groupPanel {
+	zoom: 1;
+}
+
+.checkboxes {
+	margin-top: 5px;
+	margin-left: 5px;
+}
+
+
+@external html-face;
+
+.checkboxes .html-face {
+	font-weight: normal;
+}
+
+.label {
+	margin-left:10px;
+	margin-bottom: 10px;
+	margin-top: 10px;
+}
+
+.spacer {
+	height: 10px;
+	width: 10px;
+}
+
+span.selectorLabel{
+	margin-left:5px;
+}
+
+.selectorPanel {
+	float: right;
+}
+
+.scrollPanel {
+	max-height: 400px;
+	border: 1px solid value("constants.css.borderColor");
+	padding: 3px;
+	zoom: 1;
+}
+
+.noResources {
+	padding: 20px;
+	font-size: value("constants.css.fontSizeBig");
+	text-align: center;
+}
+
+.text {
+	vertical-align: top;
+}
+
+	
+
+.selectButtons {
+	float: right;
+}
+.selectButtons > div {
+	margin-left: 3px;
+}
+
+.clear {
+	clear: both;
+}
+
+.selectPanel {
+	margin: 0px;
+}
+.selectPanel * {
+	zoom: 1;
+}
+
+.topBar {
+	margin-bottom: 5px;
+	height: value("constants.css.inputHeight");
+}
+
+.topBar > div {
+	margin-right: 4px;
+	margin-top: 3px; 
+}
+	
+.selector {
+	width: 200px;
+	vertical-align: middle;
+	display: inline-block;
+}
+
+.publishDialog, .publishDialog > * {
+ /* this fixes the 'content vanishes while dragging' problem in IE */	
+zoom: 1;
+}
+
+
+
+
+
+
+

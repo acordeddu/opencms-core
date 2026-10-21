@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -14,12 +14,12 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * Lesser General Public License for more details.
  *
- * For further information about Alkacon Software GmbH, please see the
- * company website: http://www.alkacon.com
+ * For further information about Alkacon Software GmbH & Co. KG, please see the
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -28,6 +28,7 @@
 package org.opencms.util;
 
 import org.opencms.flex.CmsFlexRequest;
+import org.opencms.flex.CmsFlexResponse;
 import org.opencms.i18n.CmsEncoder;
 import org.opencms.json.JSONArray;
 import org.opencms.json.JSONException;
@@ -35,10 +36,13 @@ import org.opencms.json.JSONObject;
 import org.opencms.jsp.CmsJspActionElement;
 import org.opencms.main.CmsLog;
 import org.opencms.main.OpenCms;
+import org.opencms.site.CmsSiteMatcher;
 
-import java.io.File;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
+import java.net.URI;
+import java.net.URLDecoder;
+import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.HashMap;
@@ -49,29 +53,42 @@ import java.util.Map.Entry;
 
 import javax.servlet.ServletException;
 import javax.servlet.ServletRequest;
+import javax.servlet.ServletResponse;
 import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletRequestWrapper;
 import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpServletResponseWrapper;
 import javax.servlet.http.HttpSession;
 
-import org.apache.commons.fileupload.FileItem;
-import org.apache.commons.fileupload.FileUploadException;
-import org.apache.commons.fileupload.disk.DiskFileItemFactory;
-import org.apache.commons.fileupload.servlet.ServletFileUpload;
+import org.apache.commons.fileupload2.core.DiskFileItem;
+import org.apache.commons.fileupload2.core.DiskFileItemFactory;
+import org.apache.commons.fileupload2.core.FileUploadException;
+import org.apache.commons.fileupload2.javax.JavaxServletDiskFileUpload;
+import org.apache.commons.fileupload2.javax.JavaxServletFileUpload;
 import org.apache.commons.logging.Log;
+
+import com.google.common.collect.ArrayListMultimap;
+import com.google.common.collect.Multimap;
 
 /**
  * Provides utility functions for dealing with values a <code>{@link HttpServletRequest}</code>.<p>
- * 
- * @since 6.0.0 
+ *
+ * @since 6.0.0
  */
 public final class CmsRequestUtil {
 
     /** Request attribute that contains the original error code. */
     public static final String ATTRIBUTE_ERRORCODE = "org.opencms.util.CmsErrorCode";
 
+    /** Flag to enable / disable backlink checks. */
+    public static boolean backlinkCheckEnabled = true;
+
     /** HTTP Accept Header for the cms:device-tag. */
     public static final String HEADER_ACCEPT = "Accept";
+
+    /** HTTP Header "Accept-Ranges". */
+    public static final String HEADER_ACCEPT_RANGES = "Accept-Ranges";
 
     /** HTTP Accept-Charset Header for internal requests used during static export. */
     public static final String HEADER_ACCEPT_CHARSET = "Accept-Charset";
@@ -88,14 +105,29 @@ public final class CmsRequestUtil {
     /** The "Content-Disposition" http header. */
     public static final String HEADER_CONTENT_DISPOSITION = "Content-Disposition";
 
+    /** The "Content-Length" http header. */
+    public static final String HEADER_CONTENT_LENGTH = "Content-Length";
+
+    /** The "Content-Range" http header. */
+    public static final String HEADER_CONTENT_RANGE = "Content-Range";
+
     /** The "Content-Type" http header. */
     public static final String HEADER_CONTENT_TYPE = "Content-Type";
+
+    /** HTTP Header "ETag". */
+    public static final String HEADER_ETAG = "ETag";
 
     /** HTTP Header "Expires". */
     public static final String HEADER_EXPIRES = "Expires";
 
+    /** HTTP Header "If-Range". */
+    public static final String HEADER_IF_RANGE = "If-Range";
+
     /** HTTP Header "If-Modified-Since". */
     public static final String HEADER_IF_MODIFIED_SINCE = "If-Modified-Since";
+
+    /** HTTP Header "If-None-Match". */
+    public static final String HEADER_IF_NONE_MATCH = "If-None-Match";
 
     /** The Header that stores the session id (used by OpenCms upload applet). */
     public static final String HEADER_JSESSIONID = "JSESSIONID";
@@ -112,6 +144,9 @@ public final class CmsRequestUtil {
     /** HTTP Header "Pragma". */
     public static final String HEADER_PRAGMA = "Pragma";
 
+    /** HTTP Header "Range". */
+    public static final String HEADER_RANGE = "Range";
+
     /** HTTP Header "Server". */
     public static final String HEADER_SERVER = "Server";
 
@@ -126,6 +161,9 @@ public final class CmsRequestUtil {
 
     /** HTTP Header value "no-cache" (for "Cache-Control"). */
     public static final String HEADER_VALUE_NO_CACHE = "no-cache";
+
+    /** HTTP Header value "no-store" (for "Cache-Control"). */
+    public static final String HEADER_VALUE_NO_STORE = "no-store";
 
     /** HTTP Header "WWW-Authenticate". */
     public static final String HEADER_WWW_AUTHENTICATE = "WWW-Authenticate";
@@ -148,8 +186,8 @@ public final class CmsRequestUtil {
     /** The log object for this class. */
     private static final Log LOG = CmsLog.getLog(CmsRequestUtil.class);
 
-    /** 
-     * Default constructor (empty), private because this class has only 
+    /**
+     * Default constructor (empty), private because this class has only
      * static methods.<p>
      */
     private CmsRequestUtil() {
@@ -159,15 +197,15 @@ public final class CmsRequestUtil {
 
     /**
      * Appends a request parameter to the given URL.<p>
-     * 
-     * This method takes care about the adding the parameter as an additional 
-     * parameter (appending <code>&param=value</code>) or as the first parameter
+     *
+     * This method takes care about the adding the parameter as an additional
+     * parameter (appending <code>&amp;param=value</code>) or as the first parameter
      * (appending <code>?param=value</code>).<p>
-     * 
+     *
      * @param url the URL where to append the parameter to
      * @param paramName the paramter name to append
      * @param paramValue the parameter value to append
-     * 
+     *
      * @return the URL with the given parameter appended
      */
     public static String appendParameter(String url, String paramName, String paramValue) {
@@ -193,18 +231,18 @@ public final class CmsRequestUtil {
 
     /**
      * Appends a map of request parameters to the given URL.<p>
-     * 
-     * The map can contains values of <code>String[]</code> or 
+     *
+     * The map can contains values of <code>String[]</code> or
      * simple <code>String</code> values.<p>
-     * 
-     * This method takes care about the adding the parameter as an additional 
-     * parameter (appending <code>&param=value</code>) or as the first parameter
+     *
+     * This method takes care about the adding the parameter as an additional
+     * parameter (appending <code>&amp;param=value</code>) or as the first parameter
      * (appending <code>?param=value</code>).<p>
-     * 
+     *
      * @param url the URL where to append the parameter to
      * @param params the parameters to append
      * @param encode if <code>true</code>, the parameter values are encoded before they are appended
-     * 
+     *
      * @return the URL with the given parameter appended
      */
     public static String appendParameters(String url, Map<String, String[]> params, boolean encode) {
@@ -253,12 +291,53 @@ public final class CmsRequestUtil {
     }
 
     /**
+     * Checks that the given link is a valid backlink for editors.
+     *
+     * <p>This means that the link is either just a path, or starts with a scheme/domain/port that is either registered in the
+     * site configuration, or is the same as that of the current request.
+     *
+     * @param backlink the link to check
+     * @param optionalRequest the current request - may be null if no check against the current request is desired
+     * @return true if the link is a valid backlink
+     */
+    public static boolean checkBacklink(String backlink, HttpServletRequest optionalRequest) {
+
+        if (!backlinkCheckEnabled) {
+            return true;
+        }
+
+        if (CmsStringUtil.isEmptyOrWhitespaceOnly(backlink)) {
+            return true;
+        }
+
+        if (backlink.startsWith("javascript")) {
+            return false;
+        }
+
+        if (backlink.startsWith("/")) {
+            return true;
+        }
+        CmsSiteMatcher matcher = new CmsSiteMatcher(backlink, 0);
+        if (OpenCms.getSiteManager().isMatching(matcher)) {
+            return true;
+        }
+
+        if (optionalRequest != null) {
+            if (optionalRequest.getServerName().equals(matcher.getServerName())) {
+                return true;
+            }
+        }
+        return false;
+
+    }
+
+    /**
      * Creates a valid request parameter map from the given map,
      * most notably changing the values form <code>String</code>
      * to <code>String[]</code> if required.<p>
-     * 
+     *
      * If the given parameter map is <code>null</code>, then <code>null</code> is returned.<p>
-     * 
+     *
      * @param params the map of parameters to create a parameter map from
      * @return the created parameter map, all values will be instances of <code>String[]</code>
      */
@@ -287,17 +366,36 @@ public final class CmsRequestUtil {
 
     /**
      * Parses the parameters of the given request query part and creates a parameter map out of them.<p>
-     * 
-     * Please note: This does not parse a full request URI/URL, only the query part that 
+     *
+     * Please note: This does not parse a full request URI/URL, only the query part that
      * starts after the "?". For example, in the URI <code>/system/index.html?a=b&amp;c=d</code>,
      * the query part is <code>a=b&amp;c=d</code>.<p>
-     * 
+     *
      * If the given String is empty, an empty map is returned.<p>
-     * 
+     *
      * @param query the query to parse
      * @return the parameter map created from the query
      */
     public static Map<String, String[]> createParameterMap(String query) {
+
+        return createParameterMap(query, false, null);
+    }
+
+    /**
+     * Parses the parameters of the given request query part, optionally decodes them, and creates a parameter map out of them.<p>
+     *
+     * Please note: This does not parse a full request URI/URL, only the query part that
+     * starts after the "?". For example, in the URI <code>/system/index.html?a=b&amp;c=d</code>,
+     * the query part is <code>a=b&amp;c=d</code>.<p>
+     *
+     * If the given String is empty, an empty map is returned.<p>
+     *
+     * @param query the query to parse
+     * @param decodeParameters a flag, indicating if the parameters should be decoded.
+     * @param encoding the character encoding used while decoding. If <code>null</code>, the default character encoding is used.
+     * @return the parameter map created from the query
+     */
+    public static Map<String, String[]> createParameterMap(String query, boolean decodeParameters, String encoding) {
 
         if (CmsStringUtil.isEmpty(query)) {
             // empty query
@@ -313,7 +411,7 @@ public final class CmsRequestUtil {
         for (int i = 0; i < params.length; i++) {
             String key = null;
             String value = null;
-            // get key and value, separated by a '=' 
+            // get key and value, separated by a '='
             int pos = params[i].indexOf(PARAMETER_ASSIGNMENT);
             if (pos > 0) {
                 key = params[i].substring(0, pos);
@@ -329,6 +427,10 @@ public final class CmsRequestUtil {
             }
             // now make sure the values are of type String[]
             if (key != null) {
+                if (decodeParameters) {
+                    key = CmsEncoder.decode(key, encoding);
+                    value = CmsEncoder.decode(value, encoding);
+                }
                 String[] values = parameters.get(key);
                 if (values == null) {
                     // this is the first value, create new array
@@ -347,13 +449,24 @@ public final class CmsRequestUtil {
     }
 
     /**
+     * Sets HTTP response headers to disable embedding in iframes on different domains.
+     *
+     * @param response the response on which to set the HTTP headers
+     */
+    public static void disableCrossSiteFrameEmbedding(HttpServletResponse response) {
+
+        response.addHeader("Content-Security-Policy", "frame-ancestors 'self';");
+        response.addHeader("X-Frame-Options", "SAMEORIGIN");
+    }
+
+    /**
      * Returns all parameters of the given request
-     * as a request parameter URL String, that is in the form <code>key1=value1&key2=value2</code> etc.
-     *  
+     * as a request parameter URL String, that is in the form <code>key1=value1&amp;key2=value2</code> etc.
+     *
      * The result will be encoded using the <code>{@link CmsEncoder#encode(String)}</code> function.<p>
-     * 
+     *
      * @param req the request to read the parameters from
-     * 
+     *
      * @return all initialized parameters of the given request as request parameter URL String
      */
     public static String encodeParams(HttpServletRequest req) {
@@ -382,9 +495,9 @@ public final class CmsRequestUtil {
 
     /**
      * Encodes the given URI, with all parameters from the given request appended.<p>
-     * 
+     *
      * The result will be encoded using the <code>{@link CmsEncoder#encode(String)}</code> function.<p>
-     * 
+     *
      * @param req the request where to read the parameters from
      * @param uri the URI to encode
      * @return the encoded URI, with all parameters from the given request appended
@@ -403,19 +516,19 @@ public final class CmsRequestUtil {
 
     /**
      * Forwards the response to the given target, which may contain parameters appended like for example <code>?a=b&amp;c=d</code>.<p>
-     * 
+     *
      * Please note: If possible, use <code>{@link #forwardRequest(String, Map, HttpServletRequest, HttpServletResponse)}</code>
      * where the parameters are passed as a map, since the parsing of the parameters may introduce issues with encoding
      * and is in general much less effective.<p>
-     * 
+     *
      * The parsing of parameters will likely fail for "large values" (e.g. full blown web forms with &lt;textarea&gt;
-     * elements etc. Use this method only if you know that the target will just contain up to 3 parameters which 
+     * elements etc. Use this method only if you know that the target will just contain up to 3 parameters which
      * are relatively short and have no encoding or line break issues.<p>
-     * 
+     *
      * @param target the target to forward to (may contain parameters like <code>?a=b&amp;c=d</code>)
      * @param req the request to forward
      * @param res the response to forward
-     * 
+     *
      * @throws IOException in case the forwarding fails
      * @throws ServletException in case the forwarding fails
      */
@@ -430,17 +543,17 @@ public final class CmsRequestUtil {
 
     /**
      * Forwards the response to the given target, with the provided parameter map.<p>
-     * 
+     *
      * The target URI must NOT have parameters appended like for example <code>?a=b&amp;c=d</code>.
      * The values in the provided map must be of type <code>String[]</code>. If required, use
      * <code>{@link #createParameterMap(Map)}</code> before calling this method to make sure
      * all values are actually of the required array type.<p>
-     * 
+     *
      * @param target the target to forward to (may NOT contain parameters like <code>?a=b&amp;c=d</code>)
      * @param params the parameter map (the values must be of type <code>String[]</code>
      * @param req the request to forward
      * @param res the response to forward
-     * 
+     *
      * @throws IOException in case the forwarding fails
      * @throws ServletException in case the forwarding fails
      */
@@ -448,10 +561,11 @@ public final class CmsRequestUtil {
         String target,
         Map<String, String[]> params,
         HttpServletRequest req,
-        HttpServletResponse res) throws IOException, ServletException {
+        HttpServletResponse res)
+    throws IOException, ServletException {
 
-        // cast the request back to a flex request so the parameter map can be accessed
-        CmsFlexRequest f_req = (CmsFlexRequest)req;
+        // get the flex request (which the servlet container may have wrapped) so the parameter map can be accessed
+        CmsFlexRequest f_req = getFlexRequest(req);
         // set the parameters
         f_req.setParameterMap(params);
         // check for links "into" OpenCms, these may need the webapp name to be removed
@@ -467,16 +581,31 @@ public final class CmsRequestUtil {
     }
 
     /**
-     * Returns a map with all request attributes.<p>
-     * 
+     * Exactly like getAttributeMap, but incorrectly spelled.<p>
+     *
+     * Kept for backward compatibility.
+     *
      * @param req the request
-     * 
+     *
      * @return the attribute map
      */
     public static Map<String, Object> getAtrributeMap(ServletRequest req) {
 
-        if (req instanceof CmsFlexRequest) {
-            return ((CmsFlexRequest)req).getAttributeMap();
+        return getAttributeMap(req);
+    }
+
+    /**
+     * Returns a map with all request attributes.<p>
+     *
+     * @param req the request
+     *
+     * @return the attribute map
+     */
+    public static Map<String, Object> getAttributeMap(ServletRequest req) {
+
+        CmsFlexRequest flexReq = getFlexRequest(req);
+        if (flexReq != null) {
+            return flexReq.getAttributeMap();
         }
         Map<String, Object> attrs = new HashMap<String, Object>();
         Enumeration<String> atrrEnum = CmsCollectionsGenericWrapper.enumeration(req.getAttributeNames());
@@ -490,15 +619,28 @@ public final class CmsRequestUtil {
 
     /**
      * Returns the value of the cookie with the given name.<p/>
-     * 
+     *
      * @param jsp the CmsJspActionElement to use
      * @param name the name of the cookie
-     * 
+     *
      * @return the value of the cookie with the given name or null, if no cookie exists with the name
      */
     public static String getCookieValue(CmsJspActionElement jsp, String name) {
 
         Cookie[] cookies = jsp.getRequest().getCookies();
+        return getCookieValue(cookies, name);
+    }
+
+    /**
+     * Gets the value of a specific cookie from an array of cookies.<p>
+     *
+     * @param cookies the cookie array
+     * @param name the name of the cookie we want
+     *
+     * @return the cookie value, or null if cookie with the given name wasn't found
+     */
+    public static String getCookieValue(Cookie[] cookies, String name) {
+
         for (int i = 0; (cookies != null) && (i < cookies.length); i++) {
             if (name.equalsIgnoreCase(cookies[i].getName())) {
                 return cookies[i].getValue();
@@ -508,10 +650,52 @@ public final class CmsRequestUtil {
     }
 
     /**
+     * Tries to extract a wrapped CmsFlexRequest from a potentially nested servlet request object.
+     *
+     * @param request the request to get the flex request from
+     * @return the flex request, or null if none was found
+     */
+    public static CmsFlexRequest getFlexRequest(ServletRequest request) {
+
+        while ((request != null) && !(request instanceof CmsFlexRequest)) {
+            if (request instanceof HttpServletRequestWrapper) {
+                request = ((HttpServletRequestWrapper)request).getRequest();
+            } else {
+                // container response implementation that's not a wrapper
+                return null;
+            }
+        }
+
+        // works for both cases of the while loop exit condition
+        return (CmsFlexRequest)request;
+    }
+
+    /**
+     * Tries to extract a wrapped CmsFlexResponse from a potentially nested servlet response object.
+     *
+     * @param response the response to get the flex response from
+     * @return the flex response, or null if none was found
+     */
+    public static CmsFlexResponse getFlexResponse(ServletResponse response) {
+
+        while ((response != null) && !(response instanceof CmsFlexResponse)) {
+            if (response instanceof HttpServletResponseWrapper) {
+                response = ((HttpServletResponseWrapper)response).getResponse();
+            } else {
+                // container response implementation that's not a wrapper
+                return null;
+            }
+        }
+
+        // works for both cases of the while loop exit condition
+        return (CmsFlexResponse)response;
+    }
+
+    /**
      * Converts the given parameter map into an JSON object.<p>
-     * 
+     *
      * @param params the parameters map to convert
-     * 
+     *
      * @return the JSON representation of the given parameter map
      */
     public static JSONObject getJsonParameterMap(Map<String, String[]> params) {
@@ -536,13 +720,13 @@ public final class CmsRequestUtil {
     /**
      * Reads value from the request parameters,
      * will return <code>null</code> if the value is not available or only white space.<p>
-     * 
+     *
      * The value of the request will also be decoded using <code>{@link CmsEncoder#decode(String)}</code>
      * and also trimmed using <code>{@link String#trim()}</code>.<p>
-     * 
+     *
      * @param request the request to read the parameter from
      * @param paramName the parameter name to read
-     * 
+     *
      * @return the request parameter value for the given parameter
      */
     public static String getNotEmptyDecodedParameter(HttpServletRequest request, String paramName) {
@@ -557,10 +741,10 @@ public final class CmsRequestUtil {
     /**
      * Reads value from the request parameters,
      * will return <code>null</code> if the value is not available or only white space.<p>
-     * 
+     *
      * @param request the request to read the parameter from
      * @param paramName the parameter name to read
-     * 
+     *
      * @return the request parameter value for the given parameter
      */
     public static String getNotEmptyParameter(HttpServletRequest request, String paramName) {
@@ -573,10 +757,30 @@ public final class CmsRequestUtil {
     }
 
     /**
+     * Returns a map with all request parameters.<p>
+     *
+     * If the given request wraps a flex request, the parameters of that flex request are returned:
+     * a request wrapper added by the servlet container does not necessarily report the parameters
+     * of the request it wraps.<p>
+     *
+     * @param req the request
+     *
+     * @return the parameter map
+     */
+    public static Map<String, String[]> getParameterMap(ServletRequest req) {
+
+        CmsFlexRequest flexReq = getFlexRequest(req);
+        if (flexReq != null) {
+            return flexReq.getParameterMap();
+        }
+        return req.getParameterMap();
+    }
+
+    /**
      * Converts the given JSON object into a valid parameter map.<p>
-     * 
+     *
      * @param params the JSON object to convert
-     * 
+     *
      * @return the parameter map from the given JSON object
      */
     public static Map<String, String[]> getParameterMapFromJSON(JSONObject params) {
@@ -595,8 +799,49 @@ public final class CmsRequestUtil {
     }
 
     /**
+     * Parses parameter map from the given URI.<p>
+     *
+     * @param uri the URI
+     * @return the parameter map
+     */
+    public static Multimap<String, String> getParameters(URI uri) {
+
+        return getParametersFromRawQuery(uri.getRawQuery());
+    }
+
+    /**
+     * Parses the parameter map from a raw query string.<p>
+     *
+     * @param rawQuery the raw query string
+     *
+     * @return the parameter map
+     */
+    public static Multimap<String, String> getParametersFromRawQuery(String rawQuery) {
+
+        Multimap<String, String> result = ArrayListMultimap.create();
+        if (rawQuery != null) {
+            for (String keyValuePair : CmsStringUtil.splitAsList(rawQuery, "&")) {
+                try {
+                    String decodedKeyValue = URLDecoder.decode(keyValuePair, "UTF-8");
+                    int eqPos = decodedKeyValue.indexOf("=");
+                    if (eqPos < 0) {
+                        decodedKeyValue = decodedKeyValue + "=";
+                        eqPos = decodedKeyValue.indexOf("=");
+                    }
+                    String key = decodedKeyValue.substring(0, eqPos);
+                    String value = decodedKeyValue.substring(eqPos + 1);
+                    result.put(key, value);
+                } catch (UnsupportedEncodingException e) {
+                    // UTF8 should be present
+                }
+            }
+        }
+        return result;
+    }
+
+    /**
      * Returns the link without parameters from a String that is formatted for a GET request.<p>
-     * 
+     *
      * @param url the URL to remove the parameters from
      * @return the URL without any parameters
      */
@@ -615,12 +860,12 @@ public final class CmsRequestUtil {
 
     /**
      * Reads an object from the session of the given HTTP request.<p>
-     * 
+     *
      * A session will be initialized if the request does not currently have a session.
-     * As a result, the request will always have a session after this method has been called.<p> 
-     * 
+     * As a result, the request will always have a session after this method has been called.<p>
+     *
      * Will return <code>null</code> if no corresponding object is found in the session.<p>
-     * 
+     *
      * @param request the request to get the session from
      * @param key the key of the object to read from the session
      * @return the object received form the session, or <code>null</code>
@@ -633,31 +878,46 @@ public final class CmsRequestUtil {
 
     /**
      * Parses a request of the form <code>multipart/form-data</code>.
-     * 
-     * The result list will contain items of type <code>{@link FileItem}</code>.
+     *
+     * The result list will contain items of type <code>{@link DiskFileItem}</code>.
      * If the request is not of type <code>multipart/form-data</code>, then <code>null</code> is returned.<p>
-     * 
+     *
      * @param request the HTTP servlet request to parse
-     * 
-     * @return the list of <code>{@link FileItem}</code> extracted from the multipart request,
+     *
+     * @return the list of <code>{@link DiskFileItem}</code> extracted from the multipart request,
      *      or <code>null</code> if the request was not of type <code>multipart/form-data</code>
      */
-    public static List<FileItem> readMultipartFileItems(HttpServletRequest request) {
+    public static List<DiskFileItem> readMultipartFileItems(HttpServletRequest request) {
 
-        if (!ServletFileUpload.isMultipartContent(request)) {
+        return readMultipartFileItems(request, OpenCms.getSystemInfo().getPackagesRfsPath());
+    }
+
+    /**
+     * Parses a request of the form <code>multipart/form-data</code>.
+     *
+     * The result list will contain items of type <code>{@link DiskFileItem}</code>.
+     * If the request is not of type <code>multipart/form-data</code>, then <code>null</code> is returned.<p>
+     *
+     * @param request the HTTP servlet request to parse
+     * @param tempFolderPath the real file system path to the temp file folder
+     *
+     * @return the list of <code>{@link DiskFileItem}</code> extracted from the multipart request,
+     *      or <code>null</code> if the request was not of type <code>multipart/form-data</code>
+     */
+    public static List<DiskFileItem> readMultipartFileItems(HttpServletRequest request, String tempFolderPath) {
+
+        if (!JavaxServletFileUpload.isMultipartContent(request)) {
             return null;
         }
-        DiskFileItemFactory factory = new DiskFileItemFactory();
-        // maximum size that will be stored in memory
-        factory.setSizeThreshold(4096);
-        // the location for saving data that is larger than getSizeThreshold()
-        factory.setRepository(new File(OpenCms.getSystemInfo().getPackagesRfsPath()));
-        ServletFileUpload fu = new ServletFileUpload(factory);
+        DiskFileItemFactory.Builder builder = DiskFileItemFactory.builder();
+        builder.setPath(tempFolderPath);
+        DiskFileItemFactory factory = builder.get();
+        JavaxServletDiskFileUpload fu = new JavaxServletDiskFileUpload(factory);
         // set encoding to correctly handle special chars (e.g. in filenames)
-        fu.setHeaderEncoding(request.getCharacterEncoding());
-        List<FileItem> result = new ArrayList<FileItem>();
+        fu.setHeaderCharset(Charset.forName(request.getCharacterEncoding()));
+        List<DiskFileItem> result = new ArrayList<DiskFileItem>();
         try {
-            List<FileItem> items = CmsCollectionsGenericWrapper.list(fu.parseRequest(request));
+            List<DiskFileItem> items = CmsCollectionsGenericWrapper.list(fu.parseRequest(request));
             if (items != null) {
                 result = items;
             }
@@ -668,31 +928,38 @@ public final class CmsRequestUtil {
     }
 
     /**
-     * Creates a "standard" request parameter map from the values of a 
+     * Creates a "standard" request parameter map from the values of a
      * <code>multipart/form-data</code> request.<p>
-     * 
+     *
      * @param encoding the encoding to use when creating the values
      * @param multiPartFileItems the list of parsed multi part file items
-     * 
+     *
      * @return a map containing all non-file request parameters
-     * 
+     *
      * @see #readMultipartFileItems(HttpServletRequest)
      */
-    public static Map<String, String[]> readParameterMapFromMultiPart(String encoding, List<FileItem> multiPartFileItems) {
+    public static Map<String, String[]> readParameterMapFromMultiPart(
+        String encoding,
+        List<DiskFileItem> multiPartFileItems) {
 
         Map<String, String[]> parameterMap = new HashMap<String, String[]>();
-        Iterator<FileItem> i = multiPartFileItems.iterator();
+        Iterator<DiskFileItem> i = multiPartFileItems.iterator();
         while (i.hasNext()) {
-            FileItem item = i.next();
+            DiskFileItem item = i.next();
             String name = item.getFieldName();
             String value = null;
             if ((name != null) && (item.getName() == null)) {
-                // only put to map if current item is no file and not null
                 try {
-                    value = item.getString(encoding);
-                } catch (UnsupportedEncodingException e) {
-                    LOG.error(Messages.get().getBundle().key(Messages.LOG_ENC_MULTIPART_REQ_ERROR_0), e);
-                    value = item.getString();
+                    // only put to map if current item is no file and not null
+                    try {
+                        value = item.getString(Charset.forName(encoding));
+                    } catch (UnsupportedEncodingException e) {
+                        LOG.error(Messages.get().getBundle().key(Messages.LOG_ENC_MULTIPART_REQ_ERROR_0), e);
+                        value = item.getString();
+                    }
+                } catch (IOException e) {
+                    LOG.error(e.getLocalizedMessage(), e);
+                    continue;
                 }
                 if (parameterMap.containsKey(name)) {
 
@@ -713,31 +980,39 @@ public final class CmsRequestUtil {
 
     /**
      * Redirects the response to the target link using a "301 - Moved Permanently" header.<p>
-     * 
+     *
      * This implementation will work only on JSP pages in OpenCms that use the default JSP loader implementation.<p>
-     * 
+     *
      * @param jsp the OpenCms JSP context
      * @param target the target link
      */
     public static void redirectPermanently(CmsJspActionElement jsp, String target) {
 
-        String newTarget = OpenCms.getLinkManager().substituteLink(jsp.getCmsObject(), target, null, true);
-        jsp.getRequest().setAttribute(
-            CmsRequestUtil.ATTRIBUTE_ERRORCODE,
-            new Integer(HttpServletResponse.SC_MOVED_PERMANENTLY));
-        jsp.getResponse().setHeader(HEADER_LOCATION, newTarget);
+        target = OpenCms.getLinkManager().substituteLink(jsp.getCmsObject(), target);
         jsp.getResponse().setHeader(HEADER_CONNECTION, "close");
+        try {
+            HttpServletResponse response = jsp.getResponse();
+            CmsFlexResponse flexRes = CmsRequestUtil.getFlexResponse(response);
+            if (flexRes != null) {
+                flexRes.sendRedirect(target, true);
+            } else {
+                response.setHeader("Location", target);
+                response.setStatus(HttpServletResponse.SC_MOVED_PERMANENTLY);
+            }
+        } catch (IOException e) {
+            LOG.error(Messages.get().getBundle().key(Messages.ERR_IOERROR_0), e);
+        }
     }
 
     /**
      * Redirects the response to the target link.<p>
-     * 
+     *
      * Use this method instead of {@link javax.servlet.http.HttpServletResponse#sendRedirect(java.lang.String)}
      * to avoid relative links with secure sites (and issues with apache).<p>
-     * 
+     *
      * @param jsp the OpenCms JSP context
      * @param target the target link
-     * 
+     *
      * @throws IOException if something goes wrong during redirection
      */
     public static void redirectRequestSecure(CmsJspActionElement jsp, String target) throws IOException {
@@ -745,12 +1020,12 @@ public final class CmsRequestUtil {
         jsp.getResponse().sendRedirect(OpenCms.getLinkManager().substituteLink(jsp.getCmsObject(), target, null, true));
     }
 
-    /** 
+    /**
      * Removes an object from the session of the given http request.<p>
-     * 
+     *
      * A session will be initialized if the request does not currently have a session.
-     * As a result, the request will always have a session after this method has been called.<p> 
-     * 
+     * As a result, the request will always have a session after this method has been called.<p>
+     *
      * @param request the request to get the session from
      * @param key the key of the object to be removed from the session
      */
@@ -760,10 +1035,10 @@ public final class CmsRequestUtil {
         session.removeAttribute(key);
     }
 
-    /** 
+    /**
      * Sets the value of a specific cookie.<p>
      * If no cookie exists with the value, a new cookie will be created.
-     * 
+     *
      * @param jsp the CmsJspActionElement to use
      * @param name the name of the cookie
      * @param value the value of the cookie
@@ -782,30 +1057,32 @@ public final class CmsRequestUtil {
     }
 
     /**
-     * Sets headers to the given response to prevent client side caching.<p> 
-     * 
+     * Sets headers to the given response to prevent client side caching.<p>
+     *
      * The following headers are set:<p>
      * <code>
      * Cache-Control: max-age=0<br>
      * Cache-Control: must-revalidate<br>
      * Pragma: no-cache
      * </code>
-     * 
+     *
      * @param res the request where to set the no-cache headers
      */
     public static void setNoCacheHeaders(HttpServletResponse res) {
 
         res.setHeader(CmsRequestUtil.HEADER_CACHE_CONTROL, CmsRequestUtil.HEADER_VALUE_MAX_AGE + "0");
         res.addHeader(CmsRequestUtil.HEADER_CACHE_CONTROL, CmsRequestUtil.HEADER_VALUE_MUST_REVALIDATE);
+        res.addHeader(CmsRequestUtil.HEADER_CACHE_CONTROL, CmsRequestUtil.HEADER_VALUE_NO_CACHE);
+        res.addHeader(CmsRequestUtil.HEADER_CACHE_CONTROL, CmsRequestUtil.HEADER_VALUE_NO_STORE);
         res.setHeader(CmsRequestUtil.HEADER_PRAGMA, CmsRequestUtil.HEADER_VALUE_NO_CACHE);
     }
 
     /**
      * Adds an object to the session of the given HTTP request.<p>
-     * 
+     *
      * A session will be initialized if the request does not currently have a session.
-     * As a result, the request will always have a session after this method has been called.<p> 
-     * 
+     * As a result, the request will always have a session after this method has been called.<p>
+     *
      * @param request the request to get the session from
      * @param key the key of the object to be stored in the session
      * @param value the object to be stored in the session

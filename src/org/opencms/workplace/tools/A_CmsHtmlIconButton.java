@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -14,12 +14,12 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * Lesser General Public License for more details.
  *
- * For further information about Alkacon Software GmbH, please see the
- * company website: http://www.alkacon.com
+ * For further information about Alkacon Software GmbH & Co. KG, please see the
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -36,8 +36,8 @@ import java.io.File;
 
 /**
  * Default skeleton for an html icon button.<p>
- * 
- * @since 6.0.0 
+ *
+ * @since 6.0.0
  */
 public abstract class A_CmsHtmlIconButton implements I_CmsHtmlIconButton {
 
@@ -64,7 +64,7 @@ public abstract class A_CmsHtmlIconButton implements I_CmsHtmlIconButton {
 
     /**
      * Default Constructor.<p>
-     * 
+     *
      * @param id the id
      */
     public A_CmsHtmlIconButton(String id) {
@@ -74,7 +74,7 @@ public abstract class A_CmsHtmlIconButton implements I_CmsHtmlIconButton {
 
     /**
      * Full Constructor.<p>
-     * 
+     *
      * @param id the id
      * @param name the name
      * @param helpText the help text
@@ -97,7 +97,7 @@ public abstract class A_CmsHtmlIconButton implements I_CmsHtmlIconButton {
 
     /**
      * Generates a default html code for icon buttons.<p>
-     * 
+     *
      * @param style the style of the button
      * @param id the id
      * @param name the name
@@ -106,7 +106,7 @@ public abstract class A_CmsHtmlIconButton implements I_CmsHtmlIconButton {
      * @param iconPath the path to the icon
      * @param confirmationMessage the optional confirmation message
      * @param onClick the js code to execute
-     * 
+     *
      * @return html code
      */
     public static String defaultButtonHtml(
@@ -135,7 +135,7 @@ public abstract class A_CmsHtmlIconButton implements I_CmsHtmlIconButton {
 
     /**
      * Generates a default html code where several buttons can have the same help text.<p>
-     * 
+     *
      * @param style the style of the button
      * @param id the id
      * @param helpId the id of the helptext div tag
@@ -147,7 +147,7 @@ public abstract class A_CmsHtmlIconButton implements I_CmsHtmlIconButton {
      * @param onClick the js code to execute, if empty no link is generated
      * @param singleHelp if set, no helptext is written, you have to use the defaultHelpHtml() method later
      * @param rightHtml optional html code that should come direct after the button
-     * 
+     *
      * @return html code
      */
     public static String defaultButtonHtml(
@@ -210,6 +210,7 @@ public abstract class A_CmsHtmlIconButton implements I_CmsHtmlIconButton {
             html.append(name);
             html.append("'");
         }
+
         html.append(">");
         if (CmsStringUtil.isNotEmptyOrWhitespaceOnly(iconPath)) {
             html.append("<img src='");
@@ -230,12 +231,12 @@ public abstract class A_CmsHtmlIconButton implements I_CmsHtmlIconButton {
                 html.append(iconPath);
             }
             html.append("'");
-            if (CmsStringUtil.isNotEmptyOrWhitespaceOnly(name)) {
+            if (CmsStringUtil.isNotEmptyOrWhitespaceOnly(helpText)) {
                 html.append(" alt='");
-                html.append(name);
+                html.append(helpText);
                 html.append("'");
                 html.append(" title='");
-                html.append(name);
+                html.append(helpText);
                 html.append("'");
             }
             html.append(">");
@@ -289,10 +290,10 @@ public abstract class A_CmsHtmlIconButton implements I_CmsHtmlIconButton {
 
     /**
      * Generates html for the helptext when having one helptext for several buttons.<p>
-     * 
+     *
      * @param helpId the id of the help text
      * @param helpText the help text
-     * 
+     *
      * @return html code
      */
     public static String defaultHelpHtml(String helpId, String helpText) {

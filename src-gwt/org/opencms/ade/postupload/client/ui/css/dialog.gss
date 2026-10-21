@@ -1,0 +1,60 @@
+@external opencms-icon-circle-inv-plus;
+
+.popup, .popupContent {}
+
+.propertyDialog {
+    overflow: auto;
+    position: relative;
+	max-height: 600px;
+	padding-right: 5px;
+}
+
+.popupOverlay {
+	background: value("constants.css.backgroundColorDialog");
+    z-index: value("constants.css.zIndexPopup");
+    width: 100vw !important; 
+    height: 100vh !important;
+    position: fixed !important;
+}
+
+.propertyDialog .fieldsetSpacer {
+	margin: 15px 0px 0px 0px;
+}
+
+.propertyDialog .labelColumn {
+	width: 100px;
+	float: left;
+	line-height: 22px;
+}
+
+.propertyDialog .block {
+	display: block;
+}
+
+.propertyDialog .inlineBlock {
+	display: inline-block;
+}
+
+.propertyDialog .inputCombination {
+	width: /*403px;*/ 500px; 
+	display: inline-block;
+	margin-bottom: 2px;
+}
+
+.propertyDialog .inputLineHeight div {
+	line-height: 20px;
+}
+
+.propertyDialog .opencms-icon-circle-inv-plus::before {
+	font-size: 16px;
+}
+
+.warningBox {
+	white-space: pre; 
+	border: 1px solid #c9c9c9;
+	border-radius: 4px;
+	padding: 5px;
+	margin-top: 5px;
+	margin-bottom: 5px;
+}
+

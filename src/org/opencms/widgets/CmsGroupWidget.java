@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -14,12 +14,12 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * Lesser General Public License for more details.
  *
- * For further information about Alkacon Software GmbH, please see the
- * company website: http://www.alkacon.com
+ * For further information about Alkacon Software GmbH & Co. KG, please see the
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -28,16 +28,25 @@
 package org.opencms.widgets;
 
 import org.opencms.file.CmsObject;
+import org.opencms.file.CmsResource;
+import org.opencms.i18n.CmsMessages;
 import org.opencms.main.OpenCms;
+import org.opencms.ui.dialogs.permissions.CmsPrincipalSelect;
+import org.opencms.ui.dialogs.permissions.CmsPrincipalSelectDialog;
 import org.opencms.util.CmsStringUtil;
 import org.opencms.workplace.CmsWorkplace;
+import org.opencms.xml.content.I_CmsXmlContentHandler.DisplayType;
+import org.opencms.xml.types.A_CmsXmlContentValue;
+
+import java.util.List;
+import java.util.Locale;
 
 /**
  * Provides a OpenCms Group selection widget, for use on a widget dialog.<p>
- * 
- * @since 6.0.0 
+ *
+ * @since 6.0.0
  */
-public class CmsGroupWidget extends A_CmsWidget {
+public class CmsGroupWidget extends A_CmsWidget implements I_CmsADEWidget {
 
     /** Configuration parameter to set the flags of the groups to display, optional. */
     public static final String CONFIGURATION_FLAGS = "flags";
@@ -68,7 +77,7 @@ public class CmsGroupWidget extends A_CmsWidget {
 
     /**
      * Creates a new group selection widget with the parameters to configure the popup window behaviour.<p>
-     * 
+     *
      * @param flags the group flags to restrict the group selection, can be <code>null</code>
      * @param userName the user to restrict the group selection, can be <code>null</code>
      */
@@ -81,7 +90,7 @@ public class CmsGroupWidget extends A_CmsWidget {
 
     /**
      * Creates a new group selection widget with the parameters to configure the popup window behaviour.<p>
-     * 
+     *
      * @param flags the group flags to restrict the group selection, can be <code>null</code>
      * @param userName the user to restrict the group selection, can be <code>null</code>
      * @param ouFqn the organizational unit to restrict the group selection, can be <code>null</code>
@@ -95,7 +104,7 @@ public class CmsGroupWidget extends A_CmsWidget {
 
     /**
      * Creates a new group selection widget with the given configuration.<p>
-     * 
+     *
      * @param configuration the configuration to use
      */
     public CmsGroupWidget(String configuration) {
@@ -142,6 +151,35 @@ public class CmsGroupWidget extends A_CmsWidget {
     }
 
     /**
+     * @see org.opencms.widgets.I_CmsADEWidget#getConfiguration(org.opencms.file.CmsObject, org.opencms.xml.types.A_CmsXmlContentValue, org.opencms.i18n.CmsMessages, org.opencms.file.CmsResource, java.util.Locale)
+     */
+    public String getConfiguration(
+        CmsObject cms,
+        A_CmsXmlContentValue schemaType,
+        CmsMessages messages,
+        CmsResource resource,
+        Locale contentLocale) {
+
+        return CmsPrincipalSelectDialog.PARAM_TYPE + "=" + CmsPrincipalSelect.WidgetType.groupwidget.name();
+    }
+
+    /**
+     * @see org.opencms.widgets.I_CmsADEWidget#getCssResourceLinks(org.opencms.file.CmsObject)
+     */
+    public List<String> getCssResourceLinks(CmsObject cms) {
+
+        return null;
+    }
+
+    /**
+     * @see org.opencms.widgets.I_CmsADEWidget#getDefaultDisplayType()
+     */
+    public DisplayType getDefaultDisplayType() {
+
+        return DisplayType.singleline;
+    }
+
+    /**
      * @see org.opencms.widgets.I_CmsWidget#getDialogIncludes(org.opencms.file.CmsObject, org.opencms.widgets.I_CmsWidgetDialog)
      */
     @Override
@@ -161,7 +199,8 @@ public class CmsGroupWidget extends A_CmsWidget {
         StringBuffer result = new StringBuffer(128);
 
         result.append("<td class=\"xmlTd\">");
-        result.append("<table border=\"0\" cellpadding=\"0\" cellspacing=\"0\" class=\"maxwidth\"><tr><td style=\"width: 100%;\">");
+        result.append(
+            "<table border=\"0\" cellpadding=\"0\" cellspacing=\"0\" class=\"maxwidth\"><tr><td style=\"width: 100%;\">");
         result.append("<input style=\"width: 99%;\" class=\"xmlInput");
         if (param.hasError()) {
             result.append(" xmlInputError");
@@ -174,7 +213,8 @@ public class CmsGroupWidget extends A_CmsWidget {
         result.append(id);
         result.append("\"></td>");
         result.append(widgetDialog.dialogHorizontalSpacer(10));
-        result.append("<td><table class=\"editorbuttonbackground\" border=\"0\" cellpadding=\"0\" cellspacing=\"0\"><tr>");
+        result.append(
+            "<td><table class=\"editorbuttonbackground\" border=\"0\" cellpadding=\"0\" cellspacing=\"0\"><tr>");
 
         StringBuffer buttonJs = new StringBuffer(8);
         buttonJs.append("javascript:openGroupWin('");
@@ -208,12 +248,13 @@ public class CmsGroupWidget extends A_CmsWidget {
         }
         buttonJs.append(");");
 
-        result.append(widgetDialog.button(
-            buttonJs.toString(),
-            null,
-            "group",
-            org.opencms.workplace.Messages.GUI_DIALOG_BUTTON_SEARCH_0,
-            widgetDialog.getButtonStyle()));
+        result.append(
+            widgetDialog.button(
+                buttonJs.toString(),
+                null,
+                "group",
+                org.opencms.workplace.Messages.GUI_DIALOG_BUTTON_SEARCH_0,
+                widgetDialog.getButtonStyle()));
         result.append("</tr></table>");
         result.append("</td></tr></table>");
 
@@ -230,6 +271,22 @@ public class CmsGroupWidget extends A_CmsWidget {
     public Integer getFlags() {
 
         return m_flags;
+    }
+
+    /**
+     * @see org.opencms.widgets.I_CmsADEWidget#getInitCall()
+     */
+    public String getInitCall() {
+
+        return null;
+    }
+
+    /**
+     * @see org.opencms.widgets.I_CmsADEWidget#getJavaScriptResourceLinks(org.opencms.file.CmsObject)
+     */
+    public List<String> getJavaScriptResourceLinks(CmsObject cms) {
+
+        return null;
     }
 
     /**
@@ -250,6 +307,22 @@ public class CmsGroupWidget extends A_CmsWidget {
     public String getUserName() {
 
         return m_userName;
+    }
+
+    /**
+     * @see org.opencms.widgets.I_CmsADEWidget#getWidgetName()
+     */
+    public String getWidgetName() {
+
+        return CmsPrincipalWidget.class.getName();
+    }
+
+    /**
+     * @see org.opencms.widgets.I_CmsADEWidget#isInternal()
+     */
+    public boolean isInternal() {
+
+        return true;
     }
 
     /**

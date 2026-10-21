@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -14,12 +14,12 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * Lesser General Public License for more details.
  *
- * For further information about Alkacon Software GmbH, please see the
- * company website: http://www.alkacon.com
+ * For further information about Alkacon Software GmbH & Co. KG, please see the
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -37,13 +37,13 @@ import java.util.Map;
 
 /**
  * This list item detail formatter creates a two column table to represent a context info object.<p>
- * 
+ *
  * @since 6.0.0
  */
 public class CmsContextInfoDetailsFormatter implements I_CmsListFormatter {
 
     /** Cache for localized messages. */
-    private Map m_cache = new HashMap();
+    private Map<Locale, Map<CmsMessageContainer, String>> m_cache = new HashMap<Locale, Map<CmsMessageContainer, String>>();
     /** Encoding message header. */
     private CmsMessageContainer m_encodingMessage;
     /** Locale message header. */
@@ -73,9 +73,9 @@ public class CmsContextInfoDetailsFormatter implements I_CmsListFormatter {
      */
     public String format(Object data, Locale locale) {
 
-        Map cache = (Map)m_cache.get(locale);
+        Map<CmsMessageContainer, String> cache = m_cache.get(locale);
         if (cache == null) {
-            cache = new HashMap();
+            cache = new HashMap<CmsMessageContainer, String>();
             cache.put(m_userMessage, m_userMessage.key(locale));
             cache.put(m_projectMessage, m_projectMessage.key(locale));
             cache.put(m_localeMessage, m_localeMessage.key(locale));
@@ -85,13 +85,13 @@ public class CmsContextInfoDetailsFormatter implements I_CmsListFormatter {
             cache.put(m_encodingMessage, m_encodingMessage.key(locale));
             m_cache.put(locale, cache);
         }
-        String userMessage = (String)cache.get(m_userMessage);
-        String projectMessage = (String)cache.get(m_projectMessage);
-        String localeMessage = (String)cache.get(m_localeMessage);
-        String rootSiteMessage = (String)cache.get(m_rootSiteMessage);
-        String requestedURIMessage = (String)cache.get(m_requestedURIMessage);
-        String remoteAddrMessage = (String)cache.get(m_remoteAddrMessage);
-        String encodingMessage = (String)cache.get(m_encodingMessage);
+        String userMessage = cache.get(m_userMessage);
+        String projectMessage = cache.get(m_projectMessage);
+        String localeMessage = cache.get(m_localeMessage);
+        String rootSiteMessage = cache.get(m_rootSiteMessage);
+        String requestedURIMessage = cache.get(m_requestedURIMessage);
+        String remoteAddrMessage = cache.get(m_remoteAddrMessage);
+        String encodingMessage = cache.get(m_encodingMessage);
         CmsContextInfo info = (CmsContextInfo)data;
         StringBuffer html = new StringBuffer(512);
         html.append("<table border='0' cellspacing='0' cellpadding='0'>\n");

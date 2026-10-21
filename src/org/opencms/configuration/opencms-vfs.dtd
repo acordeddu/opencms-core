@@ -13,12 +13,13 @@
 	resources,
 	defaultfiles,
 	translations?, 
-	
+	online-folders?,
 	xmlcontent?)>
 
 <!ELEMENT resources (
 	resourceloaders, 
 	resourcetypes,
+	storage-policy?,
 	collectors?,
 	namegenerator?,
 	mimetypes?,
@@ -31,6 +32,15 @@
 
 <!ELEMENT param (#PCDATA)>
 <!ATTLIST param name CDATA #REQUIRED>
+
+<!--
+# Storage policy for VFS file contents.
+#
+# This policy decides whether file contents remain in the content table or are
+# offloaded to the configured storage backend.
+-->
+<!ELEMENT storage-policy (param*)>
+<!ATTLIST storage-policy class CDATA #REQUIRED>
 
 <!--
 # Relation types configuration.
@@ -95,6 +105,9 @@
 -->
 <!ELEMENT translations (filetranslations?, foldertranslations?, xsdtranslations?)>
 <!ELEMENT translation (#PCDATA)>
+
+<!ELEMENT online-folders (path*, param*)>
+<!ELEMENT path (#PCDATA)>
 
 <!--
 # Filename translation is used when creating new files to automatically 
@@ -164,12 +177,15 @@
 # For a widget, an optional alias name can be configured as well as a default
 # widget configuration that is used to define the widget behavior in the structured
 # content editor if no individual configuration is defined in the XSD for the XML content.
+# Additional widget aliases can be defined using the widget-alias subelement. 
 -->
 <!ELEMENT xmlcontent (widgets, schematypes)>
 
 <!ELEMENT widgets (widget*)>
-<!ELEMENT widget EMPTY>
+<!ELEMENT widget (widget-alias*)>
 <!ATTLIST widget class CDATA #REQUIRED alias CDATA #IMPLIED configuration CDATA #IMPLIED>
+
+<!ELEMENT widget-alias (#PCDATA)>
 
 <!ELEMENT schematypes (schematype*)>
 <!ELEMENT schematype EMPTY>

@@ -39,6 +39,12 @@ public class CmsHtml2TextConverter extends CmsHtmlParser {
     /** The last stored, but not appended line break count. */
     private int m_storedBrCount;
 
+    /** List of tags where to ignore the text. */
+    private final List<String> IGNORE_TEXT = List.of("SCRIPT", "STYLE", "TEMPLATE");
+
+    /** Flag indicating whether we are in a ignore text tag. */
+    private boolean m_ignoreText;
+
     /**
      * Creates a new instance of the html converter.<p>
      */
@@ -51,12 +57,12 @@ public class CmsHtml2TextConverter extends CmsHtmlParser {
 
     /**
      * Extracts the text from the given html content, assuming the given html encoding.<p>
-     * 
+     *
      * @param html the content to extract the plain text from
      * @param encoding the encoding to use
-     * 
+     *
      * @return the text extracted from the given html content
-     * 
+     *
      * @throws Exception if something goes wrong
      */
     public static String html2text(String html, String encoding) throws Exception {
@@ -73,6 +79,7 @@ public class CmsHtml2TextConverter extends CmsHtmlParser {
     public void visitEndTag(Tag tag) {
 
         m_appendBr = false;
+        m_ignoreText = false;
         appendLinebreaks(tag, false);
         String attribute = m_attributeMap.remove(tag.getParent());
         if (attribute != null) {
@@ -86,7 +93,10 @@ public class CmsHtml2TextConverter extends CmsHtmlParser {
     @Override
     public void visitStringNode(Text text) {
 
-        appendText(text.toPlainTextString());
+        if (!m_ignoreText) {
+            appendText(text.toPlainTextString());
+        }
+        m_ignoreText = false;
     }
 
     /**
@@ -96,12 +106,14 @@ public class CmsHtml2TextConverter extends CmsHtmlParser {
     public void visitTag(Tag tag) {
 
         m_appendBr = true;
+        m_ignoreText = false;
         appendLinebreaks(tag, true);
-
+        if (IGNORE_TEXT.contains(tag.getTagName())) {
+            m_ignoreText = true;
+        }
         if (tag.getTagName().equals("IMG")) {
             appendText("##IMG##");
         }
-
         String href = tag.getAttribute("href");
         if (CmsStringUtil.isNotEmptyOrWhitespaceOnly(href)) {
             appendAttribute(tag, " [" + href.trim() + "]");
@@ -120,6 +132,12 @@ public class CmsHtml2TextConverter extends CmsHtmlParser {
         }
     }
 
+    /**
+     * Appends an attribute.<p>
+     *
+     * @param tag the tag
+     * @param text the attribute text
+     */
     private void appendAttribute(Tag tag, String text) {
 
         if (tag.getTagName().equals("IMG")) {
@@ -133,6 +151,9 @@ public class CmsHtml2TextConverter extends CmsHtmlParser {
         }
     }
 
+    /**
+     * Appends an indentation.<p>
+     */
     private void appendIndentation() {
 
         if (m_lineLength <= m_indent) {
@@ -148,11 +169,22 @@ public class CmsHtml2TextConverter extends CmsHtmlParser {
         }
     }
 
+    /**
+     * Appends a line break.<p>
+     *
+     * @param count the number of lines
+     */
     private void appendLinebreak(int count) {
 
         appendLinebreak(count, false);
     }
 
+    /**
+     * Appends line breaks.<p>
+     *
+     * @param count the number of line breaks
+     * @param force if the line break should be forced
+     */
     private void appendLinebreak(int count, boolean force) {
 
         if (m_appendBr) {
@@ -175,6 +207,12 @@ public class CmsHtml2TextConverter extends CmsHtmlParser {
         }
     }
 
+    /**
+     * Appends line breaks.<p>
+     *
+     * @param tag the tag
+     * @param open the open flag
+     */
     private void appendLinebreaks(Tag tag, boolean open) {
 
         String name = tag.getTagName();
@@ -186,7 +224,7 @@ public class CmsHtml2TextConverter extends CmsHtmlParser {
                 setIndentation(2, open);
                 appendLinebreak(2);
                 break;
-            case 1: // H2            
+            case 1: // H2
                 setMarker("==", open);
                 setIndentation(3, open);
                 appendLinebreak(2);
@@ -255,10 +293,15 @@ public class CmsHtml2TextConverter extends CmsHtmlParser {
             case 19: // TFOOT
                 appendLinebreak(1);
                 break;
-            default: // unknown tag (ignore)                
+            default: // unknown tag (ignore)
         }
     }
 
+    /**
+     * Appends text.<p>
+     *
+     * @param text the text
+     */
     private void appendText(String text) {
 
         if (CmsStringUtil.isNotEmptyOrWhitespaceOnly(text)) {
@@ -300,6 +343,12 @@ public class CmsHtml2TextConverter extends CmsHtmlParser {
         }
     }
 
+    /**
+     * Sets the indentation.<p>
+     *
+     * @param length the indentation length
+     * @param open if the indentation should be added or reduced
+     */
     private void setIndentation(int length, boolean open) {
 
         if (open) {
@@ -312,6 +361,12 @@ public class CmsHtml2TextConverter extends CmsHtmlParser {
         }
     }
 
+    /**
+     * Sets the marker.<p>
+     *
+     * @param marker the marker
+     * @param open if the marker should be added
+     */
     private void setMarker(String marker, boolean open) {
 
         if (open) {

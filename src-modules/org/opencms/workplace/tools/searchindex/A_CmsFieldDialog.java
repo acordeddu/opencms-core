@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -14,12 +14,12 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * Lesser General Public License for more details.
  *
- * For further information about Alkacon Software GmbH, please see the
- * company website: http://www.alkacon.com
+ * For further information about Alkacon Software GmbH & Co. KG, please see the
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -32,8 +32,10 @@ import org.opencms.jsp.CmsJspActionElement;
 import org.opencms.main.CmsIllegalStateException;
 import org.opencms.main.OpenCms;
 import org.opencms.search.CmsSearchManager;
+import org.opencms.search.fields.CmsLuceneField;
+import org.opencms.search.fields.CmsLuceneFieldConfiguration;
 import org.opencms.search.fields.CmsSearchField;
-import org.opencms.search.fields.CmsSearchFieldConfiguration;
+import org.opencms.search.fields.I_CmsSearchFieldConfiguration;
 import org.opencms.workplace.CmsWidgetDialog;
 import org.opencms.workplace.CmsWorkplaceSettings;
 
@@ -48,9 +50,9 @@ import javax.servlet.http.HttpServletResponse;
 import javax.servlet.jsp.PageContext;
 
 /**
- * 
- * Abstract widget dialog for all dialogs working with <code>{@link CmsSearchField}</code>.<p> 
- * 
+ *
+ * Abstract widget dialog for all dialogs working with <code>{@link CmsLuceneField}</code>.<p>
+ *
  * @since 6.5.5
  */
 public class A_CmsFieldDialog extends CmsWidgetDialog {
@@ -61,25 +63,25 @@ public class A_CmsFieldDialog extends CmsWidgetDialog {
     /** Defines which pages are valid for this dialog. */
     public static final String[] PAGES = {"page1"};
 
-    /** 
-     * The request parameter for the field to work with when contacting 
+    /**
+     * The request parameter for the field to work with when contacting
      * this dialog from another. <p>
-     *      
+     *
      */
     public static final String PARAM_FIELD = "field";
 
-    /** 
-     * The request parameter for the fieldconfiguration to work with when contacting 
+    /**
+     * The request parameter for the fieldconfiguration to work with when contacting
      * this dialog from another. <p>
-     *      
+     *
      */
     public static final String PARAM_FIELDCONFIGURATION = "fieldconfiguration";
 
     /** The user object that is edited on this dialog. */
-    protected CmsSearchField m_field;
+    protected CmsLuceneField m_field;
 
     /** The user object that is edited on this dialog. */
-    protected CmsSearchFieldConfiguration m_fieldconfiguration;
+    protected I_CmsSearchFieldConfiguration m_fieldconfiguration;
 
     /** The search manager singleton for convenient access. **/
     protected CmsSearchManager m_searchManager;
@@ -92,7 +94,7 @@ public class A_CmsFieldDialog extends CmsWidgetDialog {
 
     /**
      * Public constructor with JSP action element.<p>
-     * 
+     *
      * @param jsp an initialized JSP action element
      */
     public A_CmsFieldDialog(CmsJspActionElement jsp) {
@@ -102,7 +104,7 @@ public class A_CmsFieldDialog extends CmsWidgetDialog {
 
     /**
      * Public constructor with JSP variables.<p>
-     * 
+     *
      * @param context the JSP page context
      * @param req the JSP request
      * @param res the JSP response
@@ -113,7 +115,7 @@ public class A_CmsFieldDialog extends CmsWidgetDialog {
     }
 
     /**
-     * Writes the updated search configuration back to the XML 
+     * Writes the updated search configuration back to the XML
      * configuration file and refreshes the complete list.<p>
      */
     protected static void writeConfiguration() {
@@ -125,17 +127,17 @@ public class A_CmsFieldDialog extends CmsWidgetDialog {
     /**
      * @see org.opencms.workplace.CmsWidgetDialog#actionCommit()
      */
+    @Override
     public void actionCommit() {
 
-        List errors = new ArrayList();
+        List<Throwable> errors = new ArrayList<Throwable>();
 
         try {
 
             // if new create it first
             boolean found = false;
-            Iterator itFields = m_fieldconfiguration.getFields().iterator();
-            while (itFields.hasNext()) {
-                if (((CmsSearchField)itFields.next()).getName().equals(m_field.getName())) {
+            for (CmsSearchField field : m_fieldconfiguration.getFields()) {
+                if (field.getName().equals(m_field.getName())) {
                     found = true;
                 }
             }
@@ -157,7 +159,7 @@ public class A_CmsFieldDialog extends CmsWidgetDialog {
 
     /**
      * Returns the request parameter value for parameter field. <p>
-     * 
+     *
      * @return the request parameter value for parameter field
      */
     public String getParamField() {
@@ -167,7 +169,7 @@ public class A_CmsFieldDialog extends CmsWidgetDialog {
 
     /**
      * Returns the request parameter value for parameter fieldconfiguration. <p>
-     * 
+     *
      * @return the request parameter value for parameter fieldconfiguration
      */
     public String getParamFieldconfiguration() {
@@ -177,7 +179,7 @@ public class A_CmsFieldDialog extends CmsWidgetDialog {
 
     /**
      * Sets the request parameter value for parameter field. <p>
-     * 
+     *
      * @param field the request parameter value for parameter field
      */
     public void setParamField(String field) {
@@ -187,7 +189,7 @@ public class A_CmsFieldDialog extends CmsWidgetDialog {
 
     /**
      * Sets the request parameter value for parameter fieldconfiguration. <p>
-     * 
+     *
      * @param fieldconfiguration the request parameter value for parameter fieldconfiguration
      */
     public void setParamFieldconfiguration(String fieldconfiguration) {
@@ -198,6 +200,7 @@ public class A_CmsFieldDialog extends CmsWidgetDialog {
     /**
      * @see org.opencms.workplace.CmsWidgetDialog#defaultActionHtmlEnd()
      */
+    @Override
     protected String defaultActionHtmlEnd() {
 
         return "";
@@ -206,6 +209,7 @@ public class A_CmsFieldDialog extends CmsWidgetDialog {
     /**
      * @see org.opencms.workplace.CmsWidgetDialog#defineWidgets()
      */
+    @Override
     protected void defineWidgets() {
 
         initUserObject();
@@ -215,6 +219,7 @@ public class A_CmsFieldDialog extends CmsWidgetDialog {
     /**
      * @see org.opencms.workplace.CmsWidgetDialog#getPageArray()
      */
+    @Override
     protected String[] getPageArray() {
 
         return PAGES;
@@ -222,7 +227,7 @@ public class A_CmsFieldDialog extends CmsWidgetDialog {
 
     /**
      * Initializes the user object to work with depending on the dialog state and request parameters.<p>
-     * 
+     *
      */
     protected void initUserObject() {
 
@@ -230,38 +235,39 @@ public class A_CmsFieldDialog extends CmsWidgetDialog {
             try {
                 m_fieldconfiguration = m_searchManager.getFieldConfiguration(getParamFieldconfiguration());
                 if (m_fieldconfiguration == null) {
-                    m_fieldconfiguration = new CmsSearchFieldConfiguration();
+                    m_fieldconfiguration = new CmsLuceneFieldConfiguration();
                 }
             } catch (Exception e) {
-                m_fieldconfiguration = new CmsSearchFieldConfiguration();
+                m_fieldconfiguration = new CmsLuceneFieldConfiguration();
             }
         }
 
         if (m_field == null) {
             try {
-                Iterator itFields = m_fieldconfiguration.getFields().iterator();
+                Iterator<CmsSearchField> itFields = m_fieldconfiguration.getFields().iterator();
                 while (itFields.hasNext()) {
-                    CmsSearchField curField = (CmsSearchField)itFields.next();
+                    CmsLuceneField curField = (CmsLuceneField)itFields.next();
                     if (curField.getName().equals(getParamField())) {
                         m_field = curField;
                         break;
                     }
                 }
                 if (m_field == null) {
-                    m_field = new CmsSearchField();
+                    m_field = new CmsLuceneField();
                 }
             } catch (Exception e) {
-                m_field = new CmsSearchField();
+                m_field = new CmsLuceneField();
             }
         }
     }
 
     /**
-     * Overridden to initialize the internal <code>CmsSearchManager</code> before initWorkplaceRequestValues -> 
+     * Overridden to initialize the internal <code>CmsSearchManager</code> before initWorkplaceRequestValues ->
      * defineWidgets ->  will access it (NPE). <p>
-     * 
+     *
      * @see org.opencms.workplace.CmsWorkplace#initWorkplaceMembers(org.opencms.jsp.CmsJspActionElement)
      */
+    @Override
     protected void initWorkplaceMembers(CmsJspActionElement jsp) {
 
         m_searchManager = OpenCms.getSearchManager();
@@ -271,6 +277,8 @@ public class A_CmsFieldDialog extends CmsWidgetDialog {
     /**
      * @see org.opencms.workplace.CmsWorkplace#initWorkplaceRequestValues(org.opencms.workplace.CmsWorkplaceSettings, javax.servlet.http.HttpServletRequest)
      */
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    @Override
     protected void initWorkplaceRequestValues(CmsWorkplaceSettings settings, HttpServletRequest request) {
 
         // initialize parameters and dialog actions in super implementation
@@ -289,7 +297,7 @@ public class A_CmsFieldDialog extends CmsWidgetDialog {
 
     /**
      * Checks if the new search index dialog has to be displayed.<p>
-     * 
+     *
      * @return <code>true</code> if the new search index dialog has to be displayed
      */
     protected boolean isNewField() {
@@ -300,21 +308,21 @@ public class A_CmsFieldDialog extends CmsWidgetDialog {
     /**
      * @see org.opencms.workplace.CmsWidgetDialog#validateParamaters()
      */
+    @Override
     protected void validateParamaters() throws Exception {
 
         if (!isNewField()) {
             // test the needed parameters
-            if (getParamField() == null && getJsp().getRequest().getParameter("name.0") == null) {
-                throw new CmsIllegalStateException(Messages.get().container(
-                    Messages.ERR_SEARCHINDEX_EDIT_MISSING_PARAM_1,
-                    PARAM_FIELD));
+            if ((getParamField() == null) && (getJsp().getRequest().getParameter("name.0") == null)) {
+                throw new CmsIllegalStateException(
+                    Messages.get().container(Messages.ERR_SEARCHINDEX_EDIT_MISSING_PARAM_1, PARAM_FIELD));
             }
         }
     }
 
     /**
      * Checks the configuration to write.<p>
-     *  
+     *
      * @return true if configuration is valid, otherwise false
      */
     private boolean checkWriteConfiguration() {

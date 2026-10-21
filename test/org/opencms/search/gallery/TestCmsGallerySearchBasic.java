@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -15,11 +15,11 @@
  * Lesser General Public License for more details.
  *
  * For further information about Alkacon Software, please see the
- * company website: http://www.alkacon.com
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -28,48 +28,47 @@
 package org.opencms.search.gallery;
 
 import org.opencms.file.CmsObject;
+import org.opencms.file.CmsProperty;
+import org.opencms.file.CmsResource.CmsResourceUndoMode;
+import org.opencms.file.types.CmsResourceTypePlain;
 import org.opencms.main.OpenCms;
 import org.opencms.report.CmsShellReport;
 import org.opencms.report.I_CmsReport;
-import org.opencms.search.CmsSearchIndex;
+import org.opencms.search.fields.CmsSearchField;
 import org.opencms.search.galleries.CmsGallerySearch;
-import org.opencms.search.galleries.CmsGallerySearchIndex;
 import org.opencms.search.galleries.CmsGallerySearchParameters;
 import org.opencms.search.galleries.CmsGallerySearchParameters.CmsGallerySortParam;
 import org.opencms.search.galleries.CmsGallerySearchResult;
 import org.opencms.search.galleries.CmsGallerySearchResultList;
-import org.opencms.test.OpenCmsTestCase;
-import org.opencms.test.OpenCmsTestProperties;
+import org.opencms.search.solr.CmsSolrIndex;
+import org.opencms.search.solr.CmsSolrQuery;
+import org.opencms.search.solr.CmsSolrResultList;
+import org.opencms.test.OpenCmsTestRunner;
 import org.opencms.util.CmsDateUtil;
 import org.opencms.util.CmsStringUtil;
 import org.opencms.util.CmsUUID;
 
 import java.text.DateFormat;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.Locale;
 
-import junit.extensions.TestSetup;
-import junit.framework.Test;
-import junit.framework.TestSuite;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.MethodOrderer;
+import org.junit.jupiter.api.Order;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInfo;
+import org.junit.jupiter.api.TestMethodOrder;
 
 /**
  * Unit test for the basic OpenCms gallery search functions.<p>
  */
-public class TestCmsGallerySearchBasic extends OpenCmsTestCase {
-
-    /**
-     * Default JUnit constructor.<p>
-     * 
-     * @param arg0 JUnit parameters
-     */
-    public TestCmsGallerySearchBasic(String arg0) {
-
-        super(arg0);
-    }
+@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
+public class TestCmsGallerySearchBasic extends OpenCmsTestRunner {
 
     /**
      * Prints the given list of search results to STDOUT.<p>
-     * 
+     *
      * @param searchResult the list to print
      * @param cms the current OpenCms user context
      */
@@ -80,7 +79,7 @@ public class TestCmsGallerySearchBasic extends OpenCmsTestCase {
 
     /**
      * Prints the given list of search results to STDOUT.<p>
-     * 
+     *
      * @param searchResult the list to print
      * @param cms the current OpenCms user context
      * @param showExcerpt if <code>true</code>, the generated excerpt is also displayed
@@ -122,9 +121,10 @@ public class TestCmsGallerySearchBasic extends OpenCmsTestCase {
             }
             System.out.print(CmsStringUtil.padRight(type, 10));
             if (res.getDateLastModified() != null) {
-                System.out.print(CmsStringUtil.padRight(
-                    "" + CmsDateUtil.getDateTime(res.getDateLastModified(), DateFormat.SHORT, Locale.GERMAN),
-                    17));
+                System.out.print(
+                    CmsStringUtil.padRight(
+                        "" + CmsDateUtil.getDateTime(res.getDateLastModified(), DateFormat.SHORT, Locale.GERMAN),
+                        17));
             }
             System.out.println("score: " + res.getScore());
             if (showExcerpt) {
@@ -134,44 +134,22 @@ public class TestCmsGallerySearchBasic extends OpenCmsTestCase {
     }
 
     /**
-     * Test suite for this test class.<p>
-     * 
-     * @return the test suite
+     * @see org.opencms.test.OpenCmsTestRunner#$openCmsSetUp(org.junit.jupiter.api.TestInfo)
      */
-    public static Test suite() {
+    @Override
+    @BeforeAll
+    public void $openCmsSetUp(TestInfo testInfo) {
 
-        OpenCmsTestProperties.initialize(org.opencms.test.AllTests.TEST_PROPERTIES_PATH);
-
-        TestSuite suite = new TestSuite();
-        suite.setName(TestCmsGallerySearchBasic.class.getName());
-
-        suite.addTest(new TestCmsGallerySearchBasic("testGallerySearchIndexCreation"));
-        suite.addTest(new TestCmsGallerySearchBasic("testGallerySortSearchResults"));
-        suite.addTest(new TestCmsGallerySearchBasic("testSearchById"));
-
-        TestSetup wrapper = new TestSetup(suite) {
-
-            @Override
-            protected void setUp() {
-
-                setupOpenCms("simpletest", "/sites/default/", "/../org/opencms/search/gallery");
-            }
-
-            @Override
-            protected void tearDown() {
-
-                removeOpenCms();
-            }
-        };
-
-        return wrapper;
+        setupOpenCms(testInfo, "simpletest", "", "/../org/opencms/search/gallery");
     }
 
     /**
      * Creates the configured search indexes for all other test cases in this class.<p>
-     * 
+     *
      * @throws Exception in case the test fails
      */
+    @Test
+    @Order(1)
     public void testGallerySearchIndexCreation() throws Exception {
 
         echo("Testing dynamic creation of special index for galleries");
@@ -181,16 +159,18 @@ public class TestCmsGallerySearchBasic extends OpenCmsTestCase {
         OpenCms.getSearchManager().rebuildAllIndexes(report);
 
         // make sure the ADE index actually exists
-        CmsSearchIndex adeIndex = OpenCms.getSearchManager().getIndex(CmsGallerySearchIndex.GALLERY_INDEX_NAME);
-        assertNotNull("Index for galleries not initialized", adeIndex);
-        assertEquals("Index for galleries not of required class", CmsGallerySearchIndex.class, adeIndex.getClass());
+        CmsSolrIndex index = OpenCms.getSearchManager().getIndexSolr(CmsSolrIndex.DEFAULT_INDEX_NAME_OFFLINE);
+        assertNotNull(index, "Index for galleries not initialized");
+        assertEquals(CmsSolrIndex.class, index.getClass(), "Index for galleries not of required class");
     }
 
     /**
      * Tests sorting of search results.<p>
-     * 
+     *
      * @throws Exception if the test fails
      */
+    @Test
+    @Order(2)
     public void testGallerySortSearchResults() throws Exception {
 
         CmsObject cms = getCmsObject();
@@ -203,7 +183,7 @@ public class TestCmsGallerySearchBasic extends OpenCmsTestCase {
         String query = "OpenCms";
 
         searchBean.init(cms);
-        searchBean.setIndex(CmsGallerySearchIndex.GALLERY_INDEX_NAME);
+        searchBean.setIndex(CmsSolrIndex.DEFAULT_INDEX_NAME_OFFLINE);
         searchParams.setSearchWords(query);
         searchParams.setMatchesPerPage(50);
 
@@ -350,19 +330,61 @@ public class TestCmsGallerySearchBasic extends OpenCmsTestCase {
 
     /**
      * Tests searching documents by their structure ID.<p>
-     * 
+     *
      * @throws Exception
      */
+    @Test
+    @Order(3)
     public void testSearchById() throws Exception {
 
         CmsObject cms = getCmsObject();
         echo("Testing search by id");
         CmsGallerySearch search = new CmsGallerySearch();
         search.init(cms);
-        search.setIndex(CmsGallerySearchIndex.GALLERY_INDEX_NAME);
+        search.setIndex(CmsSolrIndex.DEFAULT_INDEX_NAME_OFFLINE);
         CmsGallerySearchResult result = search.searchById(
             new CmsUUID("7d6c22cd-4e3a-11db-9016-5bf59c6009b3"),
             new Locale("en"));
         assertTrue(result.getPath().endsWith("/index.html"));
+    }
+
+    /**
+     * Test that search results don't get "duplicated" after moving a resource.
+     *
+     * @throws Exception
+     */
+    @Test
+    @Order(4)
+    public void testSearchForMovedFiles() throws Exception {
+
+        CmsObject cms = getCmsObject();
+        // rebuild all indexes
+        cms.createResource(
+            "/foo1.txt",
+            CmsResourceTypePlain.getStaticTypeId(),
+            "foo1".getBytes(),
+            Collections.singletonList(new CmsProperty("Title", "foo1", "foo1")));
+        I_CmsReport report = new CmsShellReport(Locale.ENGLISH);
+        // rebuild all indexes
+        OpenCms.getSearchManager().rebuildAllIndexes(report);
+        OpenCms.getPublishManager().publishProject(cms);
+        OpenCms.getPublishManager().waitWhileRunning();
+        cms.lockResource("/foo1.txt");
+        cms.moveResource("/foo1.txt", "/foo2.txt");
+        OpenCms.getSearchManager().updateOfflineIndexes();
+        CmsSolrIndex index = OpenCms.getSearchManager().getIndexSolr(CmsSolrIndex.DEFAULT_INDEX_NAME_OFFLINE);
+        CmsSolrQuery query = new CmsSolrQuery();
+        query.setQuery("foo1");
+        CmsSolrResultList results = index.search(cms, query);
+        assertEquals(1, results.size());
+        System.out.println("######################");
+        System.out.println(results);
+        System.out.println("######################");
+        assertTrue(results.get(0).getField(CmsSearchField.FIELD_PATH).contains("foo2"));
+        cms.undoChanges("/foo2.txt", CmsResourceUndoMode.MODE_UNDO_MOVE_CONTENT);
+        OpenCms.getSearchManager().updateOfflineIndexes(5000);
+        results = index.search(cms, query);
+        assertEquals(1, results.size());
+        assertTrue(results.get(0).getField(CmsSearchField.FIELD_PATH).contains("foo1"));
     }
 }

@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -14,12 +14,12 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * Lesser General Public License for more details.
  *
- * For further information about Alkacon Software GmbH, please see the
- * company website: http://www.alkacon.com
+ * For further information about Alkacon Software GmbH & Co. KG, please see the
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -29,13 +29,16 @@ package org.opencms.setup.comptest;
 
 import com.alkacon.simapi.RenderSettings;
 import com.alkacon.simapi.Simapi;
-import com.alkacon.simapi.filter.ImageMath;
-import com.alkacon.simapi.filter.RotateFilter;
 
+import org.opencms.loader.CmsImageScaler;
 import org.opencms.setup.CmsSetupBean;
 
 import java.awt.image.BufferedImage;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.Iterator;
 
@@ -45,21 +48,13 @@ import javax.imageio.ImageWriter;
 
 /**
  * Tests the image processing capabilities.<p>
- * 
- * @since 6.1.8 
+ *
+ * @since 6.1.8
  */
 public class CmsSetupTestSimapi implements I_CmsSetupTest {
 
     /** The test name. */
     public static final String TEST_NAME = "Image Processing";
-
-    /**
-     * @see org.opencms.setup.comptest.I_CmsSetupTest#getName()
-     */
-    public String getName() {
-
-        return TEST_NAME;
-    }
 
     /**
      * @see org.opencms.setup.comptest.I_CmsSetupTest#execute(org.opencms.setup.CmsSetupBean)
@@ -88,14 +83,22 @@ public class CmsSetupTestSimapi implements I_CmsSetupTest {
             if (!basePath.endsWith(File.separator)) {
                 basePath += File.separator;
             }
-            basePath += "setup" + File.separator + "resources" + File.separator;
+            basePath += CmsSetupBean.FOLDER_SETUP + "resources" + File.separator;
 
-            BufferedImage img1 = Simapi.read(basePath + "test1.png");
-            BufferedImage img3 = simapi.applyFilter(img1, new RotateFilter(ImageMath.PI));
-            simapi.write(img3, basePath + "test3.png", Simapi.TYPE_PNG);
-            BufferedImage img2 = Simapi.read(basePath + "test2.png");
+            CmsImageScaler scaler = new CmsImageScaler();
+            byte[] scaled;
+            BufferedImage result;
 
-            ok = Arrays.equals(simapi.getBytes(img2, Simapi.TYPE_PNG), simapi.getBytes(img3, Simapi.TYPE_PNG));
+            BufferedImage source = Simapi.read(basePath + "test1.png");
+            String targetName = basePath + "test3.png";
+            scaler.parseParameters("w:50,h:18");
+            scaled = scaler.scaleImage(simapi.getBytes(source, Simapi.TYPE_PNG), targetName);
+            writeFile(targetName, scaled);
+            result = Simapi.read(targetName);
+
+            BufferedImage expected = Simapi.read(basePath + "test2.png");
+
+            ok = Arrays.equals(simapi.getBytes(expected, Simapi.TYPE_PNG), simapi.getBytes(result, Simapi.TYPE_PNG));
         } catch (Throwable e) {
             ok = false;
             ex = e;
@@ -109,8 +112,9 @@ public class CmsSetupTestSimapi implements I_CmsSetupTest {
             if (ex != null) {
                 testResult.setResult(RESULT_FAILED);
                 testResult.setHelp(ex.toString());
-                testResult.setInfo("<p><code>-Djava.awt.headless=true</code> JVM parameter or X-Server may be missing.<br>"
-                    + "<b>You can continue the setup, but image processing will be disabled.</b></p>");
+                testResult.setInfo(
+                    "<p><code>-Djava.awt.headless=true</code> JVM parameter or X-Server may be missing.<br>"
+                        + "<b>You can continue the setup, but image processing will be disabled.</b></p>");
             } else {
                 testResult.setResult(RESULT_WARNING);
                 testResult.setHelp("Image processing works but result does not exactly match.");
@@ -120,10 +124,52 @@ public class CmsSetupTestSimapi implements I_CmsSetupTest {
                 info.append("<tr><th>Expected</th><th>Result</th></tr>");
                 info.append("<tr><td align='center' width='50%'><img src='resources/test2.png'></td>");
                 info.append("<td align='center' width='50%'><img src='resources/test3.png'></td></table>");
-                info.append("<p><b>You can continue the setup, but image processing may not always work as expected.</b></p>");
+                info.append(
+                    "<p><b>You can continue the setup, but image processing may not always work as expected.</b></p>");
                 testResult.setInfo(info.toString());
             }
         }
         return testResult;
+    }
+
+    /**
+     * @see org.opencms.setup.comptest.I_CmsSetupTest#getName()
+     */
+    public String getName() {
+
+        return TEST_NAME;
+    }
+
+    private byte[] readFile(File file) throws IOException {
+
+        // create input and output stream
+        FileInputStream in = new FileInputStream(file);
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+
+        // read the file content
+        int c;
+        while ((c = in.read()) != -1) {
+            out.write(c);
+        }
+
+        in.close();
+        out.close();
+
+        return out.toByteArray();
+    }
+
+    private File writeFile(String rfsName, byte[] content) throws IOException {
+
+        File f = new File(rfsName);
+        File p = f.getParentFile();
+        if (!p.exists()) {
+            // create parent folders
+            p.mkdirs();
+        }
+        // write file contents
+        FileOutputStream fs = new FileOutputStream(f);
+        fs.write(content);
+        fs.close();
+        return f;
     }
 }

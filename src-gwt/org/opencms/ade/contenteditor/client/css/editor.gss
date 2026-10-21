@@ -1,0 +1,95 @@
+@external oc-inline-editable, html-face;
+
+body.standAloneEditor{
+	background: value("constants.css.backgroundColorMenu");
+	overflow: hidden;
+	height: 100%;
+	width: 100%;
+	margin: 0;
+	padding: 0;
+	font-family: value("constants.css.fontFamily");
+	font-size: value("constants.css.fontSize");
+}
+
+body.standAloneEditor div.basePanel{
+	background-image: none;
+}
+
+body.integratedEditor{
+	overflow: hidden !important;
+}
+
+.basePanel *, .basePanel table tr td{
+	margin: 0;
+	padding: 0;
+	border: none;
+	color: value("constants.css.textColor");
+	font-family: value("constants.css.fontFamily");
+	font-size: value("constants.css.fontSize");
+	font-weight: normal;
+	line-height: value("constants.css.lineHeight");
+	background: transparent;
+	text-align: left;
+	height: auto;
+	width: auto;
+	min-height: 0;
+	max-height: none;
+	min-width: 0;
+	max-width: none;
+	box-sizing: border-box;
+	-moz-box-sizing: border-box;
+}
+
+.basePanel{
+	background: value("constants.css.backgroundColorMenu");
+	font-family: value("constants.css.fontFamily");
+	font-size: value("constants.css.fontSize");
+	font-weight: normal;
+	position: fixed;
+	margin: 0;
+	bottom: 0;
+    overflow-y: scroll;
+    top: 52px;
+	padding: 20px 0px 0px 0px;
+	left:0;
+	right:0;
+	z-index: value("constants.css.zIndexPopup");
+	box-sizing: border-box;
+	-moz-box-sizing: border-box;
+}
+
+.localeButtons > * {
+	font-weight: 600;
+	background-color: #fafafd;
+	border: 2px solid #4e545b;
+	color: #4e545b;
+	padding: 5px;
+	border-radius: 3px;
+	line-height: 14px;
+	cursor: pointer;
+	font-size: 17px;
+	min-width: 32px;
+	text-align: center;
+}
+
+.localeButtons > .currentLocaleLabel {
+	background-color: #4e545b;
+	color: #fafafd;
+	cursor: default;
+}
+
+.localeButtons {
+	display: flex;
+	gap: 4px;
+	align-items: flex-start;
+}
+
+.localeButtons > *:hover {
+	color: #fafafd;
+	background-color: #4e545b;
+}
+
+div.basePanel > div{
+	padding-left:2px;
+	padding-right: 2px;
+}

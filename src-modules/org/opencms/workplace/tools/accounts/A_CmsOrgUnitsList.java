@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -14,12 +14,12 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * Lesser General Public License for more details.
  *
- * For further information about Alkacon Software GmbH, please see the
- * company website: http://www.alkacon.com
+ * For further information about Alkacon Software GmbH & Co. KG, please see the
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -61,8 +61,8 @@ import javax.servlet.ServletException;
 
 /**
  * Main organization unit management view.<p>
- * 
- * @since 6.5.6 
+ *
+ * @since 6.5.6
  */
 public abstract class A_CmsOrgUnitsList extends A_CmsListDialog {
 
@@ -124,11 +124,11 @@ public abstract class A_CmsOrgUnitsList extends A_CmsListDialog {
     public static final String PATH_BUTTONS = "tools/accounts/buttons/";
 
     /** Cached list of OUs. */
-    private List m_ous;
+    private List<CmsOrganizationalUnit> m_ous;
 
     /**
      * Public constructor.<p>
-     * 
+     *
      * @param jsp an initialized JSP action element
      * @param listId the id of the list
      * @param listName the list name
@@ -141,13 +141,14 @@ public abstract class A_CmsOrgUnitsList extends A_CmsListDialog {
     /**
      * @see org.opencms.workplace.list.A_CmsListDialog#executeListMultiActions()
      */
+    @Override
     public void executeListMultiActions() {
 
-        Iterator itItems = getSelectedItems().iterator();
+        Iterator<CmsListItem> itItems = getSelectedItems().iterator();
 
         if (getParamListAction().equals(LIST_MACTION_DELETE)) {
             while (itItems.hasNext()) {
-                CmsListItem item = (CmsListItem)itItems.next();
+                CmsListItem item = itItems.next();
                 String ouFqn = item.get(LIST_COLUMN_NAME).toString();
                 try {
                     OpenCms.getOrgUnitManager().deleteOrganizationalUnit(getCms(), ouFqn.substring(1));
@@ -164,12 +165,13 @@ public abstract class A_CmsOrgUnitsList extends A_CmsListDialog {
     /**
      * @see org.opencms.workplace.list.A_CmsListDialog#executeListSingleActions()
      */
+    @Override
     public void executeListSingleActions() throws IOException, ServletException {
 
         String ouFqn = getSelectedItem().get(LIST_COLUMN_NAME).toString();
-        Map params = new HashMap();
-        params.put(A_CmsOrgUnitDialog.PARAM_OUFQN, ouFqn.substring(1));
-        params.put(CmsDialog.PARAM_ACTION, CmsDialog.DIALOG_INITIAL);
+        Map<String, String[]> params = new HashMap<String, String[]>();
+        params.put(A_CmsOrgUnitDialog.PARAM_OUFQN, new String[] {ouFqn.substring(1)});
+        params.put(CmsDialog.PARAM_ACTION, new String[] {CmsDialog.DIALOG_INITIAL});
         if (getParamListAction().equals(LIST_ACTION_EDIT)) {
             // forward to the edit user screen
             getToolManager().jspForwardTool(this, "/accounts/orgunit/mgmt/edit", params);
@@ -193,7 +195,7 @@ public abstract class A_CmsOrgUnitsList extends A_CmsListDialog {
 
     /**
      * Returns the path of the edit icon.<p>
-     * 
+     *
      * @return the path of the edit icon
      */
     public String getEditIcon() {
@@ -203,7 +205,7 @@ public abstract class A_CmsOrgUnitsList extends A_CmsListDialog {
 
     /**
      * Returns the path of the group icon.<p>
-     * 
+     *
      * @return the path of the group icon
      */
     public String getGroupIcon() {
@@ -213,7 +215,7 @@ public abstract class A_CmsOrgUnitsList extends A_CmsListDialog {
 
     /**
      * Returns the path of the user icon.<p>
-     * 
+     *
      * @return the path of the user icon
      */
     public String getUserIcon() {
@@ -224,21 +226,22 @@ public abstract class A_CmsOrgUnitsList extends A_CmsListDialog {
     /**
      * @see org.opencms.workplace.list.A_CmsListDialog#fillDetails(java.lang.String)
      */
+    @Override
     protected void fillDetails(String detailId) {
 
         // get content
-        List orgUnits = getList().getAllContent();
-        Iterator itOrgUnits = orgUnits.iterator();
+        List<CmsListItem> orgUnits = getList().getAllContent();
+        Iterator<CmsListItem> itOrgUnits = orgUnits.iterator();
         while (itOrgUnits.hasNext()) {
-            CmsListItem item = (CmsListItem)itOrgUnits.next();
+            CmsListItem item = itOrgUnits.next();
             String ouFqn = item.get(LIST_COLUMN_NAME).toString();
             StringBuffer html = new StringBuffer(512);
             try {
                 if (detailId.equals(LIST_DETAIL_USERS)) {
-                    List usersOrgUnit = OpenCms.getOrgUnitManager().getUsers(getCms(), ouFqn, false);
-                    Iterator itUsersOrgUnit = usersOrgUnit.iterator();
+                    List<CmsUser> usersOrgUnit = OpenCms.getOrgUnitManager().getUsers(getCms(), ouFqn, false);
+                    Iterator<CmsUser> itUsersOrgUnit = usersOrgUnit.iterator();
                     while (itUsersOrgUnit.hasNext()) {
-                        CmsUser user = (CmsUser)itUsersOrgUnit.next();
+                        CmsUser user = itUsersOrgUnit.next();
                         html.append(user.getFullName());
                         if (itUsersOrgUnit.hasNext()) {
                             html.append("<br>");
@@ -246,10 +249,10 @@ public abstract class A_CmsOrgUnitsList extends A_CmsListDialog {
                         html.append("\n");
                     }
                 } else if (detailId.equals(LIST_DETAIL_GROUPS)) {
-                    List groupsOrgUnit = OpenCms.getOrgUnitManager().getGroups(getCms(), ouFqn, false);
-                    Iterator itGroupsOrgUnit = groupsOrgUnit.iterator();
+                    List<CmsGroup> groupsOrgUnit = OpenCms.getOrgUnitManager().getGroups(getCms(), ouFqn, false);
+                    Iterator<CmsGroup> itGroupsOrgUnit = groupsOrgUnit.iterator();
                     while (itGroupsOrgUnit.hasNext()) {
-                        CmsGroup group = (CmsGroup)itGroupsOrgUnit.next();
+                        CmsGroup group = itGroupsOrgUnit.next();
                         String niceGroupName = OpenCms.getWorkplaceManager().translateGroupName(group.getName(), false);
                         html.append(niceGroupName);
                         if (itGroupsOrgUnit.hasNext()) {
@@ -258,12 +261,12 @@ public abstract class A_CmsOrgUnitsList extends A_CmsListDialog {
                         html.append("\n");
                     }
                 } else if (detailId.equals(LIST_DETAIL_RESOURCES)) {
-                    List resourcesOrgUnit = OpenCms.getOrgUnitManager().getResourcesForOrganizationalUnit(
+                    List<CmsResource> resourcesOrgUnit = OpenCms.getOrgUnitManager().getResourcesForOrganizationalUnit(
                         getCms(),
                         ouFqn);
-                    Iterator itResourcesOrgUnit = resourcesOrgUnit.iterator();
+                    Iterator<CmsResource> itResourcesOrgUnit = resourcesOrgUnit.iterator();
                     while (itResourcesOrgUnit.hasNext()) {
-                        CmsResource resource = (CmsResource)itResourcesOrgUnit.next();
+                        CmsResource resource = itResourcesOrgUnit.next();
                         html.append(resource.getRootPath());
                         if (itResourcesOrgUnit.hasNext()) {
                             html.append("<br>");
@@ -283,19 +286,23 @@ public abstract class A_CmsOrgUnitsList extends A_CmsListDialog {
     /**
      * @see org.opencms.workplace.list.A_CmsListDialog#getListItems()
      */
-    protected List getListItems() throws CmsException {
+    @Override
+    protected List<CmsListItem> getListItems() throws CmsException {
 
-        List ret = new ArrayList();
-        List orgUnits = getOrgUnits();
-        Iterator itOrgUnits = orgUnits.iterator();
+        List<CmsListItem> ret = new ArrayList<CmsListItem>();
+        List<CmsOrganizationalUnit> orgUnits = getOrgUnits();
+        Iterator<CmsOrganizationalUnit> itOrgUnits = orgUnits.iterator();
         while (itOrgUnits.hasNext()) {
-            CmsOrganizationalUnit childOrgUnit = (CmsOrganizationalUnit)itOrgUnits.next();
+            CmsOrganizationalUnit childOrgUnit = itOrgUnits.next();
             CmsListItem item = getList().newItem(childOrgUnit.getName());
             item.set(LIST_COLUMN_NAME, CmsOrganizationalUnit.SEPARATOR + childOrgUnit.getName());
             item.set(LIST_COLUMN_DESCRIPTION, childOrgUnit.getDescription(getLocale()));
-            item.set(LIST_COLUMN_ADMIN, Boolean.valueOf(OpenCms.getRoleManager().hasRole(
-                getCms(),
-                CmsRole.ADMINISTRATOR.forOrgUnit(childOrgUnit.getName()))));
+            item.set(
+                LIST_COLUMN_ADMIN,
+                Boolean.valueOf(
+                    OpenCms.getRoleManager().hasRole(
+                        getCms(),
+                        CmsRole.ADMINISTRATOR.forOrgUnit(childOrgUnit.getName()))));
             item.set(LIST_COLUMN_WEBUSER, Boolean.valueOf(childOrgUnit.hasFlagWebuser()));
             ret.add(item);
         }
@@ -304,12 +311,12 @@ public abstract class A_CmsOrgUnitsList extends A_CmsListDialog {
 
     /**
      * Returns the organizational units to display.<p>
-     * 
+     *
      * @return the organizational units
-     * 
+     *
      * @throws CmsException if something goes wrong
      */
-    protected List getOrgUnits() throws CmsException {
+    protected List<CmsOrganizationalUnit> getOrgUnits() throws CmsException {
 
         if (m_ous == null) {
             m_ous = OpenCms.getRoleManager().getOrgUnitsForRole(getCms(), CmsRole.ACCOUNT_MANAGER.forOrgUnit(""), true);
@@ -320,6 +327,7 @@ public abstract class A_CmsOrgUnitsList extends A_CmsListDialog {
     /**
      * @see org.opencms.workplace.list.A_CmsListDialog#setColumns(org.opencms.workplace.list.CmsListMetadata)
      */
+    @Override
     protected void setColumns(CmsListMetadata metadata) {
 
         // create column for edit
@@ -335,6 +343,7 @@ public abstract class A_CmsOrgUnitsList extends A_CmsListDialog {
             /**
              * @see org.opencms.workplace.tools.A_CmsHtmlIconButton#getHelpText()
              */
+            @Override
             public CmsMessageContainer getHelpText() {
 
                 if (!isEnabled()) {
@@ -346,6 +355,7 @@ public abstract class A_CmsOrgUnitsList extends A_CmsListDialog {
             /**
              * @see org.opencms.workplace.tools.A_CmsHtmlIconButton#getIconPath()
              */
+            @Override
             public String getIconPath() {
 
                 if (getItem() != null) {
@@ -359,6 +369,7 @@ public abstract class A_CmsOrgUnitsList extends A_CmsListDialog {
             /**
              * @see org.opencms.workplace.tools.A_CmsHtmlIconButton#isEnabled()
              */
+            @Override
             public boolean isEnabled() {
 
                 if (getItem() != null) {
@@ -440,6 +451,7 @@ public abstract class A_CmsOrgUnitsList extends A_CmsListDialog {
     /**
      * @see org.opencms.workplace.list.A_CmsListDialog#setIndependentActions(org.opencms.workplace.list.CmsListMetadata)
      */
+    @Override
     protected void setIndependentActions(CmsListMetadata metadata) {
 
         // add users details
@@ -451,8 +463,8 @@ public abstract class A_CmsOrgUnitsList extends A_CmsListDialog {
         usersDetails.setHideActionName(Messages.get().container(Messages.GUI_ORGUNITS_DETAIL_HIDE_USERS_NAME_0));
         usersDetails.setHideActionHelpText(Messages.get().container(Messages.GUI_ORGUNITS_DETAIL_HIDE_USERS_HELP_0));
         usersDetails.setName(Messages.get().container(Messages.GUI_ORGUNITS_DETAIL_USERS_NAME_0));
-        usersDetails.setFormatter(new CmsListItemDetailsFormatter(Messages.get().container(
-            Messages.GUI_ORGUNITS_DETAIL_USERS_NAME_0)));
+        usersDetails.setFormatter(
+            new CmsListItemDetailsFormatter(Messages.get().container(Messages.GUI_ORGUNITS_DETAIL_USERS_NAME_0)));
         metadata.addItemDetails(usersDetails);
 
         // add groups details
@@ -464,23 +476,25 @@ public abstract class A_CmsOrgUnitsList extends A_CmsListDialog {
         groupsDetails.setHideActionName(Messages.get().container(Messages.GUI_ORGUNITS_DETAIL_HIDE_GROUPS_NAME_0));
         groupsDetails.setHideActionHelpText(Messages.get().container(Messages.GUI_ORGUNITS_DETAIL_HIDE_GROUPS_HELP_0));
         groupsDetails.setName(Messages.get().container(Messages.GUI_ORGUNITS_DETAIL_GROUPS_NAME_0));
-        groupsDetails.setFormatter(new CmsListItemDetailsFormatter(Messages.get().container(
-            Messages.GUI_ORGUNITS_DETAIL_GROUPS_NAME_0)));
+        groupsDetails.setFormatter(
+            new CmsListItemDetailsFormatter(Messages.get().container(Messages.GUI_ORGUNITS_DETAIL_GROUPS_NAME_0)));
         metadata.addItemDetails(groupsDetails);
 
         // add resources details
         CmsListItemDetails resourcesDetails = new CmsListItemDetails(LIST_DETAIL_RESOURCES);
         resourcesDetails.setAtColumn(LIST_COLUMN_DESCRIPTION);
         resourcesDetails.setVisible(false);
-        resourcesDetails.setShowActionName(Messages.get().container(Messages.GUI_ORGUNITS_DETAIL_SHOW_RESOURCES_NAME_0));
-        resourcesDetails.setShowActionHelpText(Messages.get().container(
-            Messages.GUI_ORGUNITS_DETAIL_SHOW_RESOURCES_HELP_0));
-        resourcesDetails.setHideActionName(Messages.get().container(Messages.GUI_ORGUNITS_DETAIL_HIDE_RESOURCES_NAME_0));
-        resourcesDetails.setHideActionHelpText(Messages.get().container(
-            Messages.GUI_ORGUNITS_DETAIL_HIDE_RESOURCES_HELP_0));
+        resourcesDetails.setShowActionName(
+            Messages.get().container(Messages.GUI_ORGUNITS_DETAIL_SHOW_RESOURCES_NAME_0));
+        resourcesDetails.setShowActionHelpText(
+            Messages.get().container(Messages.GUI_ORGUNITS_DETAIL_SHOW_RESOURCES_HELP_0));
+        resourcesDetails.setHideActionName(
+            Messages.get().container(Messages.GUI_ORGUNITS_DETAIL_HIDE_RESOURCES_NAME_0));
+        resourcesDetails.setHideActionHelpText(
+            Messages.get().container(Messages.GUI_ORGUNITS_DETAIL_HIDE_RESOURCES_HELP_0));
         resourcesDetails.setName(Messages.get().container(Messages.GUI_ORGUNITS_DETAIL_RESOURCES_NAME_0));
-        resourcesDetails.setFormatter(new CmsListItemDetailsFormatter(Messages.get().container(
-            Messages.GUI_ORGUNITS_DETAIL_RESOURCES_NAME_0)));
+        resourcesDetails.setFormatter(
+            new CmsListItemDetailsFormatter(Messages.get().container(Messages.GUI_ORGUNITS_DETAIL_RESOURCES_NAME_0)));
         metadata.addItemDetails(resourcesDetails);
 
         // makes the list searchable
@@ -492,6 +506,7 @@ public abstract class A_CmsOrgUnitsList extends A_CmsListDialog {
     /**
      * @see org.opencms.workplace.list.A_CmsListDialog#setMultiActions(org.opencms.workplace.list.CmsListMetadata)
      */
+    @Override
     protected void setMultiActions(CmsListMetadata metadata) {
 
         // noop

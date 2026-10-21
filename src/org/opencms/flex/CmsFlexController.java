@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -14,12 +14,12 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * Lesser General Public License for more details.
  *
- * For further information about Alkacon Software GmbH, please see the
- * company website: http://www.alkacon.com
+ * For further information about Alkacon Software GmbH & Co. KG, please see the
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -27,14 +27,21 @@
 
 package org.opencms.flex;
 
+import org.opencms.ade.detailpage.CmsDetailPageResourceHandler;
 import org.opencms.file.CmsObject;
 import org.opencms.file.CmsResource;
 import org.opencms.main.CmsLog;
 import org.opencms.util.CmsRequestUtil;
 
+import java.io.IOException;
+import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.Vector;
 
+import javax.servlet.RequestDispatcher;
 import javax.servlet.ServletRequest;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -42,18 +49,100 @@ import javax.servlet.http.HttpServletResponse;
 import org.apache.commons.logging.Log;
 
 /**
- * Controller for getting access to the CmsObject, should be used as a 
+ * Controller for getting access to the CmsObject, should be used as a
  * request attribute.<p>
- * 
- * @since 6.0.0 
+ *
+ * @since 6.0.0
  */
 public class CmsFlexController {
+
+    /**
+     * Information about where to redirect to.
+     */
+    public static class RedirectInfo {
+
+        /** True if a permanent redirect should be used. */
+        private boolean m_permanent;
+
+        /** The redirect target. */
+        private String m_target;
+
+        /**
+         * Creates a new instance.
+         *
+         * @param target the redirect target
+         * @param permanent true if a permanent redirect should be used
+         */
+        public RedirectInfo(String target, boolean permanent) {
+
+            m_target = target;
+            m_permanent = permanent;
+
+        }
+
+        /**
+         * Executes the redirect on the given response with the stored information.
+         *
+         * @param res the res to use for executing the redirect
+         */
+        public void executeRedirect(HttpServletResponse res) throws IOException {
+
+            if (isPermanent()) {
+                res.setHeader(CmsRequestUtil.HEADER_LOCATION, getTarget());
+                res.setStatus(HttpServletResponse.SC_MOVED_PERMANENTLY);
+            } else {
+                res.sendRedirect(getTarget());
+            }
+
+        }
+
+        /**
+         * Gets the redirect target.
+         *
+         * @return the redirect target
+         */
+        public String getTarget() {
+
+            return m_target;
+        }
+
+        /**
+         * Returns true if a permanent redirect should be used.
+         *
+         * @return true if a permanent redirect should be used
+         */
+        public boolean isPermanent() {
+
+            return m_permanent;
+        }
+
+    }
 
     /** Constant for the controller request attribute name. */
     public static final String ATTRIBUTE_NAME = "org.opencms.flex.CmsFlexController";
 
     /** The log object for this class. */
     private static final Log LOG = CmsLog.getLog(CmsFlexController.class);
+
+    /** Set of uncacheable attributes. */
+    private static Set<String> uncacheableAttributes = new HashSet<String>();
+
+    static {
+        for (String attr : Arrays.asList(
+            RequestDispatcher.ERROR_EXCEPTION,
+            RequestDispatcher.ERROR_EXCEPTION_TYPE,
+            RequestDispatcher.ERROR_MESSAGE,
+            RequestDispatcher.ERROR_REQUEST_URI,
+            RequestDispatcher.ERROR_SERVLET_NAME,
+            RequestDispatcher.ERROR_STATUS_CODE)) {
+
+            // global rule: don't cache error page attributes.
+            CmsFlexController.registerUncacheableAttribute(attr);
+        }
+    }
+
+    /** Fake HTTP header used to store information about the content type in a CmsFlexResponse. Should never be actually sent to the client. */
+    public static final String HEADER_OPENCMS_CONTENT_TYPE = "X-OpenCms-Content-Type";
 
     /** The CmsFlexCache where the result will be cached in, required for the dispatcher. */
     private CmsFlexCache m_cache;
@@ -72,6 +161,9 @@ public class CmsFlexController {
 
     /** Indicates if this controller is currently in "forward" mode. */
     private boolean m_forwardMode;
+
+    /** Information about where to redirect to. */
+    private RedirectInfo m_redirectInfo;
 
     /** Wrapped top request. */
     private HttpServletRequest m_req;
@@ -96,7 +188,7 @@ public class CmsFlexController {
 
     /**
      * Creates a new controller form the old one, exchanging just the provided OpenCms user context.<p>
-     * 
+     *
      * @param cms the OpenCms user context for this controller
      * @param base the base controller
      */
@@ -114,13 +206,14 @@ public class CmsFlexController {
         m_flexContextInfoList = base.m_flexContextInfoList;
         m_forwardMode = base.m_forwardMode;
         m_throwableResourceUri = base.m_throwableResourceUri;
+        m_redirectInfo = base.m_redirectInfo;
     }
 
     /**
      * Default constructor.<p>
-     * 
+     *
      * @param cms the initial CmsObject to wrap in the controller
-     * @param resource the file requested 
+     * @param resource the file requested
      * @param cache the instance of the flex cache
      * @param req the current request
      * @param res the current response
@@ -151,9 +244,9 @@ public class CmsFlexController {
     }
 
     /**
-     * Returns the wrapped CmsObject form the provided request, or <code>null</code> if the 
+     * Returns the wrapped CmsObject form the provided request, or <code>null</code> if the
      * request is not running inside OpenCms.<p>
-     * 
+     *
      * @param req the current request
      * @return the wrapped CmsObject
      */
@@ -168,11 +261,11 @@ public class CmsFlexController {
     }
 
     /**
-     * Returns the controller from the given request, or <code>null</code> if the 
+     * Returns the controller from the given request, or <code>null</code> if the
      * request is not running inside OpenCms.<p>
-     * 
+     *
      * @param req the request to get the controller from
-     * 
+     *
      * @return the controller from the given request, or <code>null</code> if the request is not running inside OpenCms
      */
     public static CmsFlexController getController(ServletRequest req) {
@@ -182,11 +275,11 @@ public class CmsFlexController {
 
     /**
      * Provides access to a root cause Exception that might have occurred in a complex include scenario.<p>
-     * 
+     *
      * @param req the current request
-     * 
+     *
      * @return the root cause exception or null if no root cause exception is available
-     * 
+     *
      * @see #getThrowable()
      */
     public static Throwable getThrowable(ServletRequest req) {
@@ -201,11 +294,11 @@ public class CmsFlexController {
 
     /**
      * Provides access to URI of a VFS resource that caused an exception that might have occurred in a complex include scenario.<p>
-     * 
+     *
      * @param req the current request
-     * 
+     *
      * @return to URI of a VFS resource that caused an exception, or <code>null</code>
-     * 
+     *
      * @see #getThrowableResourceUri()
      */
     public static String getThrowableResourceUri(ServletRequest req) {
@@ -222,8 +315,8 @@ public class CmsFlexController {
      * Checks if the provided request is running in OpenCms and the current users project is the online project.<p>
      *
      * @param req the current request
-     * 
-     * @return <code>true</code> if the request is running in OpenCms and the current users project is 
+     *
+     * @return <code>true</code> if the request is running in OpenCms and the current users project is
      *      the online project, <code>false</code> otherwise
      */
     public static boolean isCmsOnlineRequest(ServletRequest req) {
@@ -238,7 +331,7 @@ public class CmsFlexController {
      * Checks if the provided request is running in OpenCms.<p>
      *
      * @param req the current request
-     * 
+     *
      * @return <code>true</code> if the request is running in OpenCms, <code>false</code> otherwise
      */
     public static boolean isCmsRequest(ServletRequest req) {
@@ -249,10 +342,10 @@ public class CmsFlexController {
     /**
      * Checks if the request has the "If-Modified-Since" header set, and if so,
      * if the header date value is equal to the provided last modification date.<p>
-     * 
+     *
      * @param req the request to set the "If-Modified-Since" date header from
      * @param dateLastModified the date to compare the header with
-     *  
+     *
      * @return <code>true</code> if the header is set and the header date is equal to the provided date
      */
     public static boolean isNotModifiedSince(HttpServletRequest req, long dateLastModified) {
@@ -260,27 +353,38 @@ public class CmsFlexController {
         // check if the request contains a last modified header
         try {
             long lastModifiedHeader = req.getDateHeader(CmsRequestUtil.HEADER_IF_MODIFIED_SINCE);
-            // if last modified header is set (> -1), compare it to the requested resource                           
+            // if last modified header is set (> -1), compare it to the requested resource
             return ((lastModifiedHeader > -1) && (((dateLastModified / 1000) * 1000) == lastModifiedHeader));
         } catch (Exception ex) {
             // some clients (e.g. User-Agent: BlackBerry7290/4.1.0 Profile/MIDP-2.0 Configuration/CLDC-1.1 VendorID/111)
-            // send an invalid "If-Modified-Since" header (e.g. in german locale) 
+            // send an invalid "If-Modified-Since" header (e.g. in german locale)
             // which breaks with http://www.w3.org/Protocols/rfc2616/rfc2616-sec3.html
-            // this has to be caught because the subsequent request for the 500 error handler 
-            // would run into the same exception. 
-            LOG.warn(Messages.get().getBundle().key(
-                Messages.ERR_HEADER_IFMODIFIEDSINCE_FORMAT_3,
-                new Object[] {
-                    CmsRequestUtil.HEADER_IF_MODIFIED_SINCE,
-                    req.getHeader(CmsRequestUtil.HEADER_USER_AGENT),
-                    req.getHeader(CmsRequestUtil.HEADER_IF_MODIFIED_SINCE)}));
+            // this has to be caught because the subsequent request for the 500 error handler
+            // would run into the same exception.
+            LOG.warn(
+                Messages.get().getBundle().key(
+                    Messages.ERR_HEADER_IFMODIFIEDSINCE_FORMAT_3,
+                    new Object[] {
+                        CmsRequestUtil.HEADER_IF_MODIFIED_SINCE,
+                        req.getHeader(CmsRequestUtil.HEADER_USER_AGENT),
+                        req.getHeader(CmsRequestUtil.HEADER_IF_MODIFIED_SINCE)}));
         }
         return false;
     }
 
     /**
+     * Tells the flex controller to never cache the given attribute.<p>
+     *
+     * @param attributeName the attribute which shouldn't be cached
+     */
+    public static void registerUncacheableAttribute(String attributeName) {
+
+        uncacheableAttributes.add(attributeName);
+    }
+
+    /**
      * Removes the controller attribute from a request.<p>
-     * 
+     *
      * @param req the request to remove the controller from
      */
     public static void removeController(ServletRequest req) {
@@ -291,10 +395,10 @@ public class CmsFlexController {
         }
     }
 
-    /** 
+    /**
      * Stores the given controller in the given request (using a request attribute).<p>
-     * 
-     * @param req the request where to store the controller in 
+     *
+     * @param req the request where to store the controller in
      * @param controller the controller to store
      */
     public static void setController(ServletRequest req, CmsFlexController controller) {
@@ -304,12 +408,12 @@ public class CmsFlexController {
 
     /**
      * Sets the <code>Expires</code> date header for a given http request.<p>
-     * 
+     *
      * Also sets the <code>cache-control: max-age</code> header to the time of the expiration.
      * A certain upper limit is imposed on the expiration date parameter to ensure the resources are
-     * not cached to long in proxies. This can be controlled by the <code>maxAge</code> parameter. 
-     * If <code>maxAge</code> is lower then 0, then a default max age of 86400000 msec (1 day) is used.<p> 
-     * 
+     * not cached to long in proxies. This can be controlled by the <code>maxAge</code> parameter.
+     * If <code>maxAge</code> is lower then 0, then a default max age of 86400000 msec (1 day) is used.<p>
+     *
      * @param res the response to set the "Expires" date header for
      * @param maxAge maximum amount of time in milliseconds the response remains valid
      * @param dateExpires the date to set (if this is not in the future, it is ignored)
@@ -323,7 +427,7 @@ public class CmsFlexController {
             // to avoid re-loading of pages that are not expired
             // while this is right in general, no changes before the expiration date
             // will be displayed
-            // therefore it is better to not use an expiration to far in the future 
+            // therefore it is better to not use an expiration to far in the future
 
             // if no valid max age is set, restrict it to 24 hrs
             if (maxAge < 0L) {
@@ -344,7 +448,7 @@ public class CmsFlexController {
 
     /**
      * Sets the "last modified" date header for a given http request.<p>
-     * 
+     *
      * @param res the response to set the "last modified" date header for
      * @param dateLastModified the date to set (if this is lower then 0, the current time is set)
      */
@@ -356,7 +460,57 @@ public class CmsFlexController {
         } else {
             // this resource can not be optimized for "last modified", use current time as header
             res.setDateHeader(CmsRequestUtil.HEADER_LAST_MODIFIED, System.currentTimeMillis());
+            // avoiding issues with IE8+
+            res.addHeader(CmsRequestUtil.HEADER_CACHE_CONTROL, "public, max-age=0");
         }
+    }
+
+    /**
+     * Method overload from the standard HttpServletResponse API.<p>
+     *
+     * The method is added to the controller itself,
+     * to automatically have the correct choice for the response to set the header.
+     *
+     * @param name
+     * @param date
+     *
+     * @see javax.servlet.http.HttpServletResponse#addDateHeader(java.lang.String, long)
+     */
+    public void addDateHeader(String name, long date) {
+
+        getCurrentResponse().addDateHeader(name, date);
+    }
+
+    /**
+     * Method overload from the standard HttpServletResponse API.<p>
+     *
+     * The method is added to the controller itself,
+     * to automatically have the correct choice for the response to set the header.
+     *
+     * @param name
+     * @param value
+     *
+     * @see javax.servlet.http.HttpServletResponse#addHeader(java.lang.String, java.lang.String)
+     */
+    public void addHeader(String name, String value) {
+
+        getCurrentResponse().addHeader(name, value);
+    }
+
+    /**
+     * Method overload from the standard HttpServletResponse API.<p>
+     *
+     * The method is added to the controller itself,
+     * to automatically have the correct choice for the response to set the header.
+     *
+     * @param name
+     * @param value
+     *
+     * @see javax.servlet.http.HttpServletResponse#addIntHeader(java.lang.String, int)
+     */
+    public void addIntHeader(String name, int value) {
+
+        getCurrentResponse().addIntHeader(name, value);
     }
 
     /**
@@ -385,7 +539,7 @@ public class CmsFlexController {
 
     /**
      * Returns the CmsFlexCache instance where all results from this request will be cached in.<p>
-     * 
+     *
      * This is public so that pages like the Flex Cache Administration page
      * have a way to access the cache object.<p>
      *
@@ -398,7 +552,7 @@ public class CmsFlexController {
 
     /**
      * Returns the wrapped CmsObject.<p>
-     * 
+     *
      * @return the wrapped CmsObject
      */
     public CmsObject getCmsObject() {
@@ -406,12 +560,12 @@ public class CmsFlexController {
         return m_cmsObject;
     }
 
-    /** 
+    /**
      * This method provides access to the top-level CmsResource of the request
      * which is of a type that supports the FlexCache,
      * i.e. usually the CmsFile that is identical to the file uri requested by the user,
      * not he current included element.<p>
-     * 
+     *
      * @return the requested top-level CmsFile
      */
     public CmsResource getCmsResource() {
@@ -421,7 +575,7 @@ public class CmsFlexController {
 
     /**
      * Returns the current flex request.<p>
-     * 
+     *
      * @return the current flex request
      */
     public CmsFlexRequest getCurrentRequest() {
@@ -431,7 +585,7 @@ public class CmsFlexController {
 
     /**
      * Returns the current flex response.<p>
-     * 
+     *
      * @return the current flex response
      */
     public CmsFlexResponse getCurrentResponse() {
@@ -441,7 +595,7 @@ public class CmsFlexController {
 
     /**
      * Returns the combined "expires" date for all resources read during this request.<p>
-     * 
+     *
      * @return the combined "expires" date for all resources read during this request
      */
     public long getDateExpires() {
@@ -456,7 +610,7 @@ public class CmsFlexController {
 
     /**
      * Returns the combined "last modified" date for all resources read during this request.<p>
-     * 
+     *
      * @return the combined "last modified" date for all resources read during this request
      */
     public long getDateLastModified() {
@@ -470,8 +624,18 @@ public class CmsFlexController {
     }
 
     /**
+     * Gets the information about where to redirect to.
+     *
+     * @return the redirect information
+     */
+    public RedirectInfo getRedirectInfo() {
+
+        return m_redirectInfo;
+    }
+
+    /**
      * Returns the size of the response stack.<p>
-     * 
+     *
      * @return the size of the response stack
      */
     public int getResponseStackSize() {
@@ -480,9 +644,9 @@ public class CmsFlexController {
     }
 
     /**
-     * Returns an exception (Throwable) that was caught during inclusion of sub elements, 
+     * Returns an exception (Throwable) that was caught during inclusion of sub elements,
      * or null if no exceptions where thrown in sub elements.<p>
-     * 
+     *
      * @return an exception (Throwable) that was caught during inclusion of sub elements
      */
     public Throwable getThrowable() {
@@ -493,7 +657,7 @@ public class CmsFlexController {
     /**
      * Returns the URI of a VFS resource that caused the exception that was caught during inclusion of sub elements,
      * might return null if no URI information was available for the exception.<p>
-     * 
+     *
      * @return the URI of a VFS resource that caused the exception that was caught during inclusion of sub elements
      */
     public String getThrowableResourceUri() {
@@ -503,7 +667,7 @@ public class CmsFlexController {
 
     /**
      * Returns the current http request.<p>
-     * 
+     *
      * @return the current http request
      */
     public HttpServletRequest getTopRequest() {
@@ -513,7 +677,7 @@ public class CmsFlexController {
 
     /**
      * Returns the current http response.<p>
-     * 
+     *
      * @return the current http response
      */
     public HttpServletResponse getTopResponse() {
@@ -523,7 +687,7 @@ public class CmsFlexController {
 
     /**
      * Returns <code>true</code> if the controller does not yet contain any requests.<p>
-     * 
+     *
      * @return <code>true</code> if the controller does not yet contain any requests
      */
     public boolean isEmptyRequestList() {
@@ -542,9 +706,9 @@ public class CmsFlexController {
     }
 
     /**
-     * Returns <code>true</code> if the generated output of the response should 
+     * Returns <code>true</code> if the generated output of the response should
      * be written to the stream directly.<p>
-     * 
+     *
      * @return <code>true</code> if the generated output of the response should be written to the stream directly
      */
     public boolean isStreaming() {
@@ -554,12 +718,12 @@ public class CmsFlexController {
 
     /**
      * Returns <code>true</code> if this controller was generated as top level controller.<p>
-     * 
-     * If a resource (e.g. a JSP) is processed and it's content is included in 
-     * another resource, then this will be <code>false</code>.   
-     * 
+     *
+     * If a resource (e.g. a JSP) is processed and it's content is included in
+     * another resource, then this will be <code>false</code>.
+     *
      * @return <code>true</code> if this controller was generated as top level controller
-     * 
+     *
      * @see org.opencms.loader.I_CmsResourceLoader#dump(CmsObject, CmsResource, String, java.util.Locale, HttpServletRequest, HttpServletResponse)
      * @see org.opencms.jsp.CmsJspActionElement#getContent(String)
      */
@@ -590,7 +754,7 @@ public class CmsFlexController {
 
     /**
      * Adds another flex request/response pair to the stack.<p>
-     * 
+     *
      * @param req the request to add
      * @param res the response to add
      */
@@ -600,6 +764,49 @@ public class CmsFlexController {
         m_flexResponseList.add(res);
         m_flexContextInfoList.add(new CmsFlexRequestContextInfo());
         updateRequestContextInfo();
+    }
+
+    /**
+     * Removes request attributes which shouldn't be cached in flex cache entries from a map.<p>
+     *
+     * @param attributeMap the map of attributes
+     */
+    public void removeUncacheableAttributes(Map<String, Object> attributeMap) {
+
+        for (String uncacheableAttribute : uncacheableAttributes) {
+            attributeMap.remove(uncacheableAttribute);
+        }
+        attributeMap.remove(CmsFlexController.ATTRIBUTE_NAME);
+        attributeMap.remove(CmsDetailPageResourceHandler.ATTR_DETAIL_CONTENT_RESOURCE);
+        attributeMap.remove(CmsDetailPageResourceHandler.ATTR_DETAIL_FUNCTION_PAGE);
+    }
+
+    /**
+     * Special method for setting the content type from a JSP in a way that is compatible with both Tomcat and Jetty and also works with the Flex Cache.
+     *
+     * <p>This is implemented as setting a fake HTTP header which is then translated back to a call to setContentType() in CmsJspLoader.dispatchJsp().
+     *
+     * @param contentType the content type to set
+     */
+    public void setContentType(String contentType) {
+
+        getCurrentResponse().setHeader(HEADER_OPENCMS_CONTENT_TYPE, contentType);
+    }
+
+    /**
+     * Method overload from the standard HttpServletResponse API.<p>
+     *
+     * The method is added to the controller itself,
+     * to automatically have the correct choice for the response to set the header.
+     *
+     * @param name
+     * @param date
+     *
+     * @see javax.servlet.http.HttpServletResponse#setDateHeader(java.lang.String, long)
+     */
+    public void setDateHeader(String name, long date) {
+
+        getCurrentResponse().setDateHeader(name, date);
     }
 
     /**
@@ -613,14 +820,56 @@ public class CmsFlexController {
     }
 
     /**
+     * Method overload from the standard HttpServletResponse API.<p>
+     *
+     * The method is added to the controller itself,
+     * to automatically have the correct choice for the response to set the header.
+     *
+     * @param name
+     * @param value
+     *
+     * @see javax.servlet.http.HttpServletResponse#setHeader(java.lang.String, java.lang.String)
+     */
+    public void setHeader(String name, String value) {
+
+        getCurrentResponse().setHeader(name, value);
+    }
+
+    /**
+     * Method overload from the standard HttpServletResponse API.<p>
+     *
+     * The method is added to the controller itself,
+     * to automatically have the correct choice for the response to set the header.
+     *
+     * @param name
+     * @param value
+     *
+     * @see javax.servlet.http.HttpServletResponse#setIntHeader(java.lang.String, int)
+     */
+    public void setIntHeader(String name, int value) {
+
+        getCurrentResponse().setIntHeader(name, value);
+    }
+
+    /**
+     * Sets the information about where to redirect to.
+     *
+     * @param redirectInfo the redirect information
+     */
+    public void setRedirectInfo(RedirectInfo redirectInfo) {
+
+        m_redirectInfo = redirectInfo;
+    }
+
+    /**
      * Sets an exception (Throwable) that was caught during inclusion of sub elements.<p>
-     * 
+     *
      * If another exception is already set in this controller, then the additional exception
      * is ignored.<p>
-     * 
+     *
      * @param throwable the exception (Throwable) to set
      * @param resource the URI of the VFS resource the error occurred on (might be <code>null</code> if unknown)
-     * 
+     *
      * @return the exception stored in the controller
      */
     public Throwable setThrowable(Throwable throwable, String resource) {
@@ -631,7 +880,8 @@ public class CmsFlexController {
         } else {
             if (LOG.isDebugEnabled()) {
                 if (resource != null) {
-                    LOG.debug(Messages.get().getBundle().key(Messages.LOG_FLEXCONTROLLER_IGNORED_EXCEPTION_1, resource));
+                    LOG.debug(
+                        Messages.get().getBundle().key(Messages.LOG_FLEXCONTROLLER_IGNORED_EXCEPTION_1, resource));
                 } else {
                     LOG.debug(Messages.get().getBundle().key(Messages.LOG_FLEXCONTROLLER_IGNORED_EXCEPTION_0));
                 }
@@ -641,7 +891,7 @@ public class CmsFlexController {
     }
 
     /**
-     * Puts the response in a suspended state.<p>  
+     * Puts the response in a suspended state.<p>
      */
     public void suspendFlexResponse() {
 
@@ -652,17 +902,17 @@ public class CmsFlexController {
     }
 
     /**
-     * Updates the "last modified" date and the "expires" date 
+     * Updates the "last modified" date and the "expires" date
      * for all resources read during this request with the given values.<p>
-     * 
+     *
      * The currently stored value for "last modified" is only updated with the new value if
      * the new value is either larger (i.e. newer) then the stored value,
      * or if the new value is less then zero, which indicates that the "last modified"
      * optimization can not be used because the element is dynamic.<p>
-     * 
+     *
      * The stored "expires" value is only updated if the new value is smaller
      * then the stored value.<p>
-     * 
+     *
      * @param dateLastModified the value to update the "last modified" date with
      * @param dateExpires the value to update the "expires" date with
      */

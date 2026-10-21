@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -15,11 +15,11 @@
  * Lesser General Public License for more details.
  *
  * For further information about Alkacon Software, please see the
- * company website: http://www.alkacon.com
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -46,12 +46,15 @@ import org.opencms.gwt.client.ui.tree.CmsTree;
 import org.opencms.gwt.client.util.CmsDebugLog;
 import org.opencms.gwt.client.util.CmsDomUtil;
 import org.opencms.gwt.client.util.CmsDomUtil.Tag;
+import org.opencms.gwt.client.util.I_CmsSimpleCallback;
 import org.opencms.gwt.shared.property.CmsClientProperty;
 import org.opencms.gwt.shared.property.CmsPropertyModification;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
+import com.google.common.collect.Maps;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.dom.client.Element;
@@ -59,19 +62,19 @@ import com.google.gwt.dom.client.Style.Unit;
 
 /**
  * The sitemap drag and drop controller.<p>
- * 
+ *
  * @since 8.0.0
  */
 public class CmsSitemapDNDController implements I_CmsDNDController {
 
     /** The sitemap controller instance. */
-    private CmsSitemapController m_controller;
+    CmsSitemapController m_controller;
 
     /** The insert position of the draggable. */
-    private int m_insertIndex;
+    int m_insertIndex;
 
     /** The insert path of the draggable. */
-    private String m_insertPath;
+    String m_insertPath;
 
     /** The original position of the draggable. */
     private int m_originalIndex;
@@ -84,7 +87,7 @@ public class CmsSitemapDNDController implements I_CmsDNDController {
 
     /**
      * Constructor.<p>
-     * 
+     *
      * @param controller the sitemap controller
      * @param toolbar the sitemap toolbar
      */
@@ -239,8 +242,41 @@ public class CmsSitemapDNDController implements I_CmsDNDController {
     }
 
     /**
+     * Checks whether the current placeholder position represents a change to the original draggable position within the tree.<p>
+     *
+     * @param draggable the draggable
+     * @param target the current drop target
+     * @param strict if <code>false</code> only the parent path is considered, the index position will be ignored
+     *
+     * @return <code>true</code> if the position changed
+     */
+    boolean isChangedPosition(I_CmsDraggable draggable, I_CmsDropTarget target, boolean strict) {
+
+        // if draggable is not a sitemap item, any valid position is a changed position
+        if (!((draggable instanceof CmsSitemapTreeItem) && (target instanceof CmsTree<?>))) {
+            return true;
+        }
+
+        String placeholderPath = ((CmsTree<?>)target).getPlaceholderPath();
+        if ((placeholderPath == null) && !strict) {
+            // first positioning, path has not changed yet
+            return false;
+        }
+        // if the the path differs, the position has changed
+        if ((m_originalPath == null) || !m_originalPath.equals(placeholderPath)) {
+            return true;
+        }
+        // if the new index is not next to the old one, the position has changed
+        if (!((target.getPlaceholderIndex() == (m_originalIndex + 1))
+            || (target.getPlaceholderIndex() == m_originalIndex)) && strict) {
+            return true;
+        }
+        return false;
+    }
+
+    /**
      * Adjust the original position indicator by styling the draggable element for this purpose.<p>
-     * 
+     *
      * @param draggable the draggable
      * @param target the current drop target
      * @param handler the drag and drop handler
@@ -266,76 +302,116 @@ public class CmsSitemapDNDController implements I_CmsDNDController {
 
     /**
      * Handles a dropped detail page.<p>
-     * 
-     * @param createItem the detail page which was dropped into the sitemap 
-     * @param parent the parent sitemap entry  
+     *
+     * @param createItem the detail page which was dropped into the sitemap
+     * @param parent the parent sitemap entry
      */
-    private void handleDropNewEntry(CmsCreatableListItem createItem, CmsClientSitemapEntry parent) {
+    private void handleDropNewEntry(CmsCreatableListItem createItem, final CmsClientSitemapEntry parent) {
 
-        CmsNewResourceInfo typeInfo = createItem.getResourceTypeInfo();
-        CmsClientSitemapEntry entry = new CmsClientSitemapEntry();
+        final CmsNewResourceInfo typeInfo = createItem.getResourceTypeInfo();
+        final CmsClientSitemapEntry entry = new CmsClientSitemapEntry();
         entry.setNew(true);
         entry.setVfsPath(null);
         entry.setPosition(m_insertIndex);
         entry.setInNavigation(true);
-        entry.setDefaultFileProperties(Collections.<String, CmsClientProperty> emptyMap());
-        String uniqueName = null;
+        Map<String, CmsClientProperty> defaultFileProps = Maps.newHashMap();
+        entry.setDefaultFileProperties(defaultFileProps);
+        String name;
+        final boolean appendSlash;
         switch (createItem.getNewEntryType()) {
             case detailpage:
-                uniqueName = m_controller.ensureUniqueName(
-                    parent,
-                    CmsDetailPageInfo.removeFunctionPrefix(typeInfo.getTypeName()));
-                entry.setName(uniqueName);
-                entry.setSitePath(m_insertPath + uniqueName + "/");
-                entry.setDetailpageTypeName(typeInfo.getTypeName());
+                name = CmsDetailPageInfo.removeFunctionPrefix(typeInfo.getResourceType());
+                appendSlash = true;
+                entry.setDetailpageTypeName(typeInfo.getResourceType());
+                entry.setVfsModeIcon(typeInfo.getBigIconClasses());
+                if (typeInfo.isFunction()) {
+
+                    CmsClientProperty titleProp = new CmsClientProperty(
+                        CmsClientProperty.PROPERTY_TITLE,
+                        typeInfo.getTitle(),
+                        null);
+                    CmsClientProperty navtextProp = new CmsClientProperty(
+                        CmsClientProperty.PROPERTY_NAVTEXT,
+                        typeInfo.getTitle(),
+                        null);
+                    entry.getOwnProperties().put(titleProp.getName(), titleProp);
+                    entry.getDefaultFileProperties().put(titleProp.getName(), titleProp);
+                    entry.getOwnProperties().put(navtextProp.getName(), navtextProp);
+                }
                 entry.setResourceTypeName("folder");
                 break;
             case redirect:
-                uniqueName = m_controller.ensureUniqueName(parent, typeInfo.getTypeName());
-                entry.setName(uniqueName);
+                name = typeInfo.getResourceType();
                 entry.setEntryType(EntryType.redirect);
-                entry.setSitePath(m_insertPath + uniqueName);
-                entry.setResourceTypeName(typeInfo.getTypeName());
+                entry.setVfsModeIcon(typeInfo.getBigIconClasses());
+                entry.setResourceTypeName(typeInfo.getResourceType());
+                appendSlash = false;
                 break;
             default:
-                uniqueName = m_controller.ensureUniqueName(parent, CmsSitemapController.NEW_ENTRY_NAME);
-                entry.setName(uniqueName);
-                entry.setSitePath(m_insertPath + uniqueName + "/");
+                name = CmsSitemapController.NEW_ENTRY_NAME;
+                appendSlash = true;
                 entry.setResourceTypeName("folder");
+                entry.setVfsModeIcon(typeInfo.getBigIconClasses());
         }
-        m_controller.create(entry, typeInfo.getId(), typeInfo.getCopyResourceId(), typeInfo.getCreateParameter());
+
+        m_controller.ensureUniqueName(parent, name, new I_CmsSimpleCallback<String>() {
+
+            public void execute(String uniqueName) {
+
+                entry.setName(uniqueName);
+                String sitepath = m_insertPath + uniqueName;
+                if (appendSlash) {
+                    sitepath += "/";
+                }
+                entry.setSitePath(sitepath);
+                m_controller.create(
+                    entry,
+                    parent.getId(),
+                    typeInfo.getId(),
+                    typeInfo.getCopyResourceId(),
+                    typeInfo.getCreateParameter(),
+                    false);
+            }
+        });
+
     }
 
     /**
      * Handles the drop for a sitemap item which was dragged to a different position.<p>
-     * 
-     * @param sitemapEntry the dropped item  
-     * @param target the drop target 
+     *
+     * @param sitemapEntry the dropped item
+     * @param target the drop target
      * @param parent the parent sitemap entry
      */
     private void handleDropSitemapEntry(
-        CmsSitemapTreeItem sitemapEntry,
-        I_CmsDropTarget target,
+        final CmsSitemapTreeItem sitemapEntry,
+        final I_CmsDropTarget target,
         CmsClientSitemapEntry parent) {
 
         if (isChangedPosition(sitemapEntry, target, true)) {
             // moving a tree entry around
-            CmsClientSitemapEntry entry = m_controller.getEntry((sitemapEntry).getSitePath());
-            String uniqueName = m_controller.ensureUniqueName(parent, entry.getName());
-            if (!uniqueName.equals(entry.getName()) && isChangedPosition(sitemapEntry, target, false)) {
-                m_controller.editAndChangeName(
-                    entry,
-                    uniqueName,
-                    entry.getVfsPath(),
-                    Collections.<CmsPropertyModification> emptyList(),
-                    !entry.isNew(),
-                    CmsReloadMode.none);
-                m_controller.move(entry, m_insertPath + uniqueName + "/", m_insertIndex);
-            } else {
-                CmsDebugLog.getInstance().printLine(
-                    "inserting at " + m_insertPath + entry.getName() + "/ and index " + m_insertIndex);
-                m_controller.move(entry, m_insertPath + entry.getName() + "/", m_insertIndex);
-            }
+            final CmsClientSitemapEntry entry = sitemapEntry.getSitemapEntry();
+            m_controller.ensureUniqueName(parent, entry.getName(), new I_CmsSimpleCallback<String>() {
+
+                public void execute(String uniqueName) {
+
+                    String suffix = "";
+                    if ((sitemapEntry.getSitePath() != null) && sitemapEntry.getSitePath().endsWith("/")) {
+                        suffix = "/";
+                    }
+                    if (!uniqueName.equals(entry.getName()) && isChangedPosition(sitemapEntry, target, false)) {
+                        m_controller.editAndChangeName(
+                            entry,
+                            uniqueName,
+                            Collections.<CmsPropertyModification> emptyList(),
+                            entry.isNew(),
+                            CmsReloadMode.none);
+                        m_controller.move(entry, m_insertPath + uniqueName + suffix, m_insertIndex);
+                    } else {
+                        m_controller.move(entry, m_insertPath + entry.getName() + suffix, m_insertIndex);
+                    }
+                }
+            });
         } else {
             sitemapEntry.resetEntry();
         }
@@ -343,7 +419,7 @@ public class CmsSitemapDNDController implements I_CmsDNDController {
 
     /**
      * Hides the content of list items by setting a specific css class.<p>
-     * 
+     *
      * @param element the list item element
      */
     private void hideItemContent(Element element) {
@@ -354,38 +430,5 @@ public class CmsSitemapDNDController implements I_CmsDNDController {
         if ((itemWidget != null) && (itemWidget.size() > 0)) {
             itemWidget.get(0).addClassName(I_CmsSitemapLayoutBundle.INSTANCE.sitemapItemCss().contentHide());
         }
-    }
-
-    /**
-     * Checks whether the current placeholder position represents a change to the original draggable position within the tree.<p>
-     * 
-     * @param draggable the draggable
-     * @param target the current drop target
-     * @param strict if <code>false</code> only the parent path is considered, the index position will be ignored
-     * 
-     * @return <code>true</code> if the position changed
-     */
-    private boolean isChangedPosition(I_CmsDraggable draggable, I_CmsDropTarget target, boolean strict) {
-
-        // if draggable is not a sitemap item, any valid position is a changed position
-        if (!((draggable instanceof CmsSitemapTreeItem) && (target instanceof CmsTree<?>))) {
-            return true;
-        }
-
-        String placeholderPath = ((CmsTree<?>)target).getPlaceholderPath();
-        if ((placeholderPath == null) && !strict) {
-            // first positioning, path has not changed yet
-            return false;
-        }
-        // if the the path differs, the position has changed
-        if ((m_originalPath == null) || !m_originalPath.equals(placeholderPath)) {
-            return true;
-        }
-        // if the new index is not next to the old one, the position has changed
-        if (!((target.getPlaceholderIndex() == (m_originalIndex + 1)) || (target.getPlaceholderIndex() == m_originalIndex))
-            && strict) {
-            return true;
-        }
-        return false;
     }
 }

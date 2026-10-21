@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -14,12 +14,12 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * Lesser General Public License for more details.
  *
- * For further information about Alkacon Software GmbH, please see the
- * company website: http://www.alkacon.com
+ * For further information about Alkacon Software GmbH & Co. KG, please see the
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -48,7 +48,7 @@ import java.util.Map;
 
 /**
  * PostgreSQL implementation of the generic update class for the Users.<p>
- * 
+ *
  * @since 7.0.2
  */
 public class CmsUpdateDBCmsUsers extends org.opencms.setup.db.update6to7.CmsUpdateDBCmsUsers {
@@ -85,7 +85,7 @@ public class CmsUpdateDBCmsUsers extends org.opencms.setup.db.update6to7.CmsUpda
 
     /**
      * Constructor.<p>
-     * 
+     *
      * @throws IOException if the sql queries properties file could not be read
      */
     public CmsUpdateDBCmsUsers()
@@ -93,6 +93,37 @@ public class CmsUpdateDBCmsUsers extends org.opencms.setup.db.update6to7.CmsUpda
 
         super();
         loadQueryProperties(getPropertyFileLocation() + QUERY_PROPERTY_FILE);
+    }
+
+    /**
+     * @see org.opencms.setup.db.update6to7.CmsUpdateDBCmsUsers#createUserDataTable(org.opencms.setup.CmsSetupDb)
+     */
+    @Override
+    protected void createUserDataTable(CmsSetupDb dbCon) throws SQLException {
+
+        String indexTablespace = m_poolData.get("indexTablespace");
+
+        Map<String, String> replacer = new HashMap<String, String>();
+        replacer.put(REPLACEMENT_TABLEINDEX_SPACE, indexTablespace);
+
+        String createStatement = readQuery(QUERY_CREATE_TABLE_USERDATA);
+        dbCon.updateSqlStatement(createStatement, replacer, null);
+
+        // create indices
+        List<String> indexElements = new ArrayList<String>();
+        indexElements.add("CMS_USERDATA_01_IDX_INDEX");
+        indexElements.add("CMS_USERDATA_02_IDX_INDEX");
+
+        Iterator<String> iter = indexElements.iterator();
+        while (iter.hasNext()) {
+            String stmt = readQuery(iter.next());
+            try {
+                // Create the index
+                dbCon.updateSqlStatement(stmt, replacer, null);
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+        }
     }
 
     /**
@@ -113,7 +144,7 @@ public class CmsUpdateDBCmsUsers extends org.opencms.setup.db.update6to7.CmsUpda
             e.printStackTrace();
         }
         try {
-            // Check if the CMS_USERDATA table exists            
+            // Check if the CMS_USERDATA table exists
             if (!checkUserDataTable(dbCon)) {
                 createUserDataTable(dbCon); // Could throw Exception during table creation
 
@@ -173,41 +204,10 @@ public class CmsUpdateDBCmsUsers extends org.opencms.setup.db.update6to7.CmsUpda
     }
 
     /**
-     * @see org.opencms.setup.db.update6to7.CmsUpdateDBCmsUsers#createUserDataTable(org.opencms.setup.CmsSetupDb)
-     */
-    @Override
-    protected void createUserDataTable(CmsSetupDb dbCon) throws SQLException {
-
-        String indexTablespace = m_poolData.get("indexTablespace");
-
-        Map<String, String> replacer = new HashMap<String, String>();
-        replacer.put(REPLACEMENT_TABLEINDEX_SPACE, indexTablespace);
-
-        String createStatement = readQuery(QUERY_CREATE_TABLE_USERDATA);
-        dbCon.updateSqlStatement(createStatement, replacer, null);
-
-        // create indices
-        List<String> indexElements = new ArrayList<String>();
-        indexElements.add("CMS_USERDATA_01_IDX_INDEX");
-        indexElements.add("CMS_USERDATA_02_IDX_INDEX");
-
-        Iterator<String> iter = indexElements.iterator();
-        while (iter.hasNext()) {
-            String stmt = readQuery(iter.next());
-            try {
-                // Create the index
-                dbCon.updateSqlStatement(stmt, replacer, null);
-            } catch (SQLException e) {
-                e.printStackTrace();
-            }
-        }
-    }
-
-    /**
      * Writes one set of additional user info (key and its value) to the CMS_USERDATA table.<p>
-     * 
+     *
      * @param dbCon the db connection interface
-     * @param id the user id 
+     * @param id the user id
      * @param key the data key
      * @param value the data value
      */

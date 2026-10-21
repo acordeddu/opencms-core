@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -14,12 +14,12 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * Lesser General Public License for more details.
  *
- * For further information about Alkacon Software GmbH, please see the
- * company website: http://www.alkacon.com
+ * For further information about Alkacon Software GmbH & Co. KG, please see the
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -36,15 +36,17 @@ import org.opencms.util.CmsUUID;
 
 import java.util.Comparator;
 
+import com.google.common.base.Objects;
+
 /**
  * A relation between two opencms resources.<p>
- * 
- * @since 6.3.0 
+ *
+ * @since 6.3.0
  */
 public class CmsRelation {
 
     /**
-     * A comparator for the source & target path plus the relation type of 2 relations.<p>
+     * A comparator for the source &amp; target path plus the relation type of 2 relations.<p>
      */
     public static final Comparator<CmsRelation> COMPARATOR = new Comparator<CmsRelation>() {
 
@@ -86,7 +88,7 @@ public class CmsRelation {
 
     /**
      * Creates a new relation object of the given type between the given resources.<p>
-     * 
+     *
      * @param source the source resource
      * @param target the target resource
      * @param type the relation type
@@ -98,7 +100,7 @@ public class CmsRelation {
 
     /**
      * Base constructor.<p>
-     * 
+     *
      * @param sourceId the source structure id
      * @param sourcePath the source path
      * @param targetId the target structure id
@@ -127,22 +129,20 @@ public class CmsRelation {
         if (obj instanceof CmsRelation) {
             CmsRelation other = (CmsRelation)obj;
             return (m_type == other.m_type)
-            // && (m_dateBegin == other.m_dateBegin)
-            // && (m_dateEnd == other.m_dateEnd)
-                && (m_sourcePath.equals(other.m_sourcePath) || m_sourceId.equals(other.m_sourceId))
-                && (m_targetPath.equals(other.m_targetPath) || m_targetId.equals(other.m_targetId));
+                && (Objects.equal(m_sourcePath, other.m_sourcePath) || Objects.equal(m_sourceId, other.m_sourceId))
+                && (Objects.equal(m_targetPath, other.m_targetPath) || Objects.equal(m_targetId, other.m_targetId));
         }
         return false;
     }
 
     /**
      * Returns the source resource when possible to read with the given filter.<p>
-     * 
+     *
      * @param cms the current user context
      * @param filter the filter to use
-     * 
+     *
      * @return the source resource
-     * 
+     *
      * @throws CmsException if something goes wrong
      */
     public CmsResource getSource(CmsObject cms, CmsResourceFilter filter) throws CmsException {
@@ -184,12 +184,12 @@ public class CmsRelation {
 
     /**
      * Returns the target resource when possible to read with the given filter.<p>
-     * 
+     *
      * @param cms the current user context
      * @param filter the filter to use
-     * 
+     *
      * @return the target resource
-     * 
+     *
      * @throws CmsException if something goes wrong
      */
     public CmsResource getTarget(CmsObject cms, CmsResourceFilter filter) throws CmsException {
@@ -249,11 +249,11 @@ public class CmsRelation {
             // calculate hash code only once
             final int PRIME = 31;
             int result = 1;
-            result = PRIME * result + ((m_sourceId == null) ? 0 : m_sourceId.hashCode());
-            result = PRIME * result + ((m_sourcePath == null) ? 0 : m_sourcePath.hashCode());
-            result = PRIME * result + ((m_targetId == null) ? 0 : m_targetId.hashCode());
-            result = PRIME * result + ((m_targetPath == null) ? 0 : m_targetPath.hashCode());
-            result = PRIME * result + ((m_type == null) ? 0 : m_type.hashCode());
+            result = (PRIME * result) + ((m_sourceId == null) ? 0 : m_sourceId.hashCode());
+            result = (PRIME * result) + ((m_sourcePath == null) ? 0 : m_sourcePath.hashCode());
+            result = (PRIME * result) + ((m_targetId == null) ? 0 : m_targetId.hashCode());
+            result = (PRIME * result) + ((m_targetPath == null) ? 0 : m_targetPath.hashCode());
+            result = (PRIME * result) + ((m_type == null) ? 0 : m_type.hashCode());
             m_hashCode = result;
         }
         return m_hashCode;
@@ -274,5 +274,16 @@ public class CmsRelation {
         str.append("type: ").append(m_type);
         str.append("]");
         return str.toString();
+    }
+
+    /**
+     * Copies this relation, but sets the target id in the copy to the given value.
+     *
+     * @param id the new target id for the copy
+     * @return the copy with the target id
+     */
+    public CmsRelation withTargetId(CmsUUID id) {
+
+        return new CmsRelation(m_sourceId, m_sourcePath, id, m_targetPath, m_type);
     }
 }

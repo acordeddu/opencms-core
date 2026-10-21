@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -14,12 +14,12 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * Lesser General Public License for more details.
  *
- * For further information about Alkacon Software GmbH, please see the
- * company website: http://www.alkacon.com
+ * For further information about Alkacon Software GmbH & Co. KG, please see the
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -48,7 +48,7 @@ import org.apache.commons.logging.Log;
 
 /**
  * Repairs XML content resources according to their XSD using the corresponding settings object.<p>
- * 
+ *
  */
 public class CmsXmlContentRepairThread extends A_CmsReportThread {
 
@@ -60,7 +60,7 @@ public class CmsXmlContentRepairThread extends A_CmsReportThread {
 
     /**
      * Creates a repair XML content resources thread.<p>
-     * 
+     *
      * @param cms the current cms context
      * @param settings the settings needed to perform the repair operation
      */
@@ -74,6 +74,7 @@ public class CmsXmlContentRepairThread extends A_CmsReportThread {
     /**
      * @see org.opencms.report.A_CmsReportThread#getReportUpdate()
      */
+    @Override
     public String getReportUpdate() {
 
         return getReport().getReportUpdate();
@@ -82,6 +83,7 @@ public class CmsXmlContentRepairThread extends A_CmsReportThread {
     /**
      * @see java.lang.Runnable#run()
      */
+    @Override
     public void run() {
 
         getReport().println(
@@ -114,16 +116,16 @@ public class CmsXmlContentRepairThread extends A_CmsReportThread {
 
     /**
      * Performs the correction of the XML content resources according to their XML schema definition.<p>
-     * 
+     *
      * @throws CmsException if reading the list of resources to repair fails
      */
     private void repairXmlContents() throws CmsException {
 
-        // set the resource filter to filter XML contents of the selected type        
+        // set the resource filter to filter XML contents of the selected type
         CmsResourceFilter filter = CmsResourceFilter.IGNORE_EXPIRATION.addRequireType(m_settings.getResourceTypeId());
         String path = CmsResource.getFolderPath(m_settings.getVfsFolder());
         // get the list of resources to check
-        List resources = getCms().readResources(path, filter, m_settings.isIncludeSubFolders());
+        List<CmsResource> resources = getCms().readResources(path, filter, m_settings.isIncludeSubFolders());
 
         // set the report counters
         int count = 0;
@@ -133,11 +135,11 @@ public class CmsXmlContentRepairThread extends A_CmsReportThread {
         CmsXmlEntityResolver resolver = new CmsXmlEntityResolver(getCms());
 
         // iterate the resources
-        Iterator i = resources.iterator();
+        Iterator<CmsResource> i = resources.iterator();
         while (i.hasNext()) {
 
             count++;
-            CmsResource res = (CmsResource)i.next();
+            CmsResource res = i.next();
 
             // generate report output
             getReport().print(
@@ -189,7 +191,7 @@ public class CmsXmlContentRepairThread extends A_CmsReportThread {
                     if (canWrite) {
                         // enable "auto correction mode" - this is required or the XML structure will not be fully corrected
                         xmlContent.setAutoCorrectionEnabled(true);
-                        // now correct the XML        
+                        // now correct the XML
                         xmlContent.correctXmlStructure(getCms());
                         file.setContents(xmlContent.marshal());
                         // write the corrected file

@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -14,12 +14,12 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * Lesser General Public License for more details.
  *
- * For further information about Alkacon Software GmbH, please see the
- * company website: http://www.alkacon.com
+ * For further information about Alkacon Software GmbH & Co. KG, please see the
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -27,6 +27,7 @@
 
 package org.opencms.flex;
 
+import org.opencms.flex.CmsFlexRequestKey.PathsBean;
 import org.opencms.loader.I_CmsResourceLoader;
 import org.opencms.main.CmsLog;
 import org.opencms.util.CmsStringUtil;
@@ -43,13 +44,15 @@ import javax.servlet.http.HttpSession;
 
 import org.apache.commons.logging.Log;
 
+import com.google.common.collect.Lists;
+
 /**
  * Key used to describe the caching behaviour of a specific resource.<p>
  *
  * It has a lot of variables that are directly accessed (which isn't good style, I know)
  * to avoid method calling overhead (a cache is about speed, isn't it :).<p>
- * 
- * @since 6.0.0 
+ *
+ * @since 6.0.0
  */
 public class CmsFlexCacheKey {
 
@@ -117,32 +120,40 @@ public class CmsFlexCacheKey {
     private static final String CACHE_20_DEVICE = "device";
 
     /** Flex cache keyword: container-element. */
-    private static final String CACHE_22_CONTAINER_ELEMENT = "container-element";
+    private static final String CACHE_21_CONTAINER_ELEMENT = "container-element";
+
+    /** Flex cache keyword: ignore. */
+    private static final String CACHE_22_IGNORE = "ignore";
+
+    /** Flex cache key component for the __forceAbsoluteLinks parameter. */
+    private static final String CACHE_FORCE_ABSOLUTE_LINKS = "force-abs";
 
     /** The list of keywords of the Flex cache language. */
-    private static final List<String> CACHE_COMMANDS = Arrays.asList(new String[] {
-        CACHE_00_ALWAYS,
-        CACHE_01_NEVER,
-        CACHE_02_URI,
-        CACHE_03_USER,
-        CACHE_04_PARAMS,
-        CACHE_05_NO_PARAMS,
-        CACHE_06_TIMEOUT,
-        CACHE_07_SESSION,
-        CACHE_08_SCHEMES,
-        CACHE_09_PORTS,
-        CACHE_10_FALSE,
-        CACHE_11_PARSE_ERROR,
-        CACHE_12_TRUE,
-        CACHE_13_IP,
-        CACHE_14_ELEMENT,
-        CACHE_15_LOCALE,
-        CACHE_16_ENCODING,
-        CACHE_17_SITE,
-        CACHE_18_ATTRS,
-        CACHE_19_NO_ATTRS,
-        CACHE_20_DEVICE,
-        CACHE_22_CONTAINER_ELEMENT});
+    private static final List<String> CACHE_COMMANDS = Arrays.asList(
+        new String[] {
+            CACHE_00_ALWAYS,
+            CACHE_01_NEVER,
+            CACHE_02_URI,
+            CACHE_03_USER,
+            CACHE_04_PARAMS,
+            CACHE_05_NO_PARAMS,
+            CACHE_06_TIMEOUT,
+            CACHE_07_SESSION,
+            CACHE_08_SCHEMES,
+            CACHE_09_PORTS,
+            CACHE_10_FALSE,
+            CACHE_11_PARSE_ERROR,
+            CACHE_12_TRUE,
+            CACHE_13_IP,
+            CACHE_14_ELEMENT,
+            CACHE_15_LOCALE,
+            CACHE_16_ENCODING,
+            CACHE_17_SITE,
+            CACHE_18_ATTRS,
+            CACHE_19_NO_ATTRS,
+            CACHE_20_DEVICE,
+            CACHE_21_CONTAINER_ELEMENT,
+            CACHE_22_IGNORE});
 
     /** Marker to identify use of certain String key members (uri, ip etc.). */
     private static final String IS_USED = "/ /";
@@ -210,29 +221,32 @@ public class CmsFlexCacheKey {
     /** Cache key variable: The user id. */
     private String m_user;
 
-    /** The cache behaviour description for the resource. */
-    private String m_variation;
+    /** Resource without online / offline suffix. */
+    private String m_actualResource;
+
+    /** True if 'ignore' directive is set. */
+    private boolean m_ignore;
 
     /**
      * This constructor is used when building a cache key from set of cache directives.<p>
-     * 
-     * These directives are attached to the properties of the requested resource 
-     * on a property called "cache". 
-     * The value of this poperty that is passed in this constructor as "cacheDirectives" 
+     *
+     * These directives are attached to the properties of the requested resource
+     * on a property called "cache".
+     * The value of this poperty that is passed in this constructor as "cacheDirectives"
      * is parsed to build the keys data structure.<p>
      *
-     * In case a parsing error occures, the value of this key is set to "cache=never", 
-     * and the hadParseError() flag is set to true. 
+     * In case a parsing error occures, the value of this key is set to "cache=never",
+     * and the hadParseError() flag is set to true.
      * This is done to ensure that a valid key is always constructed with the constructor.<p>
-     * 
+     *
      * @param resourcename the full name of the resource including site root
      * @param cacheDirectives the cache directives of the resource (value of the property "cache")
      * @param online must be true for an online resource, false for offline resources
      */
     public CmsFlexCacheKey(String resourcename, String cacheDirectives, boolean online) {
 
+        m_actualResource = resourcename;
         m_resource = getKeyName(resourcename, online);
-        m_variation = "never";
         m_always = -1;
         m_timeout = -1;
         if (cacheDirectives != null) {
@@ -244,9 +258,9 @@ public class CmsFlexCacheKey {
     }
 
     /**
-     * Calculates the cache key name that is used as key in 
+     * Calculates the cache key name that is used as key in
      * the first level of the FlexCache.<p>
-     * 
+     *
      * @param resourcename the full name of the resource including site root
      * @param online must be true for an online resource, false for offline resources
      *
@@ -258,8 +272,23 @@ public class CmsFlexCacheKey {
     }
 
     /**
-     * Appends a flex cache key value to the given buffer.<p> 
-     *  
+     * Returns resource name from given key name.<p>
+     *
+     * @param keyName given name of key.
+     * @return name of resource if key is valid, otherwise ""
+     */
+    public static String getResourceName(String keyName) {
+
+        if (keyName.endsWith(CmsFlexCache.CACHE_OFFLINESUFFIX) | keyName.endsWith(CmsFlexCache.CACHE_ONLINESUFFIX)) {
+            return keyName.split(" ")[0];
+        } else {
+            return "";
+        }
+    }
+
+    /**
+     * Appends a flex cache key value to the given buffer.<p>
+     *
      * @param str the buffer to append to
      * @param key the key to append
      * @param value the value to append
@@ -277,11 +306,46 @@ public class CmsFlexCacheKey {
     }
 
     /**
+     * Returns the actual resource path under which this is cached, without online / offline suffix.<p>
+     *
+     * @return the actual resource path
+     */
+    public String getActualResource() {
+
+        return m_actualResource;
+    }
+
+    /**
+     * Gets the list of root paths for the cache key / request key combination which should be used to determine the set of flex cache buckets for the flex cache entry.<p>
+     *
+     * @param key the flex request key
+     * @return the list of paths which should be used to determine the flex cache buckets
+     */
+    public List<String> getPathsForBuckets(CmsFlexRequestKey key) {
+
+        PathsBean pathBean = key.getPaths();
+        List<String> paths = Lists.newArrayList();
+        if (m_uri != null) {
+            paths.add(pathBean.getUri());
+            paths.add(pathBean.getDetailElement());
+        }
+        if (m_site != null) {
+            paths.add(pathBean.getSite());
+        }
+        if (m_containerElement != null) {
+            paths.add(pathBean.getContainerElement());
+        }
+
+        paths.removeAll(Collections.singletonList(null));
+        return paths;
+    }
+
+    /**
      * This flag is used to indicate that a parse error had
      * occurred, which can happen if the cache directives String
      * passed to the constructor using the response is
      * not build according to the Flex cache language syntax.<p>
-     * 
+     *
      * @return true if a parse error did occur, false otherwise
      */
     public boolean hadParseError() {
@@ -290,18 +354,30 @@ public class CmsFlexCacheKey {
     }
 
     /**
+     * Returns true if 'ignore' directive is set.<p>
+     *
+     * Mostly the same as 'never', but prevents the 'Cache-Control: public, max-age=0' header from being set
+     *
+     *  @return true if 'ignore' is set
+     */
+    public boolean isIgnore() {
+
+        return m_ignore;
+    }
+
+    /**
      * Compares this key to the other key passed as parameter,
      * from comparing the two keys, a variation String is constructed.<p>
-     * 
+     *
      * This method is the "heart" of the key matching process.<p>
      *
-     * The assumtion is that this key should be the one constructed for the response, 
+     * The assumtion is that this key should be the one constructed for the response,
      * while the parameter key should have been constructed from the request.<p>
      *
      * A short example how this works:
      * If the cache key is "cache=user" and the request is done from a guest user
      * the constructed variation will be "user=(guest)".<p>
-     * 
+     *
      * @param key the key to match this key with
      * @return null if not cachable, or the Variation String if cachable
      */
@@ -312,6 +388,11 @@ public class CmsFlexCacheKey {
             if (LOG.isDebugEnabled()) {
                 LOG.debug(Messages.get().getBundle().key(Messages.LOG_FLEXCACHEKEY_KEYMATCH_CACHE_NEVER_0));
             }
+            return null;
+        }
+
+        if (m_ignore) {
+            LOG.debug("Not matching because 'ignore' directive is set.");
             return null;
         }
 
@@ -370,7 +451,7 @@ public class CmsFlexCacheKey {
         }
 
         if (m_containerElement != null) {
-            appendKeyValue(str, CACHE_22_CONTAINER_ELEMENT, key.getContainerElement());
+            appendKeyValue(str, CACHE_21_CONTAINER_ELEMENT, key.getContainerElement());
         }
 
         if (m_locale != null) {
@@ -443,7 +524,7 @@ public class CmsFlexCacheKey {
                             str.append(s);
                             str.append("=");
                             Object value = keyAttrs.get(s);
-                            str.append(value.toString());
+                            str.append(value);
                             if (i.hasNext()) {
                                 str.append(",");
                             }
@@ -457,7 +538,7 @@ public class CmsFlexCacheKey {
                         str.append(entry.getKey());
                         str.append("=");
                         Object value = entry.getValue();
-                        str.append(value.toString());
+                        str.append(value);
                         if (i.hasNext()) {
                             str.append(",");
                         }
@@ -523,13 +604,15 @@ public class CmsFlexCacheKey {
         }
 
         if (str.length() > 0) {
+            // we don't want an element to just be cached with the __forceAbsoluteLinks parameter as key if it wouldn't be cached otherwise
+            appendKeyValue(str, CACHE_FORCE_ABSOLUTE_LINKS, "" + key.isForceAbsoluteLinks());
             return str.toString();
         } else {
             return null;
         }
     }
 
-    /** 
+    /**
      * @see java.lang.Object#toString()
      *
      * @return a complete String representation for this key
@@ -545,6 +628,11 @@ public class CmsFlexCacheKey {
                 str.append(";");
                 str.append(CACHE_11_PARSE_ERROR);
             }
+            return str.toString();
+        }
+        if (m_ignore) {
+            // return "ignore"
+            str.append(CACHE_22_IGNORE);
             return str.toString();
         }
         if (m_noparams != null) {
@@ -607,7 +695,7 @@ public class CmsFlexCacheKey {
             appendKeyValue(str, CACHE_20_DEVICE, m_device);
         }
         if (m_containerElement != null) {
-            appendKeyValue(str, CACHE_22_CONTAINER_ELEMENT, m_containerElement);
+            appendKeyValue(str, CACHE_21_CONTAINER_ELEMENT, m_containerElement);
         }
         if (m_locale != null) {
             // add locale
@@ -679,7 +767,7 @@ public class CmsFlexCacheKey {
             str.append(");");
         }
         if (m_timeout >= 0) {
-            // add timeout 
+            // add timeout
             str.append(CACHE_06_TIMEOUT);
             str.append("=(");
             str.append(m_timeout);
@@ -747,27 +835,7 @@ public class CmsFlexCacheKey {
     }
 
     /**
-     * Returns the variation.<p>
-     *
-     * @return the variation
-     */
-    protected String getVariation() {
-
-        return m_variation;
-    }
-
-    /**
-     * Sets the variation.<p>
-     *
-     * @param variation the variation to set
-     */
-    protected void setVariation(String variation) {
-
-        m_variation = variation;
-    }
-
-    /**
-     * Parse a String in the Flex cache language and construct 
+     * Parse a String in the Flex cache language and construct
      * the key data structure from this.<p>
      *
      * @param key the String to parse (usually read from the file property "cache")
@@ -899,6 +967,9 @@ public class CmsFlexCacheKey {
                     case 21: // container element
                         m_containerElement = IS_USED;
                         break;
+                    case 22:
+                        m_ignore = true;
+                        break;
                     default: // unknown directive, throw error
                         m_parseError = true;
                 }
@@ -906,7 +977,7 @@ public class CmsFlexCacheKey {
         } catch (Exception e) {
             // any Exception here indicates a parsing error
             if (LOG.isErrorEnabled()) {
-                LOG.error(Messages.get().getBundle().key(Messages.LOG_FLEXCACHEKEY_PARSE_ERROR_1, e.toString()));
+                LOG.error(Messages.get().getBundle().key(Messages.LOG_FLEXCACHEKEY_PARSE_ERROR_1, e.toString()), e);
             }
             m_parseError = true;
         }
@@ -916,11 +987,11 @@ public class CmsFlexCacheKey {
         }
     }
 
-    /** 
+    /**
      * A helper method for the parsing process which parses
      * Strings like groups=(a, b, c).<p>
      *
-     * @param value the String to parse 
+     * @param value the String to parse
      * @return a Map that contains of the parsed values, only the keyset of the Map is needed later
      */
     private Set<String> parseValueList(String value) {

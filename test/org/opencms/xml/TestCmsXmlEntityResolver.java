@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -14,12 +14,12 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * Lesser General Public License for more details.
  *
- * For further information about Alkacon Software GmbH, please see the
- * company website: http://www.alkacon.com
+ * For further information about Alkacon Software GmbH & Co. KG, please see the
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -30,79 +30,47 @@ package org.opencms.xml;
 import org.opencms.file.CmsFile;
 import org.opencms.file.CmsObject;
 import org.opencms.i18n.CmsEncoder;
-import org.opencms.test.OpenCmsTestCase;
-import org.opencms.test.OpenCmsTestProperties;
+import org.opencms.test.OpenCmsTestRunner;
 import org.opencms.util.CmsFileUtil;
 import org.opencms.xml.content.CmsXmlContent;
 import org.opencms.xml.content.CmsXmlContentFactory;
 
-import junit.extensions.TestSetup;
-import junit.framework.Test;
-import junit.framework.TestSuite;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInfo;
 
 /**
  * Tests the OpenCms XML entity resolver.<p>
  *
  */
-public class TestCmsXmlEntityResolver extends OpenCmsTestCase {
+public class TestCmsXmlEntityResolver extends OpenCmsTestRunner {
 
     /**
-     * Default JUnit constructor.<p>
-     * 
-     * @param arg0 JUnit parameters
+     * @see org.opencms.test.OpenCmsTestRunner#$openCmsSetUp(org.junit.jupiter.api.TestInfo)
      */
-    public TestCmsXmlEntityResolver(String arg0) {
+    @Override
+    @BeforeAll
+    public void $openCmsSetUp(TestInfo testInfo) {
 
-        super(arg0);
+        setupOpenCms(testInfo, "simpletest", "/");
     }
 
     /**
-     * Test suite for this test class.<p>
-     * 
-     * @return the test suite
-     */
-    public static Test suite() {
-
-        OpenCmsTestProperties.initialize(org.opencms.test.AllTests.TEST_PROPERTIES_PATH);
-
-        TestSuite suite = new TestSuite();
-        suite.setName(TestCmsXmlEntityResolver.class.getName());
-
-        suite.addTest(new TestCmsXmlEntityResolver("testRemoveNestedSubschemaFromCacheIssue"));
-
-        TestSetup wrapper = new TestSetup(suite) {
-
-            @Override
-            protected void setUp() {
-
-                setupOpenCms("simpletest", "/");
-            }
-
-            @Override
-            protected void tearDown() {
-
-                removeOpenCms();
-            }
-        };
-
-        return wrapper;
-    }
-
-    /**
-     * Tests the "wrong version of nested subschema still cached after change in VFS" issue.<p> 
-     * 
+     * Tests the "wrong version of nested subschema still cached after change in VFS" issue.<p>
+     *
      * An issue was discovered in the conext of auto correction of XML content:
-     * Cached content definition objects where not removed from the cache if 
-     * a nested subschema was changed.<p> 
-     * 
+     * Cached content definition objects where not removed from the cache if
+     * a nested subschema was changed.<p>
+     *
      * @throws Exception if the test fails
      */
+    @Test
     public void testRemoveNestedSubschemaFromCacheIssue() throws Exception {
 
         CmsObject cms = getCmsObject();
-        echo("Testing the \"wrong version of nested subschema still cached after change in VFS\" issue");
+        System.out.println("Testing the \"wrong version of nested subschema still cached after change in VFS\" issue");
 
-        // this test replaces the predefined article schema with an "articlelist" 
+        // this test replaces the predefined article schema with an "articlelist"
         // schema that contains the original article as nested subschema
         // this is require so that the original resource type for the article can be used
         String nestedSchemaUri = "/xmlcontent/subarticle.xsd";
@@ -112,7 +80,7 @@ public class TestCmsXmlEntityResolver extends OpenCmsTestCase {
         // copy the original article XML schema
         cms.copyResource(schemaUri, nestedSchemaUri);
 
-        // overwrite the schema with the new version read from the RFS      
+        // overwrite the schema with the new version read from the RFS
         String rfsname = "org/opencms/xml/xmlcontent-definition-1.xsd";
         String content = CmsFileUtil.readFile(rfsname, CmsEncoder.ENCODING_ISO_8859_1);
         // write the updated XML schema to the VFS
@@ -122,7 +90,7 @@ public class TestCmsXmlEntityResolver extends OpenCmsTestCase {
         cms.writeFile(schemaFile);
 
         // create a new xml content article with the updated schema
-        cms.createResource(xmlContentUri, OpenCmsTestCase.ARTICLE_TYPEID);
+        cms.createResource(xmlContentUri, ARTICLE_TYPEID);
         CmsFile xmlContentFile = cms.readFile(xmlContentUri);
         CmsXmlContent xmlContent = CmsXmlContentFactory.unmarshal(cms, xmlContentFile);
 
@@ -145,9 +113,9 @@ public class TestCmsXmlEntityResolver extends OpenCmsTestCase {
         } catch (CmsXmlException e) {
             ex = e;
         }
-        assertNotNull("Validation of XML did not fail even though nested subschema was changed", ex);
+        assertNotNull(ex, "Validation of XML did not fail even though nested subschema was changed");
 
-        // now set the "auto correct" runtime property and write the XML (which will auto correct it)        
+        // now set the "auto correct" runtime property and write the XML (which will auto correct it)
         cms.getRequestContext().setAttribute(CmsXmlContent.AUTO_CORRECTION_ATTRIBUTE, Boolean.TRUE);
         xmlContentFile2 = cms.writeFile(xmlContentFile2);
         xmlContent2 = CmsXmlContentFactory.unmarshal(cms, xmlContentFile2);

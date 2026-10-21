@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -14,12 +14,12 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * Lesser General Public License for more details.
  *
- * For further information about Alkacon Software GmbH, please see the
- * company website: http://www.alkacon.com
+ * For further information about Alkacon Software GmbH & Co. KG, please see the
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -27,6 +27,7 @@
 
 package org.opencms.importexport;
 
+import org.opencms.db.CmsDefaultUsers;
 import org.opencms.db.CmsResourceState;
 import org.opencms.file.CmsFile;
 import org.opencms.file.CmsFolder;
@@ -34,17 +35,21 @@ import org.opencms.file.CmsGroup;
 import org.opencms.file.CmsObject;
 import org.opencms.file.CmsProject;
 import org.opencms.file.CmsProperty;
+import org.opencms.file.CmsPropertyDefinition;
 import org.opencms.file.CmsResource;
 import org.opencms.file.CmsResourceFilter;
 import org.opencms.file.CmsUser;
 import org.opencms.file.CmsVfsException;
 import org.opencms.file.CmsVfsResourceNotFoundException;
+import org.opencms.file.types.CmsResourceTypePlain;
 import org.opencms.i18n.CmsMessageContainer;
+import org.opencms.importexport.CmsImportExportManager.TimestampMode;
 import org.opencms.main.CmsEvent;
 import org.opencms.main.CmsException;
 import org.opencms.main.CmsLog;
 import org.opencms.main.I_CmsEventListener;
 import org.opencms.main.OpenCms;
+import org.opencms.module.CmsModule.ExportMode;
 import org.opencms.relations.CmsRelation;
 import org.opencms.relations.CmsRelationFilter;
 import org.opencms.report.I_CmsReport;
@@ -55,6 +60,8 @@ import org.opencms.security.CmsRoleViolationException;
 import org.opencms.util.CmsDataTypeUtil;
 import org.opencms.util.CmsDateUtil;
 import org.opencms.util.CmsFileUtil;
+import org.opencms.util.CmsMacroResolver;
+import org.opencms.util.CmsStringUtil;
 import org.opencms.util.CmsUUID;
 import org.opencms.util.CmsXmlSaxWriter;
 import org.opencms.workplace.CmsWorkplace;
@@ -66,7 +73,9 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.logging.Log;
@@ -79,17 +88,20 @@ import org.xml.sax.SAXException;
 
 /**
  * Provides the functionality to export files from the OpenCms VFS to a ZIP file.<p>
- * 
+ *
  * The ZIP file written will contain a copy of all exported files with their contents.
- * It will also contain a <code>manifest.xml</code> file in which all meta-information 
+ * It will also contain a <code>manifest.xml</code> file in which all meta-information
  * about this files are stored, like permissions etc.<p>
- * 
- * @since 6.0.0 
+ *
+ * @since 6.0.0
  */
 public class CmsExport {
 
     /** The log object for this class. */
     private static final Log LOG = CmsLog.getLog(CmsExport.class);
+
+    /** The cms context. */
+    private CmsObject m_cms;
 
     /** Counter for the export. */
     private int m_exportCount;
@@ -97,8 +109,14 @@ public class CmsExport {
     /** Set of all exported files, required for preventing redundant sibling export. */
     private Set<CmsUUID> m_exportedResources;
 
+    /** The export writer. */
+    private CmsExportHelper m_exportWriter;
+
     /** The export parameters. */
     private CmsExportParameters m_parameters;
+
+    /** The report. */
+    private I_CmsReport m_report;
 
     /** The top level file node where all resources are appended to. */
     private Element m_resourceNode;
@@ -109,9 +127,6 @@ public class CmsExport {
     /** Cache for previously added super folders. */
     private List<String> m_superFolders;
 
-    /** The export writer. */
-    private CmsExportHelper m_exportWriter;
-
     /**
      * Constructs a new uninitialized export, required for special subclass data export.<p>
      */
@@ -120,16 +135,10 @@ public class CmsExport {
         // empty constructor
     }
 
-    /** The cms context. */
-    private CmsObject m_cms;
-
-    /** The report. */
-    private I_CmsReport m_report;
-
     /**
      * Constructs a new export.<p>
-     * 
-     * @param cms the cms context 
+     *
+     * @param cms the cms context
      * @param report the report
      *
      * @throws CmsRoleViolationException if the current user has not the required role
@@ -147,10 +156,10 @@ public class CmsExport {
 
     /**
      * Export the data.<p>
-     * 
+     *
      * @param parameters the export parameters
-     * 
-     * @throws CmsImportExportException if something goes wrong 
+     *
+     * @throws CmsImportExportException if something goes wrong
      */
     public void exportData(CmsExportParameters parameters) throws CmsImportExportException {
 
@@ -162,7 +171,7 @@ public class CmsExport {
         OpenCms.fireCmsEvent(new CmsEvent(I_CmsEventListener.EVENT_CLEAR_CACHES, new HashMap<String, Object>(0)));
 
         try {
-            Element exportNode = openExportFile();
+            Element exportNode = openExportFile(parameters.getExportMode());
 
             if (m_parameters.getModuleInfo() != null) {
                 // add the module element
@@ -173,7 +182,7 @@ public class CmsExport {
 
             // export account data only if selected
             if (m_parameters.isExportAccountData()) {
-                Element accountsElement = exportNode.addElement(CmsImportVersion7.N_ACCOUNTS);
+                Element accountsElement = exportNode.addElement(CmsImportVersion10.N_ACCOUNTS);
                 getSaxWriter().writeOpen(accountsElement);
 
                 exportOrgUnits(accountsElement);
@@ -184,12 +193,13 @@ public class CmsExport {
 
             // export resource data only if selected
             if (m_parameters.isExportResourceData()) {
+                m_parameters.addAdditionalResources();
                 exportAllResources(exportNode, m_parameters.getResources());
             }
 
             // export project data only if selected
             if (m_parameters.isExportProjectData()) {
-                Element projectsElement = exportNode.addElement(CmsImportVersion7.N_PROJECTS);
+                Element projectsElement = exportNode.addElement(CmsImportVersion10.N_PROJECTS);
                 getSaxWriter().writeOpen(projectsElement);
 
                 exportProjects(projectsElement);
@@ -221,6 +231,10 @@ public class CmsExport {
             }
 
             throw new CmsImportExportException(message, ioe);
+        } finally {
+            if (m_exportWriter != null) {
+                m_exportWriter.ensureZipStreamClosed();
+            }
         }
     }
 
@@ -228,7 +242,7 @@ public class CmsExport {
      * Exports the given folder and all child resources.<p>
      *
      * @param folderName to complete path to the resource to export
-     * 
+     *
      * @throws CmsImportExportException if something goes wrong
      * @throws SAXException if something goes wrong processing the manifest.xml
      * @throws IOException if not all resources could be appended to the ZIP archive
@@ -313,9 +327,9 @@ public class CmsExport {
 
     /**
      * Adds all files in fileNames to the manifest.xml file.<p>
-     * 
+     *
      * @param fileNames list of path Strings, e.g. <code>/folder/index.html</code>
-     * 
+     *
      * @throws CmsImportExportException if something goes wrong
      * @throws IOException if a file could not be exported
      * @throws SAXException if something goes wrong processing the manifest.xml
@@ -358,11 +372,11 @@ public class CmsExport {
     }
 
     /**
-     * Adds the parent folders of the given resource to the config file, 
+     * Adds the parent folders of the given resource to the config file,
      * starting at the top, excluding the root folder.<p>
-     * 
+     *
      * @param resourceName the name of a resource in the VFS
-     * 
+     *
      * @throws CmsImportExportException if something goes wrong
      * @throws SAXException if something goes wrong processing the manifest.xml
      */
@@ -379,24 +393,36 @@ public class CmsExport {
                 m_superFolders = new ArrayList<String>();
             }
             List<String> superFolders = new ArrayList<String>();
+            String currentSubFolder = resourceName;
 
             // Check, if the path is really a folder
-            if (resourceName.lastIndexOf("/") != (resourceName.length() - 1)) {
-                resourceName = resourceName.substring(0, resourceName.lastIndexOf("/") + 1);
-            }
-            while (resourceName.length() > "/".length()) {
-                superFolders.add(resourceName);
-                resourceName = resourceName.substring(0, resourceName.length() - 1);
-                resourceName = resourceName.substring(0, resourceName.lastIndexOf("/") + 1);
+            boolean isFolderResource = currentSubFolder.endsWith("/");
+
+            while (currentSubFolder.length() > "/".length()) {
+                currentSubFolder = currentSubFolder.substring(0, currentSubFolder.length() - 1);
+                currentSubFolder = currentSubFolder.substring(0, currentSubFolder.lastIndexOf("/") + 1);
+                if (currentSubFolder.length() <= "/".length()) {
+                    break;
+                }
+                superFolders.add(currentSubFolder);
             }
             for (int i = superFolders.size() - 1; i >= 0; i--) {
                 String addFolder = superFolders.get(i);
                 if (!m_superFolders.contains(addFolder)) {
                     // This super folder was NOT added previously. Add it now!
                     CmsFolder folder = getCms().readFolder(addFolder, CmsResourceFilter.IGNORE_EXPIRATION);
-                    appendResourceToManifest(folder, false);
+                    appendResourceToManifest(folder, false, true);
                     // Remember that this folder was added
                     m_superFolders.add(addFolder);
+                }
+            }
+            if (isFolderResource) { // add the folder itself
+                if (!m_superFolders.contains(resourceName)) {
+                    // This super folder was NOT added previously. Add it now!
+                    CmsFolder folder = getCms().readFolder(resourceName, CmsResourceFilter.IGNORE_EXPIRATION);
+                    appendResourceToManifest(folder, false);
+                    // Remember that this folder was added
+                    m_superFolders.add(resourceName);
                 }
             }
         } catch (CmsImportExportException e) {
@@ -417,28 +443,32 @@ public class CmsExport {
 
     /**
      * Adds a property node to the manifest.xml.<p>
-     * 
+     *
      * @param propertiesElement the parent element to append the node to
      * @param propertyName the name of the property
      * @param propertyValue the value of the property
      * @param shared if <code>true</code>, add a shared property attribute to the generated property node
      */
-    protected void addPropertyNode(Element propertiesElement, String propertyName, String propertyValue, boolean shared) {
+    protected void addPropertyNode(
+        Element propertiesElement,
+        String propertyName,
+        String propertyValue,
+        boolean shared) {
 
         if (propertyValue != null) {
-            Element propertyElement = propertiesElement.addElement(CmsImportVersion7.N_PROPERTY);
+            Element propertyElement = propertiesElement.addElement(CmsImportVersion10.N_PROPERTY);
             if (shared) {
                 // add "type" attribute to the property node in case of a shared/resource property value
-                propertyElement.addAttribute(CmsImportVersion7.A_TYPE, CmsImportVersion7.PROPERTY_ATTRIB_TYPE_SHARED);
+                propertyElement.addAttribute(CmsImportVersion10.A_TYPE, CmsImportVersion10.PROPERTY_ATTRIB_TYPE_SHARED);
             }
-            propertyElement.addElement(CmsImportVersion7.N_NAME).addText(propertyName);
-            propertyElement.addElement(CmsImportVersion7.N_VALUE).addCDATA(propertyValue);
+            propertyElement.addElement(CmsImportVersion10.N_NAME).addText(propertyName);
+            propertyElement.addElement(CmsImportVersion10.N_VALUE).addCDATA(propertyValue);
         }
     }
 
     /**
      * Adds a relation node to the <code>manifest.xml</code>.<p>
-     * 
+     *
      * @param relationsElement the parent element to append the node to
      * @param structureId the structure id of the target relation
      * @param sitePath the site path of the target relation
@@ -446,27 +476,45 @@ public class CmsExport {
      */
     protected void addRelationNode(Element relationsElement, String structureId, String sitePath, String relationType) {
 
-        if ((structureId != null) && (sitePath != null) && (relationType != null)) {
-            Element relationElement = relationsElement.addElement(CmsImportVersion7.N_RELATION);
-
-            relationElement.addElement(CmsImportVersion7.N_ID).addText(structureId);
-            relationElement.addElement(CmsImportVersion7.N_PATH).addText(sitePath);
-            relationElement.addElement(CmsImportVersion7.N_TYPE).addText(relationType);
+        if ((sitePath != null) && (relationType != null)) {
+            Element relationElement = relationsElement.addElement(CmsImportVersion10.N_RELATION);
+            if (structureId != null) {
+                relationElement.addElement(CmsImportVersion10.N_ID).addText(structureId);
+            }
+            relationElement.addElement(CmsImportVersion10.N_PATH).addText(sitePath);
+            relationElement.addElement(CmsImportVersion10.N_TYPE).addText(relationType);
         }
     }
 
-    /**
-     * Writes the data for a resource (like access-rights) to the <code>manifest.xml</code> file.<p>
-     * 
-     * @param resource the resource to get the data from
-     * @param source flag to show if the source information in the xml file must be written
-     * 
-     * @throws CmsImportExportException if something goes wrong
-     * @throws SAXException if something goes wrong processing the manifest.xml
+    /** @see #appendResourceToManifest(CmsResource, boolean, boolean)
+     * @param resource @see #appendResourceToManifest(CmsResource, boolean, boolean)
+     * @param source @see #appendResourceToManifest(CmsResource, boolean, boolean)
+     * @throws CmsImportExportException @see #appendResourceToManifest(CmsResource, boolean, boolean)
+     * @throws SAXException @see #appendResourceToManifest(CmsResource, boolean, boolean)
      */
     protected void appendResourceToManifest(CmsResource resource, boolean source)
     throws CmsImportExportException, SAXException {
 
+        appendResourceToManifest(resource, source, false);
+    }
+
+    /**
+     * Writes the data for a resource (like access-rights) to the <code>manifest.xml</code> file.<p>
+     *
+     * @param resource the resource to get the data from
+     * @param source flag to show if the source information in the xml file must be written
+     * @param isSuperFolder flag to indicate that the resource is only a super folder of a module resource.
+     *  This will prevent exporting uuid and creation date in the reduced export mode.
+     *
+     * @throws CmsImportExportException if something goes wrong
+     * @throws SAXException if something goes wrong processing the manifest.xml
+     */
+    protected void appendResourceToManifest(CmsResource resource, boolean source, boolean isSuperFolder)
+    throws CmsImportExportException, SAXException {
+
+        if (isSuperFolder && m_parameters.isSkipParentFolders()) {
+            return;
+        }
         try {
             // only write <source> if resource is a file
             String fileName = trimResourceName(getCms().getSitePath(resource));
@@ -477,165 +525,214 @@ public class CmsExport {
             }
 
             // define the file node
-            Element fileElement = m_resourceNode.addElement(CmsImportVersion7.N_FILE);
+            Element fileElement = m_resourceNode.addElement(CmsImportVersion10.N_FILE);
 
             if (resource.isFile()) {
                 if (source) {
-                    fileElement.addElement(CmsImportVersion7.N_SOURCE).addText(fileName);
+                    fileElement.addElement(CmsImportVersion10.N_SOURCE).addText(fileName);
                 }
             } else {
                 m_exportCount++;
                 I_CmsReport report = getReport();
                 // output something to the report for the folder
-                report.print(org.opencms.report.Messages.get().container(
-                    org.opencms.report.Messages.RPT_SUCCESSION_1,
-                    String.valueOf(m_exportCount)), I_CmsReport.FORMAT_NOTE);
+                report.print(
+                    org.opencms.report.Messages.get().container(
+                        org.opencms.report.Messages.RPT_SUCCESSION_1,
+                        String.valueOf(m_exportCount)),
+                    I_CmsReport.FORMAT_NOTE);
                 report.print(Messages.get().container(Messages.RPT_EXPORT_0), I_CmsReport.FORMAT_NOTE);
-                report.print(org.opencms.report.Messages.get().container(
-                    org.opencms.report.Messages.RPT_ARGUMENT_1,
-                    getCms().getSitePath(resource)));
+                report.print(
+                    org.opencms.report.Messages.get().container(
+                        org.opencms.report.Messages.RPT_ARGUMENT_1,
+                        getCms().getSitePath(resource)));
                 report.print(org.opencms.report.Messages.get().container(org.opencms.report.Messages.RPT_DOTS_0));
                 report.println(
                     org.opencms.report.Messages.get().container(org.opencms.report.Messages.RPT_OK_0),
                     I_CmsReport.FORMAT_OK);
 
                 if (LOG.isInfoEnabled()) {
-                    LOG.info(Messages.get().getBundle().key(
-                        Messages.LOG_EXPORTING_OK_2,
-                        String.valueOf(m_exportCount),
-                        getCms().getSitePath(resource)));
+                    LOG.info(
+                        Messages.get().getBundle().key(
+                            Messages.LOG_EXPORTING_OK_2,
+                            String.valueOf(m_exportCount),
+                            getCms().getSitePath(resource)));
                 }
             }
+
+            boolean isReducedExportMode = m_parameters.getExportMode().equals(ExportMode.REDUCED);
+            boolean isMinimalMetaData = isReducedExportMode && isSuperFolder && exportWithMinimalMetaData(fileName);
 
             // <destination>
-            fileElement.addElement(CmsImportVersion7.N_DESTINATION).addText(fileName);
+            fileElement.addElement(CmsImportVersion10.N_DESTINATION).addText(fileName);
             // <type>
-            fileElement.addElement(CmsImportVersion7.N_TYPE).addText(
-                OpenCms.getResourceManager().getResourceType(resource.getTypeId()).getTypeName());
-
-            //  <uuidstructure>
-            fileElement.addElement(CmsImportVersion7.N_UUIDSTRUCTURE).addText(resource.getStructureId().toString());
-            if (resource.isFile()) {
-                //  <uuidresource>
-                fileElement.addElement(CmsImportVersion7.N_UUIDRESOURCE).addText(resource.getResourceId().toString());
-            }
-
-            // <datelastmodified>
-            fileElement.addElement(CmsImportVersion7.N_DATELASTMODIFIED).addText(
-                CmsDateUtil.getHeaderDate(resource.getDateLastModified()));
-            // <userlastmodified>
-            String userNameLastModified = null;
+            Element typeElem = fileElement.addElement(CmsImportVersion10.N_TYPE);
+            String typeName = null;
             try {
-                userNameLastModified = getCms().readUser(resource.getUserLastModified()).getName();
+                typeName = OpenCms.getResourceManager().getResourceType(resource.getTypeId()).getTypeName();
             } catch (CmsException e) {
-                userNameLastModified = OpenCms.getDefaultUsers().getUserAdmin();
+                LOG.warn(e.getLocalizedMessage(), e);
+                typeName = "unknown_" + resource.getTypeId();
             }
-            fileElement.addElement(CmsImportVersion7.N_USERLASTMODIFIED).addText(userNameLastModified);
-            // <datecreated>
-            fileElement.addElement(CmsImportVersion7.N_DATECREATED).addText(
-                CmsDateUtil.getHeaderDate(resource.getDateCreated()));
-            // <usercreated>
-            String userNameCreated = null;
-            try {
-                userNameCreated = getCms().readUser(resource.getUserCreated()).getName();
-            } catch (CmsException e) {
-                userNameCreated = OpenCms.getDefaultUsers().getUserAdmin();
-            }
-            fileElement.addElement(CmsImportVersion7.N_USERCREATED).addText(userNameCreated);
-            // <release>
-            if (resource.getDateReleased() != CmsResource.DATE_RELEASED_DEFAULT) {
-                fileElement.addElement(CmsImportVersion7.N_DATERELEASED).addText(
-                    CmsDateUtil.getHeaderDate(resource.getDateReleased()));
-            }
-            // <expire>
-            if (resource.getDateExpired() != CmsResource.DATE_EXPIRED_DEFAULT) {
-                fileElement.addElement(CmsImportVersion7.N_DATEEXPIRED).addText(
-                    CmsDateUtil.getHeaderDate(resource.getDateExpired()));
-            }
-            // <flags>
-            int resFlags = resource.getFlags();
-            resFlags &= ~CmsResource.FLAG_LABELED;
-            fileElement.addElement(CmsImportVersion7.N_FLAGS).addText(Integer.toString(resFlags));
+            typeElem.addText(typeName);
 
-            // write the properties to the manifest
-            Element propertiesElement = fileElement.addElement(CmsImportVersion7.N_PROPERTIES);
-            List<CmsProperty> properties = getCms().readPropertyObjects(getCms().getSitePath(resource), false);
-            // sort the properties for a well defined output order
-            Collections.sort(properties);
-            for (int i = 0, n = properties.size(); i < n; i++) {
-                CmsProperty property = properties.get(i);
-                if (isIgnoredProperty(property)) {
-                    continue;
+            if (!isMinimalMetaData) {
+                //  <uuidstructure>
+                fileElement.addElement(CmsImportVersion10.N_UUIDSTRUCTURE).addText(
+                    resource.getStructureId().toString());
+                if (resource.isFile()) {
+                    //  <uuidresource>
+                    fileElement.addElement(CmsImportVersion10.N_UUIDRESOURCE).addText(
+                        resource.getResourceId().toString());
                 }
-                addPropertyNode(propertiesElement, property.getName(), property.getStructureValue(), false);
-                addPropertyNode(propertiesElement, property.getName(), property.getResourceValue(), true);
             }
 
-            // Write the relations to the manifest
-            List<CmsRelation> relations = getCms().getRelationsForResource(
-                resource,
-                CmsRelationFilter.TARGETS.filterNotDefinedInContent());
-            Element relationsElement = fileElement.addElement(CmsImportVersion7.N_RELATIONS);
-            // iterate over the relations 
-            for (CmsRelation relation : relations) {
-                // relation may be broken already: 
+            if (!isReducedExportMode) {
+                // <datelastmodified>
+                fileElement.addElement(CmsImportVersion10.N_DATELASTMODIFIED).addText(
+                    getDateLastModifiedForExport(resource));
+                // <userlastmodified>
+                String userNameLastModified = null;
                 try {
-                    CmsResource target = relation.getTarget(getCms(), CmsResourceFilter.ALL);
-                    String structureId = target.getStructureId().toString();
-                    String sitePath = getCms().getSitePath(target);
-                    String relationType = relation.getType().getName();
-                    addRelationNode(relationsElement, structureId, sitePath, relationType);
-                } catch (CmsVfsResourceNotFoundException crnfe) {
-                    // skip this relation: 
-                    if (LOG.isWarnEnabled()) {
-                        LOG.warn(Messages.get().getBundle().key(
-                            Messages.LOG_IMPORTEXPORT_WARN_DELETED_RELATIONS_2,
-                            new String[] {relation.getTargetPath(), resource.getRootPath()}), crnfe);
+                    userNameLastModified = getCms().readUser(resource.getUserLastModified()).getName();
+                } catch (@SuppressWarnings("unused") CmsException e) {
+                    userNameLastModified = OpenCms.getDefaultUsers().getUserAdmin();
+                }
+                fileElement.addElement(CmsImportVersion10.N_USERLASTMODIFIED).addText(userNameLastModified);
+            }
+            if (!isMinimalMetaData) {
+                // <datecreated>
+                fileElement.addElement(CmsImportVersion10.N_DATECREATED).addText(
+                    CmsDateUtil.getHeaderDate(resource.getDateCreated()));
+            }
+            if (!isReducedExportMode) {
+                // <usercreated>
+                String userNameCreated = null;
+                try {
+                    userNameCreated = getCms().readUser(resource.getUserCreated()).getName();
+                } catch (@SuppressWarnings("unused") CmsException e) {
+                    userNameCreated = OpenCms.getDefaultUsers().getUserAdmin();
+                }
+                fileElement.addElement(CmsImportVersion10.N_USERCREATED).addText(userNameCreated);
+            }
+            if (!isMinimalMetaData) {
+                // <release>
+                if (resource.getDateReleased() != CmsResource.DATE_RELEASED_DEFAULT) {
+                    fileElement.addElement(CmsImportVersion10.N_DATERELEASED).addText(
+                        CmsDateUtil.getHeaderDate(resource.getDateReleased()));
+                }
+                // <expire>
+                if (resource.getDateExpired() != CmsResource.DATE_EXPIRED_DEFAULT) {
+                    fileElement.addElement(CmsImportVersion10.N_DATEEXPIRED).addText(
+                        CmsDateUtil.getHeaderDate(resource.getDateExpired()));
+                }
+                // <flags>
+                int resFlags = resource.getFlags();
+                resFlags &= ~CmsResource.FLAG_LABELED;
+                fileElement.addElement(CmsImportVersion10.N_FLAGS).addText(Integer.toString(resFlags));
+
+                // write the properties to the manifest
+                Element propertiesElement = fileElement.addElement(CmsImportVersion10.N_PROPERTIES);
+                List<CmsProperty> properties = getCms().readPropertyObjects(getCms().getSitePath(resource), false);
+                CmsProperty exportTypeProp = CmsProperty.get(CmsPropertyDefinition.PROPERTY_EXPORT_TYPE, properties);
+                String exportType = exportTypeProp.getValue();
+                if ((exportType != null) && CmsResourceTypePlain.getStaticTypeName().equals(typeElem.getText())) {
+                    typeElem.setText(exportType);
+                }
+                // sort the properties for a well defined output order
+                Collections.sort(properties);
+                for (int i = 0, n = properties.size(); i < n; i++) {
+                    CmsProperty property = properties.get(i);
+                    if (isIgnoredProperty(property)) {
+                        continue;
+                    }
+                    addPropertyNode(propertiesElement, property.getName(), property.getStructureValue(), false);
+                    addPropertyNode(propertiesElement, property.getName(), property.getResourceValue(), true);
+                }
+
+                // Write the relations to the manifest
+                List<CmsRelation> relations = getCms().getRelationsForResource(
+                    resource,
+                    CmsRelationFilter.TARGETS.filterNotDefinedInContent());
+                Element relationsElement = fileElement.addElement(CmsImportVersion10.N_RELATIONS);
+                // iterate over the relations
+                for (CmsRelation relation : relations) {
+                    // relation may be broken already:
+                    try {
+                        CmsResource target = relation.getTarget(getCms(), CmsResourceFilter.ALL);
+                        String structureId = target.getStructureId().toString();
+                        String sitePath = getCms().getSitePath(target);
+                        String relationType = relation.getType().getName();
+                        if (OpenCms.getImportExportManager().isImmutable(target.getRootPath())) {
+                            structureId = null;
+                        }
+                        addRelationNode(relationsElement, structureId, sitePath, relationType);
+                    } catch (CmsVfsResourceNotFoundException crnfe) {
+                        // skip this relation:
+                        if (LOG.isWarnEnabled()) {
+                            LOG.warn(
+                                Messages.get().getBundle().key(
+                                    Messages.LOG_IMPORTEXPORT_WARN_DELETED_RELATIONS_2,
+                                    new String[] {relation.getTargetPath(), resource.getRootPath()}),
+                                crnfe);
+                        }
                     }
                 }
-            }
 
-            // append the nodes for access control entries
-            Element acl = fileElement.addElement(CmsImportVersion7.N_ACCESSCONTROL_ENTRIES);
+                // append the nodes for access control entries
+                Element acl = fileElement.addElement(CmsImportVersion10.N_ACCESSCONTROL_ENTRIES);
 
-            // read the access control entries
-            List<CmsAccessControlEntry> fileAcEntries = getCms().getAccessControlEntries(
-                getCms().getSitePath(resource),
-                false);
-            Iterator<CmsAccessControlEntry> i = fileAcEntries.iterator();
+                // read the access control entries
+                List<CmsAccessControlEntry> fileAcEntries = getCms().getAccessControlEntries(
+                    getCms().getSitePath(resource),
+                    false);
+                Iterator<CmsAccessControlEntry> i = fileAcEntries.iterator();
 
-            // create xml elements for each access control entry
-            while (i.hasNext()) {
-                CmsAccessControlEntry ace = i.next();
-                Element a = acl.addElement(CmsImportVersion7.N_ACCESSCONTROL_ENTRY);
+                // create xml elements for each access control entry
+                while (i.hasNext()) {
+                    CmsAccessControlEntry ace = i.next();
+                    Element a = acl.addElement(CmsImportVersion10.N_ACCESSCONTROL_ENTRY);
 
-                // now check if the principal is a group or a user
-                int flags = ace.getFlags();
-                String acePrincipalName = "";
-                CmsUUID acePrincipal = ace.getPrincipal();
-                if ((flags & CmsAccessControlEntry.ACCESS_FLAGS_ALLOTHERS) > 0) {
-                    acePrincipalName = CmsAccessControlEntry.PRINCIPAL_ALL_OTHERS_NAME;
-                } else if ((flags & CmsAccessControlEntry.ACCESS_FLAGS_OVERWRITE_ALL) > 0) {
-                    acePrincipalName = CmsAccessControlEntry.PRINCIPAL_OVERWRITE_ALL_NAME;
-                } else if ((flags & CmsAccessControlEntry.ACCESS_FLAGS_GROUP) > 0) {
-                    // the principal is a group
-                    acePrincipalName = getCms().readGroup(acePrincipal).getPrefixedName();
-                } else if ((flags & CmsAccessControlEntry.ACCESS_FLAGS_USER) > 0) {
-                    // the principal is a user
-                    acePrincipalName = getCms().readUser(acePrincipal).getPrefixedName();
-                } else {
-                    // the principal is a role
-                    acePrincipalName = CmsRole.PRINCIPAL_ROLE + "." + CmsRole.valueOfId(acePrincipal).getRoleName();
+                    // now check if the principal is a group or a user
+                    int flags = ace.getFlags();
+                    String acePrincipalName = "";
+                    CmsUUID acePrincipal = ace.getPrincipal();
+                    if ((flags & CmsAccessControlEntry.ACCESS_FLAGS_ALLOTHERS) > 0) {
+                        acePrincipalName = CmsAccessControlEntry.PRINCIPAL_ALL_OTHERS_NAME;
+                    } else if ((flags & CmsAccessControlEntry.ACCESS_FLAGS_OVERWRITE_ALL) > 0) {
+                        acePrincipalName = CmsAccessControlEntry.PRINCIPAL_OVERWRITE_ALL_NAME;
+                    } else if ((flags & CmsAccessControlEntry.ACCESS_FLAGS_GROUP) > 0) {
+                        // the principal is a group
+                        try {
+                            acePrincipalName = getCms().readGroup(acePrincipal).getPrefixedName();
+                        } catch (@SuppressWarnings("unused") CmsException e) {
+                            // the group for this permissions does not exist anymore, so simply skip it
+                        }
+                    } else if ((flags & CmsAccessControlEntry.ACCESS_FLAGS_USER) > 0) {
+                        // the principal is a user
+                        try {
+                            acePrincipalName = getCms().readUser(acePrincipal).getPrefixedName();
+                        } catch (@SuppressWarnings("unused") CmsException e) {
+                            // the user for this permissions does not exist anymore, so simply skip it
+                        }
+                    } else {
+                        // the principal is a role
+                        acePrincipalName = CmsRole.PRINCIPAL_ROLE + "." + CmsRole.valueOfId(acePrincipal).getRoleName();
+                    }
+
+                    // only add the permission if a principal was set
+                    if (CmsStringUtil.isNotEmptyOrWhitespaceOnly(acePrincipalName)) {
+                        a.addElement(CmsImportVersion10.N_ACCESSCONTROL_PRINCIPAL).addText(acePrincipalName);
+                        a.addElement(CmsImportVersion10.N_FLAGS).addText(Integer.toString(flags));
+
+                        Element b = a.addElement(CmsImportVersion10.N_ACCESSCONTROL_PERMISSIONSET);
+                        b.addElement(CmsImportVersion10.N_ACCESSCONTROL_ALLOWEDPERMISSIONS).addText(
+                            Integer.toString(ace.getAllowedPermissions()));
+                        b.addElement(CmsImportVersion10.N_ACCESSCONTROL_DENIEDPERMISSIONS).addText(
+                            Integer.toString(ace.getDeniedPermissions()));
+                    }
                 }
-
-                a.addElement(CmsImportVersion7.N_ACCESSCONTROL_PRINCIPAL).addText(acePrincipalName);
-                a.addElement(CmsImportVersion7.N_FLAGS).addText(Integer.toString(flags));
-
-                Element b = a.addElement(CmsImportVersion7.N_ACCESSCONTROL_PERMISSIONSET);
-                b.addElement(CmsImportVersion7.N_ACCESSCONTROL_ALLOWEDPERMISSIONS).addText(
-                    Integer.toString(ace.getAllowedPermissions()));
-                b.addElement(CmsImportVersion7.N_ACCESSCONTROL_DENIEDPERMISSIONS).addText(
-                    Integer.toString(ace.getDeniedPermissions()));
+            } else {
+                fileElement.addElement(CmsImportVersion10.N_PROPERTIES);
             }
 
             // write the XML
@@ -658,7 +755,7 @@ public class CmsExport {
 
     /**
      * Returns true if the checked resource name can be exported depending on the include settings.<p>
-     * 
+     *
      * @param resourcename the absolute path of the resource
      * @return true if the checked resource name can be exported depending on the include settings
      */
@@ -668,15 +765,15 @@ public class CmsExport {
         !resourcename.startsWith(CmsWorkplace.VFS_PATH_SYSTEM) // OR always export "/system/"
             || resourcename.equalsIgnoreCase(CmsWorkplace.VFS_PATH_SYSTEM) // OR always export "/system/galleries/"
             || resourcename.startsWith(CmsWorkplace.VFS_PATH_GALLERIES) // OR option "include system folder" selected
-        || (m_parameters.isIncludeSystemFolder() // AND export folder is a system folder
-        && resourcename.startsWith(CmsWorkplace.VFS_PATH_SYSTEM)));
+            || (m_parameters.isIncludeSystemFolder() // AND export folder is a system folder
+                && resourcename.startsWith(CmsWorkplace.VFS_PATH_SYSTEM)));
     }
 
     /**
      * Closes the export ZIP file and saves the XML document for the manifest.<p>
-     * 
+     *
      * @param exportNode the export root node
-     * 
+     *
      * @throws SAXException if something goes wrong processing the manifest.xml
      * @throws IOException if something goes wrong while closing the export file
      */
@@ -685,7 +782,7 @@ public class CmsExport {
         // close the <export> Tag
         getSaxWriter().writeClose(exportNode);
 
-        // close the XML document 
+        // close the XML document
         CmsXmlSaxWriter xmlSaxWriter = (CmsXmlSaxWriter)getSaxWriter().getContentHandler();
 
         // write the manifest file
@@ -693,12 +790,12 @@ public class CmsExport {
     }
 
     /**
-     * Writes the output element to the XML output writer and detaches it 
-     * from it's parent element.<p> 
-     * 
+     * Writes the output element to the XML output writer and detaches it
+     * from it's parent element.<p>
+     *
      * @param parent the parent element
-     * @param output the output element 
-     * 
+     * @param output the output element
+     *
      * @throws SAXException if something goes wrong processing the manifest.xml
      */
     protected void digestElement(Element parent, Element output) throws SAXException {
@@ -709,10 +806,10 @@ public class CmsExport {
 
     /**
      * Exports all resources and possible sub-folders form the provided list of resources.
-     * 
+     *
      * @param parent the parent node to add the resources to
      * @param resourcesToExport the list of resources to export
-     * 
+     *
      * @throws CmsImportExportException if something goes wrong
      * @throws SAXException if something goes wrong processing the manifest.xml
      * @throws IOException if not all resources could be appended to the ZIP archive
@@ -726,11 +823,24 @@ public class CmsExport {
         getSaxWriter().writeOpen(m_resourceNode);
 
         if (m_parameters.isRecursive()) {
-            // remove the possible redundancies in the list of resources
-            resourcesToExport = CmsFileUtil.removeRedundancies(resourcesToExport);
+            String siteRoot = m_cms.getRequestContext().getSiteRoot();
+            if (siteRoot.equals("") || siteRoot.equals("/")) {
+                resourcesToExport = CmsFileUtil.removeRedundancies(resourcesToExport);
+            } else {
+                // Prevent resources in /system or other sites from being removed when '/' for current site is also selected
+                Map<String, String> rootToSitePaths = new HashMap<>();
+                for (String sitePath : resourcesToExport) {
+                    String rootPath = m_cms.addSiteRoot(sitePath);
+                    rootToSitePaths.put(rootPath, sitePath);
+                }
+                resourcesToExport = CmsFileUtil.removeRedundancies(
+                    new ArrayList<>(rootToSitePaths.keySet())).stream().map(rootToSitePaths::get).collect(
+                        Collectors.toList());
+
+            }
         }
 
-        // distinguish folder and file names   
+        // distinguish folder and file names
         List<String> folderNames = new ArrayList<String>();
         List<String> fileNames = new ArrayList<String>();
         Iterator<String> it = resourcesToExport.iterator();
@@ -778,7 +888,7 @@ public class CmsExport {
                         // check if this is a system-folder and if it should be included.
                         String export = getCms().getSitePath(folder);
                         if (checkExportResource(export)) {
-                            appendResourceToManifest(folder, false);
+                            appendResourceToManifest(folder, true);
                         }
                     }
                 }
@@ -797,7 +907,7 @@ public class CmsExport {
      * Exports one single file with all its data and content.<p>
      *
      * @param file the file to be exported
-     * 
+     *
      * @throws CmsImportExportException if something goes wrong
      * @throws SAXException if something goes wrong processing the manifest.xml
      * @throws IOException if the ZIP entry for the file could be appended to the ZIP archive
@@ -807,19 +917,22 @@ public class CmsExport {
         String source = trimResourceName(getCms().getSitePath(file));
         I_CmsReport report = getReport();
         m_exportCount++;
-        report.print(org.opencms.report.Messages.get().container(
-            org.opencms.report.Messages.RPT_SUCCESSION_1,
-            String.valueOf(m_exportCount)), I_CmsReport.FORMAT_NOTE);
+        report.print(
+            org.opencms.report.Messages.get().container(
+                org.opencms.report.Messages.RPT_SUCCESSION_1,
+                String.valueOf(m_exportCount)),
+            I_CmsReport.FORMAT_NOTE);
         report.print(Messages.get().container(Messages.RPT_EXPORT_0), I_CmsReport.FORMAT_NOTE);
-        report.print(org.opencms.report.Messages.get().container(
-            org.opencms.report.Messages.RPT_ARGUMENT_1,
-            getCms().getSitePath(file)));
+        report.print(
+            org.opencms.report.Messages.get().container(
+                org.opencms.report.Messages.RPT_ARGUMENT_1,
+                getCms().getSitePath(file)));
         report.print(org.opencms.report.Messages.get().container(org.opencms.report.Messages.RPT_DOTS_0));
 
         // store content in zip-file
         // check if the content of this resource was not already exported
         if (!m_exportedResources.contains(file.getResourceId())) {
-            // write the file using the export writer 
+            // write the file using the export writer
             m_exportWriter.writeFile(file, source);
             // add the resource id to the storage to mark that this resource was already exported
             m_exportedResources.add(file.getResourceId());
@@ -831,7 +944,8 @@ public class CmsExport {
         }
 
         if (LOG.isInfoEnabled()) {
-            LOG.info(Messages.get().getBundle().key(Messages.LOG_EXPORTING_OK_2, String.valueOf(m_exportCount), source));
+            LOG.info(
+                Messages.get().getBundle().key(Messages.LOG_EXPORTING_OK_2, String.valueOf(m_exportCount), source));
         }
         report.println(
             org.opencms.report.Messages.get().container(org.opencms.report.Messages.RPT_OK_0),
@@ -843,7 +957,7 @@ public class CmsExport {
      *
      * @param parent the parent node to add the groups to
      * @param group the group to be exported
-     * 
+     *
      * @throws CmsImportExportException if something goes wrong
      * @throws SAXException if something goes wrong processing the manifest.xml
      */
@@ -857,11 +971,11 @@ public class CmsExport {
                 parentgroup = getCms().getParent(group.getName()).getName();
             }
 
-            Element e = parent.addElement(CmsImportVersion7.N_GROUP);
-            e.addElement(CmsImportVersion7.N_NAME).addText(group.getSimpleName());
-            e.addElement(CmsImportVersion7.N_DESCRIPTION).addCDATA(group.getDescription());
-            e.addElement(CmsImportVersion7.N_FLAGS).addText(Integer.toString(group.getFlags()));
-            e.addElement(CmsImportVersion7.N_PARENTGROUP).addText(parentgroup);
+            Element e = parent.addElement(CmsImportVersion10.N_GROUP);
+            e.addElement(CmsImportVersion10.N_NAME).addText(group.getSimpleName());
+            e.addElement(CmsImportVersion10.N_DESCRIPTION).addCDATA(group.getDescription());
+            e.addElement(CmsImportVersion10.N_FLAGS).addText(Integer.toString(group.getFlags()));
+            e.addElement(CmsImportVersion10.N_PARENTGROUP).addText(parentgroup);
 
             // write the XML
             digestElement(parent, e);
@@ -882,7 +996,7 @@ public class CmsExport {
      *
      * @param parent the parent node to add the groups to
      * @param orgunit the organizational unit to write the groups for
-     * 
+     *
      * @throws CmsImportExportException if something goes wrong
      * @throws SAXException if something goes wrong processing the manifest.xml
      */
@@ -894,14 +1008,17 @@ public class CmsExport {
             List<CmsGroup> allGroups = OpenCms.getOrgUnitManager().getGroups(getCms(), orgunit.getName(), false);
             for (int i = 0, l = allGroups.size(); i < l; i++) {
                 CmsGroup group = allGroups.get(i);
-                report.print(org.opencms.report.Messages.get().container(
-                    org.opencms.report.Messages.RPT_SUCCESSION_2,
-                    String.valueOf(i + 1),
-                    String.valueOf(l)), I_CmsReport.FORMAT_NOTE);
+                report.print(
+                    org.opencms.report.Messages.get().container(
+                        org.opencms.report.Messages.RPT_SUCCESSION_2,
+                        String.valueOf(i + 1),
+                        String.valueOf(l)),
+                    I_CmsReport.FORMAT_NOTE);
                 report.print(Messages.get().container(Messages.RPT_EXPORT_GROUP_0), I_CmsReport.FORMAT_NOTE);
-                report.print(org.opencms.report.Messages.get().container(
-                    org.opencms.report.Messages.RPT_ARGUMENT_1,
-                    group.getName()));
+                report.print(
+                    org.opencms.report.Messages.get().container(
+                        org.opencms.report.Messages.RPT_ARGUMENT_1,
+                        group.getName()));
                 report.print(org.opencms.report.Messages.get().container(org.opencms.report.Messages.RPT_DOTS_0));
                 exportGroup(parent, group);
                 report.println(
@@ -923,45 +1040,45 @@ public class CmsExport {
      *
      * @param parent the parent node to add the groups to
      * @param orgunit the group to be exported
-     * 
+     *
      * @throws SAXException if something goes wrong processing the manifest.xml
      * @throws CmsException if something goes wrong reading the data to export
      */
     protected void exportOrgUnit(Element parent, CmsOrganizationalUnit orgunit) throws SAXException, CmsException {
 
-        Element orgunitElement = parent.addElement(CmsImportVersion7.N_ORGUNIT);
+        Element orgunitElement = parent.addElement(CmsImportVersion10.N_ORGUNIT);
         getSaxWriter().writeOpen(orgunitElement);
 
-        Element name = orgunitElement.addElement(CmsImportVersion7.N_NAME).addText(orgunit.getName());
+        Element name = orgunitElement.addElement(CmsImportVersion10.N_NAME).addText(orgunit.getName());
         digestElement(orgunitElement, name);
 
-        Element description = orgunitElement.addElement(CmsImportVersion7.N_DESCRIPTION).addCDATA(
+        Element description = orgunitElement.addElement(CmsImportVersion10.N_DESCRIPTION).addCDATA(
             orgunit.getDescription());
         digestElement(orgunitElement, description);
 
-        Element flags = orgunitElement.addElement(CmsImportVersion7.N_FLAGS).addText(
+        Element flags = orgunitElement.addElement(CmsImportVersion10.N_FLAGS).addText(
             Integer.toString(orgunit.getFlags()));
         digestElement(orgunitElement, flags);
 
-        Element resources = orgunitElement.addElement(CmsImportVersion7.N_RESOURCES);
+        Element resources = orgunitElement.addElement(CmsImportVersion10.N_RESOURCES);
         Iterator<CmsResource> it = OpenCms.getOrgUnitManager().getResourcesForOrganizationalUnit(
             getCms(),
             orgunit.getName()).iterator();
         while (it.hasNext()) {
             CmsResource resource = it.next();
-            resources.addElement(CmsImportVersion7.N_RESOURCE).addText(resource.getRootPath());
+            resources.addElement(CmsImportVersion10.N_RESOURCE).addText(resource.getRootPath());
         }
         digestElement(orgunitElement, resources);
         getReport().println(
             org.opencms.report.Messages.get().container(org.opencms.report.Messages.RPT_OK_0),
             I_CmsReport.FORMAT_OK);
 
-        Element groupsElement = parent.addElement(CmsImportVersion7.N_GROUPS);
+        Element groupsElement = parent.addElement(CmsImportVersion10.N_GROUPS);
         getSaxWriter().writeOpen(groupsElement);
         exportGroups(groupsElement, orgunit);
         getSaxWriter().writeClose(groupsElement);
 
-        Element usersElement = parent.addElement(CmsImportVersion7.N_USERS);
+        Element usersElement = parent.addElement(CmsImportVersion10.N_USERS);
         getSaxWriter().writeOpen(usersElement);
         exportUsers(usersElement, orgunit);
         getSaxWriter().writeClose(usersElement);
@@ -973,14 +1090,14 @@ public class CmsExport {
      * Exports all organizational units with all data.<p>
      *
      * @param parent the parent node to add the organizational units to
-     * 
+     *
      * @throws CmsImportExportException if something goes wrong
      * @throws SAXException if something goes wrong processing the manifest.xml
      */
     protected void exportOrgUnits(Element parent) throws CmsImportExportException, SAXException {
 
         try {
-            Element orgunitsElement = parent.addElement(CmsImportVersion7.N_ORGUNITS);
+            Element orgunitsElement = parent.addElement(CmsImportVersion10.N_ORGUNITS);
             getSaxWriter().writeOpen(orgunitsElement);
 
             I_CmsReport report = getReport();
@@ -989,14 +1106,17 @@ public class CmsExport {
             allOUs.addAll(OpenCms.getOrgUnitManager().getOrganizationalUnits(getCms(), "", true));
             for (int i = 0; i < allOUs.size(); i++) {
                 CmsOrganizationalUnit ou = allOUs.get(i);
-                report.print(org.opencms.report.Messages.get().container(
-                    org.opencms.report.Messages.RPT_SUCCESSION_2,
-                    String.valueOf(i + 1),
-                    String.valueOf(allOUs.size())), I_CmsReport.FORMAT_NOTE);
+                report.print(
+                    org.opencms.report.Messages.get().container(
+                        org.opencms.report.Messages.RPT_SUCCESSION_2,
+                        String.valueOf(i + 1),
+                        String.valueOf(allOUs.size())),
+                    I_CmsReport.FORMAT_NOTE);
                 report.print(Messages.get().container(Messages.RPT_EXPORT_ORGUNIT_0), I_CmsReport.FORMAT_NOTE);
-                report.print(org.opencms.report.Messages.get().container(
-                    org.opencms.report.Messages.RPT_ARGUMENT_1,
-                    ou.getName()));
+                report.print(
+                    org.opencms.report.Messages.get().container(
+                        org.opencms.report.Messages.RPT_ARGUMENT_1,
+                        ou.getName()));
                 report.print(org.opencms.report.Messages.get().container(org.opencms.report.Messages.RPT_DOTS_0));
 
                 exportOrgUnit(orgunitsElement, ou);
@@ -1017,11 +1137,14 @@ public class CmsExport {
      *
      * @param parent the parent node to add the project to
      * @param project the project to be exported
-     * 
+     *
      * @throws CmsImportExportException if something goes wrong
      * @throws SAXException if something goes wrong processing the manifest.xml
      */
     protected void exportProject(Element parent, CmsProject project) throws CmsImportExportException, SAXException {
+
+        I_CmsReport report = getReport();
+        CmsDefaultUsers defaultUsers = OpenCms.getDefaultUsers();
 
         String users;
         try {
@@ -1034,7 +1157,10 @@ public class CmsExport {
                 LOG.debug(message.key(), e);
             }
 
-            throw new CmsImportExportException(message, e);
+            users = defaultUsers.getGroupUsers();
+            report.println(org.opencms.report.Messages.get().container(org.opencms.report.Messages.RPT_DOTS_0));
+            report.print(message, I_CmsReport.FORMAT_ERROR);
+
         }
         String managers;
         try {
@@ -1047,21 +1173,23 @@ public class CmsExport {
                 LOG.debug(message.key(), e);
             }
 
-            throw new CmsImportExportException(message, e);
+            managers = defaultUsers.getGroupAdministrators();
+            report.println(org.opencms.report.Messages.get().container(org.opencms.report.Messages.RPT_DOTS_0));
+            report.print(message, I_CmsReport.FORMAT_ERROR);
         }
 
-        Element e = parent.addElement(CmsImportVersion7.N_PROJECT);
-        e.addElement(CmsImportVersion7.N_NAME).addText(project.getSimpleName());
-        e.addElement(CmsImportVersion7.N_DESCRIPTION).addCDATA(project.getDescription());
-        e.addElement(CmsImportVersion7.N_USERSGROUP).addText(users);
-        e.addElement(CmsImportVersion7.N_MANAGERSGROUP).addText(managers);
+        Element e = parent.addElement(CmsImportVersion10.N_PROJECT);
+        e.addElement(CmsImportVersion10.N_NAME).addText(project.getSimpleName());
+        e.addElement(CmsImportVersion10.N_DESCRIPTION).addCDATA(project.getDescription());
+        e.addElement(CmsImportVersion10.N_USERSGROUP).addText(users);
+        e.addElement(CmsImportVersion10.N_MANAGERSGROUP).addText(managers);
 
-        Element resources = e.addElement(CmsImportVersion7.N_RESOURCES);
+        Element resources = e.addElement(CmsImportVersion10.N_RESOURCES);
         try {
             Iterator<String> it = getCms().readProjectResources(project).iterator();
             while (it.hasNext()) {
                 String resName = it.next();
-                resources.addElement(CmsImportVersion7.N_RESOURCE).addText(resName);
+                resources.addElement(CmsImportVersion10.N_RESOURCE).addText(resName);
             }
         } catch (CmsException exc) {
             CmsMessageContainer message = org.opencms.db.Messages.get().container(
@@ -1082,7 +1210,7 @@ public class CmsExport {
      * Exports all projects with all data.<p>
      *
      * @param parent the parent node to add the projects to
-     * 
+     *
      * @throws CmsImportExportException if something goes wrong
      * @throws SAXException if something goes wrong processing the manifest.xml
      */
@@ -1093,18 +1221,21 @@ public class CmsExport {
             List<CmsProject> allProjects = OpenCms.getOrgUnitManager().getAllManageableProjects(getCms(), "", true);
             for (int i = 0; i < allProjects.size(); i++) {
                 CmsProject project = allProjects.get(i);
-                report.print(org.opencms.report.Messages.get().container(
-                    org.opencms.report.Messages.RPT_SUCCESSION_2,
-                    String.valueOf(i + 1),
-                    String.valueOf(allProjects.size())), I_CmsReport.FORMAT_NOTE);
+                report.print(
+                    org.opencms.report.Messages.get().container(
+                        org.opencms.report.Messages.RPT_SUCCESSION_2,
+                        String.valueOf(i + 1),
+                        String.valueOf(allProjects.size())),
+                    I_CmsReport.FORMAT_NOTE);
                 report.print(Messages.get().container(Messages.RPT_EXPORT_PROJECT_0), I_CmsReport.FORMAT_NOTE);
-                report.print(org.opencms.report.Messages.get().container(
-                    org.opencms.report.Messages.RPT_ARGUMENT_1,
-                    project.getName()));
-                report.print(org.opencms.report.Messages.get().container(org.opencms.report.Messages.RPT_DOTS_0));
+                report.print(
+                    org.opencms.report.Messages.get().container(
+                        org.opencms.report.Messages.RPT_ARGUMENT_1,
+                        project.getName()));
 
                 exportProject(parent, project);
 
+                report.print(org.opencms.report.Messages.get().container(org.opencms.report.Messages.RPT_DOTS_0));
                 report.println(
                     org.opencms.report.Messages.get().container(org.opencms.report.Messages.RPT_OK_0),
                     I_CmsReport.FORMAT_OK);
@@ -1121,10 +1252,10 @@ public class CmsExport {
 
     /**
      * Exports one single user with all its data.<p>
-     * 
+     *
      * @param parent the parent node to add the users to
      * @param user the user to be exported
-     * 
+     *
      * @throws CmsImportExportException if something goes wrong
      * @throws SAXException if something goes wrong processing the manifest.xml
      */
@@ -1132,18 +1263,18 @@ public class CmsExport {
 
         try {
             // add user node to the manifest.xml
-            Element e = parent.addElement(CmsImportVersion7.N_USER);
-            e.addElement(CmsImportVersion7.N_NAME).addText(user.getSimpleName());
+            Element e = parent.addElement(CmsImportVersion10.N_USER);
+            e.addElement(CmsImportVersion10.N_NAME).addText(user.getSimpleName());
             // encode the password, using a base 64 decoder
             String passwd = new String(Base64.encodeBase64(user.getPassword().getBytes()));
-            e.addElement(CmsImportVersion7.N_PASSWORD).addCDATA(passwd);
-            e.addElement(CmsImportVersion7.N_FIRSTNAME).addText(user.getFirstname());
-            e.addElement(CmsImportVersion7.N_LASTNAME).addText(user.getLastname());
-            e.addElement(CmsImportVersion7.N_EMAIL).addText(user.getEmail());
-            e.addElement(CmsImportVersion7.N_FLAGS).addText(Integer.toString(user.getFlags()));
-            e.addElement(CmsImportVersion7.N_DATECREATED).addText(Long.toString(user.getDateCreated()));
+            e.addElement(CmsImportVersion10.N_PASSWORD).addCDATA(passwd);
+            e.addElement(CmsImportVersion10.N_FIRSTNAME).addText(user.getFirstname());
+            e.addElement(CmsImportVersion10.N_LASTNAME).addText(user.getLastname());
+            e.addElement(CmsImportVersion10.N_EMAIL).addText(user.getEmail());
+            e.addElement(CmsImportVersion10.N_FLAGS).addText(Integer.toString(user.getFlags()));
+            e.addElement(CmsImportVersion10.N_DATECREATED).addText(Long.toString(user.getDateCreated()));
 
-            Element userInfoNode = e.addElement(CmsImportVersion7.N_USERINFO);
+            Element userInfoNode = e.addElement(CmsImportVersion10.N_USERINFO);
             List<String> keys = new ArrayList<String>(user.getAdditionalInfo().keySet());
             Collections.sort(keys);
             Iterator<String> itInfoKeys = keys.iterator();
@@ -1156,24 +1287,26 @@ public class CmsExport {
                 if (value == null) {
                     continue;
                 }
-                Element entryNode = userInfoNode.addElement(CmsImportVersion7.N_USERINFO_ENTRY);
-                entryNode.addAttribute(CmsImportVersion7.A_NAME, key);
-                entryNode.addAttribute(CmsImportVersion7.A_TYPE, value.getClass().getName());
+                Element entryNode = userInfoNode.addElement(CmsImportVersion10.N_USERINFO_ENTRY);
+                entryNode.addAttribute(CmsImportVersion10.A_NAME, key);
+                entryNode.addAttribute(CmsImportVersion10.A_TYPE, value.getClass().getName());
                 try {
                     // serialize the user info and write it into a file
                     entryNode.addCDATA(CmsDataTypeUtil.dataExport(value));
                 } catch (IOException ioe) {
                     getReport().println(ioe);
                     if (LOG.isErrorEnabled()) {
-                        LOG.error(Messages.get().getBundle().key(
-                            Messages.ERR_IMPORTEXPORT_ERROR_EXPORTING_USER_1,
-                            user.getName()), ioe);
+                        LOG.error(
+                            Messages.get().getBundle().key(
+                                Messages.ERR_IMPORTEXPORT_ERROR_EXPORTING_USER_1,
+                                user.getName()),
+                            ioe);
                     }
                 }
             }
 
             // append node for roles of user
-            Element userRoles = e.addElement(CmsImportVersion7.N_USERROLES);
+            Element userRoles = e.addElement(CmsImportVersion10.N_USERROLES);
             List<CmsRole> roles = OpenCms.getRoleManager().getRolesOfUser(
                 getCms(),
                 user.getName(),
@@ -1183,14 +1316,14 @@ public class CmsExport {
                 true);
             for (int i = 0; i < roles.size(); i++) {
                 String roleName = roles.get(i).getFqn();
-                userRoles.addElement(CmsImportVersion7.N_USERROLE).addText(roleName);
+                userRoles.addElement(CmsImportVersion10.N_USERROLE).addText(roleName);
             }
             // append the node for groups of user
-            Element userGroups = e.addElement(CmsImportVersion7.N_USERGROUPS);
+            Element userGroups = e.addElement(CmsImportVersion10.N_USERGROUPS);
             List<CmsGroup> groups = getCms().getGroupsOfUser(user.getName(), true, true);
             for (int i = 0; i < groups.size(); i++) {
                 String groupName = groups.get(i).getName();
-                userGroups.addElement(CmsImportVersion7.N_USERGROUP).addText(groupName);
+                userGroups.addElement(CmsImportVersion10.N_USERGROUP).addText(groupName);
             }
             // write the XML
             digestElement(parent, e);
@@ -1207,7 +1340,7 @@ public class CmsExport {
      *
      * @param parent the parent node to add the users to
      * @param orgunit the organizational unit to write the groups for
-     * 
+     *
      * @throws CmsImportExportException if something goes wrong
      * @throws SAXException if something goes wrong processing the manifest.xml
      */
@@ -1219,14 +1352,17 @@ public class CmsExport {
             List<CmsUser> allUsers = OpenCms.getOrgUnitManager().getUsers(getCms(), orgunit.getName(), false);
             for (int i = 0, l = allUsers.size(); i < l; i++) {
                 CmsUser user = allUsers.get(i);
-                report.print(org.opencms.report.Messages.get().container(
-                    org.opencms.report.Messages.RPT_SUCCESSION_2,
-                    String.valueOf(i + 1),
-                    String.valueOf(l)), I_CmsReport.FORMAT_NOTE);
+                report.print(
+                    org.opencms.report.Messages.get().container(
+                        org.opencms.report.Messages.RPT_SUCCESSION_2,
+                        String.valueOf(i + 1),
+                        String.valueOf(l)),
+                    I_CmsReport.FORMAT_NOTE);
                 report.print(Messages.get().container(Messages.RPT_EXPORT_USER_0), I_CmsReport.FORMAT_NOTE);
-                report.print(org.opencms.report.Messages.get().container(
-                    org.opencms.report.Messages.RPT_ARGUMENT_1,
-                    user.getName()));
+                report.print(
+                    org.opencms.report.Messages.get().container(
+                        org.opencms.report.Messages.RPT_ARGUMENT_1,
+                        user.getName()));
                 report.print(org.opencms.report.Messages.get().container(org.opencms.report.Messages.RPT_DOTS_0));
                 exportUser(parent, user);
                 report.println(
@@ -1244,8 +1380,28 @@ public class CmsExport {
     }
 
     /**
+     * Check, if the resource should be exported with minimal meta-data.
+     * This holds for resources that are not part of the export, but must be
+     * exported as super-folders.
+     *
+     * @param path export-site relative path of the resource to check.
+     *
+     * @return flag, indicating if the resource should be exported with minimal meta data.
+     */
+    protected boolean exportWithMinimalMetaData(String path) {
+
+        String checkPath = path.startsWith("/") ? path + "/" : "/" + path + "/";
+        for (String p : m_parameters.getResourcesToExportWithMetaData()) {
+            if (checkPath.startsWith(p)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    /**
      * Returns the OpenCms context object this export was initialized with.<p>
-     * 
+     *
      * @return the OpenCms context object this export was initialized with
      */
     protected CmsObject getCms() {
@@ -1255,7 +1411,7 @@ public class CmsExport {
 
     /**
      * Returns the name of the export file.<p>
-     * 
+     *
      * @return the name of the export file
      */
     protected String getExportFileName() {
@@ -1265,7 +1421,7 @@ public class CmsExport {
 
     /**
      * Returns the name of the main export node.<p>
-     * 
+     *
      * @return the name of the main export node
      */
     protected String getExportNodeName() {
@@ -1275,7 +1431,7 @@ public class CmsExport {
 
     /**
      * Returns the report to write progress messages to.<p>
-     * 
+     *
      * @return the report to write progress messages to
      */
     protected I_CmsReport getReport() {
@@ -1285,7 +1441,7 @@ public class CmsExport {
 
     /**
      * Returns the name for the main resource node.<p>
-     * 
+     *
      * @return the name for the main resource node
      */
     protected String getResourceNodeName() {
@@ -1295,7 +1451,7 @@ public class CmsExport {
 
     /**
      * Returns the SAX based xml writer to write the XML output to.<p>
-     * 
+     *
      * @return the SAX based xml writer to write the XML output to
      */
     protected SAXWriter getSaxWriter() {
@@ -1305,9 +1461,9 @@ public class CmsExport {
 
     /**
      * Checks if a property should be written to the export or not.<p>
-     * 
+     *
      * @param property the property to check
-     * 
+     *
      * @return if true, the property is to be ignored, otherwise it should be exported
      */
     protected boolean isIgnoredProperty(CmsProperty property) {
@@ -1315,15 +1471,17 @@ public class CmsExport {
         if (property == null) {
             return true;
         }
-        // default implementation is to export all properties not null
+        if (property.getName().equals(CmsPropertyDefinition.PROPERTY_EXPORT_TYPE)) {
+            return true;
+        }
         return false;
     }
 
     /**
      * Checks if a resource is belongs to the correct project for exporting.<p>
-     * 
+     *
      * @param res the resource to check
-     * 
+     *
      * @return <code>true</code>, if the resource can be exported, false otherwise
      */
     protected boolean isInExportableProject(CmsResource res) {
@@ -1333,7 +1491,7 @@ public class CmsExport {
         if (m_parameters.isInProject()) {
             // resource state is new or changed
             if ((res.getState() == CmsResource.STATE_CHANGED) || (res.getState() == CmsResource.STATE_NEW)) {
-                // the resource belongs not to the current project, so it must not be exported    
+                // the resource belongs not to the current project, so it must not be exported
                 if (!res.getProjectLastModified().equals(getCms().getRequestContext().getCurrentProject().getUuid())) {
                     retValue = false;
                 }
@@ -1347,13 +1505,14 @@ public class CmsExport {
 
     /**
      * Opens the export ZIP file and initializes the internal XML document for the manifest.<p>
-     * 
+     * @param exportMode the export mode to use.
+     *
      * @return the node in the XML document where all files are appended to
-     * 
+     *
      * @throws SAXException if something goes wrong processing the manifest.xml
      * @throws IOException if something goes wrong while closing the export file
      */
-    protected Element openExportFile() throws IOException, SAXException {
+    protected Element openExportFile(ExportMode exportMode) throws IOException, SAXException {
 
         // create the export writer
         m_exportWriter = new CmsExportHelper(
@@ -1363,7 +1522,7 @@ public class CmsExport {
         // initialize the dom4j writer object as member variable
         setSaxWriter(m_exportWriter.getSaxWriter());
 
-        // the node in the XML document where the file entries are appended to        
+        // the node in the XML document where the file entries are appended to
         String exportNodeName = getExportNodeName();
         // the XML document to write the XMl to
         Document doc = DocumentHelper.createDocument();
@@ -1373,9 +1532,13 @@ public class CmsExport {
 
         // add the info element. it contains all infos for this export
         Element info = exportNode.addElement(CmsImportExportManager.N_INFO);
-        info.addElement(CmsImportExportManager.N_CREATOR).addText(getCms().getRequestContext().getCurrentUser().getName());
-        info.addElement(CmsImportExportManager.N_OC_VERSION).addText(OpenCms.getSystemInfo().getVersionNumber());
-        info.addElement(CmsImportExportManager.N_DATE).addText(CmsDateUtil.getHeaderDate(System.currentTimeMillis()));
+        if (!exportMode.equals(ExportMode.REDUCED)) {
+            info.addElement(CmsImportExportManager.N_CREATOR).addText(
+                getCms().getRequestContext().getCurrentUser().getName());
+            info.addElement(CmsImportExportManager.N_OC_VERSION).addText(OpenCms.getSystemInfo().getVersionNumber());
+            info.addElement(CmsImportExportManager.N_DATE).addText(
+                CmsDateUtil.getHeaderDate(System.currentTimeMillis()));
+        }
         info.addElement(CmsImportExportManager.N_INFO_PROJECT).addText(
             getCms().getRequestContext().getCurrentProject().getName());
         info.addElement(CmsImportExportManager.N_VERSION).addText(CmsImportExportManager.EXPORT_VERSION);
@@ -1388,7 +1551,7 @@ public class CmsExport {
 
     /**
      * Sets the SAX based XML writer to write the XML output to.<p>
-     * 
+     *
      * @param saxWriter the SAX based XML writer to write the XML output to
      */
     protected void setSaxWriter(SAXWriter saxWriter) {
@@ -1398,9 +1561,9 @@ public class CmsExport {
 
     /**
      * Cuts leading and trailing '/' from the given resource name.<p>
-     * 
+     *
      * @param resourceName the absolute path of a resource
-     * 
+     *
      * @return the trimmed resource name
      */
     protected String trimResourceName(String resourceName) {
@@ -1412,5 +1575,46 @@ public class CmsExport {
             resourceName = resourceName.substring(0, resourceName.length() - 1);
         }
         return resourceName;
+    }
+
+    /** Returns the manifest entry for the <code>&lt;datelastmodified&gt;</code> node of the resource.
+     * Depending on the export.timestamp property, the time stamp from the VFS (default) or
+     * special macros are used.
+     *
+     * @param resource the resource for which the manifest entry is generated
+     * @return the time stamp or macro to write as value for <code>&lt;datelastmodified&gt;</code>
+     */
+    private String getDateLastModifiedForExport(final CmsResource resource) {
+
+        TimestampMode timeMode = TimestampMode.VFSTIME;
+        String typeName = OpenCms.getResourceManager().getResourceType(resource).getTypeName();
+        TimestampMode defaultModeForResourceType = OpenCms.getImportExportManager().getDefaultTimestampMode(typeName);
+        if (null == defaultModeForResourceType) {
+            try {
+                CmsProperty exporttimeProp = m_cms.readPropertyObject(
+                    resource,
+                    CmsImportExportManager.PROP_EXPORT_TIMESTAMP,
+                    true);
+                if (TimestampMode.FILETIME.equals(TimestampMode.getEnum(exporttimeProp.getValue()))) {
+                    timeMode = TimestampMode.FILETIME;
+                } else if (TimestampMode.IMPORTTIME.equals(TimestampMode.getEnum(exporttimeProp.getValue()))) {
+                    timeMode = TimestampMode.IMPORTTIME;
+                }
+            } catch (@SuppressWarnings("unused") CmsException e) {
+                // Do nothing, use default mode
+            }
+        } else {
+            timeMode = defaultModeForResourceType;
+        }
+        switch (timeMode) {
+            case FILETIME:
+                return CmsMacroResolver.formatMacro(CmsImportExportManager.TimestampMode.FILETIME.toString());
+            case IMPORTTIME:
+                return CmsMacroResolver.formatMacro(CmsImportExportManager.TimestampMode.IMPORTTIME.toString());
+            case VFSTIME:
+            default:
+                return CmsDateUtil.getHeaderDate(resource.getDateLastModified());
+        }
+
     }
 }

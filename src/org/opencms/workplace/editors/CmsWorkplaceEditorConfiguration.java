@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -14,12 +14,12 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * Lesser General Public License for more details.
  *
- * For further information about Alkacon Software GmbH, please see the
- * company website: http://www.alkacon.com
+ * For further information about Alkacon Software GmbH & Co. KG, please see the
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -47,18 +47,21 @@ import org.dom4j.Element;
 
 /**
  * Single editor configuration object.<p>
- * 
+ *
  * Holds all necessary information about an OpenCms editor which is stored in the
  * "editor_configuration.xml" file in each editor folder.<p>
- * 
+ *
  * Provides methods to get the editor information for the editor manager.<p>
- * 
- * @since 6.0.0 
+ *
+ * @since 6.0.0
  */
 public class CmsWorkplaceEditorConfiguration {
 
     /** Name of the root document node. */
     public static final String DOCUMENT_NODE = "editor";
+
+    /** Name of the name attribute. */
+    protected static final String A_NAME = "name";
 
     /** Name of the single user agent node. */
     protected static final String N_AGENT = "agent";
@@ -74,6 +77,12 @@ public class CmsWorkplaceEditorConfiguration {
 
     /** Name of the resource type subnode name. */
     protected static final String N_NAME = "name";
+
+    /** Name of the param node. */
+    protected static final String N_PARAM = "param";
+
+    /** Name of the params node. */
+    protected static final String N_PARAMS = "params";
 
     /** Name of the resource type subnode ranking. */
     protected static final String N_RANKING = "ranking";
@@ -93,25 +102,47 @@ public class CmsWorkplaceEditorConfiguration {
     /** The log object for this class. */
     private static final Log LOG = CmsLog.getLog(CmsWorkplaceEditorConfiguration.class);
 
-    private List m_browserPattern;
+    /** The browser patterns. */
+    private List<Pattern> m_browserPattern;
+
+    /** The editor label. */
     private String m_editorLabel;
+
+    /** The editor URI. */
     private String m_editorUri;
-    private Map m_resTypes;
-    private List m_userAgentsRegEx;
+
+    /** The name of the configuration (usually the name of the folder under /system/workplace/editors). */
+    private String m_name;
+
+    /** Additional parameters for the editor. */
+    private Map<String, String> m_parameters = new HashMap<String, String>();
+
+    /** The resource types. */
+    private Map<String, String[]> m_resTypes;
+
+    /** The user agents. */
+    private List<String> m_userAgentsRegEx;
+
+    /** The valid configuration flag. */
     private boolean m_validConfiguration;
+
+    /** The widget editor. */
     private String m_widgetEditor;
 
     /**
      * Constructor with xml data String.<p>
-     * 
+     *
      * @param xmlData the XML data String containing the information about the editor
      * @param editorUri the editor workplace URI
+     * @param name the editor configuration name
      */
-    public CmsWorkplaceEditorConfiguration(byte[] xmlData, String editorUri) {
+    public CmsWorkplaceEditorConfiguration(byte[] xmlData, String editorUri, String name) {
 
         setValidConfiguration(true);
         try {
+            m_name = name;
             initialize(CmsXmlUtils.unmarshalHelper(xmlData, null), editorUri);
+
         } catch (CmsXmlException e) {
             // xml String could not be parsed
             logConfigurationError(Messages.get().getBundle().key(Messages.ERR_XML_PARSE_0), e);
@@ -120,17 +151,17 @@ public class CmsWorkplaceEditorConfiguration {
 
     /**
      * Returns the list of compiled browser patterns.<p>
-     * 
+     *
      * @return the list of compiled browser patterns
      */
-    public List getBrowserPattern() {
+    public List<Pattern> getBrowserPattern() {
 
         return m_browserPattern;
     }
 
     /**
      * Returns the editor label key used for the localized nice name.<p>
-     * 
+     *
      * @return the editor label key used for the localized nice name
      */
     public String getEditorLabel() {
@@ -140,7 +171,7 @@ public class CmsWorkplaceEditorConfiguration {
 
     /**
      * Returns the editor workplace URI.<p>
-     * 
+     *
      * @return the editor workplace URI
      */
     public String getEditorUri() {
@@ -150,13 +181,13 @@ public class CmsWorkplaceEditorConfiguration {
 
     /**
      * Returns the mapping for the given resource type.<p>
-     * 
+     *
      * @param resourceType the resource type name to check
      * @return the mapping or null, if no mapping is specified
      */
     public String getMappingForResourceType(String resourceType) {
 
-        String[] resourceTypeParams = (String[])getResourceTypes().get(resourceType);
+        String[] resourceTypeParams = getResourceTypes().get(resourceType);
         if (resourceTypeParams == null) {
             return null;
         } else {
@@ -165,14 +196,34 @@ public class CmsWorkplaceEditorConfiguration {
     }
 
     /**
+     * Gets the name of the editor configuration (usually the folder name under /system/workplace/editors).<p>
+     *
+     * @return the name of the editor configuration
+     */
+    public String getName() {
+
+        return m_name;
+    }
+
+    /**
+     * Gets the map of additional editor parameters.<p>
+     *
+     * @return the editor parameter map
+     */
+    public Map<String, String> getParameters() {
+
+        return m_parameters;
+    }
+
+    /**
      * Returns the ranking value for the given resource type.<p>
-     * 
+     *
      * @param resourceType the current resource type
      * @return the ranking (the higher the better)
      */
     public float getRankingForResourceType(String resourceType) {
 
-        String[] resourceTypeParams = (String[])getResourceTypes().get(resourceType);
+        String[] resourceTypeParams = getResourceTypes().get(resourceType);
         if (resourceTypeParams == null) {
             return -1.0f;
         } else {
@@ -182,34 +233,34 @@ public class CmsWorkplaceEditorConfiguration {
 
     /**
      * Returns the valid resource types of the editor.<p>
-     * 
-     * A single map item has the resource type name as key, 
+     *
+     * A single map item has the resource type name as key,
      * the value is a String array with two entries:
      * <ul>
      * <li>Entry 0: the ranking for the resource type</li>
      * <li>Entry 1: the mapping to another resource type or null</li>
      * </ul><p>
-     * 
+     *
      * @return the valid resource types of the editor
      */
-    public Map getResourceTypes() {
+    public Map<String, String[]> getResourceTypes() {
 
         return m_resTypes;
     }
 
     /**
      * Returns the valid user agents regular expressions of the editor.<p>
-     * 
+     *
      * @return the valid user agents regular expressions of the editor
      */
-    public List getUserAgentsRegEx() {
+    public List<String> getUserAgentsRegEx() {
 
         return m_userAgentsRegEx;
     }
 
     /**
      * Returns the widget editor class for rich text editing.<p>
-     * 
+     *
      * @return the widget editor class for rich text editing
      */
     public String getWidgetEditor() {
@@ -219,7 +270,7 @@ public class CmsWorkplaceEditorConfiguration {
 
     /**
      * Returns if the current configuration is valid.<p>
-     * 
+     *
      * @return true if no configuration errors were found, otherwise false
      */
     public boolean isValidConfiguration() {
@@ -229,7 +280,7 @@ public class CmsWorkplaceEditorConfiguration {
 
     /**
      * Returns if the editor is usable as a widget editor for rich text editing.<p>
-     * 
+     *
      * @return true if the editor is usable as a widget editor for rich text editing, otherwise false
      */
     public boolean isWidgetEditor() {
@@ -239,7 +290,7 @@ public class CmsWorkplaceEditorConfiguration {
 
     /**
      * Tests if the current browser is matching the configuration.<p>
-     * 
+     *
      * @param currentBrowser the users browser String to test
      * @return true if the browser matches the configuration, otherwise false
      */
@@ -249,7 +300,7 @@ public class CmsWorkplaceEditorConfiguration {
             return false;
         }
         for (int i = 0; i < getBrowserPattern().size(); i++) {
-            boolean matches = ((Pattern)getBrowserPattern().get(i)).matcher(currentBrowser.trim()).matches();
+            boolean matches = getBrowserPattern().get(i).matcher(currentBrowser.trim()).matches();
             if (matches) {
                 if (LOG.isDebugEnabled()) {
                     LOG.debug(Messages.get().getBundle().key(Messages.LOG_BROWSER_MATCHES_CONFIG_1, currentBrowser));
@@ -262,7 +313,7 @@ public class CmsWorkplaceEditorConfiguration {
 
     /**
      * Returns if the configuration is suitable for the given resource type.<p>
-     * 
+     *
      * @param resourceType the resource type to check
      * @return true if the configuration matches the resource type
      */
@@ -273,11 +324,14 @@ public class CmsWorkplaceEditorConfiguration {
 
     /**
      * Initializes all member variables.<p>
-     * 
+     *
      * @param document the XML configuration document
      * @param editorUri the editor workplace URI
      */
+    @SuppressWarnings("unchecked")
     private void initialize(Document document, String editorUri) {
+
+        m_parameters.clear();
 
         // get the root element of the configuration
         Element rootElement = document.getRootElement();
@@ -295,10 +349,10 @@ public class CmsWorkplaceEditorConfiguration {
         setEditorUri(editorUri);
 
         // create the map of valid resource types
-        Iterator i = rootElement.element(N_RESOURCETYPES).elementIterator(N_TYPE);
-        Map resTypes = new HashMap();
+        Iterator<Element> i = rootElement.element(N_RESOURCETYPES).elementIterator(N_TYPE);
+        Map<String, String[]> resTypes = new HashMap<String, String[]>();
         while (i.hasNext()) {
-            Element currentType = (Element)i.next();
+            Element currentType = i.next();
             float ranking;
             String name = currentType.elementText(N_NAME);
             if (CmsStringUtil.isEmpty(name)) {
@@ -320,9 +374,9 @@ public class CmsWorkplaceEditorConfiguration {
         // add the additional resource types
         i = rootElement.element(N_RESOURCETYPES).elementIterator(N_CLASS);
         while (i.hasNext()) {
-            Element currentClass = (Element)i.next();
+            Element currentClass = i.next();
             String name = currentClass.elementText(N_NAME);
-            List assignedTypes = new ArrayList();
+            List<String> assignedTypes = new ArrayList<String>();
             try {
                 // get the editor type matcher class
                 I_CmsEditorTypeMatcher matcher = (I_CmsEditorTypeMatcher)Class.forName(name).newInstance();
@@ -342,10 +396,10 @@ public class CmsWorkplaceEditorConfiguration {
             if ("".equals(mapTo)) {
                 mapTo = null;
             }
-            // now loop through all types found and add them 
-            Iterator j = assignedTypes.iterator();
+            // now loop through all types found and add them
+            Iterator<String> j = assignedTypes.iterator();
             while (j.hasNext()) {
-                String typeName = (String)j.next();
+                String typeName = j.next();
                 resTypes.put(typeName, new String[] {"" + ranking, mapTo});
             }
         }
@@ -354,10 +408,10 @@ public class CmsWorkplaceEditorConfiguration {
 
         // create the list of user agents & compiled patterns for editor
         i = document.getRootElement().element(N_USERAGENTS).elementIterator(N_AGENT);
-        List pattern = new ArrayList();
-        List userAgents = new ArrayList();
+        List<Pattern> pattern = new ArrayList<Pattern>();
+        List<String> userAgents = new ArrayList<String>();
         while (i.hasNext()) {
-            Element currentAgent = (Element)i.next();
+            Element currentAgent = i.next();
             String agentName = currentAgent.getText();
             if (CmsStringUtil.isNotEmptyOrWhitespaceOnly(agentName)) {
                 userAgents.add(agentName);
@@ -374,11 +428,22 @@ public class CmsWorkplaceEditorConfiguration {
         }
         setBrowserPattern(pattern);
         setUserAgentsRegEx(userAgents);
+
+        Element paramsElement = (Element)(document.getRootElement().selectSingleNode(N_PARAMS));
+        if (paramsElement != null) {
+            List<?> params = paramsElement.selectNodes(N_PARAM);
+            for (Object paramObj : params) {
+                Element paramElement = (Element)paramObj;
+                String name = paramElement.attributeValue(A_NAME);
+                String value = paramElement.getText();
+                m_parameters.put(name, value);
+            }
+        }
     }
 
     /**
      * Logs configuration errors and invalidates the current configuration.<p>
-     * 
+     *
      * @param message the message specifying the configuration error
      * @param t the Throwable object or null
      */
@@ -396,10 +461,10 @@ public class CmsWorkplaceEditorConfiguration {
 
     /**
      * Sets the list of compiled browser patterns.<p>
-     * 
+     *
      * @param pattern the list of compiled browser patterns
      */
-    private void setBrowserPattern(List pattern) {
+    private void setBrowserPattern(List<Pattern> pattern) {
 
         if ((pattern == null) || (pattern.size() == 0)) {
             setValidConfiguration(false);
@@ -410,7 +475,7 @@ public class CmsWorkplaceEditorConfiguration {
 
     /**
      * Sets the editor label key used for the localized nice name.<p>
-     * 
+     *
      * @param label the editor label key used for the localized nice name
      */
     private void setEditorLabel(String label) {
@@ -437,10 +502,10 @@ public class CmsWorkplaceEditorConfiguration {
 
     /**
      * Sets the valid resource types of the editor.<p>
-     * 
+     *
      * @param types the valid resource types of the editor
      */
-    private void setResourceTypes(Map types) {
+    private void setResourceTypes(Map<String, String[]> types) {
 
         if ((types == null) || (types.size() == 0)) {
             setValidConfiguration(false);
@@ -451,10 +516,10 @@ public class CmsWorkplaceEditorConfiguration {
 
     /**
      * Sets the valid user agents regular expressions of the editor.<p>
-     * 
+     *
      * @param agents the valid user agents regular expressions of the editor
      */
-    private void setUserAgentsRegEx(List agents) {
+    private void setUserAgentsRegEx(List<String> agents) {
 
         if ((agents == null) || (agents.size() == 0)) {
             setValidConfiguration(false);
@@ -465,7 +530,7 @@ public class CmsWorkplaceEditorConfiguration {
 
     /**
      * Sets if the current configuration is valid.<p>
-     * 
+     *
      * @param isValid true if no configuration errors were found, otherwise false
      */
     private void setValidConfiguration(boolean isValid) {
@@ -475,7 +540,7 @@ public class CmsWorkplaceEditorConfiguration {
 
     /**
      * Sets the widget editor class for rich text editing.<p>
-     * 
+     *
      * @param widgetEditor the widget editor class for rich text editing
      */
     private void setWidgetEditor(String widgetEditor) {

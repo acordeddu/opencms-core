@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -15,11 +15,11 @@
  * Lesser General Public License for more details.
  *
  * For further information about Alkacon Software, please see the
- * company website: http://www.alkacon.com
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -29,6 +29,7 @@ package org.opencms.importexport;
 
 import org.opencms.configuration.CmsConfigurationManager;
 import org.opencms.file.CmsFile;
+import org.opencms.main.CmsLog;
 import org.opencms.main.OpenCms;
 import org.opencms.util.CmsFileUtil;
 import org.opencms.util.CmsXmlSaxWriter;
@@ -42,18 +43,22 @@ import java.io.Writer;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
+import org.apache.commons.logging.Log;
+
 import org.dom4j.io.SAXWriter;
 import org.xml.sax.SAXException;
 
 /**
  * Wrapper to write exported OpenCms resources either to a .ZIP file or to the file system.<p>
- * 
+ *
  * @since 7.5.1
  */
 public class CmsExportHelper {
 
     /** Length that can be safely written to ZIP output. */
     private static final int SUB_LENGTH = 4096;
+
+    private static final Log LOG = CmsLog.getLog(CmsExportHelper.class);
 
     /** The main export path. */
     private String m_exportPath;
@@ -69,11 +74,11 @@ public class CmsExportHelper {
 
     /**
      * Creates a new export helper.<p>
-     * 
+     *
      * @param exportPath the export path
      * @param exportAsFiles indicates if the resources should be exported as individual files or in one big ZIP file
      * @param validateXml indicates of the manifest.xml should be validated
-     * 
+     *
      * @throws SAXException in case of issues creating the manifest.xml
      * @throws IOException in case of file access issues
      */
@@ -95,6 +100,9 @@ public class CmsExportHelper {
             rfsFile.createNewFile();
             writer = new FileWriter(rfsFile);
         } else {
+            // make sure parent folders exist
+            File rfsFile = new File(m_exportPath);
+            rfsFile.getParentFile().mkdirs();
             // create the export ZIP stream
             m_exportZipStream = new ZipOutputStream(new FileOutputStream(m_exportPath));
             // delegate writing to a String writer
@@ -110,12 +118,28 @@ public class CmsExportHelper {
 
         // set the doctype if needed
         if (validateXml) {
-            saxHandler.startDTD(CmsImportExportManager.N_EXPORT, null, CmsConfigurationManager.DEFAULT_DTD_PREFIX
-                + CmsImportVersion7.DTD_FILENAME);
+            saxHandler.startDTD(
+                CmsImportExportManager.N_EXPORT,
+                null,
+                CmsConfigurationManager.DEFAULT_DTD_PREFIX + CmsImportVersion7.DTD_FILENAME);
             saxHandler.endDTD();
         }
         // initialize the dom4j writer object
         m_saxWriter = new SAXWriter(saxHandler, saxHandler);
+    }
+
+    /**
+     * Ensures the zip stream is closed (if there is one).
+     */
+    public void ensureZipStreamClosed() {
+
+        if (m_exportZipStream != null) {
+            try {
+                m_exportZipStream.close();
+            } catch (Exception e) {
+                LOG.info(e.getLocalizedMessage(), e);
+            }
+        }
     }
 
     /**
@@ -130,10 +154,10 @@ public class CmsExportHelper {
 
     /**
      * Writes a single OpenCms VFS file to the export.<p>
-     * 
-     * @param file the OpenCms VFS file to write 
+     *
+     * @param file the OpenCms VFS file to write
      * @param name the name of the file in the export
-     * 
+     *
      * @throws IOException in case of file access issues
      */
     public void writeFile(CmsFile file, String name) throws IOException {
@@ -147,9 +171,9 @@ public class CmsExportHelper {
 
     /**
      * Writes the OpenCms manifest.xml file to the export.<p>
-     * 
+     *
      * @param xmlSaxWriter the SAX writer to use
-     * 
+     *
      * @throws SAXException in case of issues creating the manifest.xml
      * @throws IOException in case of file access issues
      */
@@ -164,9 +188,9 @@ public class CmsExportHelper {
 
     /**
      * Returns the RFS file name for the given OpenCms VFS file name.<p>
-     * 
+     *
      * @param name the OpenCms VFS file name
-     * 
+     *
      * @return the RFS file name for the given OpenCms VFS file name
      */
     protected String getRfsFileName(String name) {
@@ -175,8 +199,8 @@ public class CmsExportHelper {
     }
 
     /**
-     * Removes the old export output, which may be an existing file or directory.<p> 
-     * 
+     * Removes the old export output, which may be an existing file or directory.<p>
+     *
      * @param exportPath the export output path
      */
     protected void removeOldExport(String exportPath) {
@@ -190,7 +214,7 @@ public class CmsExportHelper {
             } else {
                 // remove the existing file
                 if (m_isExportAsFiles) {
-                    // in case we write to a file we can just overwrite, 
+                    // in case we write to a file we can just overwrite,
                     // but for a folder we must remove an existing file
                     output.delete();
                 }
@@ -200,10 +224,10 @@ public class CmsExportHelper {
 
     /**
      * Writes a single OpenCms VFS file to the RFS export.<p>
-     * 
-     * @param file the OpenCms VFS file to write 
+     *
+     * @param file the OpenCms VFS file to write
      * @param name the name of the file in the export
-     * 
+     *
      * @throws IOException in case of file access issues
      */
     protected void writeFile2Rfs(CmsFile file, String name) throws IOException {
@@ -221,10 +245,10 @@ public class CmsExportHelper {
 
     /**
      * Writes a single OpenCms VFS file to the ZIP export.<p>
-     * 
-     * @param file the OpenCms VFS file to write 
+     *
+     * @param file the OpenCms VFS file to write
      * @param name the name of the file in the export
-     * 
+     *
      * @throws IOException in case of file access issues
      */
     protected void writeFile2Zip(CmsFile file, String name) throws IOException {
@@ -239,12 +263,12 @@ public class CmsExportHelper {
 
     /**
      * Writes the OpenCms manifest.xml file to the RFS export.<p>
-     * 
+     *
      * In case of the RFS export the file is directly written to a file output stream,
      * so calling this method just closes the XML and finishes the stream.<p>
-     * 
+     *
      * @param xmlSaxWriter the SAX writer to use
-     * 
+     *
      * @throws SAXException in case of issues creating the manifest.xml
      * @throws IOException in case of issues closing the file writer
      */
@@ -257,12 +281,12 @@ public class CmsExportHelper {
 
     /**
      * Writes the OpenCms manifest.xml file to the ZIP export.<p>
-     * 
-     * In case of the ZIP export the manifest is written to an internal StringBuffer 
+     *
+     * In case of the ZIP export the manifest is written to an internal StringBuffer
      * first, which is then stored in the ZIP file when this method is called.<p>
-     * 
+     *
      * @param xmlSaxWriter the SAX writer to use
-     * 
+     *
      * @throws SAXException in case of issues creating the manifest.xml
      * @throws IOException in case of file access issues
      */

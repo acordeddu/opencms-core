@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -15,11 +15,11 @@
  * Lesser General Public License for more details.
  *
  * For further information about Alkacon Software, please see the
- * company website: http://www.alkacon.com
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -31,7 +31,7 @@ import java.util.List;
 
 /**
  * Interface for a context menu entry.<p>
- * 
+ *
  * @since version 8.0.0
  */
 public interface I_CmsContextMenuEntry {
@@ -42,18 +42,18 @@ public interface I_CmsContextMenuEntry {
     void execute();
 
     /**
-     * Returns the image class for the icon in front of the label.<p>
+     * Generates the context menu item.<p>
      *
-     * @return the image class
+     * @return the context menu item
      */
-    String getImageClass();
+    A_CmsContextMenuItem generateMenuItem();
 
     /**
-     * Returns the image path for the icon in front of the label.<p>
+     * Returns a CSS class which should be used to display an icon, or null if no icon is required.<p>
      *
-     * @return the image path
+     * @return the CSS class for the icon
      */
-    String getImagePath();
+    String getIconClass();
 
     /**
      * Returns the JSP path for the command generation.<p>
@@ -71,7 +71,7 @@ public interface I_CmsContextMenuEntry {
 
     /**
      * Returns the name of the entry.<p>
-     * 
+     *
      * @return the name of the entry
      */
     String getName();
@@ -92,7 +92,7 @@ public interface I_CmsContextMenuEntry {
 
     /**
      * Returns <code>true</code> if this menu entry has a sub menu <code>false</code> otherwise.<p>
-     * 
+     *
      * @return <code>true</code> if this menu entry has a sub menu <code>false</code> otherwise
      */
     boolean hasSubMenu();

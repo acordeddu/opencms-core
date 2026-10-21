@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -14,12 +14,12 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * Lesser General Public License for more details.
  *
- * For further information about Alkacon Software GmbH, please see the
- * company website: http://www.alkacon.com
+ * For further information about Alkacon Software GmbH & Co. KG, please see the
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -37,8 +37,8 @@ import org.opencms.main.OpenCms;
 import org.opencms.report.CmsShellReport;
 import org.opencms.report.I_CmsReport;
 import org.opencms.search.fields.CmsSearchField;
-import org.opencms.test.OpenCmsTestCase;
-import org.opencms.test.OpenCmsTestProperties;
+import org.opencms.search.fields.CmsSearchFieldConfigurationOldCategories;
+import org.opencms.test.OpenCmsTestRunner;
 
 import java.util.Arrays;
 import java.util.Date;
@@ -46,15 +46,19 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
-import junit.extensions.TestSetup;
-import junit.framework.Test;
-import junit.framework.TestSuite;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.MethodOrderer;
+import org.junit.jupiter.api.Order;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInfo;
+import org.junit.jupiter.api.TestMethodOrder;
 
 /**
  * Unit test for advanced search features.<p>
- * 
+ *
  */
-public class TestCmsSearchAdvancedFeatures extends OpenCmsTestCase {
+@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
+public class TestCmsSearchAdvancedFeatures extends OpenCmsTestRunner {
 
     /** Name of the index used for testing. */
     public static final String INDEX_OFFLINE = "Offline project (VFS)";
@@ -63,66 +67,30 @@ public class TestCmsSearchAdvancedFeatures extends OpenCmsTestCase {
     public static final String INDEX_ONLINE = "Online project (VFS)";
 
     /**
-     * Default JUnit constructor.<p>
-     * 
-     * @param arg0 JUnit parameters
+     * @see org.opencms.test.OpenCmsTestRunner#$openCmsSetUp(org.junit.jupiter.api.TestInfo)
      */
-    public TestCmsSearchAdvancedFeatures(String arg0) {
+    @Override
+    @BeforeAll
+    public void $openCmsSetUp(TestInfo testInfo) {
 
-        super(arg0);
-    }
-
-    /**
-     * Test suite for this test class.<p>
-     * 
-     * @return the test suite
-     */
-    public static Test suite() {
-
-        OpenCmsTestProperties.initialize(org.opencms.test.AllTests.TEST_PROPERTIES_PATH);
-
-        TestSuite suite = new TestSuite();
-        suite.setName(TestCmsSearchAdvancedFeatures.class.getName());
-
-        suite.addTest(new TestCmsSearchAdvancedFeatures("testSortSearchResults"));
-        suite.addTest(new TestCmsSearchAdvancedFeatures("testSearchCategories"));
-        suite.addTest(new TestCmsSearchAdvancedFeatures("testMultipleSearchRoots"));
-        suite.addTest(new TestCmsSearchAdvancedFeatures("testSearchRestriction"));
-        suite.addTest(new TestCmsSearchAdvancedFeatures("testLimitTimeRanges"));
-        suite.addTest(new TestCmsSearchAdvancedFeatures("testLimitTimeRangesOptimized"));
-        suite.addTest(new TestCmsSearchAdvancedFeatures("testOnlyFilterSearch"));
-
-        TestSetup wrapper = new TestSetup(suite) {
-
-            @Override
-            protected void setUp() {
-
-                setupOpenCms("simpletest", "/");
-            }
-
-            @Override
-            protected void tearDown() {
-
-                removeOpenCms();
-            }
-        };
-
-        return wrapper;
+        setupOpenCms(testInfo, "simpletest", "/");
     }
 
     /**
      * Tests searching with limiting the time ranges.<p>
-     * 
+     *
      * @throws Exception if the test fails
      */
+    @Order(5)
+    @Test
     public void testLimitTimeRanges() throws Exception {
 
         CmsObject cms = getCmsObject();
         echo("Testing searching with limiting to time ranges");
 
-        CmsSearchIndex index = OpenCms.getSearchManager().getIndex(INDEX_OFFLINE);
+        CmsSearchIndex index = (CmsSearchIndex)OpenCms.getSearchManager().getIndex(INDEX_OFFLINE);
         index.addConfigurationParameter(CmsSearchIndex.TIME_RANGE, "true");
-        assertTrue("Index '" + INDEX_OFFLINE + "' not checking time range as expected", index.isCheckingTimeRange());
+        assertTrue(index.isCheckingTimeRange(), "Index '" + INDEX_OFFLINE + "' not checking time range as expected");
 
         CmsSearch searchBean = new CmsSearch();
         List<CmsSearchResult> searchResult;
@@ -202,17 +170,19 @@ public class TestCmsSearchAdvancedFeatures extends OpenCmsTestCase {
 
     /**
      * Tests searching with optimized limiting the time ranges.<p>
-     * 
+     *
      * @throws Exception if the test fails
      */
+    @Order(6)
+    @Test
     public void testLimitTimeRangesOptimized() throws Exception {
 
         CmsObject cms = getCmsObject();
         echo("Testing searching with optimized limiting to time ranges");
 
-        CmsSearchIndex index = OpenCms.getSearchManager().getIndex(INDEX_OFFLINE);
+        CmsSearchIndex index = (CmsSearchIndex)OpenCms.getSearchManager().getIndex(INDEX_OFFLINE);
         index.addConfigurationParameter(CmsSearchIndex.TIME_RANGE, "false");
-        assertFalse("Index '" + INDEX_OFFLINE + "' checking time range but should not", index.isCheckingTimeRange());
+        assertFalse(index.isCheckingTimeRange(), "Index '" + INDEX_OFFLINE + "' checking time range but should not");
 
         CmsSearch searchBean = new CmsSearch();
         List<CmsSearchResult> searchResult;
@@ -279,6 +249,7 @@ public class TestCmsSearchAdvancedFeatures extends OpenCmsTestCase {
 
         searchBean.init(cms);
         searchResult = searchBean.getSearchResult();
+        // TODO Why runs this test successfully? The result size should be 1
         assertEquals(2, searchResult.size());
 
         // check max date last modified
@@ -297,68 +268,12 @@ public class TestCmsSearchAdvancedFeatures extends OpenCmsTestCase {
     }
 
     /**
-     * Tests searching without a query only using a filter.<p>
-     * 
-     * @throws Exception if the test fails
-     */
-    public void testOnlyFilterSearch() throws Exception {
-
-        CmsObject cms = getCmsObject();
-        echo("Testing searching without a query only using a filter");
-
-        CmsSearchIndex index = OpenCms.getSearchManager().getIndex(INDEX_OFFLINE);
-        index.addConfigurationParameter(CmsSearchIndex.TIME_RANGE, "false");
-        assertFalse("Index '" + INDEX_OFFLINE + "' checking time range but should not", index.isCheckingTimeRange());
-
-        CmsSearch searchBean = new CmsSearch();
-        List<CmsSearchResult> searchResult;
-
-        searchBean.init(cms);
-        searchBean.setIndex(INDEX_OFFLINE);
-        searchBean.setMatchesPerPage(1000);
-        searchBean.getParameters().setIgnoreQuery(true);
-
-        // query all files created since yesterday, this should be 2 because of previous tests
-        Date stamp = new Date();
-        searchBean.getParameters().setMinDateCreated(stamp.getTime() - (1000 * 60 * 60 * 24));
-
-        searchResult = searchBean.getSearchResult();
-        assertEquals(2, searchResult.size());
-
-        // now do a search for all documents of type "plain"
-        searchBean.getParameters().setMinDateCreated(Long.MIN_VALUE);
-        searchBean.setResourceType(CmsResourceTypePlain.getStaticTypeName());
-        searchBean.init(cms);
-        searchResult = searchBean.getSearchResult();
-        assertEquals(7, searchResult.size());
-
-        // now do a search for all documents of type "plain" created since yesterday    
-        searchBean.setResourceType(CmsResourceTypePlain.getStaticTypeName());
-        searchBean.getParameters().setMinDateCreated(stamp.getTime() - (1000 * 60 * 60 * 24));
-        searchBean.init(cms);
-        searchResult = searchBean.getSearchResult();
-        assertEquals(2, searchResult.size());
-
-        // now do a search for all documents of type "binary" created since yesterday      
-        searchBean.setResourceType(CmsResourceTypeBinary.getStaticTypeName());
-        searchBean.getParameters().setMinDateCreated(stamp.getTime() - (1000 * 60 * 60 * 24));
-        searchBean.init(cms);
-        searchResult = searchBean.getSearchResult();
-        assertEquals(0, searchResult.size());
-
-        // now do a search for all documents
-        searchBean.getParameters().setMinDateCreated(Long.MIN_VALUE);
-        searchBean.setResourceTypes(null);
-        searchBean.init(cms);
-        searchResult = searchBean.getSearchResult();
-        assertEquals(48, searchResult.size());
-    }
-
-    /**
      * Tests searching with multiple search roots.<p>
-     * 
+     *
      * @throws Exception if the test fails
      */
+    @Order(3)
+    @Test
     public void testMultipleSearchRoots() throws Exception {
 
         CmsObject cms = getCmsObject();
@@ -389,27 +304,87 @@ public class TestCmsSearchAdvancedFeatures extends OpenCmsTestCase {
             String[] rootList = roots[i];
             searchBean.setSearchRoots(rootList);
             searchResult = searchBean.getSearchResult();
-            System.out.println("Result for search "
-                + i
-                + " (found "
-                + searchResult.size()
-                + ", expected "
-                + expect
-                + ")");
+            System.out.println(
+                "Result for search " + i + " (found " + searchResult.size() + ", expected " + expect + ")");
             TestCmsSearch.printResults(searchResult, cms);
             assertEquals(expect, searchResult.size());
         }
     }
 
     /**
-     * Tests search category grouping.<p>
-     * 
+     * Tests searching without a query only using a filter.<p>
+     *
      * @throws Exception if the test fails
      */
+    @Order(7)
+    @Test
+    public void testOnlyFilterSearch() throws Exception {
+
+        CmsObject cms = getCmsObject();
+        echo("Testing searching without a query only using a filter");
+
+        CmsSearchIndex index = (CmsSearchIndex)OpenCms.getSearchManager().getIndex(INDEX_OFFLINE);
+        index.addConfigurationParameter(CmsSearchIndex.TIME_RANGE, "false");
+        assertFalse(index.isCheckingTimeRange(), "Index '" + INDEX_OFFLINE + "' checking time range but should not");
+
+        CmsSearch searchBean = new CmsSearch();
+        List<CmsSearchResult> searchResult;
+
+        searchBean.init(cms);
+        searchBean.setIndex(INDEX_OFFLINE);
+        searchBean.setMatchesPerPage(1000);
+        searchBean.getParameters().setIgnoreQuery(true);
+
+        // query all files created since yesterday, this should be 2 because of previous tests
+        Date stamp = new Date();
+        searchBean.getParameters().setMinDateCreated(stamp.getTime() - (1000 * 60 * 60 * 24));
+
+        searchResult = searchBean.getSearchResult();
+        assertEquals(2, searchResult.size());
+
+        // now do a search for all documents of type "plain"
+        searchBean.getParameters().setMinDateCreated(Long.MIN_VALUE);
+        searchBean.setResourceType(CmsResourceTypePlain.getStaticTypeName());
+        searchBean.init(cms);
+        searchResult = searchBean.getSearchResult();
+        assertEquals(7, searchResult.size());
+
+        // now do a search for all documents of type "plain" created since yesterday
+        searchBean.setResourceType(CmsResourceTypePlain.getStaticTypeName());
+        searchBean.getParameters().setMinDateCreated(stamp.getTime() - (1000 * 60 * 60 * 24));
+        searchBean.init(cms);
+        searchResult = searchBean.getSearchResult();
+        assertEquals(2, searchResult.size());
+
+        // now do a search for all documents of type "binary" created since yesterday
+        searchBean.setResourceType(CmsResourceTypeBinary.getStaticTypeName());
+        searchBean.getParameters().setMinDateCreated(stamp.getTime() - (1000 * 60 * 60 * 24));
+        searchBean.init(cms);
+        searchResult = searchBean.getSearchResult();
+        assertEquals(0, searchResult.size());
+
+        // now do a search for all documents
+        searchBean.getParameters().setMinDateCreated(Long.MIN_VALUE);
+        searchBean.setResourceTypes(null);
+        searchBean.init(cms);
+        searchResult = searchBean.getSearchResult();
+        assertEquals(48, searchResult.size());
+    }
+
+    /**
+     * Tests search category grouping.<p>
+     *
+     * @throws Exception if the test fails
+     */
+    @Order(2)
+    @Test
     public void testSearchCategories() throws Exception {
 
         CmsObject cms = getCmsObject();
         echo("Testing searching for categories");
+
+        CmsSearchIndex index = (CmsSearchIndex)OpenCms.getSearchManager().getIndex(INDEX_OFFLINE);
+        assertTrue(index.getFieldConfiguration() instanceof CmsSearchFieldConfigurationOldCategories);
 
         // perform a search on the newly generated index
         CmsSearch searchBean = new CmsSearch();
@@ -445,11 +420,12 @@ public class TestCmsSearchAdvancedFeatures extends OpenCmsTestCase {
         searchResult = searchBean.getSearchResult();
         System.out.println("Result sorted by relevance:");
         TestCmsSearch.printResults(searchResult, cms);
+        assertEquals(13, searchResult.size());
 
         Map<String, Integer> categories = searchBean.getSearchResultCategories();
         // make sure categories where found
         assertNotNull(categories);
-        // print the categories 
+        // print the categories
         System.out.println(CmsSearchCategoryCollector.formatCategoryMap(categories));
         // make sure the results are as expected
         assertTrue(categories.containsKey(cat1.getValue()));
@@ -459,10 +435,10 @@ public class TestCmsSearchAdvancedFeatures extends OpenCmsTestCase {
         // result must be all 3 categories plus 1 for "unknown"
         assertEquals(4, categories.size());
         // assert result count
-        assertEquals(new Integer(7), categories.get(cat1.getValue()));
-        assertEquals(new Integer(4), categories.get(cat2.getValue()));
-        assertEquals(new Integer(1), categories.get(cat3.getValue()));
-        assertEquals(new Integer(1), categories.get(CmsSearchCategoryCollector.UNKNOWN_CATEGORY));
+        assertEquals(Integer.valueOf(7), categories.get(cat1.getValue()));
+        assertEquals(Integer.valueOf(4), categories.get(cat2.getValue()));
+        assertEquals(Integer.valueOf(1), categories.get(cat3.getValue()));
+        assertEquals(Integer.valueOf(1), categories.get(CmsSearchCategoryCollector.UNKNOWN_CATEGORY));
 
         // count the category results
         searchBean.setCalculateCategories(false);
@@ -483,13 +459,8 @@ public class TestCmsSearchAdvancedFeatures extends OpenCmsTestCase {
             String[] catList = cats[k];
             searchBean.setCategories(catList);
             searchResult = searchBean.getSearchResult();
-            System.out.println("Result for search "
-                + k
-                + " (found "
-                + searchResult.size()
-                + ", expected "
-                + expect
-                + ")");
+            System.out.println(
+                "Result for search " + k + " (found " + searchResult.size() + ", expected " + expect + ")");
             TestCmsSearch.printResults(searchResult, cms);
             assertEquals(expect, searchResult.size());
         }
@@ -497,9 +468,11 @@ public class TestCmsSearchAdvancedFeatures extends OpenCmsTestCase {
 
     /**
      * Tests searching with restrictions.<p>
-     * 
+     *
      * @throws Exception if the test fails
      */
+    @Order(4)
+    @Test
     public void testSearchRestriction() throws Exception {
 
         CmsObject cms = getCmsObject();
@@ -531,13 +504,8 @@ public class TestCmsSearchAdvancedFeatures extends OpenCmsTestCase {
             String[] rootList = roots[i];
             searchBean.setSearchRoots(rootList);
             searchResult = searchBean.getSearchResult();
-            System.out.println("Result for search "
-                + i
-                + " (found "
-                + searchResult.size()
-                + ", expected "
-                + expect
-                + ")");
+            System.out.println(
+                "Result for search " + i + " (found " + searchResult.size() + ", expected " + expect + ")");
             TestCmsSearch.printResults(searchResult, cms);
             assertEquals(expect, searchResult.size());
         }
@@ -554,13 +522,8 @@ public class TestCmsSearchAdvancedFeatures extends OpenCmsTestCase {
             searchBean.setSearchRoots(rootList);
             searchBean.setResultRestriction(restriction);
             searchResult = searchBean.getSearchResult();
-            System.out.println("Result for search "
-                + i
-                + " (found "
-                + searchResult.size()
-                + ", expected "
-                + expect
-                + ")");
+            System.out.println(
+                "Result for search " + i + " (found " + searchResult.size() + ", expected " + expect + ")");
             TestCmsSearch.printResults(searchResult, cms);
             assertEquals(expect, searchResult.size());
         }
@@ -583,13 +546,8 @@ public class TestCmsSearchAdvancedFeatures extends OpenCmsTestCase {
             searchBean.setSearchRoots(rootList);
             searchBean.setResultRestriction(restriction);
             searchResult = searchBean.getSearchResult();
-            System.out.println("Result for search "
-                + i
-                + " (found "
-                + searchResult.size()
-                + ", expected "
-                + expect
-                + ")");
+            System.out.println(
+                "Result for search " + i + " (found " + searchResult.size() + ", expected " + expect + ")");
             TestCmsSearch.printResults(searchResult, cms);
             assertEquals(expect, searchResult.size());
         }
@@ -618,13 +576,8 @@ public class TestCmsSearchAdvancedFeatures extends OpenCmsTestCase {
             searchBean.setSearchRoots(rootList);
             searchBean.setResultRestriction(restriction);
             searchResult = searchBean.getSearchResult();
-            System.out.println("Result for search "
-                + i
-                + " (found "
-                + searchResult.size()
-                + ", expected "
-                + expect
-                + ")");
+            System.out.println(
+                "Result for search " + i + " (found " + searchResult.size() + ", expected " + expect + ")");
             TestCmsSearch.printResults(searchResult, cms);
             assertEquals(expect, searchResult.size());
         }
@@ -632,9 +585,11 @@ public class TestCmsSearchAdvancedFeatures extends OpenCmsTestCase {
 
     /**
      * Tests sorting of search results.<p>
-     * 
+     *
      * @throws Exception if the test fails
      */
+    @Order(1)
+    @Test
     public void testSortSearchResults() throws Exception {
 
         CmsObject cms = getCmsObject();
@@ -658,16 +613,18 @@ public class TestCmsSearchAdvancedFeatures extends OpenCmsTestCase {
         System.out.println("Result sorted by relevance:");
         TestCmsSearch.printResults(searchResult, cms);
         assertTrue(
-            "Best match by sore must always be 100 but is " + searchResult.get(0).getScore(),
-            searchResult.get(0).getScore() == 100);
+            searchResult.get(0).getScore() == 100,
+            "Best match by sore must always be 100 but is " + searchResult.get(0).getScore());
         for (int i = 1; i < searchResult.size(); i++) {
-            assertTrue("Resource "
-                + searchResult.get(i - 1).getPath()
-                + " not sorted as expected - index ["
-                + (i - 1)
-                + "/"
-                + i
-                + "]", searchResult.get(i - 1).getScore() >= searchResult.get(i).getScore());
+            assertTrue(
+                searchResult.get(i - 1).getScore() >= searchResult.get(i).getScore(),
+                "Resource "
+                    + searchResult.get(i - 1).getPath()
+                    + " not sorted as expected - index ["
+                    + (i - 1)
+                    + "/"
+                    + i
+                    + "]");
         }
 
         // second run use Title sort order

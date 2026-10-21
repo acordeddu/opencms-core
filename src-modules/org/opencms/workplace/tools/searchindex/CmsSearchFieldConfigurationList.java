@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -14,12 +14,12 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * Lesser General Public License for more details.
  *
- * For further information about Alkacon Software GmbH, please see the
- * company website: http://www.alkacon.com
+ * For further information about Alkacon Software GmbH & Co. KG, please see the
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -34,9 +34,12 @@ import org.opencms.main.CmsLog;
 import org.opencms.main.CmsRuntimeException;
 import org.opencms.main.OpenCms;
 import org.opencms.search.CmsSearchManager;
+import org.opencms.search.fields.CmsLuceneField;
 import org.opencms.search.fields.CmsSearchField;
 import org.opencms.search.fields.CmsSearchFieldConfiguration;
 import org.opencms.search.fields.CmsSearchFieldMapping;
+import org.opencms.search.fields.I_CmsSearchFieldConfiguration;
+import org.opencms.search.fields.I_CmsSearchFieldMapping;
 import org.opencms.util.CmsStringUtil;
 import org.opencms.workplace.list.A_CmsListDialog;
 import org.opencms.workplace.list.CmsListColumnAlignEnum;
@@ -67,14 +70,14 @@ import javax.servlet.jsp.PageContext;
 import org.apache.commons.logging.Log;
 
 /**
- * A list that displays information about the <code>{@link org.opencms.search.fields.CmsSearchFieldConfiguration}</code> 
- * that are members of the <code>{@link org.opencms.search.CmsSearchIndex}</code> 
- * in the current request scope (param "searchindex").<p> 
- * 
- * This list is stand-alone displayable (not to embed in another dialog) and 
- * offers single actions within the rows related to the current selected field configuration 
+ * A list that displays information about the <code>{@link org.opencms.search.fields.CmsLuceneFieldConfiguration}</code>
+ * that are members of the <code>{@link org.opencms.search.CmsSearchIndex}</code>
+ * in the current request scope (param "searchindex").<p>
+ *
+ * This list is stand-alone displayable (not to embed in another dialog) and
+ * offers single actions within the rows related to the current selected field configuration
  * which has to be found by the <b>request parameter <code></code></b>.
- * 
+ *
  * @since 6.5.5
  */
 public class CmsSearchFieldConfigurationList extends A_CmsListDialog {
@@ -123,7 +126,7 @@ public class CmsSearchFieldConfigurationList extends A_CmsListDialog {
 
     /**
      * Public constructor.<p>
-     * 
+     *
      * @param jsp an initialized JSP action element
      */
     public CmsSearchFieldConfigurationList(CmsJspActionElement jsp) {
@@ -133,7 +136,7 @@ public class CmsSearchFieldConfigurationList extends A_CmsListDialog {
 
     /**
      * Public constructor.<p>
-     * 
+     *
      * @param jsp an initialized JSP action element
      * @param listId the id of the list
      * @param listName the list name
@@ -145,7 +148,7 @@ public class CmsSearchFieldConfigurationList extends A_CmsListDialog {
 
     /**
      * Public constructor.<p>
-     * 
+     *
      * @param jsp an initialized JSP action element
      * @param listId the id of the displayed list
      * @param listName the name of the list
@@ -167,9 +170,9 @@ public class CmsSearchFieldConfigurationList extends A_CmsListDialog {
 
     /**
      * Public constructor.<p>
-     * 
+     *
      * Public constructor with JSP variables.<p>
-     * 
+     *
      * @param context the JSP page context
      * @param req the JSP request
      * @param res the JSP response
@@ -182,16 +185,17 @@ public class CmsSearchFieldConfigurationList extends A_CmsListDialog {
     /**
      * @see org.opencms.workplace.list.A_CmsListDialog#executeListMultiActions()
      */
+    @Override
     public void executeListMultiActions() {
 
         CmsSearchManager searchManager = OpenCms.getSearchManager();
         if (getParamListAction().equals(LIST_MACTION_DELETECONFIGURATION)) {
             // execute the delete multiaction
-            Iterator itItems = getSelectedItems().iterator();
+            Iterator<CmsListItem> itItems = getSelectedItems().iterator();
             CmsListItem listItem;
-            CmsSearchFieldConfiguration fieldconfig;
+            I_CmsSearchFieldConfiguration fieldconfig;
             while (itItems.hasNext()) {
-                listItem = (CmsListItem)itItems.next();
+                listItem = itItems.next();
                 fieldconfig = searchManager.getFieldConfiguration((String)listItem.get(LIST_COLUMN_NAME));
                 searchManager.removeSearchFieldConfiguration(fieldconfig);
             }
@@ -204,29 +208,30 @@ public class CmsSearchFieldConfigurationList extends A_CmsListDialog {
     /**
      * @see org.opencms.workplace.list.A_CmsListDialog#executeListSingleActions()
      */
+    @Override
     public void executeListSingleActions() throws IOException, ServletException, CmsRuntimeException {
 
         String fieldConfiguration = getSelectedItem().getId();
-        Map params = new HashMap();
+        Map<String, String[]> params = new HashMap<String, String[]>();
         String action = getParamListAction();
 
-        params.put(A_CmsFieldConfigurationDialog.PARAM_FIELDCONFIGURATION, fieldConfiguration);
-        params.put(PARAM_ACTION, DIALOG_INITIAL);
-        params.put(PARAM_STYLE, CmsToolDialog.STYLE_NEW);
+        params.put(A_CmsFieldConfigurationDialog.PARAM_FIELDCONFIGURATION, new String[] {fieldConfiguration});
+        params.put(PARAM_ACTION, new String[] {DIALOG_INITIAL});
+        params.put(PARAM_STYLE, new String[] {CmsToolDialog.STYLE_NEW});
         if (action.equals(LIST_ACTION_EDIT)) {
-            // forward to the edit indexsource screen   
+            // forward to the edit indexsource screen
             getToolManager().jspForwardTool(this, "/searchindex/fieldconfigurations/fieldconfiguration/edit", params);
         } else if (action.equals(LIST_ACTION_FIELD)) {
-            // forward to the new field screen   
+            // forward to the new field screen
             getToolManager().jspForwardTool(
                 this,
                 "/searchindex/fieldconfigurations/fieldconfiguration/newfield",
                 params);
         } else if (action.equals(LIST_ACTION_DELETE)) {
-            // forward to the delete field configuration screen   
+            // forward to the delete field configuration screen
             getToolManager().jspForwardTool(this, "/searchindex/fieldconfigurations/fieldconfiguration/delete", params);
         } else if (action.equals(LIST_ACTION_OVERVIEW_FIELDCONFIGURATION)) {
-            // forward to the field configuration overview screen   
+            // forward to the field configuration overview screen
             getToolManager().jspForwardTool(this, "/searchindex/fieldconfigurations/fieldconfiguration", params);
         }
         listSave();
@@ -235,14 +240,15 @@ public class CmsSearchFieldConfigurationList extends A_CmsListDialog {
     /**
      * @see org.opencms.workplace.list.A_CmsListDialog#fillDetails(java.lang.String)
      */
+    @Override
     protected void fillDetails(String detailId) {
 
         // get content
-        List items = getList().getAllContent();
-        Iterator itItems = items.iterator();
+        List<CmsListItem> items = getList().getAllContent();
+        Iterator<CmsListItem> itItems = items.iterator();
         CmsListItem item;
         while (itItems.hasNext()) {
-            item = (CmsListItem)itItems.next();
+            item = itItems.next();
             if (detailId.equals(LIST_DETAIL_FIELDCONFIGURATION)) {
                 fillDetailFieldConfiguration(item, detailId);
             }
@@ -252,18 +258,20 @@ public class CmsSearchFieldConfigurationList extends A_CmsListDialog {
     /**
      * @see org.opencms.workplace.list.A_CmsListDialog#getListItems()
      */
-    protected List getListItems() {
+    @Override
+    protected List<CmsListItem> getListItems() {
 
-        List result = new ArrayList();
+        List<CmsListItem> result = new ArrayList<CmsListItem>();
         CmsSearchManager manager = OpenCms.getSearchManager();
 
         // get content
-        List configs = new LinkedList(manager.getFieldConfigurations());
-        Iterator itConfigs = configs.iterator();
+        List<CmsSearchFieldConfiguration> configs = new LinkedList<CmsSearchFieldConfiguration>(
+            manager.getFieldConfigurationsLucene());
+        Iterator<CmsSearchFieldConfiguration> itConfigs = configs.iterator();
         CmsSearchFieldConfiguration config;
         while (itConfigs.hasNext()) {
             try {
-                config = (CmsSearchFieldConfiguration)itConfigs.next();
+                config = itConfigs.next();
                 CmsListItem item = getList().newItem(config.getName());
                 item.set(LIST_COLUMN_NAME, config.getName());
                 item.set(LIST_COLUMN_DESCRIPTION, config.getDescription());
@@ -284,6 +292,7 @@ public class CmsSearchFieldConfigurationList extends A_CmsListDialog {
     /**
      * @see org.opencms.workplace.list.A_CmsListDialog#setColumns(org.opencms.workplace.list.CmsListMetadata)
      */
+    @Override
     protected void setColumns(CmsListMetadata metadata) {
 
         // create column for edit
@@ -342,8 +351,8 @@ public class CmsSearchFieldConfigurationList extends A_CmsListDialog {
         // add overview action
         CmsListDefaultAction defEditAction = new CmsListDefaultAction(LIST_ACTION_OVERVIEW_FIELDCONFIGURATION);
         defEditAction.setName(Messages.get().container(Messages.GUI_LIST_FIELDCONFIGURATION_COL_OVERVIEW_NAME_0));
-        defEditAction.setHelpText(Messages.get().container(
-            Messages.GUI_LIST_FIELDCONFIGURATION_COL_OVERVIEW_NAME_HELP_0));
+        defEditAction.setHelpText(
+            Messages.get().container(Messages.GUI_LIST_FIELDCONFIGURATION_COL_OVERVIEW_NAME_HELP_0));
         nameCol.addDefaultAction(defEditAction);
         metadata.addColumn(nameCol);
 
@@ -358,47 +367,50 @@ public class CmsSearchFieldConfigurationList extends A_CmsListDialog {
     /**
      * @see org.opencms.workplace.list.A_CmsListDialog#setIndependentActions(org.opencms.workplace.list.CmsListMetadata)
      */
+    @Override
     protected void setIndependentActions(CmsListMetadata metadata) {
 
         // add field configuration details
         CmsListItemDetails configDetails = new CmsListItemDetails(LIST_DETAIL_FIELDCONFIGURATION);
         configDetails.setAtColumn(LIST_COLUMN_NAME);
         configDetails.setVisible(false);
-        configDetails.setShowActionName(Messages.get().container(
-            Messages.GUI_LIST_FIELDCONFIGURATION_DETAIL_FIELDS_SHOW_0));
-        configDetails.setShowActionHelpText(Messages.get().container(
-            Messages.GUI_LIST_FIELDCONFIGURATION_DETAIL_FIELDS_SHOW_HELP_0));
-        configDetails.setHideActionName(Messages.get().container(
-            Messages.GUI_LIST_FIELDCONFIGURATION_DETAIL_FIELDS_HIDE_0));
-        configDetails.setHideActionHelpText(Messages.get().container(
-            Messages.GUI_LIST_FIELDCONFIGURATION_DETAIL_FIELDS_HIDE_HELP_0));
+        configDetails.setShowActionName(
+            Messages.get().container(Messages.GUI_LIST_FIELDCONFIGURATION_DETAIL_FIELDS_SHOW_0));
+        configDetails.setShowActionHelpText(
+            Messages.get().container(Messages.GUI_LIST_FIELDCONFIGURATION_DETAIL_FIELDS_SHOW_HELP_0));
+        configDetails.setHideActionName(
+            Messages.get().container(Messages.GUI_LIST_FIELDCONFIGURATION_DETAIL_FIELDS_HIDE_0));
+        configDetails.setHideActionHelpText(
+            Messages.get().container(Messages.GUI_LIST_FIELDCONFIGURATION_DETAIL_FIELDS_HIDE_HELP_0));
         configDetails.setName(Messages.get().container(Messages.GUI_LIST_FIELDCONFIGURATION_DETAIL_FIELDS_NAME_0));
-        configDetails.setFormatter(new CmsListItemDetailsFormatter(Messages.get().container(
-            Messages.GUI_LIST_FIELDCONFIGURATION_DETAIL_FIELDS_NAME_0)));
+        configDetails.setFormatter(
+            new CmsListItemDetailsFormatter(
+                Messages.get().container(Messages.GUI_LIST_FIELDCONFIGURATION_DETAIL_FIELDS_NAME_0)));
         metadata.addItemDetails(configDetails);
     }
 
     /**
      * @see org.opencms.workplace.list.A_CmsListDialog#setMultiActions(org.opencms.workplace.list.CmsListMetadata)
      */
+    @Override
     protected void setMultiActions(CmsListMetadata metadata) {
 
         // add add multi action
         CmsListMultiAction deleteMultiAction = new CmsListMultiAction(LIST_MACTION_DELETECONFIGURATION);
-        deleteMultiAction.setName(Messages.get().container(
-            Messages.GUI_LIST_FIELDCONFIGURATION_MACTION_DELETECONFIGURATION_NAME_0));
-        deleteMultiAction.setHelpText(Messages.get().container(
-            Messages.GUI_LIST_FIELDCONFIGURATION_MACTION_DELETECONFIGURATION_NAME_HELP_0));
-        deleteMultiAction.setConfirmationMessage(Messages.get().container(
-            Messages.GUI_LIST_FIELDCONFIGURATION_MACTION_DELETECONFIGURATION_CONF_0));
+        deleteMultiAction.setName(
+            Messages.get().container(Messages.GUI_LIST_FIELDCONFIGURATION_MACTION_DELETECONFIGURATION_NAME_0));
+        deleteMultiAction.setHelpText(
+            Messages.get().container(Messages.GUI_LIST_FIELDCONFIGURATION_MACTION_DELETECONFIGURATION_NAME_HELP_0));
+        deleteMultiAction.setConfirmationMessage(
+            Messages.get().container(Messages.GUI_LIST_FIELDCONFIGURATION_MACTION_DELETECONFIGURATION_CONF_0));
         deleteMultiAction.setIconPath(ICON_MULTI_DELETE);
         metadata.addMultiAction(deleteMultiAction);
     }
 
     /**
-     * Writes the updated search configuration back to the XML 
+     * Writes the updated search configuration back to the XML
      * configuration file and refreshes the complete list.<p>
-     * 
+     *
      * @param refresh if true, the list items are refreshed
      */
     protected void writeConfiguration(boolean refresh) {
@@ -412,29 +424,28 @@ public class CmsSearchFieldConfigurationList extends A_CmsListDialog {
 
     /**
      * Fills details of the field configuration into the given item. <p>
-     * 
+     *
      * @param item the list item to fill
      * @param detailId the id for the detail to fill
      */
     private void fillDetailFieldConfiguration(CmsListItem item, String detailId) {
 
         StringBuffer html = new StringBuffer();
-        // search for the corresponding CmsSearchIndex: 
+        // search for the corresponding A_CmsSearchIndex:
         String idxConfigName = (String)item.get(LIST_COLUMN_NAME);
 
-        CmsSearchFieldConfiguration idxFieldConfiguration = OpenCms.getSearchManager().getFieldConfiguration(
+        I_CmsSearchFieldConfiguration idxFieldConfiguration = OpenCms.getSearchManager().getFieldConfiguration(
             idxConfigName);
-        List fields = idxFieldConfiguration.getFields();
+        List<CmsSearchField> fields = idxFieldConfiguration.getFields();
 
         html.append("<ul>\n");
-        Iterator itFields = fields.iterator();
+        Iterator<CmsSearchField> itFields = fields.iterator();
         while (itFields.hasNext()) {
-            CmsSearchField field = (CmsSearchField)itFields.next();
+            CmsLuceneField field = (CmsLuceneField)itFields.next();
             String fieldName = field.getName();
             boolean fieldStore = field.isStored();
             String fieldIndex = field.getIndexed();
             boolean fieldExcerpt = field.isInExcerpt();
-            float fieldBoost = field.getBoost();
             String fieldDefault = field.getDefaultValue();
 
             html.append("  <li>\n").append("    ");
@@ -448,15 +459,12 @@ public class CmsSearchFieldConfigurationList extends A_CmsListDialog {
             if (fieldExcerpt) {
                 html.append(", ").append("excerpt=").append(fieldExcerpt);
             }
-            if (fieldBoost != CmsSearchField.BOOST_DEFAULT) {
-                html.append(", ").append("boost=").append(fieldBoost);
-            }
             if (fieldDefault != null) {
                 html.append(", ").append("default=").append(field.getDefaultValue());
             }
             html.append("\n").append("    <ul>\n");
 
-            Iterator itMappings = field.getMappings().iterator();
+            Iterator<I_CmsSearchFieldMapping> itMappings = field.getMappings().iterator();
             while (itMappings.hasNext()) {
                 CmsSearchFieldMapping mapping = (CmsSearchFieldMapping)itMappings.next();
                 html.append("  <li>\n").append("    ");

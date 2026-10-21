@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -15,11 +15,11 @@
  * Lesser General Public License for more details.
  *
  * For further information about Alkacon Software, please see the
- * company website: http://www.alkacon.com
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -31,7 +31,7 @@ import org.opencms.gwt.client.util.CmsClientStringUtil;
 
 /**
  * Predefined image format restriction. To be used within the image format tab of the image preview.<p>
- * 
+ *
  * @since 8.0.0
  */
 public class CmsImageFormatRestriction implements I_CmsFormatRestriction {
@@ -50,8 +50,8 @@ public class CmsImageFormatRestriction implements I_CmsFormatRestriction {
 
     /**
      * Constructor.<p>
-     * 
-     * @param name the format name 
+     *
+     * @param name the format name
      * @param label the label
      * @param config the configuration
      */
@@ -64,15 +64,15 @@ public class CmsImageFormatRestriction implements I_CmsFormatRestriction {
 
     /**
      * Returns if given configuration string is valid.<p>
-     * 
+     *
      * @param config configuration string
-     * 
+     *
      * @return <code>true</code> if given configuration string is valid
      */
     public static native boolean isValidConfig(String config)/*-{
-        var regex = /^(\?|\d+)x(\?|\d+)$/;
-        return regex.test(config);
-    }-*/;
+                                                             var regex = /^(\?|\d+)x(\?|\d+)$/;
+                                                             return regex.test(config);
+                                                             }-*/;
 
     /**
      * @see org.opencms.ade.galleries.client.preview.I_CmsFormatRestriction#adjustCroppingParam(org.opencms.ade.galleries.client.preview.CmsCroppingParamBean)
@@ -182,7 +182,7 @@ public class CmsImageFormatRestriction implements I_CmsFormatRestriction {
 
     /**
      * Parses the the given configuration string.<p>
-     * 
+     *
      * @param config the configuration
      */
     private void parseConfig(String config) {
@@ -198,7 +198,7 @@ public class CmsImageFormatRestriction implements I_CmsFormatRestriction {
             if (conf[1].trim().equals("?")) {
                 m_height = I_CmsFormatRestriction.DIMENSION_NOT_SET;
             } else {
-                m_height = CmsClientStringUtil.parseInt(conf[0]);
+                m_height = CmsClientStringUtil.parseInt(conf[1]);
                 m_height = (m_height == 0) ? I_CmsFormatRestriction.DIMENSION_NOT_SET : m_height;
             }
         }

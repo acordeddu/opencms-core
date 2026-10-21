@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -14,12 +14,12 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * Lesser General Public License for more details.
  *
- * For further information about Alkacon Software GmbH, please see the
- * company website: http://www.alkacon.com
+ * For further information about Alkacon Software GmbH & Co. KG, please see the
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -31,6 +31,7 @@ import org.opencms.file.CmsObject;
 import org.opencms.i18n.CmsEncoder;
 import org.opencms.main.CmsLog;
 import org.opencms.main.CmsRuntimeException;
+import org.opencms.relations.CmsRelationType;
 import org.opencms.util.CmsFileUtil;
 import org.opencms.util.CmsStringUtil;
 import org.opencms.widgets.I_CmsWidgetParameter;
@@ -48,8 +49,8 @@ import org.dom4j.Element;
 
 /**
  * Base class for XML content value implementations.<p>
- * 
- * @since 6.0.0 
+ *
+ * @since 6.0.0
  */
 public abstract class A_CmsXmlContentValue implements I_CmsXmlContentValue, I_CmsWidgetParameter {
 
@@ -93,8 +94,8 @@ public abstract class A_CmsXmlContentValue implements I_CmsXmlContentValue, I_Cm
     private int m_xmlIndex;
 
     /**
-     * Default constructor for a XML content type 
-     * that initializes some internal values.<p> 
+     * Default constructor for a XML content type
+     * that initializes some internal values.<p>
      */
     protected A_CmsXmlContentValue() {
 
@@ -107,7 +108,7 @@ public abstract class A_CmsXmlContentValue implements I_CmsXmlContentValue, I_Cm
 
     /**
      * Initializes the required members for this XML content value.<p>
-     * 
+     *
      * @param document the XML content instance this value belongs to
      * @param element the XML element that contains this value
      * @param locale the locale this value is created for
@@ -129,7 +130,7 @@ public abstract class A_CmsXmlContentValue implements I_CmsXmlContentValue, I_Cm
 
     /**
      * Initializes the schema type descriptor values for this type descriptor.<p>
-     * 
+     *
      * @param name the name of the XML node containing the value according to the XML schema
      * @param minOccurs minimum number of occurrences of this type according to the XML schema
      * @param maxOccurs maximum number of occurrences of this type according to the XML schema
@@ -164,7 +165,7 @@ public abstract class A_CmsXmlContentValue implements I_CmsXmlContentValue, I_Cm
 
     /**
      * Appends an element XML representation of this type to the given root node.<p>
-     * 
+     *
      * @param root the element to append the XML to
      */
     public void appendXmlSchema(Element root) {
@@ -210,7 +211,8 @@ public abstract class A_CmsXmlContentValue implements I_CmsXmlContentValue, I_Cm
             I_CmsXmlSchemaType other = (I_CmsXmlSchemaType)obj;
             return (getName().equals(other.getName())
                 && getTypeName().equals(other.getTypeName())
-                && (getMinOccurs() == other.getMinOccurs()) && (getMaxOccurs() == other.getMaxOccurs()));
+                && (getMinOccurs() == other.getMinOccurs())
+                && (getMaxOccurs() == other.getMaxOccurs()));
         }
         return false;
     }
@@ -259,7 +261,7 @@ public abstract class A_CmsXmlContentValue implements I_CmsXmlContentValue, I_Cm
      */
     public String getDefault(CmsObject cms) {
 
-        return m_contentDefinition.getContentHandler().getDefault(cms, this, this.getLocale());
+        return m_contentDefinition.getContentHandler().getDefault(cms, this, getLocale());
     }
 
     /**
@@ -290,6 +292,10 @@ public abstract class A_CmsXmlContentValue implements I_CmsXmlContentValue, I_Cm
      * @see org.opencms.widgets.I_CmsWidgetParameter#getId()
      */
     public String getId() {
+
+        if (m_element == null) {
+            return null;
+        }
 
         StringBuffer result = new StringBuffer(128);
         result.append(getTypeName());
@@ -390,6 +396,9 @@ public abstract class A_CmsXmlContentValue implements I_CmsXmlContentValue, I_Cm
      */
     public String getPath() {
 
+        if (m_element == null) {
+            return "";
+        }
         String path = m_element.getUniquePath();
         // must remove the first 2 nodes because these are not required for XML content values
         int pos = path.indexOf('/', path.indexOf('/', 1) + 1) + 1;
@@ -454,7 +463,7 @@ public abstract class A_CmsXmlContentValue implements I_CmsXmlContentValue, I_Cm
 
     /**
      * The default implementation always returns <code>true</code>.<p>
-     * 
+     *
      * @see org.opencms.xml.types.I_CmsXmlContentValue#isSearchable()
      */
     public boolean isSearchable() {
@@ -505,7 +514,7 @@ public abstract class A_CmsXmlContentValue implements I_CmsXmlContentValue, I_Cm
 
     /**
      * Sets the default value for a node of this type.<p>
-     * 
+     *
      * @param defaultValue the default value to set
      */
     public void setDefault(String defaultValue) {
@@ -555,10 +564,30 @@ public abstract class A_CmsXmlContentValue implements I_CmsXmlContentValue, I_Cm
     }
 
     /**
-     * Moves this XML content element up or down in the XML document.<p> 
-     * 
+     * Returns the relation type for the given path.<p>
+     *
+     * @param path the element path
+     *
+     * @return the relation type
+     */
+    protected CmsRelationType getRelationType(String path) {
+
+        CmsRelationType result = getContentDefinition().getContentHandler().getRelationType(path);
+        I_CmsXmlDocument document = getDocument();
+        if (document != null) {
+            // the relations set in the main content definition override relations set in the nested definition
+            result = document.getContentDefinition().getContentHandler().getRelationType(getPath(), result);
+        } else {
+            LOG.warn("Missing document while evaluating relation type for " + path);
+        }
+        return result;
+    }
+
+    /**
+     * Moves this XML content element up or down in the XML document.<p>
+     *
      * Please note: No check is performed if the move violates the XML document schema!<p>
-     * 
+     *
      * @param step move the element up or down according to the given step value
      */
     protected void moveValue(int step) {
@@ -575,11 +604,11 @@ public abstract class A_CmsXmlContentValue implements I_CmsXmlContentValue, I_Cm
 
     /**
      * Convenience method to loads the XML schema definition for this value type from an external file.<p>
-     * 
+     *
      * @param schemaUri the schema uri to load the XML schema file from
-     * 
+     *
      * @return the loaded XML schema
-     * 
+     *
      * @throws CmsRuntimeException if something goes wrong
      */
     protected String readSchemaDefinition(String schemaUri) throws CmsRuntimeException {
@@ -589,7 +618,9 @@ public abstract class A_CmsXmlContentValue implements I_CmsXmlContentValue, I_Cm
         try {
             schemaDefinition = CmsFileUtil.readFile(schemaUri, CmsEncoder.ENCODING_UTF_8);
         } catch (Exception e) {
-            throw new CmsRuntimeException(Messages.get().container(Messages.ERR_XMLCONTENT_LOAD_SCHEMA_1, schemaUri), e);
+            throw new CmsRuntimeException(
+                Messages.get().container(Messages.ERR_XMLCONTENT_LOAD_SCHEMA_1, schemaUri),
+                e);
         }
         return schemaDefinition;
     }

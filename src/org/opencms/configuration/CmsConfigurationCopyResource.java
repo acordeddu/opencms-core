@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -14,12 +14,12 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * Lesser General Public License for more details.
  *
- * For further information about Alkacon Software GmbH, please see the
- * company website: http://www.alkacon.com
+ * For further information about Alkacon Software GmbH & Co. KG, please see the
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -32,15 +32,17 @@ import org.opencms.file.CmsResource.CmsResourceCopyMode;
 import org.opencms.file.types.A_CmsResourceType;
 import org.opencms.util.CmsMacroResolver;
 
+import java.io.Serializable;
+
 /**
  * Describes a resource to copy during the creation of a new resource.<p>
- * 
+ *
  * Usually used in folder types to copy some default resources to the folder,
  * but also usable for file resources.<p>
- * 
+ *
  * @since 6.0.0
  */
-public class CmsConfigurationCopyResource {
+public class CmsConfigurationCopyResource implements Serializable {
 
     /** Indicates "copy resources" should be copied with type {@link CmsResource#COPY_AS_NEW}. */
     public static final String COPY_AS_NEW = "new";
@@ -50,6 +52,9 @@ public class CmsConfigurationCopyResource {
 
     /** Indicates "copy resources" should be copied with type {@link CmsResource#COPY_AS_SIBLING}. */
     public static final String COPY_AS_SIBLING = "sibling";
+
+    /** The serial version id. */
+    private static final long serialVersionUID = 3698327414935524194L;
 
     /** The source resource. */
     private String m_source;
@@ -68,10 +73,10 @@ public class CmsConfigurationCopyResource {
 
     /**
      * Creates a new copy resource info container.<p>
-     * 
+     *
      * If target is <code>null</code>, the macro {@link A_CmsResourceType#MACRO_RESOURCE_FOLDER_PATH} is used as default.
      * If type is <code>null</code>, the copy type {@link CmsResource#COPY_AS_NEW} is used as default.<p>
-     * 
+     *
      * @param source the source resource
      * @param target the target resource (may contain macros)
      * @param type the type of the copy, for example "as new", "as sibling" etc
@@ -101,7 +106,7 @@ public class CmsConfigurationCopyResource {
 
     /**
      * Returns the source resource.<p>
-     * 
+     *
      * @return the source resource
      */
     public String getSource() {
@@ -111,7 +116,7 @@ public class CmsConfigurationCopyResource {
 
     /**
      * Returns the target resource (may contain macros).<p>
-     * 
+     *
      * @return the target resource (may contain macros)
      */
     public String getTarget() {
@@ -121,11 +126,11 @@ public class CmsConfigurationCopyResource {
 
     /**
      * Returns the type of the copy, for example "as new", "as sibling" etc.<p>
-     * 
-     * Possible types are {@link org.opencms.file.CmsResource#COPY_AS_NEW}, 
+     *
+     * Possible types are {@link org.opencms.file.CmsResource#COPY_AS_NEW},
      * {@link org.opencms.file.CmsResource#COPY_AS_SIBLING} and
      * {@link org.opencms.file.CmsResource#COPY_PRESERVE_SIBLING}.<p>
-     * 
+     *
      * @return the type of the copy, for example "as new", "as sibling" etc
      */
     public CmsResourceCopyMode getType() {
@@ -135,9 +140,9 @@ public class CmsConfigurationCopyResource {
 
     /**
      * Returns the copy type as String.<p>
-     * 
+     *
      * @see #getType()
-     * 
+     *
      * @return the copy type as String
      */
     public String getTypeString() {

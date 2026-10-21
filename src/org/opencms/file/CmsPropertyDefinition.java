@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -14,12 +14,12 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * Lesser General Public License for more details.
  *
- * For further information about Alkacon Software GmbH, please see the
- * company website: http://www.alkacon.com
+ * For further information about Alkacon Software GmbH & Co. KG, please see the
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -27,6 +27,7 @@
 
 package org.opencms.file;
 
+import org.opencms.gwt.shared.CmsGwtConstants;
 import org.opencms.main.CmsIllegalArgumentException;
 import org.opencms.util.A_CmsModeIntEnumeration;
 import org.opencms.util.CmsStringUtil;
@@ -34,8 +35,8 @@ import org.opencms.util.CmsUUID;
 
 /**
  * Defines a property name, so that <code>{@link CmsProperty}</code> instances can be created with that name.<p>
- * 
- * @since 6.0.0 
+ *
+ * @since 6.0.0
  */
 public class CmsPropertyDefinition implements Cloneable, Comparable<CmsPropertyDefinition> {
 
@@ -55,7 +56,7 @@ public class CmsPropertyDefinition implements Cloneable, Comparable<CmsPropertyD
 
         /**
          * Creates a new property type with the given identifier.<p>
-         * 
+         *
          * @param type the mode id to use
          */
         private CmsPropertyType(int type) {
@@ -65,12 +66,12 @@ public class CmsPropertyDefinition implements Cloneable, Comparable<CmsPropertyD
 
         /**
          * Returns the property definition type for the given type id. <p>
-         * 
-         * If the given String matches no known type <code>{@link #NORMAL}</code> 
+         *
+         * If the given String matches no known type <code>{@link #NORMAL}</code>
          * will be returned as the default.<p>
-         * 
+         *
          * @param type the type value to get the property type for
-         * 
+         *
          * @return the property type for the given type value
          */
         public static CmsPropertyType valueOf(int type) {
@@ -101,8 +102,19 @@ public class CmsPropertyDefinition implements Cloneable, Comparable<CmsPropertyD
     /** The name of the VFS property that controls the caching. */
     public static final String PROPERTY_CACHE = "cache";
 
-    /** Property for the sitemap configuration file path. */
-    public static final String PROPERTY_CONFIG_SITEMAP = "config.sitemap";
+    /**
+     * Property for configuring background color for a category in the explorer's category column.
+     */
+    public static final String PROPERTY_CATEGORY_BACKGROUND = "category.background";
+
+    /** Property used to hide categories from the category widgets in the page/content editor.
+     *
+     * <p>If this property is set to 'true' on a category, it should never be set to 'false' on one of its subcategory.
+     */
+    public static final String PROPERTY_CATEGORY_HIDDEN = "category.hidden";
+
+    /** The property to read an additional category folder from.  */
+    public static final String PROPERTY_CATEGORY_REPOSITORY = "category.repository";
 
     /** Property to define the function detail container for a template. */
     public static final String PROPERTY_CONTAINER_INFO = "container.info";
@@ -112,6 +124,9 @@ public class CmsPropertyDefinition implements Cloneable, Comparable<CmsPropertyD
 
     /** Property for the content encoding. */
     public static final String PROPERTY_CONTENT_ENCODING = "content-encoding";
+
+    /** If configured on a folder, when copying contents in the folder or any of its subfolders through ADE, the copies will be placed in the same folder as the original, and given a file name according to the name pattern. */
+    public static final String PROPERTY_CONTENT_NAME_PATTERN = "content.namepattern";
 
     /** Property for the content encoding. */
     public static final String PROPERTY_COPYRIGHT = "Copyright";
@@ -125,11 +140,26 @@ public class CmsPropertyDefinition implements Cloneable, Comparable<CmsPropertyD
     /** Property for the description. */
     public static final String PROPERTY_DESCRIPTION = "Description";
 
+    /** Property for the description in HTML format. */
+    public static final String PROPERTY_DESCRIPTION_HTML = "Description.html";
+
+    /** Property to set the display order of a content in lists. */
+    public static final String PROPERTY_DISPLAY_ORDER = "display-order";
+
+    /** The name of the property which controls whether an element will be used as a copy model by the container page editor. */
+    public static final String PROPERTY_ELEMENT_MODEL = "element.model";
+
+    /** May contain a path to an element replacement configuration, for use in the 'copy page' dialog. */
+    public static final String PROPERTY_ELEMENT_REPLACEMENTS = "element.replacements";
+
     /** Property for the resource title. */
     public static final String PROPERTY_ENABLE_NOTIFICATION = "enable-notification";
 
     /** Property for the static export. */
     public static final String PROPERTY_EXPORT = "export";
+
+    /** Property used to record the resource type for resources whose type is unknown at import time, so they can be exported with that type later. */
+    public static final String PROPERTY_EXPORT_TYPE = "export.type";
 
     /** Property for the resource export name, during export this name is used instead of the resource name. */
     public static final String PROPERTY_EXPORTNAME = "exportname";
@@ -140,14 +170,41 @@ public class CmsPropertyDefinition implements Cloneable, Comparable<CmsPropertyD
     /** Property to control the folders where template or default bodies should be available. */
     public static final String PROPERTY_FOLDERS_AVAILABLE = "folders.available";
 
+    /** Property stating where to create new gallery folders. */
+    public static final String PROPERTY_GALLERIES_FOLDER = "galleries.folder";
+
+    /** Property containing the maps API key. */
+    public static final String PROPERTY_GOOGLE_API_KEY = "google.apikey";
+
+    /** Property containing the maps API key. */
+    public static final String PROPERTY_GOOGLE_API_KEY_WORKPLACE = "google.apikey.workplace";
+
+    /** Property to control whether historic versions should be removed when deleted resources are published. */
+    public static final String PROPERTY_HISTORY_REMOVE_DELETED = "history.removedeleted";
+
+    /** Name of the property in which the focal point is stored. */
+    public static final String PROPERTY_IMAGE_FOCAL_POINT = CmsGwtConstants.PROPERTY_IMAGE_FOCALPOINT;
+
     /** Property constant for <code>"image.size"</code>. */
     public static final String PROPERTY_IMAGE_SIZE = "image.size";
+
+    /** The property for defining the date (as Solr field) that should be used for sorting in lists. */
+    public static final String PROPERTY_INSTANCEDATE_COPYFIELD = "instancedate.copyfield";
 
     /** Property for the keywords. */
     public static final String PROPERTY_KEYWORDS = "Keywords";
 
+    /** Property to enable __forceAbsoluteLinks request parameter for a resource. */
+    public static final String PROPERTY_LINKS_FORCEABSOLUTE_ENABLED = "links.forceabsolute.enabled";
+
     /** Property for the current locale. */
     public static final String PROPERTY_LOCALE = "locale";
+
+    /** Property to mark detail pages to have locale independent detail only containers. */
+    public static final String PROPERTY_LOCALE_INDEPENDENT_DETAILS = "locale.independent-details";
+
+    /** Property for the 'do not translate' marking in the sitemap editor. */
+    public static final String PROPERTY_LOCALE_NOTRANSLATION = "locale.notranslation";
 
     /** Property for the login form. */
     public static final String PROPERTY_LOGIN_FORM = "login-form";
@@ -179,8 +236,14 @@ public class CmsPropertyDefinition implements Cloneable, Comparable<CmsPropertyD
     /** Property to exclude individual resources from search index generation. */
     public static final String PROPERTY_SEARCH_EXCLUDE = "search.exclude";
 
+    /** Property to exclude individual resources from search results online (Solr only). */
+    public static final String PROPERTY_SEARCH_EXCLUDE_ONLINE = "search.exclude.online";
+
     /** Property to boost certain search results. */
     public static final String PROPERTY_SEARCH_PRIORITY = "search.priority";
+
+    /** Property for secondary locales for use in the locale compare view in the sitemap editor. */
+    public static final String PROPERTY_SECONDARY_LOCALES = "locale.secondary";
 
     /** Property for the secure transmission of resources. */
     public static final String PROPERTY_SECURE = "secure";
@@ -191,17 +254,41 @@ public class CmsPropertyDefinition implements Cloneable, Comparable<CmsPropertyD
     /** Property to control the template. */
     public static final String PROPERTY_TEMPLATE = "template";
 
+    /** Property to customize for which templates elements should be displayed in the gallery when using the CmsTransformerTemplateProvider. */
+    public static final String PROPERTY_TEMPLATE_COMPATILIBITY = "template.compatibility";
+
+    /** Property for specifying a list of container types used to match formatters in the display formatter selection widget. */
+    public static final String PROPERTY_TEMPLATE_DISPLAY_TYPES = "template.display.types";
+
     /** Property to control the template elements. */
     public static final String PROPERTY_TEMPLATE_ELEMENTS = "template-elements";
 
     /** Property for the template image. */
     public static final String PROPERTY_TEMPLATE_IMAGE = "template.image";
 
+    /** Property to configure the value which should be used instead of the template path when selecting the template in the GUI. Please note that this does not have to actually be a template provider configuration string, this is just the most common use case.  */
+    public static final String PROPERTY_TEMPLATE_PROVIDER = "template.provider";
+
     /** Property for the resource title. */
     public static final String PROPERTY_TITLE = "Title";
 
+    /** Property for user data request configuration. */
+    public static final String PROPERTY_UDR_CONFIG = "udr.config";
+
+    /** Property used to configure default organizational unit. */
+    public static final String PROPERTY_UDR_DEFAULTOU = "udr.defaultou";
+
+    /** Name of the property used to control whether mapped URL names should replace previous URL names. */
+    public static final String PROPERTY_URLNAME_REPLACE = "urlname.replace";
+
     /** Property for the visible method in the administration view. */
     public static final String PROPERTY_VISIBLE = "visiblemethod";
+
+    /** Property for the XML sitemap change frequency. */
+    public static final String PROPERTY_XMLSITEMAP_CHANGEFREQ = "xmlsitemap.changefreq";
+
+    /** Property for the XML sitemap priority. */
+    public static final String PROPERTY_XMLSITEMAP_PRIORITY = "xmlsitemap.priority";
 
     /** The property definition type for resources. */
     public static final int PROPERYDEFINITION_RESOURCE = 1;
@@ -228,11 +315,11 @@ public class CmsPropertyDefinition implements Cloneable, Comparable<CmsPropertyD
     private CmsPropertyType m_type;
 
     /**
-     * Creates a new property definition object with the type 
+     * Creates a new property definition object with the type
      * <code>{@link #TYPE_NORMAL}</code>.<p>
-     * 
+     *
      * @param id the id of the property definition
-     * @param name the name of the property definition 
+     * @param name the name of the property definition
      */
     public CmsPropertyDefinition(CmsUUID id, String name) {
 
@@ -241,9 +328,9 @@ public class CmsPropertyDefinition implements Cloneable, Comparable<CmsPropertyD
 
     /**
      * Creates a new property definition object.<p>
-     * 
+     *
      * @param id the id of the property definition
-     * @param name the name of the property definition 
+     * @param name the name of the property definition
      * @param propertyType the type of the property
      */
     public CmsPropertyDefinition(CmsUUID id, String name, CmsPropertyType propertyType) {
@@ -254,20 +341,21 @@ public class CmsPropertyDefinition implements Cloneable, Comparable<CmsPropertyD
     }
 
     /**
-     * Checks if the provided property name is a valid property name, 
+     * Checks if the provided property name is a valid property name,
      * that is contains only valid characters.<p>
-     * 
-     * A property name can only be composed of digits, 
+     *
+     * A property name can only be composed of digits,
      * standard ASCII letters and the symbols defined in {@link #NAME_CONSTRAINTS}.<p>
      *
      * @param name the property name to check
-     * 
+     *
      * @throws CmsIllegalArgumentException if the given property name is not valid
      */
     public static void checkPropertyName(String name) throws CmsIllegalArgumentException {
 
         if (CmsStringUtil.isEmptyOrWhitespaceOnly(name)) {
-            throw new CmsIllegalArgumentException(Messages.get().container(Messages.ERR_BAD_PROPERTYNAME_EMPTY_0, name));
+            throw new CmsIllegalArgumentException(
+                Messages.get().container(Messages.ERR_BAD_PROPERTYNAME_EMPTY_0, name));
         }
 
         CmsStringUtil.checkName(name, NAME_CONSTRAINTS, Messages.ERR_BAD_PROPERTYNAME_4, Messages.get());
@@ -275,7 +363,7 @@ public class CmsPropertyDefinition implements Cloneable, Comparable<CmsPropertyD
 
     /**
      * Returns the null property definition.<p>
-     * 
+     *
      * @return the null property definition
      */
     public static CmsPropertyDefinition getNullPropertyDefinition() {
@@ -285,7 +373,7 @@ public class CmsPropertyDefinition implements Cloneable, Comparable<CmsPropertyD
 
     /**
      * Returns a clone of this Objects instance.<p>
-     * 
+     *
      * @return a clone of this instance
      */
     @Override
@@ -341,8 +429,8 @@ public class CmsPropertyDefinition implements Cloneable, Comparable<CmsPropertyD
     }
 
     /**
-     * Returns the the type of this property definition.<p> 
-     * 
+     * Returns the the type of this property definition.<p>
+     *
      * @return the type of this property definition
      */
     public CmsPropertyType getType() {
@@ -364,7 +452,7 @@ public class CmsPropertyDefinition implements Cloneable, Comparable<CmsPropertyD
 
     /**
      * Sets the type for this property definition.<p>
-     * 
+     *
      * @param type the type to set
      */
     public void setType(CmsPropertyType type) {

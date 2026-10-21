@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -14,12 +14,12 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * Lesser General Public License for more details.
  *
- * For further information about Alkacon Software GmbH, please see the
- * company website: http://www.alkacon.com
+ * For further information about Alkacon Software GmbH & Co. KG, please see the
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -38,14 +38,14 @@ import javax.servlet.jsp.PageContext;
 
 /**
  * Edit class to edit an exiting module.<p>
- * 
- * @since 6.0.0 
+ *
+ * @since 6.0.0
  */
 public class CmsModulesEditResources extends CmsModulesEditBase {
 
     /**
      * Public constructor with JSP action element.<p>
-     * 
+     *
      * @param jsp an initialized JSP action element
      */
     public CmsModulesEditResources(CmsJspActionElement jsp) {
@@ -55,7 +55,7 @@ public class CmsModulesEditResources extends CmsModulesEditBase {
 
     /**
      * Public constructor with JSP variables.<p>
-     * 
+     *
      * @param context the JSP page context
      * @param req the JSP request
      * @param res the JSP response
@@ -68,6 +68,7 @@ public class CmsModulesEditResources extends CmsModulesEditBase {
     /**
      * @see org.opencms.workplace.tools.modules.CmsModulesEditBase#actionCommit()
      */
+    @Override
     public void actionCommit() {
 
         try {
@@ -82,11 +83,12 @@ public class CmsModulesEditResources extends CmsModulesEditBase {
     }
 
     /**
-     * Creates the dialog HTML for all defined widgets of the named dialog (page).<p>  
-     * 
+     * Creates the dialog HTML for all defined widgets of the named dialog (page).<p>
+     *
      * @param dialog the dialog (page) to get the HTML for
      * @return the dialog HTML for all defined widgets of the named dialog (page)
      */
+    @Override
     protected String createDialogHtml(String dialog) {
 
         StringBuffer result = new StringBuffer(1024);
@@ -104,6 +106,14 @@ public class CmsModulesEditResources extends CmsModulesEditBase {
             result.append(createWidgetTableEnd());
             result.append(dialogBlockEnd());
         }
+
+        if (dialog.equals(PAGES[0])) {
+            result.append(dialogBlockStart(key("label.excluderesource")));
+            result.append(createWidgetTableStart());
+            result.append(createDialogRowsHtml(1, 1));
+            result.append(createWidgetTableEnd());
+            result.append(dialogBlockEnd());
+        }
         // close table
         result.append(createWidgetTableEnd());
 
@@ -113,10 +123,12 @@ public class CmsModulesEditResources extends CmsModulesEditBase {
     /**
      * Creates the list of widgets for this dialog.<p>
      */
+    @Override
     protected void defineWidgets() {
 
         super.defineWidgets();
 
         addWidget(new CmsWidgetDialogParameter(m_module, "resources", PAGES[0], new CmsVfsFileWidget()));
+        addWidget(new CmsWidgetDialogParameter(m_module, "excludeResources", PAGES[0], new CmsVfsFileWidget()));
     }
 }

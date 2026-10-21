@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta name="package-mapping" content="o:org.opencms.ui.components" />
+    </head>
+    <body>
+        <o-cms-basic-dialog>
+            <content>
+                <vaadin-vertical-layout size-full>
+	                <vaadin-vertical-layout _id="m_dataListHeaderView"
+                			height-undefined
+                			width-full
+                			margin="false"></vaadin-vertical-layout>
+	                <vaadin-panel size-full :expand _id="m_dataListViewScrollable">
+	                    <vaadin-grid-layout _id="m_dataListView"
+	                    		height-undefined
+	                    		width-full
+	                    		margin="false"
+	                    		padding="false"></vaadin-grid-layout>
+	                </vaadin-panel>
+                </vaadin-vertical-layout>
+            </content>
+            <buttons>
+                <v-button _id="m_buttonSave">%(key.GUI_DIALOG_BUTTON_SAVE_0)</v-button>
+                <v-button _id="m_buttonSaveAndExit">%(key.GUI_DIALOG_BUTTON_SAVE_AND_EXIT_0)</v-button>
+            </buttons>
+        </o-cms-basic-dialog>
+    </body>
+</html>

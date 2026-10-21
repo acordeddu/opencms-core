@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -14,12 +14,12 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * Lesser General Public License for more details.
  *
- * For further information about Alkacon Software GmbH, please see the
- * company website: http://www.alkacon.com
+ * For further information about Alkacon Software GmbH & Co. KG, please see the
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -31,9 +31,9 @@ import org.opencms.file.CmsFile;
 import org.opencms.file.CmsObject;
 import org.opencms.file.CmsProperty;
 import org.opencms.file.CmsResource;
-import org.opencms.file.CmsResourceFilter;
 import org.opencms.file.CmsResource.CmsResourceCopyMode;
 import org.opencms.file.CmsResource.CmsResourceDeleteMode;
+import org.opencms.file.CmsResourceFilter;
 import org.opencms.lock.CmsLock;
 import org.opencms.main.CmsException;
 import org.opencms.main.CmsIllegalArgumentException;
@@ -41,9 +41,9 @@ import org.opencms.main.CmsIllegalArgumentException;
 import java.util.List;
 
 /**
- * Abstract base class which implements {@link I_CmsResourceWrapper} and 
+ * Abstract base class which implements {@link I_CmsResourceWrapper} and
  * makes it possible to add and remove file extensions to resources.<p>
- * 
+ *
  * @since 6.5.6
  */
 public abstract class A_CmsResourceExtensionWrapper extends A_CmsResourceWrapper {
@@ -77,7 +77,8 @@ public abstract class A_CmsResourceExtensionWrapper extends A_CmsResourceWrapper
         String resourcename,
         int type,
         byte[] content,
-        List<CmsProperty> properties) throws CmsException, CmsIllegalArgumentException {
+        List<CmsProperty> properties)
+    throws CmsException, CmsIllegalArgumentException {
 
         if (checkTypeId(type)) {
 
@@ -136,15 +137,19 @@ public abstract class A_CmsResourceExtensionWrapper extends A_CmsResourceWrapper
     }
 
     /**
-     * @see org.opencms.file.wrapper.A_CmsResourceWrapper#lockResource(org.opencms.file.CmsObject, java.lang.String)
+     * @see org.opencms.file.wrapper.A_CmsResourceWrapper#lockResource(org.opencms.file.CmsObject, java.lang.String, boolean)
      */
     @Override
-    public boolean lockResource(CmsObject cms, String resourcename) throws CmsException {
+    public boolean lockResource(CmsObject cms, String resourcename, boolean temporary) throws CmsException {
 
         CmsResource res = getResource(cms, resourcename);
         if (res != null) {
-
-            cms.lockResource(cms.getRequestContext().removeSiteRoot(res.getRootPath()));
+            String path = cms.getRequestContext().removeSiteRoot(res.getRootPath());
+            if (temporary) {
+                cms.lockResourceTemporary(path);
+            } else {
+                cms.lockResource(path);
+            }
             return true;
         }
 
@@ -163,9 +168,8 @@ public abstract class A_CmsResourceExtensionWrapper extends A_CmsResourceWrapper
 
             // check if destination name is valid
             if (!destination.endsWith("." + getExtension())) {
-                throw new CmsIllegalArgumentException(Messages.get().container(
-                    Messages.ERR_BAD_RESOURCE_EXTENSION_1,
-                    destination));
+                throw new CmsIllegalArgumentException(
+                    Messages.get().container(Messages.ERR_BAD_RESOURCE_EXTENSION_1, destination));
             }
 
             cms.moveResource(
@@ -292,7 +296,7 @@ public abstract class A_CmsResourceExtensionWrapper extends A_CmsResourceWrapper
 
     /**
      * Checks if the type id belongs to this resource wrapper.<p>
-     * 
+     *
      * @param typeId the type id to check
      * @return true if the type id belongs to this wrapper otherwise false
      */
@@ -300,7 +304,7 @@ public abstract class A_CmsResourceExtensionWrapper extends A_CmsResourceWrapper
 
     /**
      * Returns the extension to add and/or remove to/from the resource.<p>
-     * 
+     *
      * @return the extension to use
      */
     protected abstract String getExtension();
@@ -308,10 +312,10 @@ public abstract class A_CmsResourceExtensionWrapper extends A_CmsResourceWrapper
     /**
      * Trys to read the resourcename after removing the file extension and return the
      * resource if the type id is correct.<p>
-     * 
+     *
      * @param cms the initialized CmsObject
      * @param resourcename the name of the resource to read
-     * 
+     *
      * @return the resource or null if not found
      */
     private CmsResource getResource(CmsObject cms, String resourcename) {
@@ -322,11 +326,11 @@ public abstract class A_CmsResourceExtensionWrapper extends A_CmsResourceWrapper
     /**
      * Trys to read the resourcename after removing the file extension and return the
      * resource if the type id is correct.<p>
-     * 
+     *
      * @param cms the initialized CmsObject
      * @param resourcename the name of the resource to read
      * @param filter the resource filter to use while reading
-     * 
+     *
      * @return the resource or null if not found
      */
     private CmsResource getResource(CmsObject cms, String resourcename, CmsResourceFilter filter) {

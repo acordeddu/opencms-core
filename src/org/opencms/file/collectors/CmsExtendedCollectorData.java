@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -14,12 +14,12 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * Lesser General Public License for more details.
  *
- * For further information about Alkacon Software GmbH, please see the
- * company website: http://www.alkacon.com
+ * For further information about Alkacon Software GmbH & Co. KG, please see the
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -41,18 +41,18 @@ import org.apache.commons.logging.Log;
 
 /**
  * Extended data structure for the collector, parsed from the collector parameters.<p>
- * 
+ *
  * The input data String must have the following format:<br>
- * <code>"{VFS URI}|{Resource type}|{Count}|{AddParam1}|{AddParam2}..."</code>, for example:<br>
- * <code>"/my/folder/|xmlcontent|5|p1|p2|p3|p4"</code>.<p>
- * 
- * This extends the basic {@link CmsCollectorData} by allowing to append additional 
- * parameters to the input String. The parameters can then be obtained by the collector 
- * using {@link #getAdditionalParams()}. It will depend on the collector implementation 
+ * <code>"{VFS URI}|{Resource type}|{Count}|excludeTimerange|{AddParam1}|{AddParam2}..."</code>, for example:<br>
+ * <code>"/my/folder/|xmlcontent|5|excludeTimerange|p1|p2|p3|p4"</code> or <code>"/my/folder/|xmlcontent|5|p1|p2|p3|p4"</code>.<p>
+ *
+ * This extends the basic {@link CmsCollectorData} by allowing to append additional
+ * parameters to the input String. The parameters can then be obtained by the collector
+ * using {@link #getAdditionalParams()}. It will depend on the collector implementation
  * how these additional parameters are used.<p>
- * 
+ *
  * @since 7.0.2
- * 
+ *
  * @see CmsCollectorData
  */
 public class CmsExtendedCollectorData extends CmsCollectorData {
@@ -64,20 +64,12 @@ public class CmsExtendedCollectorData extends CmsCollectorData {
     private List<String> m_additionalParams;
 
     /**
-     * Required constructor for subclasses.<p>
-     */
-    protected CmsExtendedCollectorData() {
-
-        // NOOP       
-    }
-
-    /**
      * Creates a new extended collector data set.<p>
-     * 
+     *
      * The input data String must have the following format:<br>
      * <code>"{VFS URI}|{Resource type}|{Count}|{AddParam1}|{AddParam2}..."</code>, for example:<br>
-     * <code>"/my/folder/|xmlcontent|5|p1|p2|p3|p4"</code>.<p>
-     * 
+     * <code>"/my/folder/|xmlcontent|5|excludeTimerange|p1|p2|p3|p4"</code> or <code>"/my/folder/|xmlcontent|5|p1|p2|p3|p4"</code>.<p>
+     *
      * @param data the data to parse
      */
     public CmsExtendedCollectorData(String data) {
@@ -104,10 +96,11 @@ public class CmsExtendedCollectorData extends CmsCollectorData {
                 I_CmsResourceType resourceType = OpenCms.getResourceManager().getResourceType(typeInt);
                 setType(resourceType.getTypeId());
                 if (LOG.isWarnEnabled()) {
-                    LOG.warn(Messages.get().getBundle().key(
-                        Messages.LOG_RESTYPE_INTID_2,
-                        resourceType.getTypeName(),
-                        new Integer(resourceType.getTypeId())));
+                    LOG.warn(
+                        Messages.get().getBundle().key(
+                            Messages.LOG_RESTYPE_INTID_2,
+                            resourceType.getTypeName(),
+                            Integer.valueOf(resourceType.getTypeId())));
                 }
             } catch (NumberFormatException e2) {
                 // bad number format used for type
@@ -126,7 +119,7 @@ public class CmsExtendedCollectorData extends CmsCollectorData {
                 try {
                     setCount(Integer.parseInt(count));
                 } catch (NumberFormatException e) {
-                    // bad number format used for type
+                    // bad number format used for count
                     throw new CmsRuntimeException(
                         Messages.get().container(Messages.ERR_COLLECTOR_PARAM_INVALID_1, data),
                         e);
@@ -134,8 +127,23 @@ public class CmsExtendedCollectorData extends CmsCollectorData {
             }
         }
         if (args.size() > 3) {
-            m_additionalParams = args.subList(3, args.size());
+            if (PARAM_EXCLUDETIMERANGE.equalsIgnoreCase(args.get(3))) {
+                setExcludeTimerange(true);
+                if (args.size() > 4) {
+                    m_additionalParams = args.subList(4, args.size());
+                }
+            } else {
+                m_additionalParams = args.subList(3, args.size());
+            }
         }
+    }
+
+    /**
+     * Required constructor for subclasses.<p>
+     */
+    protected CmsExtendedCollectorData() {
+
+        // NOOP
     }
 
     /**

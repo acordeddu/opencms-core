@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -14,12 +14,12 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * Lesser General Public License for more details.
  *
- * For further information about Alkacon Software GmbH, please see the
- * company website: http://www.alkacon.com
+ * For further information about Alkacon Software GmbH & Co. KG, please see the
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -29,7 +29,7 @@ package org.opencms.xml.containerpage;
 
 /**
  * The cache settings for ADE.<p>
- * 
+ *
  * @since 8.0.0
  */
 public class CmsADECacheSettings {
@@ -37,14 +37,14 @@ public class CmsADECacheSettings {
     /** Default size for container page caches. */
     private static final int DEFAULT_CONTAINER_PAGE_SIZE = 128;
 
+    /** Default size for group container caches. */
+    private static final int DEFAULT_GROUP_CONTAINER_SIZE = 128;
+
     /** The size of the container page offline cache. */
     private int m_containerPageOfflineSize;
 
     /** The size of the container page online cache. */
     private int m_containerPageOnlineSize;
-
-    /** Default size for group container caches. */
-    private static final int DEFAULT_GROUP_CONTAINER_SIZE = 128;
 
     /** The size of the group container offline cache. */
     private int m_groupContainerOfflineSize;
@@ -62,7 +62,7 @@ public class CmsADECacheSettings {
 
     /**
      * Returns the size of the container page offline cache.<p>
-     * 
+     *
      * @return the size of the container page offline cache
      */
     public int getContainerPageOfflineSize() {
@@ -75,7 +75,7 @@ public class CmsADECacheSettings {
 
     /**
      * Returns the size of the container page online cache.<p>
-     * 
+     *
      * @return the size of the container page online cache
      */
     public int getContainerPageOnlineSize() {
@@ -84,6 +84,32 @@ public class CmsADECacheSettings {
             return DEFAULT_CONTAINER_PAGE_SIZE;
         }
         return m_containerPageOnlineSize;
+    }
+
+    /**
+     * Returns the size of the group container offline cache.<p>
+     *
+     * @return the size of the group container offline cache
+     */
+    public int getGroupContainerOfflineSize() {
+
+        if (m_groupContainerOfflineSize <= 0) {
+            return DEFAULT_GROUP_CONTAINER_SIZE;
+        }
+        return m_groupContainerOfflineSize;
+    }
+
+    /**
+     * Returns the size of the group container online cache.<p>
+     *
+     * @return the size of the group container online cache
+     */
+    public int getGroupContainerOnlineSize() {
+
+        if (m_groupContainerOnlineSize <= 0) {
+            return DEFAULT_GROUP_CONTAINER_SIZE;
+        }
+        return m_groupContainerOnlineSize;
     }
 
     /**
@@ -104,32 +130,6 @@ public class CmsADECacheSettings {
     public void setContainerPageOnlineSize(String size) {
 
         m_containerPageOnlineSize = getIntValue(size, DEFAULT_CONTAINER_PAGE_SIZE);
-    }
-
-    /**
-     * Returns the size of the group container offline cache.<p>
-     * 
-     * @return the size of the group container offline cache
-     */
-    public int getGroupContainerOfflineSize() {
-
-        if (m_groupContainerOfflineSize <= 0) {
-            return DEFAULT_GROUP_CONTAINER_SIZE;
-        }
-        return m_groupContainerOfflineSize;
-    }
-
-    /**
-     * Returns the size of the group container online cache.<p>
-     * 
-     * @return the size of the group container online cache
-     */
-    public int getGroupContainerOnlineSize() {
-
-        if (m_groupContainerOnlineSize <= 0) {
-            return DEFAULT_GROUP_CONTAINER_SIZE;
-        }
-        return m_groupContainerOnlineSize;
     }
 
     /**
@@ -154,7 +154,7 @@ public class CmsADECacheSettings {
 
     /**
      * Turns a string into an int.<p>
-     * 
+     *
      * @param str the string to be converted
      * @param defaultValue a default value to be returned in case the string could not be parsed or the parsed int value is <= 0
      * @return the int value of the string

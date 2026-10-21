@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -15,11 +15,11 @@
  * Lesser General Public License for more details.
  *
  * For further information about Alkacon Software, please see the
- * company website: http://www.alkacon.com
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -39,13 +39,13 @@ import java.util.regex.Pattern;
 
 /**
  * Help class for storing of rfs-rules.<p>
- * 
+ *
  * @since 6.0.0
  */
 public class CmsStaticExportRfsRule {
 
     /** Name for the default work path. */
-    public static final Integer EXPORT_DEFAULT_BACKUPS = new Integer(0);
+    public static final Integer EXPORT_DEFAULT_BACKUPS = Integer.valueOf(0);
 
     /** Description of the rule. */
     private String m_description;
@@ -85,7 +85,7 @@ public class CmsStaticExportRfsRule {
 
     /**
      * Default constructor.<p>
-     * 
+     *
      * @param name the name of the rule
      * @param description the description for the rule
      * @param source the source regular expression
@@ -118,7 +118,7 @@ public class CmsStaticExportRfsRule {
 
     /**
      * Full constructor.<p>
-     * 
+     *
      * @param name the name of the rule
      * @param description the description for the rule
      * @param source the source regular expression
@@ -146,7 +146,7 @@ public class CmsStaticExportRfsRule {
 
     /**
      * Adds a regular expression of related system resources.<p>
-     * 
+     *
      * @param regex the regular expression to add
      */
     public void addRelatedSystemRes(String regex) {
@@ -166,7 +166,7 @@ public class CmsStaticExportRfsRule {
 
     /**
      * Returns the number of backups.<p>
-     * 
+     *
      * @return the number of backups
      */
     public Integer getExportBackups() {
@@ -203,7 +203,7 @@ public class CmsStaticExportRfsRule {
 
     /**
      * Returns the rfs export Work Path.<p>
-     * 
+     *
      * @return the rfs export Work Path
      */
     public String getExportWorkPath() {
@@ -213,7 +213,7 @@ public class CmsStaticExportRfsRule {
 
     /**
      * Returns the configured rfs export Work Path with unsubstituted context values.<p>
-     * 
+     *
      * @return the configured rfs export Work Path
      */
     public String getExportWorkPathConfigured() {
@@ -229,10 +229,10 @@ public class CmsStaticExportRfsRule {
 
     /**
      * Returns the rfs name for the given locale, only used for multi-language export.<p>
-     * 
+     *
      * @param rfsName the original rfs name
      * @param fileSeparator the file separator to use
-     * 
+     *
      * @return the rfs name for the given locale
      */
     public String getLocalizedRfsName(String rfsName, String fileSeparator) {
@@ -240,9 +240,10 @@ public class CmsStaticExportRfsRule {
         String locRfsName = null;
 
         // this might be too simple
-        locRfsName = CmsStringUtil.substitute(rfsName, fileSeparator
-            + CmsLocaleManager.getDefaultLocale().toString()
-            + fileSeparator, fileSeparator + getName() + fileSeparator);
+        locRfsName = CmsStringUtil.substitute(
+            rfsName,
+            fileSeparator + CmsLocaleManager.getDefaultLocale().toString() + fileSeparator,
+            fileSeparator + getName() + fileSeparator);
         return locRfsName;
     }
 
@@ -258,7 +259,7 @@ public class CmsStaticExportRfsRule {
 
     /**
      * Returns the related system resources list as list of <code>{@link Pattern}</code>.<p>
-     * 
+     *
      * @return the related resources list as list of <code>{@link Pattern}</code>
      */
     public List<Pattern> getRelatedSystemResources() {
@@ -298,7 +299,7 @@ public class CmsStaticExportRfsRule {
 
     /**
      * Returns true if the links in the static export should be relative.<p>
-     * 
+     *
      * @return true if the links in the static export should be relative
      */
     public Boolean getUseRelativeLinks() {
@@ -308,9 +309,9 @@ public class CmsStaticExportRfsRule {
 
     /**
      * Checks if a vfsName matches the given related system resource patterns.<p>
-     * 
+     *
      * @param vfsName the vfs name of a resource to check
-     * 
+     *
      * @return true if the name matches one of the given related system resource patterns
      */
     public boolean match(String vfsName) {

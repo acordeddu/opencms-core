@@ -2,7 +2,7 @@
  * This library is part of OpenCms -
  * the Open Source Content Management System
  *
- * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH & Co. KG (https://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -15,11 +15,11 @@
  * Lesser General Public License for more details.
  *
  * For further information about Alkacon Software, please see the
- * company website: http://www.alkacon.com
+ * company website: https://www.alkacon.com
  *
  * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
- * 
+ * project website: https://www.opencms.org
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -35,7 +35,7 @@ import com.google.gwt.i18n.client.DateTimeFormat;
 
 /**
  * This class is an Helper with mostly static methods that convert a given date object
- * or that convert a given String.<p> 
+ * or that convert a given String.<p>
  */
 public final class CmsDateConverter {
 
@@ -48,31 +48,48 @@ public final class CmsDateConverter {
     /** The part of the 12 hour presentation which signals the am pm. */
     private static final String AMPM_PATTERN_PART = "aa";
 
+    /** A pattern for date representation. */
+    private static final String DATE_PATTERN = Messages.get().key(Messages.GUI_DATEBOX_DATE_PATTERN_0);
+
     /** A pattern for date time representation. */
     private static final String DATETIME_PATTERN = Messages.get().key(Messages.GUI_DATEBOX_DATETIME_PATTERN_0);
 
-    /** A pattern for date time representation in 12 hour presentation. */
+    /** A pattern for time representation. */
     private static final String TIME_PATTERN = Messages.get().key(Messages.GUI_DATEBOX_TIME_PATTERN_0);
+
+    /** The formatter for the date format. */
+    private static final DateTimeFormat Z_DATE_FORMAT = DateTimeFormat.getFormat(DATE_PATTERN);
+
+    /** The format used to parse dates (this needs to be different from Z_DATE_FORMAT because we want to interpret the year 22 as 2022, but don't want to format 1922 as 22. */
+    private static final DateTimeFormat Z_DATE_FORMAT_SHORTYEAR = DateTimeFormat.getFormat(
+        DATE_PATTERN.replace("yyyy", "yy"));
 
     /** The formatter for the date time format. */
     private static final DateTimeFormat Z_DATETIME_FORMAT = DateTimeFormat.getFormat(DATETIME_PATTERN);
 
+    /** The format used to parse date/time combinations (this needs to be different from Z_DATETIME_FORMAT because we want to interpret the year 22 as 2022, but don't want to format 1922 as 22. */
+    private static final DateTimeFormat Z_DATETIME_FORMAT_SHORTYEAR = DateTimeFormat.getFormat(
+        DATETIME_PATTERN.replace("yyyy", "yy"));
+
     /** The formatter for the time format. */
     private static final DateTimeFormat Z_TIME_FORMAT = DateTimeFormat.getFormat(TIME_PATTERN);
 
+    /**
+     * Hiding constructor for final class.<p>
+     */
     private CmsDateConverter() {
 
-        // noop
+        // nothing to do
     }
 
     /**
      * Cuts the suffix (am or pm) from a given time String.<p>
-     * 
-     * If the given String has less than 5 characters an dosen't 
+     *
+     * If the given String has less than 5 characters an dosen't
      * contains an am or pm in it the original String is returned.<p>
-     * 
+     *
      * @param time the time String to cut the suffix from
-     * 
+     *
      * @return the time String without the suffix or the original String if the format of the String is incorrect
      */
     public static String cutSuffix(String time) {
@@ -89,37 +106,78 @@ public final class CmsDateConverter {
     }
 
     /**
-     * Merges a given Date object with a given time String.<p>
-     * 
-     * Returns a <code>null</code> if the given time format coudn't be parsed.<p>
-     * 
-     * The expected time String should include the am pm information if the time format is in 12 hour presentation.<p>
-     * 
-     * @param date the given Date object which time has to be set
-     * @param time the given time String which should be inserted into the Date Object
-     * 
-     * @return the merged date Object
+     * Formats the provided date to a date only representation.<p>
+     *
+     * @param date the date to format
+     *
+     * @return the formatted date as a string
      */
-    @SuppressWarnings("deprecation")
-    public static Date getDateWithTime(Date date, String time) {
+    public static String dateToString(final Date date) {
 
-        Date result;
-        try {
-            result = Z_TIME_FORMAT.parse(time);
-            result.setDate(date.getDate());
-            result.setMonth(date.getMonth());
-            result.setYear(date.getYear());
-        } catch (Exception e) {
-            result = null;
+        String result;
+        if (date == null) {
+            result = "";
+        } else {
+            result = Z_DATE_FORMAT.format(date);
         }
         return result;
     }
 
     /**
+     * Merges a given Date object with a given time String.<p>
+     *
+     * Returns a <code>null</code> if the given time format coudn't be parsed.<p>
+     *
+     * The expected time String should include the am pm information if the time format is in 12 hour presentation.<p>
+     *
+     * @param date the given Date object which time has to be set
+     * @param time the given time String which should be inserted into the Date Object
+     *
+     * @return the merged date Object
+     */
+    @SuppressWarnings("deprecation")
+    public static Date getDateWithTime(Date date, String time) {
+
+        return getDateWithTime(date, time, Z_TIME_FORMAT);
+    }
+
+    /**
+     * Changes the time portion of date to another value.
+     *
+     * @param date the original date
+     * @param time the string representing the time to be set in the result
+     * @param timeFormat the format to use for parsing the time
+     *
+     * @return a new Date with the date from the date parameter and the time from the time parameter.
+     */
+    public static Date getDateWithTime(Date date, String time, DateTimeFormat timeFormat) {
+
+        Date result;
+        try {
+            if (isEndOfDayTime(time)) {
+                result = new Date(date.getYear(), date.getMonth(), date.getDate() + 1);
+                result.setHours(0);
+                result.setMinutes(0);
+                result.setSeconds(0);
+                return result;
+            }
+            Date timeAsDate = timeFormat.parse(time);
+            result = new Date(date.getYear(), date.getMonth(), date.getDate());
+            result.setHours(timeAsDate.getHours());
+            result.setMinutes(timeAsDate.getMinutes());
+            result.setSeconds(timeAsDate.getSeconds());
+        } catch (Exception e) {
+            result = null;
+        }
+        return result;
+
+    }
+
+    /**
      * Returns the short time format of a given date as String.<p>
-     * 
+     *
      * @param date the date to get the short time format from
-     * 
+     *
      * @return the short time format of a given date
      */
     public static String getTime(Date date) {
@@ -128,9 +186,9 @@ public final class CmsDateConverter {
     }
 
     /**
-     * Returns <code>true</code> if the current date format is in the 12 hour 
+     * Returns <code>true</code> if the current date format is in the 12 hour
      * representation mode <code>false</code> otherwise.<p>
-     * 
+     *
      * @return <code>true</code> if an am or a pm is in a new Date object <code>false</code> otherwise
      */
     public static boolean is12HourPresentation() {
@@ -140,9 +198,9 @@ public final class CmsDateConverter {
 
     /**
      * Returns <code>true</code> if an am is in the given date object <code>false</code> otherwise.<p>
-     * 
+     *
      * @param date the date to check
-     * 
+     *
      * @return <code>true</code> if an am is in the given Date object <code>false</code> otherwise
      */
     public static boolean isAm(Date date) {
@@ -153,22 +211,22 @@ public final class CmsDateConverter {
 
     /**
      * Parses the provided String as a date.<p>
-     * 
+     *
      * First try to parse the String with the given time format.<p>
-     * 
+     *
      * If that fails try to parse the date with the browser settings.<p>
-     * 
+     *
      * @param dateText the string representing a date
-     * 
+     *
      * @return the date created, or null if there was a parse error
-     * 
-     * @throws Exception 
+     *
+     * @throws Exception in case the text can not be parsed to a date
      */
     public static Date toDate(final String dateText) throws Exception {
 
         Date date = null;
         if (dateText.length() > 0) {
-            date = Z_DATETIME_FORMAT.parse(dateText.trim());
+            date = Z_DATETIME_FORMAT_SHORTYEAR.parse(dateText.trim());
             if (!validateDate(date)) {
                 throw new IllegalArgumentException();
             }
@@ -177,10 +235,50 @@ public final class CmsDateConverter {
     }
 
     /**
-     * Formats the provided date. Note, a null date is a possible input.
-     * 
+     * Formats the provided date as only a date format (dd/mm/yyyy). Note, a null date is a possible input.
+     *
      * @param date the date to format
-     * 
+     *
+     * @return the formatted date as a string
+     */
+    public static String toDateString(final Date date) {
+
+        String result;
+        if (date == null) {
+            result = "";
+        } else {
+            result = Z_DATE_FORMAT.format(date);
+        }
+        return result;
+    }
+
+    /**
+     * Parses the provided String as a date.<p>
+     *
+     * First try to parse the String with the given time format.<p>
+     *
+     * If that fails try to parse the date with the browser settings.<p>
+     *
+     * @param dateText the string representing a date
+     *
+     * @return the date created, or null if there was a parse error
+     *
+     * @throws Exception in case the text can not be parsed to a date
+     */
+    public static Date toDayDate(final String dateText) throws Exception {
+
+        Date date = null;
+        if (dateText.length() > 0) {
+            date = Z_DATE_FORMAT_SHORTYEAR.parse(dateText.trim());
+        }
+        return date;
+    }
+
+    /**
+     * Formats the provided date. Note, a null date is a possible input.
+     *
+     * @param date the date to format
+     *
      * @return the formatted date as a string
      */
     public static String toString(final Date date) {
@@ -196,60 +294,86 @@ public final class CmsDateConverter {
 
     /**
      * Validates a time String if it matches one of the two regular expressions.<p>
-     * 
-     * Returns <code>true</code> if the given date matches to one of the regular 
-     * expressions, <code>false</code> otherwise.<p> 
-     * 
+     *
+     * Returns <code>true</code> if the given date matches to one of the regular
+     * expressions, <code>false</code> otherwise.<p>
+     *
      * @param date the date String to check
-     * 
+     *
      * @return <code>true</code> if the given time matches to one of the regular expressions, <code>false</code> otherwise
      */
     public static boolean validateDate(Date date) {
 
         String time = getTime(date);
-        return validateTime(time);
+        boolean timeOk = validateTime(time);
+        return timeOk;
 
     }
 
     /**
      * Validates a time String if it matches the regular expressions.<p>
-     * 
-     * Returns <code>true</code> if the given time matches the regular 
-     * expressions, <code>false</code> otherwise.<p> 
-     * 
+     *
+     * Returns <code>true</code> if the given time matches the regular
+     * expressions, <code>false</code> otherwise.<p>
+     *
      * @param time the time String to check
-     * 
+     *
      * @return <code>true</code> if the given time matches the regular expressions, <code>false</code> otherwise
      */
     public static native boolean validateTime(String time) /*-{
-        var hasMeridian = false;
-        var re = /^\d{1,2}[:]\d{2}([:]\d{2})?( [aApP][mM]?)?$/;
-        if (!re.test(time)) {
-            return false;
-        }
-        if (time.toLowerCase().indexOf("p") != -1) {
-            hasMeridian = true;
-        }
-        if (time.toLowerCase().indexOf("a") != -1) {
-            hasMeridian = true;
-        }
-        var values = time.split(":");
-        if ((parseFloat(values[0]) < 0) || (parseFloat(values[0]) > 23)) {
-            return false;
-        }
-        if (hasMeridian) {
-            if ((parseFloat(values[0]) < 1) || (parseFloat(values[0]) > 12)) {
-                return false;
-            }
-        }
-        if ((parseFloat(values[1]) < 0) || (parseFloat(values[1]) > 59)) {
-            return false;
-        }
-        if (values.length > 2) {
-            if ((parseFloat(values[2]) < 0) || (parseFloat(values[2]) > 59)) {
-                return false;
-            }
-        }
-        return true;
-    }-*/;
+                                                           var hasMeridian = false;
+                                                           var re = /^\d{1,2}[:]\d{2}([:]\d{2})?( [aApP][mM]?)?$/;
+                                                           if (!re.test(time)) {
+                                                           return false;
+                                                           }
+                                                           if (time.toLowerCase().indexOf("p") != -1) {
+                                                           hasMeridian = true;
+                                                           }
+                                                           if (time.toLowerCase().indexOf("a") != -1) {
+                                                           hasMeridian = true;
+                                                           }
+                                                           var values = time.split(":");
+                                                           if (parseFloat(values[0]) == 24) {
+                                                           if (hasMeridian) {
+                                                           return false;
+                                                           }
+                                                           if (parseFloat(values[1]) != 0) {
+                                                           return false;
+                                                           }
+                                                           if (values.length > 2) {
+                                                           if (parseFloat(values[2]) != 0) {
+                                                           return false;
+                                                           }
+                                                           }
+                                                           return true;
+                                                           }
+                                                           if ((parseFloat(values[0]) < 0) || (parseFloat(values[0]) > 23)) {
+                                                           return false;
+                                                           }
+                                                           if (hasMeridian) {
+                                                           if ((parseFloat(values[0]) < 1) || (parseFloat(values[0]) > 12)) {
+                                                           return false;
+                                                           }
+                                                           }
+                                                           if ((parseFloat(values[1]) < 0) || (parseFloat(values[1]) > 59)) {
+                                                           return false;
+                                                           }
+                                                           if (values.length > 2) {
+                                                           if ((parseFloat(values[2]) < 0) || (parseFloat(values[2]) > 59)) {
+                                                           return false;
+                                                           }
+                                                           }
+                                                           return true;
+                                                           }-*/;
+
+    /**
+     * Returns if the given time represents the end of day as 24:00.<p>
+     *
+     * @param time the time string
+     *
+     * @return true if the time is 24:00 or 24:00:00
+     */
+    private static native boolean isEndOfDayTime(String time) /*-{
+                                                              return /^\s*24:00(:00)?\s*$/.test(time);
+                                                              }-*/;
 }
